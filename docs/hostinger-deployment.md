@@ -56,6 +56,11 @@ dist/hostinger/index.html
 If the deployment is currently returning HTTP 403 after a successful build, this
 is the mode to use first.
 
+The repository also includes a root `.htaccess` fallback for Hostinger plans
+that serve `public_html` from the repository root even after the build creates
+`dist/hostinger`. It rewrites `/` to `dist/hostinger/index.html` and maps
+`/_next/*` asset requests to `dist/hostinger/_next/*`.
+
 ## Node.js Application Settings
 
 Use these settings only when Hostinger asks for a startup file or process
