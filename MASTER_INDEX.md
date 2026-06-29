@@ -36,6 +36,8 @@ working on Fylmico.
   policy rules.
 - [docs/deployment.md](docs/deployment.md): Deployment architecture and
   operational strategy.
+- [docs/hostinger-deployment.md](docs/hostinger-deployment.md): Hostinger
+  Node.js deployment settings and 403 checklist.
 - [docs/coding-standards.md](docs/coding-standards.md): Coding standards and
   quality expectations.
 - [docs/tech-stack.md](docs/tech-stack.md): Selected technologies and reasons.

@@ -25,8 +25,8 @@ becoming decorative or inefficient.
 
 ## Current Architecture
 
-Architecture is not yet implemented in application code. The accepted planning
-baseline is a TypeScript monorepo:
+Sprint 0 has implemented the first application scaffold. The accepted baseline
+is a TypeScript npm workspace:
 
 ```text
 apps/
@@ -50,7 +50,8 @@ docs/
 
 Baseline architecture decisions:
 
-- `apps/web`: Next.js web application.
+- `apps/web`: Next.js App Router web application. This is the only runnable app
+  in Sprint 0.
 - `apps/api`: NestJS API application.
 - `packages/ui`: Shared design system and UI primitives.
 - `packages/database`: Prisma schema, migrations, and database client.
@@ -58,6 +59,9 @@ Baseline architecture decisions:
 - `packages/permissions`: Authorization policy logic.
 - `packages/realtime`: Typed Socket.IO event contracts.
 - `packages/shared`: Shared domain contracts and validation schemas.
+
+`apps/api` and `packages/*` are intentionally not created yet because Sprint 0
+must avoid placeholder folders.
 
 ## Planned Stack
 
@@ -94,22 +98,24 @@ Phase 1: foundation and planning.
 
 ## Current Progress
 
-Phase 1 foundation documentation expanded. Baseline ADRs have been created. No
-application code has been written.
+Sprint 0 foundation scaffold exists. The repository has a root npm workspace,
+Next.js App Router app in `apps/web`, TypeScript, TailwindCSS, ESLint,
+Prettier, Husky, lint-staged, Docker, GitHub Actions CI, and a Hostinger
+standalone startup entry.
 
 ## Current Blockers
 
-- Confirm Phase 1 baseline with the product owner.
-- Decide exact Phase 2 scaffold tooling.
-- Create app/package scaffold after approval.
+- Confirm the Hostinger deployment returns HTTP 200 after using root deployment
+  and `server.js` startup.
+- Do not begin Sprint 1 until deployment is confirmed functional.
 
 ## Current Priorities
 
-1. Review and approve baseline ADRs.
-2. Choose monorepo package manager and build tooling during scaffold planning.
-3. Scaffold application structure without product features.
-4. Configure linting, formatting, testing, and TypeScript.
-5. Keep docs updated as the scaffold appears.
+1. Redeploy on Hostinger from the repository root.
+2. Use `npm install`, `npm run build`, and `npm start`.
+3. Configure startup file as `server.js` if Hostinger asks for one.
+4. Confirm the deployed domain returns HTTP 200.
+5. Only then approve Sprint 1 planning.
 
 ## Latest Implemented Feature
 
@@ -117,9 +123,9 @@ None. No product features have been implemented.
 
 ## Next Feature
 
-No product feature should be started until the application scaffold exists. The
-likely first feature area remains authentication plus organization workspace
-setup, after scaffold validation.
+No product feature should be started until Hostinger deployment is confirmed
+functional. The likely first feature area remains authentication plus
+organization workspace setup, after deployment approval.
 
 ## Things Never To Change Without Explicit Decision
 
@@ -133,11 +139,10 @@ setup, after scaffold validation.
 
 ## Known Issues
 
-- No application scaffold exists yet.
-- No validated architecture exists yet.
+- Hostinger deployment needs confirmation after the standalone startup fix.
 - No database schema exists yet.
 - No API contract exists yet.
-- No deployment pipeline exists yet.
+- No production database, object storage, or API deployment exists yet.
 
 ## Session Startup Checklist
 

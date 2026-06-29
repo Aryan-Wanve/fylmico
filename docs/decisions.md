@@ -71,6 +71,16 @@ deployment path.
 
 ADR: [0006-deployment.md](adr/0006-deployment.md)
 
+### 2026-06-29: Hostinger standalone startup
+
+Status: Accepted
+
+Decision: Deploy from the repository root and use root `server.js` as the
+Hostinger startup file. Root `npm start` runs the generated Next.js standalone
+server instead of `next start`.
+
+ADR: [0007-sprint-0-foundation.md](adr/0007-sprint-0-foundation.md)
+
 ## Pending Decisions
 
 - Package manager and build tooling.

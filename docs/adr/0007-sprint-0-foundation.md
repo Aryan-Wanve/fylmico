@@ -34,6 +34,11 @@ Create only folders that are used in Sprint 0:
 Do not create `apps/api` or `packages/*` until those folders contain real
 implementation code or shared contracts.
 
+For Hostinger Node.js deployment, root `npm start` runs `node server.js`. The
+root `server.js` file delegates to the generated Next.js standalone server at
+`apps/web/.next/standalone/apps/web/server.js`. A root `postbuild` script copies
+standalone static assets into the generated runtime folder.
+
 ## Alternatives
 
 - Create a flat root-level Next.js application.

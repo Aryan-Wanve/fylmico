@@ -43,6 +43,7 @@ Before any implementation session, read these files:
 - [Authentication](docs/authentication.md)
 - [Permissions](docs/permissions.md)
 - [Deployment](docs/deployment.md)
+- [Hostinger deployment](docs/hostinger-deployment.md)
 - [Coding standards](docs/coding-standards.md)
 - [Tech stack](docs/tech-stack.md)
 - [Glossary](docs/glossary.md)

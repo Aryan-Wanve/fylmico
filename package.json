@@ -15,7 +15,9 @@
   "scripts": {
     "dev": "npm --workspace @fylmico/web run dev",
     "build": "npm --workspace @fylmico/web run build",
-    "start": "npm --workspace @fylmico/web run start",
+    "postbuild": "node scripts/sync-next-standalone-assets.mjs",
+    "start": "node server.js",
+    "start:next": "npm --workspace @fylmico/web run start",
     "lint": "npm --workspace @fylmico/web run lint",
     "typecheck": "npm --workspace @fylmico/web run typecheck",
     "format": "prettier . --write",
