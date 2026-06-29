@@ -39,6 +39,11 @@ root `server.js` file delegates to the generated Next.js standalone server at
 `apps/web/.next/standalone/apps/web/server.js`. A root `postbuild` script copies
 standalone static assets into the generated runtime folder.
 
+For Hostinger static Git deployment, root `npm run build:hostinger` exports the
+Sprint 0 static shell to `dist/hostinger`. This prevents HTTP 403 responses when
+Hostinger is configured to serve a publish directory instead of running a Node.js
+process.
+
 ## Alternatives
 
 - Create a flat root-level Next.js application.

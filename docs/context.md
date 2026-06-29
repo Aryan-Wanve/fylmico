@@ -102,6 +102,9 @@ Sprint 0 foundation scaffold exists. The repository has a root npm workspace,
 Next.js App Router app in `apps/web`, TypeScript, TailwindCSS, ESLint,
 Prettier, Husky, lint-staged, Docker, GitHub Actions CI, and a Hostinger
 standalone startup entry.
+Because the deployed Hostinger site continued returning HTTP 403, Sprint 0 also
+supports a static Git deployment path with `npm run build:hostinger`, which
+publishes to `dist/hostinger`.
 
 ## Current Blockers
 
@@ -114,8 +117,10 @@ standalone startup entry.
 1. Redeploy on Hostinger from the repository root.
 2. Use `npm install`, `npm run build`, and `npm start`.
 3. Configure startup file as `server.js` if Hostinger asks for one.
-4. Confirm the deployed domain returns HTTP 200.
-5. Only then approve Sprint 1 planning.
+4. If Hostinger asks for a publish directory instead of a startup file, use
+   `npm run build:hostinger` and publish `dist/hostinger`.
+5. Confirm the deployed domain returns HTTP 200.
+6. Only then approve Sprint 1 planning.
 
 ## Latest Implemented Feature
 
@@ -139,7 +144,8 @@ organization workspace setup, after deployment approval.
 
 ## Known Issues
 
-- Hostinger deployment needs confirmation after the standalone startup fix.
+- Hostinger deployment needs confirmation after switching the panel to either
+  Node.js mode with `server.js` or static Git mode with `dist/hostinger`.
 - No database schema exists yet.
 - No API contract exists yet.
 - No production database, object storage, or API deployment exists yet.

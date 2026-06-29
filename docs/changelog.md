@@ -19,6 +19,8 @@ Summary:
 - Added root Hostinger startup entry for Next.js standalone output.
 - Added postbuild static asset sync for standalone runtime.
 - Added Hostinger deployment documentation and 403 checklist.
+- Added `npm run build:hostinger` to generate a static publish directory at
+  `dist/hostinger` for Hostinger Git deployments.
 
 Breaking changes:
 

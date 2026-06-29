@@ -23,6 +23,8 @@ Files modified:
 - `PROJECT_SPEC.md`
 - `MASTER_INDEX.md`
 - `package.json`
+- `.prettierignore`
+- `eslint.config.mjs`
 - `apps/web/next-env.d.ts`
 - `apps/web/tsconfig.json`
 - `docs/context.md`
@@ -83,6 +85,7 @@ Files created:
 - `eslint.config.mjs`
 - `server.js`
 - `scripts/sync-next-standalone-assets.mjs`
+- `scripts/build-hostinger-static.mjs`
 - `apps/web/package.json`
 - `apps/web/.env.example`
 - `apps/web/next-env.d.ts`
@@ -119,6 +122,8 @@ Architecture changes:
 - Added root Hostinger startup entry that runs the generated Next.js standalone
   server.
 - Added postbuild standalone static asset sync.
+- Added Hostinger static export path for Git deployments that require a publish
+  directory.
 
 Performance improvements:
 
@@ -128,10 +133,13 @@ Bugs fixed:
 
 - Fixed Hostinger deployment ambiguity where root `npm start` delegated to
   `next start` instead of the generated standalone server.
+- Added `npm run build:hostinger` to prevent static Hostinger deployments from
+  serving a directory without `index.html`.
 
 Known bugs:
 
-- Hostinger deployment must be redeployed and confirmed to return HTTP 200.
+- Hostinger deployment must be redeployed with the correct mode and confirmed to
+  return HTTP 200.
 
 Technical debt:
 
@@ -142,5 +150,7 @@ Technical debt:
 
 Next task:
 
-- Redeploy on Hostinger from the repository root with startup file `server.js`
-  and confirm the deployed domain returns HTTP 200 before Sprint 1.
+- For static Git deployment, use build command `npm run build:hostinger` and
+  publish directory `dist/hostinger`.
+- For Node.js deployment, use startup file `server.js`.
+- Confirm the deployed domain returns HTTP 200 before Sprint 1.

@@ -14,7 +14,7 @@ Accepted planning baseline. No deployment infrastructure has been created.
 
 See ADR 0006.
 
-For current Hostinger Node.js Git deployment settings, see
+For current Hostinger static Git and Node.js deployment settings, see
 `docs/hostinger-deployment.md`.
 
 ## Deployment Goals

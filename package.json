@@ -15,6 +15,7 @@
   "scripts": {
     "dev": "npm --workspace @fylmico/web run dev",
     "build": "npm --workspace @fylmico/web run build",
+    "build:hostinger": "node scripts/build-hostinger-static.mjs",
     "postbuild": "node scripts/sync-next-standalone-assets.mjs",
     "start": "node server.js",
     "start:next": "npm --workspace @fylmico/web run start",

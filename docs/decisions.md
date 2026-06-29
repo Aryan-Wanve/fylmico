@@ -81,6 +81,16 @@ server instead of `next start`.
 
 ADR: [0007-sprint-0-foundation.md](adr/0007-sprint-0-foundation.md)
 
+### 2026-06-29: Hostinger static export fallback
+
+Status: Accepted
+
+Decision: Add `npm run build:hostinger` to export the current static Sprint 0
+shell to `dist/hostinger` for Hostinger Git deployments that require a publish
+directory instead of a Node.js startup file.
+
+ADR: [0007-sprint-0-foundation.md](adr/0007-sprint-0-foundation.md)
+
 ## Pending Decisions
 
 - Package manager and build tooling.

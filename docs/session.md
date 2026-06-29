@@ -85,6 +85,8 @@ Completed work:
   standalone Next.js server.
 - Added postbuild standalone static asset sync.
 - Added Hostinger deployment documentation and updated decisions.
+- Added `npm run build:hostinger` static export for Hostinger Git deployments
+  that use a publish directory.
 
 Problems encountered:
 
@@ -94,16 +96,21 @@ Problems encountered:
   outside the sandbox.
 - Hostinger deployment returned HTTP 403 after a successful build, indicating a
   deployment routing/startup mismatch rather than a Next.js compile failure.
+- The repeated 403 indicates Hostinger is likely serving a static directory
+  without an `index.html` or using the wrong publish directory.
 
 Decisions made:
 
 - Use npm workspaces from the repository root.
 - Deploy Hostinger from the repository root, not `apps/web`.
 - Use root `server.js` as the production startup file.
+- Use `dist/hostinger` as the publish directory when Hostinger is configured as
+  a static Git deployment.
 - Keep Docker files for container/VPS deployment; they do not control
   Hostinger Node.js Git deployment.
 
 Next session objective:
 
-- Confirm the Hostinger deployment returns HTTP 200, then request approval
-  before beginning Sprint 1.
+- Redeploy using either static Git mode (`npm run build:hostinger`,
+  `dist/hostinger`) or Node.js mode (`server.js`) and confirm HTTP 200 before
+  beginning Sprint 1.

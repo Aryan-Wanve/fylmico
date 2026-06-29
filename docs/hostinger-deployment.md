@@ -4,15 +4,62 @@
 
 Accepted Sprint 0 deployment baseline.
 
-## Deployment Mode
+## Deployment Modes
 
-Deploy Fylmico as a Hostinger Node.js application from the repository root.
+Fylmico supports two Hostinger deployment modes.
 
-Do not deploy from `apps/web` for the current foundation. The repository root
-contains the workspace lockfile, root scripts, shared configuration, Docker
-files, CI configuration, documentation, and the production startup entry.
+Use **Static Git deployment** if Hostinger asks for a build command and publish
+directory. This is the safest Sprint 0 mode because the current site has no
+server-only features.
 
-## Required Hostinger Settings
+Use **Node.js application deployment** only if Hostinger asks for a startup file
+or process command.
+
+Do not deploy from `apps/web` in either mode. The repository root contains the
+workspace lockfile, root scripts, shared configuration, Docker files, CI
+configuration, documentation, and deployment entries.
+
+## Static Git Deployment Settings
+
+Use these settings when Hostinger asks for a publish directory:
+
+Repository root:
+
+```text
+/
+```
+
+Install command:
+
+```bash
+npm install
+```
+
+Build command:
+
+```bash
+npm run build:hostinger
+```
+
+Publish directory:
+
+```text
+dist/hostinger
+```
+
+This produces:
+
+```text
+dist/hostinger/index.html
+```
+
+If the deployment is currently returning HTTP 403 after a successful build, this
+is the mode to use first.
+
+## Node.js Application Settings
+
+Use these settings only when Hostinger asks for a startup file or process
+command:
 
 Repository root:
 
@@ -96,6 +143,9 @@ node scripts/sync-next-standalone-assets.mjs
 This copies required assets into the standalone runtime folder after every root
 build.
 
+For static Git deployment, `npm run build:hostinger` creates a plain static
+export at `dist/hostinger`.
+
 ## Docker
 
 Docker files do not affect Hostinger Node.js Git deployment unless the hosting
@@ -104,16 +154,20 @@ and container deployment paths.
 
 ## 403 Forbidden Checklist
 
-A successful build can still return HTTP 403 when Hostinger is serving the
-domain from a static directory instead of routing traffic to the Node.js
-process.
+A successful build can still return HTTP 403 when Hostinger is serving a
+directory that does not contain an `index.html`, or when the domain is attached
+to a static website deployment while the repo only produced a Node.js standalone
+server.
 
 Check:
 
-- The application is configured as a Node.js application, not a static website.
+- If using static Git deployment, the build command is `npm run
+build:hostinger`.
+- If using static Git deployment, the publish directory is `dist/hostinger`.
+- If using Node.js deployment, the start command is `npm start`.
+- If using Node.js deployment, the startup file is `server.js` if Hostinger asks
+  for one.
 - The repository root is `/`, not `apps/web`.
-- The start command is `npm start`.
-- The startup file is `server.js` if Hostinger asks for one.
 - Hostinger regenerated its Node.js routing files after the latest deployment.
 - The domain is attached to the Node.js app.
 - There is no stale `public_html` deployment masking the Node.js app.
@@ -132,4 +186,16 @@ Then open:
 
 ```text
 http://localhost:3000
+```
+
+For the Hostinger static export:
+
+```bash
+npm run build:hostinger
+```
+
+Then verify:
+
+```text
+dist/hostinger/index.html
 ```
