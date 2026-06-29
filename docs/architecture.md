@@ -195,8 +195,7 @@ See `docs/authentication.md` and ADR 0003.
 ## Authorization
 
 Authorization uses hybrid RBAC and policy checks. The API is the enforcement
-source. UI checks are only for experience. See `docs/permissions.md` and ADR
-0004.
+source. UI checks are only for experience. See `docs/permissions.md` and ADR 0004.
 
 ## Realtime
 

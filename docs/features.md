@@ -146,49 +146,49 @@ added without rewriting core production workflows.
 
 ## Full Module Register
 
-| Module | Status | Priority |
-| --- | --- | --- |
-| Authentication | Planned | Critical |
-| Organizations | Planned | Critical |
-| Teams | Planned | High |
-| Projects | Planned | High |
-| Clients | Planned | High |
-| Departments | Planned | Medium |
-| Permissions | Planned | Critical |
-| Chat | Planned | High |
-| Voice channels | Planned | Medium |
-| Video meetings | Planned | Medium |
-| Announcements | Planned | Medium |
-| Notifications | Planned | High |
-| Tasks | Planned | High |
-| Kanban | Planned | High |
-| Calendar | Planned | High |
-| Timeline | Planned | High |
-| Scheduling | Planned | High |
-| Storyboards | Planned | High |
-| Moodboards | Planned | High |
-| Scripts | Planned | High |
-| Shot lists | Planned | High |
-| Call sheets | Planned | High |
-| Equipment | Planned | Medium |
-| Crew | Planned | Medium |
-| Locations | Planned | Medium |
-| Budgets | Planned | Medium |
-| Invoices | Planned | Medium |
-| Contracts | Planned | Medium |
-| Assets | Planned | High |
-| Cloud storage | Planned | High |
-| Video review | Planned | High |
-| Comments | Planned | High |
-| Approvals | Planned | High |
-| Version control | Planned | High |
-| Publishing | Planned | Medium |
-| Analytics | Planned | Medium |
-| Dashboards | Planned | High |
-| Global search | Planned | Medium |
-| Templates | Planned | Medium |
-| AI assistant | Planned | Medium |
-| Administration | Planned | High |
-| Settings | Planned | High |
-| Audit logs | Planned | High |
-| Activity feed | Planned | High |
+| Module          | Status  | Priority |
+| --------------- | ------- | -------- |
+| Authentication  | Planned | Critical |
+| Organizations   | Planned | Critical |
+| Teams           | Planned | High     |
+| Projects        | Planned | High     |
+| Clients         | Planned | High     |
+| Departments     | Planned | Medium   |
+| Permissions     | Planned | Critical |
+| Chat            | Planned | High     |
+| Voice channels  | Planned | Medium   |
+| Video meetings  | Planned | Medium   |
+| Announcements   | Planned | Medium   |
+| Notifications   | Planned | High     |
+| Tasks           | Planned | High     |
+| Kanban          | Planned | High     |
+| Calendar        | Planned | High     |
+| Timeline        | Planned | High     |
+| Scheduling      | Planned | High     |
+| Storyboards     | Planned | High     |
+| Moodboards      | Planned | High     |
+| Scripts         | Planned | High     |
+| Shot lists      | Planned | High     |
+| Call sheets     | Planned | High     |
+| Equipment       | Planned | Medium   |
+| Crew            | Planned | Medium   |
+| Locations       | Planned | Medium   |
+| Budgets         | Planned | Medium   |
+| Invoices        | Planned | Medium   |
+| Contracts       | Planned | Medium   |
+| Assets          | Planned | High     |
+| Cloud storage   | Planned | High     |
+| Video review    | Planned | High     |
+| Comments        | Planned | High     |
+| Approvals       | Planned | High     |
+| Version control | Planned | High     |
+| Publishing      | Planned | Medium   |
+| Analytics       | Planned | Medium   |
+| Dashboards      | Planned | High     |
+| Global search   | Planned | Medium   |
+| Templates       | Planned | Medium   |
+| AI assistant    | Planned | Medium   |
+| Administration  | Planned | High     |
+| Settings        | Planned | High     |
+| Audit logs      | Planned | High     |
+| Activity feed   | Planned | High     |
