@@ -1,14 +1,11 @@
-DirectoryIndex dist/hostinger/index.html index.html
+DirectoryIndex index.html
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  RewriteRule ^_next/(.*)$ dist/hostinger/_next/$1 [L]
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
 
-  RewriteCond %{DOCUMENT_ROOT}/dist/hostinger%{REQUEST_URI} -f [OR]
-  RewriteCond %{DOCUMENT_ROOT}/dist/hostinger%{REQUEST_URI} -d
-  RewriteRule ^(.*)$ dist/hostinger/$1 [L]
-
-  RewriteCond %{REQUEST_URI} !^/dist/hostinger/
-  RewriteRule ^.*$ dist/hostinger/index.html [L]
+  RewriteRule ^ index.html [L]
 </IfModule>
