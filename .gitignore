@@ -10,14 +10,6 @@ apps/**/out/
 # Production builds
 dist/
 build/
-/_next/
-/_not-found/
-/index.html
-/index.txt
-/404.html
-/_not-found.html
-/_not-found.txt
-/__next.*.txt
 
 # Environment
 .env

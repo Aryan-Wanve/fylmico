@@ -62,6 +62,11 @@ plans that serve `public_html` from the checked-out repository still get
 `.htaccess` keeps direct asset requests untouched and falls unknown routes back
 to `index.html`.
 
+Those root static files are committed on purpose. Some Hostinger Git deployments
+serve the checked-out `public_html` directory directly after pulling the branch,
+so committed root artifacts keep the site available even when Hostinger does not
+honor the configured publish directory.
+
 ## Node.js Application Settings
 
 Use these settings only when Hostinger asks for a startup file or process
