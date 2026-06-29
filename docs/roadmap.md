@@ -29,6 +29,19 @@ Exit criteria:
 - API conventions are documented before endpoints are created.
 - Authentication and permissions are documented before implementation.
 - Deployment approach is documented before infrastructure scripts are created.
+- Permanent AI and product principle documents exist.
+- Session log and master index are maintained.
+
+Progress:
+
+- Documentation scaffold: complete.
+- Permanent AI/product docs: complete.
+- Baseline ADRs: complete.
+- Database planning baseline: complete.
+- Authentication planning baseline: complete.
+- Permission planning baseline: complete.
+- Deployment planning baseline: complete.
+- Application code: not started.
 
 ## Future Milestones
 
@@ -48,6 +61,7 @@ Scope:
 - Create shared packages.
 - Configure TypeScript, linting, formatting, and testing.
 - Configure database package and Prisma.
+- Add scaffold documentation updates and validation commands.
 
 ### Phase 3: Authentication and Organizations
 

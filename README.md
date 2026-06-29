@@ -19,10 +19,14 @@ coding standards are clear.
 
 Before any implementation session, read these files:
 
+- [MASTER_INDEX.md](MASTER_INDEX.md)
 - [PROJECT_SPEC.md](PROJECT_SPEC.md)
+- [AI_RULES.md](AI_RULES.md)
+- [PRODUCT_PRINCIPLES.md](PRODUCT_PRINCIPLES.md)
 - [docs/context.md](docs/context.md)
 - [docs/progress.md](docs/progress.md)
 - [docs/roadmap.md](docs/roadmap.md)
+- [docs/features.md](docs/features.md)
 - [docs/decisions.md](docs/decisions.md)
 - Latest records in [docs/adr](docs/adr)
 
@@ -36,8 +40,13 @@ Before any implementation session, read these files:
 - [Architecture](docs/architecture.md)
 - [Database](docs/database.md)
 - [API](docs/api.md)
+- [Authentication](docs/authentication.md)
+- [Permissions](docs/permissions.md)
 - [Deployment](docs/deployment.md)
 - [Coding standards](docs/coding-standards.md)
+- [Tech stack](docs/tech-stack.md)
+- [Glossary](docs/glossary.md)
+- [Session log](docs/session.md)
 - [Decision log](docs/decisions.md)
 - [Architecture decision records](docs/adr)
 
@@ -63,6 +72,19 @@ The intended architecture is a monorepo with:
 The intended stack is Next.js, React, TypeScript, TailwindCSS, shadcn/ui, Framer
 Motion, NestJS, PostgreSQL, Prisma, Socket.IO, JWT, OAuth, Docker, Nginx, and
 Hostinger VPS.
+
+## Current Baseline Decisions
+
+- Monorepo structure is accepted in [ADR 0001](docs/adr/0001-monorepo.md).
+- PostgreSQL and Prisma are accepted in [ADR 0002](docs/adr/0002-database.md).
+- JWT access tokens with rotated refresh tokens are accepted in
+  [ADR 0003](docs/adr/0003-authentication.md).
+- Hybrid RBAC and policy-based authorization is accepted in
+  [ADR 0004](docs/adr/0004-permissions.md).
+- Socket.IO realtime architecture is accepted in
+  [ADR 0005](docs/adr/0005-realtime.md).
+- Docker, Nginx, GitHub, and Hostinger VPS deployment is accepted in
+  [ADR 0006](docs/adr/0006-deployment.md).
 
 ## Documentation Policy
 

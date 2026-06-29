@@ -25,7 +25,8 @@ becoming decorative or inefficient.
 
 ## Current Architecture
 
-Architecture is not yet implemented. The planned direction is a monorepo:
+Architecture is not yet implemented in application code. The accepted planning
+baseline is a TypeScript monorepo:
 
 ```text
 apps/
@@ -47,6 +48,17 @@ packages/
 docs/
 ```
 
+Baseline architecture decisions:
+
+- `apps/web`: Next.js web application.
+- `apps/api`: NestJS API application.
+- `packages/ui`: Shared design system and UI primitives.
+- `packages/database`: Prisma schema, migrations, and database client.
+- `packages/auth`: Authentication contracts and helpers.
+- `packages/permissions`: Authorization policy logic.
+- `packages/realtime`: Typed Socket.IO event contracts.
+- `packages/shared`: Shared domain contracts and validation schemas.
+
 ## Planned Stack
 
 - Web: Next.js, React, TypeScript, TailwindCSS, shadcn/ui, Framer Motion
@@ -58,8 +70,23 @@ docs/
 
 ## Database Overview
 
-No database schema has been implemented yet. The database design must be planned
-before implementation and documented in `docs/database.md`.
+No database schema has been implemented yet. The accepted planning baseline uses
+PostgreSQL and Prisma. Organization is the primary tenant boundary. Initial
+domain areas include users, authentication accounts, sessions, organizations,
+memberships, roles, permissions, clients, projects, tasks, conversations,
+assets, comments, approvals, versions, audit logs, and notifications.
+
+## Authentication Overview
+
+The accepted planning baseline uses email authentication, OAuth-ready auth
+accounts, short-lived JWT access tokens, and rotated opaque refresh tokens
+stored server-side as hashes. Authentication is separate from authorization.
+
+## Permissions Overview
+
+The accepted planning baseline uses hybrid RBAC and policy checks. Organization
+is the primary tenant boundary. The API is the source of authorization
+enforcement; UI permission checks are only for experience.
 
 ## Current Milestone
 
@@ -67,25 +94,22 @@ Phase 1: foundation and planning.
 
 ## Current Progress
 
-Documentation scaffold created. No application code has been written.
+Phase 1 foundation documentation expanded. Baseline ADRs have been created. No
+application code has been written.
 
 ## Current Blockers
 
-- Complete architecture design.
-- Complete database design.
-- Complete permissions model.
-- Complete authentication design.
-- Complete deployment design.
-- Decide initial milestone scope.
+- Confirm Phase 1 baseline with the product owner.
+- Decide exact Phase 2 scaffold tooling.
+- Create app/package scaffold after approval.
 
 ## Current Priorities
 
-1. Finalize architecture.
-2. Finalize database model.
-3. Finalize permissions and authentication.
-4. Finalize deployment approach.
-5. Create initial ADRs for major decisions.
-6. Only then scaffold application code.
+1. Review and approve baseline ADRs.
+2. Choose monorepo package manager and build tooling during scaffold planning.
+3. Scaffold application structure without product features.
+4. Configure linting, formatting, testing, and TypeScript.
+5. Keep docs updated as the scaffold appears.
 
 ## Latest Implemented Feature
 
@@ -93,9 +117,9 @@ None. No product features have been implemented.
 
 ## Next Feature
 
-No feature should be started until Phase 1 foundation work is complete. The
-likely first implementation area is authentication plus organization workspace
-setup, after ADR approval.
+No product feature should be started until the application scaffold exists. The
+likely first feature area remains authentication plus organization workspace
+setup, after scaffold validation.
 
 ## Things Never To Change Without Explicit Decision
 
@@ -121,6 +145,9 @@ Before implementation, read:
 
 - `README.md`
 - `PROJECT_SPEC.md`
+- `MASTER_INDEX.md`
+- `AI_RULES.md`
+- `PRODUCT_PRINCIPLES.md`
 - `docs/context.md`
 - `docs/progress.md`
 - `docs/roadmap.md`

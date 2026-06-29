@@ -24,13 +24,14 @@ Status: Planned
 
 Priority: Critical
 
-Dependencies: Architecture ADR, authentication ADR, database design
+Dependencies: Monorepo scaffold, database package, authentication ADR,
+permissions model
 
 Description: User identity, email authentication, OAuth support, JWT sessions,
 and secure account lifecycle.
 
-Implementation notes: Do not implement until session, token, organization, and
-permission boundaries are documented.
+Implementation notes: Use short-lived JWT access tokens and rotated opaque
+refresh tokens. Keep authentication separate from authorization.
 
 ## Organizations
 
@@ -38,7 +39,7 @@ Status: Planned
 
 Priority: Critical
 
-Dependencies: Authentication, permissions model, database design
+Dependencies: Authentication, permissions model, database package
 
 Description: Top-level workspaces that own users, teams, projects, clients, and
 production data.
@@ -101,6 +102,34 @@ assets.
 Implementation notes: Must be designed with large media files, client feedback,
 and auditability in mind.
 
+## Permissions
+
+Status: Planned
+
+Priority: Critical
+
+Dependencies: Organizations, authentication, database package
+
+Description: Organization-aware RBAC and policy checks for members, projects,
+clients, assets, approvals, billing, and audit logs.
+
+Implementation notes: API enforcement is mandatory. UI checks are only for
+experience. Cross-organization access is denied by default.
+
+## Audit Logs
+
+Status: Planned
+
+Priority: High
+
+Dependencies: Authentication, permissions, database package
+
+Description: Immutable records of important organization, project, auth, and
+administrative actions.
+
+Implementation notes: Audit logging should be included early for security and
+enterprise readiness.
+
 ## Publishing and Analytics
 
 Status: Planned
@@ -114,3 +143,52 @@ analytics.
 
 Implementation notes: Keep integration boundaries modular so channels can be
 added without rewriting core production workflows.
+
+## Full Module Register
+
+| Module | Status | Priority |
+| --- | --- | --- |
+| Authentication | Planned | Critical |
+| Organizations | Planned | Critical |
+| Teams | Planned | High |
+| Projects | Planned | High |
+| Clients | Planned | High |
+| Departments | Planned | Medium |
+| Permissions | Planned | Critical |
+| Chat | Planned | High |
+| Voice channels | Planned | Medium |
+| Video meetings | Planned | Medium |
+| Announcements | Planned | Medium |
+| Notifications | Planned | High |
+| Tasks | Planned | High |
+| Kanban | Planned | High |
+| Calendar | Planned | High |
+| Timeline | Planned | High |
+| Scheduling | Planned | High |
+| Storyboards | Planned | High |
+| Moodboards | Planned | High |
+| Scripts | Planned | High |
+| Shot lists | Planned | High |
+| Call sheets | Planned | High |
+| Equipment | Planned | Medium |
+| Crew | Planned | Medium |
+| Locations | Planned | Medium |
+| Budgets | Planned | Medium |
+| Invoices | Planned | Medium |
+| Contracts | Planned | Medium |
+| Assets | Planned | High |
+| Cloud storage | Planned | High |
+| Video review | Planned | High |
+| Comments | Planned | High |
+| Approvals | Planned | High |
+| Version control | Planned | High |
+| Publishing | Planned | Medium |
+| Analytics | Planned | Medium |
+| Dashboards | Planned | High |
+| Global search | Planned | Medium |
+| Templates | Planned | Medium |
+| AI assistant | Planned | Medium |
+| Administration | Planned | High |
+| Settings | Planned | High |
+| Audit logs | Planned | High |
+| Activity feed | Planned | High |

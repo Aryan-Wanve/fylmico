@@ -6,7 +6,7 @@ Update this file after every coding or documentation session.
 
 Current milestone: Phase 1 - foundation and planning
 
-Completion percentage: 1%
+Completion percentage: 12%
 
 Features completed:
 
@@ -18,7 +18,19 @@ Features started:
 
 Files modified:
 
-- None.
+- `README.md`
+- `PROJECT_SPEC.md`
+- `docs/context.md`
+- `docs/progress.md`
+- `docs/roadmap.md`
+- `docs/features.md`
+- `docs/changelog.md`
+- `docs/architecture.md`
+- `docs/database.md`
+- `docs/api.md`
+- `docs/deployment.md`
+- `docs/coding-standards.md`
+- `docs/decisions.md`
 
 Files created:
 
@@ -36,6 +48,20 @@ Files created:
 - `docs/coding-standards.md`
 - `docs/decisions.md`
 - `docs/adr/README.md`
+- `MASTER_INDEX.md`
+- `AI_RULES.md`
+- `PRODUCT_PRINCIPLES.md`
+- `docs/tech-stack.md`
+- `docs/glossary.md`
+- `docs/session.md`
+- `docs/authentication.md`
+- `docs/permissions.md`
+- `docs/adr/0001-monorepo.md`
+- `docs/adr/0002-database.md`
+- `docs/adr/0003-authentication.md`
+- `docs/adr/0004-permissions.md`
+- `docs/adr/0005-realtime.md`
+- `docs/adr/0006-deployment.md`
 
 Files removed:
 
@@ -54,6 +80,8 @@ Architecture changes:
 - Established documentation-first project foundation.
 - Documented intended monorepo direction from the project specification.
 - Created ADR directory and decision-log structure.
+- Accepted baseline architecture decisions for monorepo, database,
+  authentication, permissions, realtime, and deployment.
 
 Performance improvements:
 
@@ -69,10 +97,11 @@ Known bugs:
 
 Technical debt:
 
-- Architecture, database, API, authentication, permissions, and deployment plans
-  still need detailed design.
+- No application scaffold exists yet.
+- Package manager and build tooling have not been selected.
+- Object storage, email, background jobs, monitoring, and analytics providers
+  remain deferred.
 
 Next task:
 
-- Draft and approve initial ADRs for monorepo structure, authentication,
-  database, permissions, and realtime architecture.
+- Approve the Phase 1 baseline and plan the application scaffold.

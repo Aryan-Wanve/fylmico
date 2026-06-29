@@ -2,9 +2,9 @@
 
 ## Status
 
-Draft. No API endpoints have been implemented.
+Accepted planning baseline. No API endpoints have been implemented.
 
-## Planned API Stack
+## API Stack
 
 - NestJS
 - TypeScript
@@ -14,18 +14,145 @@ Draft. No API endpoints have been implemented.
 ## API Design Principles
 
 - Every endpoint must document request, response, authentication, permissions,
-  and examples.
+  errors, and examples.
 - API contracts should be strongly typed.
-- Validation should happen at boundaries.
-- Errors should be consistent and safe to expose.
+- Validation must happen at boundaries.
+- Errors must be consistent and safe to expose.
 - Endpoints must never leak data across organizations.
 - Realtime events must follow the same authorization model as HTTP endpoints.
+- The API is the source of permission enforcement.
+
+## URL Conventions
+
+Use versioned API routes:
+
+```text
+/api/v1/...
+```
+
+Prefer organization-scoped routes when resources belong to an organization:
+
+```text
+/api/v1/organizations/:organizationId/projects
+```
+
+Prefer nested routes only when the parent context is required for authorization
+or clarity.
+
+## Authentication
+
+Access tokens identify the user, session, and active organization. The API must
+load and enforce permissions server-side.
+
+Planned auth endpoints:
+
+- `POST /api/v1/auth/signup`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/refresh`
+- `POST /api/v1/auth/logout`
+- `POST /api/v1/auth/logout-all`
+- `POST /api/v1/auth/verify-email`
+- `POST /api/v1/auth/request-password-reset`
+- `POST /api/v1/auth/reset-password`
+- `GET /api/v1/auth/me`
+
+## Planned Endpoint Areas
+
+Organizations:
+
+- Create organization.
+- List current user's organizations.
+- Read organization.
+- Update organization.
+- Invite members.
+- Manage memberships.
+
+Projects:
+
+- Create project.
+- List organization projects.
+- Read project.
+- Update project.
+- Archive project.
+- Manage project members.
+
+Clients:
+
+- Create client.
+- List clients.
+- Read client.
+- Update client.
+- Link clients to projects.
+
+Collaboration:
+
+- Tasks.
+- Conversations.
+- Messages.
+- Comments.
+- Notifications.
+- Activity feed.
+
+Creative production:
+
+- Assets.
+- Asset versions.
+- Reviews.
+- Approvals.
+- Storyboards.
+- Moodboards.
+- Scripts.
+- Shot lists.
+- Call sheets.
+- Equipment.
+- Crew.
+- Locations.
+
+Administration:
+
+- Roles.
+- Permissions.
+- Audit logs.
+- Settings.
+
+## Response Shape
+
+Successful single-resource response:
+
+```json
+{
+  "data": {}
+}
+```
+
+Successful list response:
+
+```json
+{
+  "data": [],
+  "page": {
+    "limit": 25,
+    "cursor": null,
+    "nextCursor": null
+  }
+}
+```
+
+Error response:
+
+```json
+{
+  "error": {
+    "code": "forbidden",
+    "message": "You do not have permission to perform this action.",
+    "requestId": "req_example"
+  }
+}
+```
 
 ## Endpoint Documentation Template
 
-Use this template for every endpoint once API work begins.
-
-### `METHOD /path`
+### `METHOD /api/v1/path`
 
 Purpose:
 
@@ -47,30 +174,24 @@ Example response:
 
 Notes:
 
-## Planned API Areas
+## Realtime API
 
-- Authentication
-- Users
-- Organizations
-- Memberships
-- Teams
-- Departments
-- Clients
-- Projects
-- Tasks
-- Chat
-- Notifications
-- Calendar
-- Assets
-- Comments
-- Approvals
-- Search
-- Administration
+Realtime events must be documented with:
 
-## Open Questions
+- Event name.
+- Payload.
+- Emitting service.
+- Required room.
+- Required permissions.
+- Persistence behavior.
 
-- What is the preferred API versioning strategy?
-- Which validation library should be standardized?
-- Should public API contracts be generated from shared schemas?
-- What rate limiting is required for production?
-- What audit events must be emitted by API mutations?
+Realtime events must not be the source of truth. Persisted data belongs in
+PostgreSQL.
+
+## Deferred API Decisions
+
+- Validation library.
+- Request ID implementation.
+- Rate limiting strategy.
+- Public API strategy.
+- API documentation generation.

@@ -9,10 +9,11 @@ Every major architectural decision must create an ADR before implementation.
 Use sequential numbers and a short slug:
 
 ```text
-0001-authentication.md
+0001-monorepo.md
 0002-database.md
-0003-chat.md
+0003-authentication.md
 0004-permissions.md
+0005-realtime.md
 ```
 
 ## Required Sections

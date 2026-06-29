@@ -2,9 +2,9 @@
 
 ## Status
 
-Draft. No deployment infrastructure has been created.
+Accepted planning baseline. No deployment infrastructure has been created.
 
-## Planned Infrastructure
+## Infrastructure Baseline
 
 - Hostinger VPS
 - Docker
@@ -12,15 +12,17 @@ Draft. No deployment infrastructure has been created.
 - PostgreSQL
 - GitHub
 
+See ADR 0006.
+
 ## Deployment Goals
 
 - Repeatable production deploys.
 - Clear environment variable management.
 - Safe database migrations.
 - SSL termination through Nginx.
-- Separation between web, API, database, and background processes.
-- Clear rollback path.
-- Documentation that another engineer can follow without chat history.
+- Separation between web, API, database, and future worker processes.
+- Clear backup and rollback path.
+- Documentation another engineer can follow without chat history.
 
 ## Environments
 
@@ -30,37 +32,104 @@ Purpose: Development and testing.
 
 Status: Not configured.
 
+Expected services:
+
+- Web app.
+- API app.
+- PostgreSQL.
+- Optional local object storage later.
+
 ### Staging
 
 Purpose: Pre-production validation.
 
-Status: Not configured.
+Status: Planned.
+
+Requirements:
+
+- Separate environment variables from production.
+- Separate database from production.
+- Production-like build process.
 
 ### Production
 
 Purpose: Live customer-facing environment.
 
-Status: Not configured.
+Status: Planned.
 
-## Required Deployment Documentation
+Requirements:
 
-Before production deployment, document:
+- SSL.
+- Backups.
+- Logging.
+- Monitoring.
+- Rollback procedure.
+- Migration procedure.
 
-- VPS provisioning steps.
-- Docker build and runtime strategy.
-- Nginx configuration.
-- SSL certificate setup.
-- Environment variables.
-- Database backup and restore process.
-- Migration process.
-- Logging strategy.
-- Monitoring strategy.
-- Rollback process.
+## Initial Runtime Topology
 
-## Open Questions
+```text
+Internet
+  -> Nginx
+    -> web container
+    -> api container
+  -> PostgreSQL
+```
 
-- Will staging and production use separate VPS instances?
-- What backup frequency is required?
-- Which process manager or orchestration approach will be used?
-- How will secrets be stored and rotated?
-- What uptime and recovery targets are expected?
+Future additions:
+
+- Worker container.
+- Redis for queues or realtime scaling.
+- Object storage for assets.
+- Search service.
+- Monitoring agent.
+
+## Environment Variables
+
+Must be documented before deployment:
+
+- Database URL.
+- JWT signing secret or key references.
+- Refresh token secret or hashing configuration.
+- OAuth provider credentials.
+- Email provider credentials.
+- Object storage credentials.
+- Public web URL.
+- API URL.
+- CORS origins.
+
+## Migration Strategy
+
+- Migrations must be generated through Prisma.
+- Migrations must be reviewed before production.
+- Production database backups must happen before migrations.
+- Rollback notes must be included for risky migrations.
+- Destructive migrations require explicit approval.
+
+## Backup Strategy
+
+Before production launch, define:
+
+- Backup frequency.
+- Backup storage location.
+- Restore test process.
+- Retention period.
+- Responsible operator.
+
+## Rollback Strategy
+
+Before production launch, define:
+
+- How to redeploy the previous app version.
+- How to handle database migration rollback or forward-fix.
+- How to restore from backup.
+- How to communicate downtime.
+
+## Deferred Deployment Decisions
+
+- Package manager and build runner.
+- CI/CD provider configuration.
+- Managed versus containerized PostgreSQL.
+- Object storage provider.
+- Monitoring and alerting provider.
+- Log aggregation provider.

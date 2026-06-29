@@ -59,6 +59,7 @@ From the first client meeting to the final exported video.
 - Production houses
 - Film studios
 - Students
+- Content creators
 - Creative teams
 
 ## Core Modules
@@ -69,15 +70,17 @@ From the first client meeting to the final exported video.
 - Projects
 - Clients
 - Departments
+- Permissions
 - Chat
 - Voice channels
 - Video meetings
+- Announcements
 - Notifications
+- Tasks
+- Kanban
 - Calendar
 - Timeline
 - Scheduling
-- Tasks
-- Kanban
 - Storyboards
 - Moodboards
 - Scripts
@@ -90,6 +93,7 @@ From the first client meeting to the final exported video.
 - Invoices
 - Contracts
 - Assets
+- Cloud storage
 - Video review
 - Comments
 - Approvals
@@ -97,11 +101,13 @@ From the first client meeting to the final exported video.
 - Publishing
 - Analytics
 - Dashboards
-- Search
+- Global search
 - Templates
 - AI assistant
 - Administration
 - Settings
+- Audit logs
+- Activity feed
 
 ## Design Principles
 
@@ -118,6 +124,8 @@ From the first client meeting to the final exported video.
 - Intentional whitespace
 - Subtle animations
 - Expensive-feeling interface quality
+- No template UI
+- No childish gradients
 
 ## UI Inspiration
 
@@ -198,7 +206,13 @@ docs/
   features.md
   changelog.md
   decisions.md
+  tech-stack.md
+  glossary.md
+  session.md
   adr/
+MASTER_INDEX.md
+AI_RULES.md
+PRODUCT_PRINCIPLES.md
 README.md
 ```
 

@@ -2,7 +2,8 @@
 
 ## Status
 
-Draft. These standards must be finalized before application code is written.
+Accepted planning baseline. These standards must be kept current as code is
+introduced.
 
 ## General Rules
 
@@ -14,23 +15,26 @@ Draft. These standards must be finalized before application code is written.
 - Do not duplicate logic.
 - Avoid unnecessary abstractions.
 - Optimize for maintainability over speed of initial development.
+- Documentation must change when code behavior, architecture, database, API, or
+  deployment changes.
 
 ## Naming
 
 - Use clear, domain-specific names.
 - Avoid abbreviations unless they are common in the codebase.
-- Use PascalCase for React components and classes.
+- Use PascalCase for React components, classes, and types.
 - Use camelCase for variables, functions, and object properties.
 - Use kebab-case for route segments and file names unless framework conventions
   require otherwise.
+- Use `resource.action` for permission names.
 
 ## Folder Conventions
 
-- Application code should live under `apps`.
-- Shared packages should live under `packages`.
-- Durable project memory should live under `docs`.
-- Domain code should be grouped by product responsibility.
-- Cross-cutting utilities should not become dumping grounds.
+- Application code lives under `apps`.
+- Shared packages live under `packages`.
+- Durable project memory lives under `docs`.
+- Domain code is grouped by product responsibility.
+- Cross-cutting utilities must not become dumping grounds.
 
 ## Import Conventions
 
@@ -39,20 +43,39 @@ Draft. These standards must be finalized before application code is written.
 - Avoid circular dependencies.
 - Keep shared contracts in shared packages.
 - Do not import server-only code into client bundles.
+- Do not import app code into packages.
+
+## Backend Rules
+
+- Keep controllers thin.
+- Put use-case coordination in services.
+- Validate request input at boundaries.
+- Enforce authorization in the API.
+- Emit audit logs for important mutations.
+- Keep database access behind clear service or repository boundaries.
+
+## Frontend Rules
+
+- Build actual product workflows, not marketing shells.
+- Use the design system consistently.
+- Keep screens dense enough for professional repeated use.
+- Avoid visual clutter and decorative UI that does not support the task.
+- Keep UI state local unless it is genuinely shared.
+- Treat loading, empty, error, and permission states as first-class.
 
 ## Component Rules
 
 - Components should be reusable when reuse is real, not speculative.
-- Keep presentation and domain behavior separated where it improves clarity.
+- Keep presentation and domain behavior separated when it improves clarity.
 - Use accessible primitives.
-- Keep UI consistent with the design system.
-- Avoid visual clutter.
+- Avoid nested cards and over-framed layouts.
+- Use icons for compact tool actions when appropriate.
 
 ## State Management
 
 - Keep local state local.
-- Promote state only when multiple parts of the application truly share it.
-- Server state should use a consistent fetching and caching approach once
+- Promote state only when multiple areas truly share it.
+- Server state must use a consistent fetching and caching approach once
   selected.
 - Realtime state must handle reconnects, stale data, and authorization changes.
 
@@ -63,6 +86,14 @@ Draft. These standards must be finalized before application code is written.
 - Never expose secrets or internal stack traces.
 - Enforce organization and permission boundaries in the API, not only in the UI.
 - Document every endpoint in `docs/api.md`.
+
+## Database Rules
+
+- Every table must document purpose, ownership, relationships, indexes,
+  constraints, permissions, and reasoning.
+- Organization-owned records must be tenant-scoped.
+- Migrations must be reviewed and documented.
+- Large media files must not be stored directly in PostgreSQL.
 
 ## Error Handling
 
@@ -75,8 +106,9 @@ Draft. These standards must be finalized before application code is written.
 
 - Add tests proportional to risk and blast radius.
 - Shared permission and authentication logic requires focused test coverage.
-- API mutations require tests for authorization boundaries.
+- API mutations require authorization boundary tests.
 - UI flows require tests for critical user journeys.
+- Realtime events require authorization and payload tests.
 
 ## Performance Guidelines
 
@@ -84,6 +116,7 @@ Draft. These standards must be finalized before application code is written.
 - Keep bundle size in mind from the start.
 - Index database queries based on real access patterns.
 - Treat media-heavy workflows as a first-class performance concern.
+- Avoid chatty API patterns for high-frequency collaboration workflows.
 
 ## Accessibility Rules
 
@@ -92,9 +125,11 @@ Draft. These standards must be finalized before application code is written.
 - Provide visible focus states.
 - Maintain readable contrast.
 - Do not rely on color alone to communicate state.
+- Respect reduced-motion preferences.
 
 ## Animation Rules
 
 - Animations should be subtle and purposeful.
 - Motion should reinforce state changes, not distract from work.
 - Respect reduced-motion preferences.
+- Avoid flashy or childish motion patterns.

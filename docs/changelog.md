@@ -10,6 +10,10 @@ Summary:
 - Added the project specification as the canonical product brief.
 - Added project memory, roadmap, progress, features, architecture, database,
   API, deployment, coding standards, decisions, and ADR documentation files.
+- Added master index, AI rules, product principles, tech stack, glossary,
+  session, authentication, and permissions documentation.
+- Added baseline ADRs for monorepo, database, authentication, permissions,
+  realtime, and deployment.
 
 Breaking changes:
 
