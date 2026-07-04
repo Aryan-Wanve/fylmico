@@ -392,3 +392,166 @@ Technical debt:
 Next task:
 
 - Validate the frontend build and continue refining the base experience.
+
+## 2026-07-04 Login Page Redesign
+
+Current milestone: Phase 2 - frontend application scaffold
+
+Completion percentage: 70%
+
+Features completed:
+
+- Redesigned the logged-out login page to match the provided cinematic Fylmico
+  reference.
+
+Files modified:
+
+- `apps/web/src/components/base-workspace.tsx`
+- `apps/web/src/app/globals.css`
+- `docs/progress.md`
+- `docs/session.md`
+
+Files created:
+
+- `apps/web/public/images/login-production-set.png`
+
+Database changes:
+
+- None.
+
+API changes:
+
+- None.
+
+Architecture changes:
+
+- Kept the login flow connected to the existing mock auth service.
+- Kept backend as a black box; no backend implementation details were added.
+
+Validation:
+
+- `npm run lint` passed.
+- `npm run typecheck` passed.
+- `npm run build` passed outside the sandbox.
+- Browser-verified the redesigned login screen and mock login flow.
+
+Next task:
+
+- Continue polishing the frontend base workspace.
+
+## 2026-07-04 Post-login Page Redesign
+
+Current milestone: Phase 2 - frontend application scaffold
+
+Completion percentage: 74%
+
+Features completed:
+
+- Redesigned the post-login empty state as a no-house onboarding page.
+- Redesigned the post-house state as a light production dashboard.
+- Added sidebar navigation, top search/action bar, dashboard stat cards,
+  upcoming schedule, my tasks, recent projects, recent activity, house
+  management, task scheduler, and house chat sections.
+- Updated mock login to begin without a house so create/join house onboarding is
+  visible first.
+- Updated mock create/join flows to seed dashboard data after the house is
+  created or joined.
+
+Files modified:
+
+- `apps/web/src/components/base-workspace.tsx`
+- `apps/web/src/services/base-workspace.service.ts`
+- `apps/web/src/app/globals.css`
+- `docs/progress.md`
+- `docs/session.md`
+
+Database changes:
+
+- None.
+
+API changes:
+
+- None. Existing mock service contracts continue to power the frontend.
+
+Architecture changes:
+
+- Split the base frontend into login, no-house onboarding, app shell, and
+  dashboard component sections while keeping data behind mock services.
+- Fixed async form reset handling by capturing the form element before awaiting
+  mock service calls.
+
+Validation:
+
+- `npm run lint` passed.
+- `npm run typecheck` passed.
+- `npm run build` passed outside the sandbox.
+- Browser-verified login, no-house onboarding, create-house transition, and the
+  dashboard state.
+
+Next task:
+
+- Continue matching individual dashboard modules to production workflows and
+  extract reusable UI primitives as patterns stabilize.
+
+## 2026-07-04 Frontend Interactivity Polish
+
+Current milestone: Phase 2 - frontend application scaffold
+
+Completion percentage: 80%
+
+Features completed:
+
+- Made the app shell interactive with local sidebar view state, search preview,
+  create action menu, and notification popover.
+- Added frontend-only dashboard interactions for schedule selection, task
+  completion, recent project selection, chat room switching, and mock message
+  sending.
+- Added motion polish including entrance animations, popover animation, hover
+  lift states, selected states, progress animation, and reduced-motion support.
+- Kept all data mutations behind existing mock services or local UI state.
+
+Files modified:
+
+- `apps/web/src/components/base-workspace.tsx`
+- `apps/web/src/app/globals.css`
+- `docs/progress.md`
+- `docs/session.md`
+
+Database changes:
+
+- None.
+
+API changes:
+
+- None. Backend-facing needs remain documented as frontend contracts and inline
+  backend tasks.
+
+Backend tasks left for Developer 2:
+
+- Implement public APIs for authenticated workspace snapshots, house creation,
+  house joining, tasks, schedules, project details, notifications, chat rooms,
+  and message persistence.
+- Persist schedule selection/calendar edits and task completion state through
+  public APIs.
+- Replace mock notification and chat data with real websocket/API delivery.
+
+Architecture changes:
+
+- Added local UI state for interaction polish without introducing backend
+  implementation details.
+- Preserved the rule that UI components communicate through frontend service
+  abstractions and mock data until backend APIs exist.
+
+Validation:
+
+- `npm run lint` passed.
+- `npm run typecheck` passed.
+- `npm run build` passed outside the sandbox.
+- Browser-verified login, create-house, topbar menus, search preview, schedule
+  selection, task completion, project selection, chat room switching, and mock
+  chat send.
+
+Next task:
+
+- Extract repeated buttons, panels, fields, popovers, and dashboard cards into
+  reusable design-system primitives while continuing frontend-only development.
