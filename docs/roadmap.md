@@ -13,11 +13,12 @@ Estimated completion: TBD
 Scope:
 
 - Complete architecture design.
-- Complete folder structure design.
-- Complete database design.
-- Complete permissions model.
-- Complete authentication design.
-- Complete deployment plan.
+- Complete frontend folder structure design.
+- Complete frontend/backend independence model.
+- Complete public API contract workflow.
+- Complete mock service workflow.
+- Complete frontend state-management boundaries.
+- Complete design-system direction.
 - Complete coding standards.
 - Create ADR system.
 - Create project memory files.
@@ -25,10 +26,10 @@ Scope:
 Exit criteria:
 
 - Architecture is documented and has ADR coverage.
-- Database design is documented before migrations are created.
-- API conventions are documented before endpoints are created.
-- Authentication and permissions are documented before implementation.
-- Deployment approach is documented before infrastructure scripts are created.
+- Frontend/backend independence is documented.
+- API contract workflow is documented before frontend features are built.
+- Mock service workflow is documented before frontend features are built.
+- Backend implementation remains outside this workstream.
 - Permanent AI and product principle documents exist.
 - Session log and master index are maintained.
 
@@ -37,15 +38,29 @@ Progress:
 - Documentation scaffold: complete.
 - Permanent AI/product docs: complete.
 - Baseline ADRs: complete.
-- Database planning baseline: complete.
-- Authentication planning baseline: complete.
-- Permission planning baseline: complete.
-- Deployment planning baseline: complete.
-- Application code: not started.
+- Sprint 1 complete technical architecture: complete.
+- Database architecture baseline: complete.
+- API architecture baseline: complete.
+- Authentication and authorization architecture baseline: complete.
+- Organization and project hierarchy baseline: complete.
+- File storage architecture baseline: complete.
+- Realtime architecture baseline: complete.
+- AI integration architecture baseline: complete.
+- Future mobile compatibility baseline: complete.
+- Deployment and scaling architecture baseline: complete.
+- Frontend/backend independence ADR: complete.
+- Application features: not started.
+
+Current development rule:
+
+- Build frontend only.
+- Define API contracts and mock services whenever backend functionality is
+  needed.
+- Never implement backend functionality in this workstream.
 
 ## Future Milestones
 
-### Phase 2: Application Scaffold
+### Phase 2: Frontend Application Scaffold / Sprint 2
 
 Status: Planned
 
@@ -55,15 +70,16 @@ Estimated completion: TBD
 
 Scope:
 
-- Create monorepo workspace.
-- Create `apps/web`.
-- Create `apps/api`.
-- Create shared packages.
-- Configure TypeScript, linting, formatting, and testing.
-- Configure database package and Prisma.
+- Build the frontend application shell.
+- Define frontend folder architecture under `apps/web/src`.
+- Build design-system foundations.
+- Add API client/service boundaries.
+- Add realistic mock data and mock services.
+- Add frontend state-management boundaries.
+- Add loading, empty, error, and success state patterns.
 - Add scaffold documentation updates and validation commands.
 
-### Phase 3: Authentication and Organizations
+### Phase 3: Frontend Authentication and Organizations
 
 Status: Planned
 
@@ -73,14 +89,14 @@ Estimated completion: TBD
 
 Scope:
 
-- Email authentication.
-- OAuth foundation.
-- JWT session model.
-- Organization creation.
-- Workspace membership.
-- Initial role and permission model.
+- Authentication UI and auth state.
+- Public authentication API contracts.
+- Mock authentication service.
+- Organization switcher and workspace UI.
+- Organization/member API contracts.
+- Mock organization and membership data.
 
-### Phase 4: Projects and Clients
+### Phase 4: Frontend Projects and Clients
 
 Status: Planned
 
@@ -90,29 +106,13 @@ Estimated completion: TBD
 
 Scope:
 
-- Client management.
-- Project management.
-- Departments and teams.
+- Client management screens.
+- Project management screens.
+- Departments and teams UI.
 - Basic project dashboard.
+- Public API contracts and mock services for each area.
 
-### Phase 5: Collaboration Core
-
-Status: Planned
-
-Priority: High
-
-Estimated completion: TBD
-
-Scope:
-
-- Chat.
-- Notifications.
-- Tasks.
-- Kanban.
-- Calendar.
-- Realtime infrastructure.
-
-### Phase 6: Creative Production Modules
+### Phase 5: Frontend Collaboration Core
 
 Status: Planned
 
@@ -122,16 +122,14 @@ Estimated completion: TBD
 
 Scope:
 
-- Storyboards.
-- Moodboards.
-- Scripts.
-- Shot lists.
-- Call sheets.
-- Equipment.
-- Crew.
-- Locations.
+- Chat UI.
+- Notification UI.
+- Task UI.
+- Kanban UI.
+- Calendar UI.
+- Realtime public event contracts and mocked realtime behavior.
 
-### Phase 7: Review, Delivery, and Analytics
+### Phase 6: Frontend Creative Production Modules
 
 Status: Planned
 
@@ -141,13 +139,34 @@ Estimated completion: TBD
 
 Scope:
 
-- Asset management.
-- Video review.
-- Comments.
-- Approvals.
-- Version control.
-- Publishing.
-- Analytics.
+- Storyboard UI.
+- Moodboard UI.
+- Script UI.
+- Shot list UI.
+- Call sheet UI.
+- Equipment UI.
+- Crew UI.
+- Location UI.
+- Public API contracts and mock services.
+
+### Phase 7: Frontend Review, Delivery, and Analytics
+
+Status: Planned
+
+Priority: High
+
+Estimated completion: TBD
+
+Scope:
+
+- Asset management UI.
+- Video review UI.
+- Comment UI.
+- Approval UI.
+- Version-control UI.
+- Publishing UI.
+- Analytics UI.
+- Public API contracts and mock services.
 
 ## Completed Milestones
 

@@ -114,3 +114,117 @@ Next session objective:
 - Redeploy using either static Git mode (`npm run build:hostinger`,
   `dist/hostinger`) or Node.js mode (`server.js`) and confirm HTTP 200 before
   beginning Sprint 1.
+
+## Session 4
+
+Date: 2026-07-04
+
+Goal:
+
+- Complete Sprint 1 system architecture documentation without implementing
+  application features.
+
+Completed work:
+
+- Expanded `docs/architecture.md` into the complete technical architecture
+  baseline.
+- Documented system, frontend, backend, database, API, authentication,
+  authorization, organization hierarchy, project hierarchy, file storage,
+  realtime, AI integration, mobile compatibility, deployment, and scaling
+  architecture.
+- Added ADRs 0008 through 0016.
+- Updated decisions, context, roadmap, progress, ADR index, and master index.
+
+Problems encountered:
+
+- None.
+
+Decisions made:
+
+- Keep Sprint 1 documentation-only.
+- Do not implement feature code, migrations, API endpoints, or placeholder
+  packages during Sprint 1.
+
+Next session objective:
+
+- Wait for explicit direction before beginning implementation.
+
+## Session 5
+
+Date: 2026-07-04
+
+Goal:
+
+- Record the new two-developer development direction and frontend-only
+  workstream rules.
+
+Completed work:
+
+- Updated AI rules, architecture, API, context, roadmap, progress, decisions,
+  ADR index, and master index.
+- Added ADR 0017 for frontend/backend independence.
+- Documented that this workstream focuses only on frontend development.
+- Documented that the backend is treated as a black box owned by another
+  developer.
+- Documented the API-contract and mock-service workflow for frontend features.
+
+Problems encountered:
+
+- None.
+
+Decisions made:
+
+- Frontend must never depend on Prisma, SQL, database logic, backend business
+  logic, backend validation implementations, NestJS internals, storage
+  internals, queues, or backend infrastructure.
+- Frontend communicates only through documented public API contracts.
+- Frontend features must use realistic mock services until backend APIs exist.
+- Backend implementation must not be added in this workstream unless the user
+  explicitly changes direction.
+
+Next session objective:
+
+- Continue with frontend-only implementation. For each backend dependency,
+  define the API contract, create a mock service, and build the UI against that
+  service abstraction.
+
+## Session 6
+
+Date: 2026-07-04
+
+Goal:
+
+- Build the first frontend base scope with login, houses, roles, task
+  scheduling, task assignment, and chat rooms.
+
+Completed work:
+
+- Replaced the Sprint 0 landing shell with a mock-backed frontend workspace.
+- Added a login page backed by a mock auth service.
+- Added house creation, house joining, and house switching UI.
+- Added house roles inspired by Discord-style creative production roles such as
+  editor, videographer, and photographer.
+- Added task scheduling and task assignment UI.
+- Added chat rooms and mock message sending.
+- Added frontend-safe types and a base workspace mock service.
+- Documented public API contracts for login, workspace snapshot, houses, tasks,
+  and chat messages.
+
+Problems encountered:
+
+- The sandboxed Next.js production build compiled successfully but failed when
+  spawning a build worker with `spawn EPERM`.
+- The same production build passed outside the sandbox with the approved
+  PowerShell build command.
+
+Decisions made:
+
+- Keep all base data access behind frontend service abstractions.
+- Use realistic mock data until the backend team implements the documented
+  public API contracts.
+- Do not implement backend logic, Prisma, SQL, migrations, or server endpoints.
+
+Next session objective:
+
+- Refine the frontend base UX, extract reusable design-system primitives when
+  duplication appears, and choose the frontend state/server-state strategy.

@@ -56,6 +56,24 @@ Current ADRs:
 - [0004-permissions.md](docs/adr/0004-permissions.md)
 - [0005-realtime.md](docs/adr/0005-realtime.md)
 - [0006-deployment.md](docs/adr/0006-deployment.md)
+- [0007-sprint-0-foundation.md](docs/adr/0007-sprint-0-foundation.md)
+- [0008-modular-monolith-backend.md](docs/adr/0008-modular-monolith-backend.md)
+- [0009-frontend-architecture.md](docs/adr/0009-frontend-architecture.md)
+- [0010-api-architecture.md](docs/adr/0010-api-architecture.md)
+- [0011-organization-hierarchy.md](docs/adr/0011-organization-hierarchy.md)
+- [0012-project-hierarchy.md](docs/adr/0012-project-hierarchy.md)
+- [0013-file-storage-architecture.md](docs/adr/0013-file-storage-architecture.md)
+- [0014-ai-integration-architecture.md](docs/adr/0014-ai-integration-architecture.md)
+- [0015-future-mobile-compatibility.md](docs/adr/0015-future-mobile-compatibility.md)
+- [0016-scaling-strategy.md](docs/adr/0016-scaling-strategy.md)
+- [0017-frontend-backend-independence.md](docs/adr/0017-frontend-backend-independence.md)
+
+## Current Sprint Gate
+
+Development workflow has changed. Fylmico frontend and backend are independent
+workstreams. This workstream focuses only on frontend. Treat the backend as a
+black box and communicate only through documented public API contracts. Do not
+implement backend functionality here.
 
 ## Required Startup Flow
 
@@ -75,3 +93,6 @@ Before writing application code:
 Then summarize the current architecture, affected files, database impact, API
 impact, security impact, performance impact, and scalability impact before
 implementation.
+
+For frontend features, also define the API contract, mock service, loading
+state, empty state, error state, and success state before completion.

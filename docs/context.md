@@ -25,26 +25,27 @@ becoming decorative or inefficient.
 
 ## Current Architecture
 
-Sprint 0 has implemented the first application scaffold. The accepted baseline
-is a TypeScript npm workspace:
+Sprint 1 has completed the complete technical architecture documentation
+baseline. No Sprint 1 application features, database migrations, API endpoints,
+package folders, or placeholder implementations were created.
+
+Development direction update: Fylmico is now developed by two developers. This
+workstream is frontend-only unless the user explicitly changes direction.
+Developer 1 owns frontend engineering, UI/UX, frontend architecture, design
+system, component library, state management, frontend performance,
+accessibility, animations, responsive design, and frontend API integration.
+Developer 2 owns backend engineering, authentication, database, Prisma, NestJS,
+business logic, REST APIs, WebSockets, permissions, storage, notifications, AI
+services, infrastructure, and backend deployment.
+
+The accepted frontend baseline is a TypeScript npm workspace:
 
 ```text
 apps/
   web/
-  api/
 packages/
   ui/
-  auth/
-  database/
   shared/
-  realtime/
-  calendar/
-  storyboard/
-  editor/
-  ai/
-  notifications/
-  search/
-  permissions/
 docs/
 ```
 
@@ -52,49 +53,65 @@ Baseline architecture decisions:
 
 - `apps/web`: Next.js App Router web application. This is the only runnable app
   in Sprint 0.
-- `apps/api`: NestJS API application.
 - `packages/ui`: Shared design system and UI primitives.
-- `packages/database`: Prisma schema, migrations, and database client.
-- `packages/auth`: Authentication contracts and helpers.
-- `packages/permissions`: Authorization policy logic.
-- `packages/realtime`: Typed Socket.IO event contracts.
-- `packages/shared`: Shared domain contracts and validation schemas.
+- `packages/shared`: Frontend-safe public API contracts, shared domain types,
+  and validation schemas for client-side forms only.
 
-`apps/api` and `packages/*` are intentionally not created yet because Sprint 0
-must avoid placeholder folders.
+`apps/api`, backend packages, and backend implementation folders must not be
+created in this workstream unless the user explicitly changes direction.
+
+Sprint 1 accepted architecture decisions:
+
+- Start with a modular monolith backend, not microservices.
+- Use Next.js App Router with a shared UI package and typed API/realtime
+  clients.
+- Use versioned REST over JSON under `/api/v1`.
+- Treat organization as the primary tenant boundary.
+- Treat project as the primary production workspace inside an organization.
+- Store file binaries in object storage and file metadata in PostgreSQL.
+- Use Socket.IO with server-authorized rooms for realtime collaboration.
+- Use AI only through permission-aware backend services with minimized context.
+- Keep API/auth/realtime/file contracts compatible with future mobile clients.
+- Scale in phases: single-node deployment, workers/Redis/object storage,
+  horizontal scale, then selective service extraction.
+- Treat the backend as a black box and communicate only through documented
+  public API contracts.
+- Use realistic mock data and service abstractions until backend APIs exist.
+- Never put Prisma, SQL, database logic, backend business logic, backend
+  validation implementations, or backend implementation assumptions in frontend
+  code.
 
 ## Planned Stack
 
 - Web: Next.js, React, TypeScript, TailwindCSS, shadcn/ui, Framer Motion
-- API: Node.js, NestJS
-- Database: PostgreSQL, Prisma ORM
-- Realtime: Socket.IO
-- Authentication: JWT, OAuth, email authentication
-- Infrastructure: Docker, Nginx, Hostinger VPS, GitHub
+- Frontend API layer: `lib/api/*` and service abstractions with mock services
+  until backend APIs exist
+- Backend API: public API contracts defined by frontend/backend collaboration
+- Backend implementation stack: owned by Developer 2 and treated as a black box
 
 ## Database Overview
 
-No database schema has been implemented yet. The accepted planning baseline uses
-PostgreSQL and Prisma. Organization is the primary tenant boundary. Initial
-domain areas include users, authentication accounts, sessions, organizations,
-memberships, roles, permissions, clients, projects, tasks, conversations,
-assets, comments, approvals, versions, audit logs, and notifications.
+Database work is owned by Developer 2. Frontend work must not create schemas,
+migrations, Prisma models, SQL, or database logic. Frontend models represent
+public API contracts and UI view models only.
 
 ## Authentication Overview
 
-The accepted planning baseline uses email authentication, OAuth-ready auth
-accounts, short-lived JWT access tokens, and rotated opaque refresh tokens
-stored server-side as hashes. Authentication is separate from authorization.
+Authentication backend implementation is owned by Developer 2. Frontend work
+builds authentication screens, session UI, auth state, route protection UX, and
+API contracts/mock services without implementing backend auth logic.
 
 ## Permissions Overview
 
-The accepted planning baseline uses hybrid RBAC and policy checks. Organization
-is the primary tenant boundary. The API is the source of authorization
-enforcement; UI permission checks are only for experience.
+Permissions backend implementation is owned by Developer 2. Frontend work may
+use public permission claims or capability responses for UI experience, but the
+API remains the enforcement source.
 
 ## Current Milestone
 
-Phase 1: foundation and planning.
+Phase 1: foundation and planning. Sprint 1 system architecture documentation is
+complete. The workflow has changed to frontend-only development with a
+black-box backend and public API contracts.
 
 ## Current Progress
 
@@ -106,21 +123,27 @@ Because the deployed Hostinger site continued returning HTTP 403, Sprint 0 also
 supports a static Git deployment path with `npm run build:hostinger`, which
 publishes to `dist/hostinger`.
 
+Sprint 1 architecture documentation is complete in `docs/architecture.md` with
+ADR coverage through ADR 0016. It covers overall system architecture, frontend,
+backend, database, API, authentication, authorization, organization hierarchy,
+project hierarchy, file storage, realtime, AI integration, future mobile
+compatibility, deployment, and scaling strategy.
+
+ADR 0017 records the new frontend/backend independence model.
+
 ## Current Blockers
 
-- Confirm the Hostinger deployment returns HTTP 200 after using root deployment
-  and `server.js` startup.
-- Do not begin Sprint 1 until deployment is confirmed functional.
+- Backend implementation must not be started in this workstream.
+- Confirm the Hostinger deployment returns HTTP 200 after using either root
+  Node.js deployment with `server.js` startup or static Git deployment with
+  `dist/hostinger`, if this has not already been confirmed outside the repo.
 
 ## Current Priorities
 
-1. Redeploy on Hostinger from the repository root.
-2. Use `npm install`, `npm run build`, and `npm start`.
-3. Configure startup file as `server.js` if Hostinger asks for one.
-4. If Hostinger asks for a publish directory instead of a startup file, use
-   `npm run build:hostinger` and publish `dist/hostinger`.
-5. Confirm the deployed domain returns HTTP 200.
-6. Only then approve Sprint 1 planning.
+1. Focus only on frontend application development.
+2. For every backend dependency, define an API contract and mock service.
+3. Confirm the deployed domain returns HTTP 200 if deployment confirmation is
+   still pending.
 
 ## Latest Implemented Feature
 
@@ -128,9 +151,9 @@ None. No product features have been implemented.
 
 ## Next Feature
 
-No product feature should be started until Hostinger deployment is confirmed
-functional. The likely first feature area remains authentication plus
-organization workspace setup, after deployment approval.
+The next frontend feature should be built as if the backend already exists:
+design UI, define API contract, create mock service, build components, connect
+to mocks, handle loading/empty/error/success states, and update documentation.
 
 ## Things Never To Change Without Explicit Decision
 
@@ -141,14 +164,18 @@ organization workspace setup, after deployment approval.
 - Do not rely on chat history as project memory.
 - Do not write placeholder implementations.
 - Do not rewrite unrelated files.
+- Frontend must never depend on backend implementation details.
+- Frontend must communicate only through documented public API contracts.
+- Mock services are required until backend APIs exist.
 
 ## Known Issues
 
 - Hostinger deployment needs confirmation after switching the panel to either
   Node.js mode with `server.js` or static Git mode with `dist/hostinger`.
-- No database schema exists yet.
-- No API contract exists yet.
-- No production database, object storage, or API deployment exists yet.
+- Backend implementation is external to this frontend workstream.
+- Frontend API contracts must be created as features need them.
+- Sprint 1 architecture is documentation-only and does not implement the
+  architecture.
 
 ## Session Startup Checklist
 

@@ -16,6 +16,26 @@ Use sequential numbers and a short slug:
 0005-realtime.md
 ```
 
+## Current ADRs
+
+- `0001-monorepo.md`
+- `0002-database.md`
+- `0003-authentication.md`
+- `0004-permissions.md`
+- `0005-realtime.md`
+- `0006-deployment.md`
+- `0007-sprint-0-foundation.md`
+- `0008-modular-monolith-backend.md`
+- `0009-frontend-architecture.md`
+- `0010-api-architecture.md`
+- `0011-organization-hierarchy.md`
+- `0012-project-hierarchy.md`
+- `0013-file-storage-architecture.md`
+- `0014-ai-integration-architecture.md`
+- `0015-future-mobile-compatibility.md`
+- `0016-scaling-strategy.md`
+- `0017-frontend-backend-independence.md`
+
 ## Required Sections
 
 Each ADR must include:

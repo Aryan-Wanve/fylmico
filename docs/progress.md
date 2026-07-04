@@ -154,3 +154,241 @@ Next task:
   publish directory `dist/hostinger`.
 - For Node.js deployment, use startup file `server.js`.
 - Confirm the deployed domain returns HTTP 200 before Sprint 1.
+
+## 2026-07-04
+
+Current milestone: Phase 1 - foundation and planning
+
+Completion percentage: 55%
+
+Features completed:
+
+- None.
+
+Features started:
+
+- None.
+
+Files modified:
+
+- `docs/architecture.md`
+- `docs/decisions.md`
+- `docs/context.md`
+- `docs/roadmap.md`
+- `docs/progress.md`
+- `docs/adr/README.md`
+- `MASTER_INDEX.md`
+
+Files created:
+
+- `docs/adr/0008-modular-monolith-backend.md`
+- `docs/adr/0009-frontend-architecture.md`
+- `docs/adr/0010-api-architecture.md`
+- `docs/adr/0011-organization-hierarchy.md`
+- `docs/adr/0012-project-hierarchy.md`
+- `docs/adr/0013-file-storage-architecture.md`
+- `docs/adr/0014-ai-integration-architecture.md`
+- `docs/adr/0015-future-mobile-compatibility.md`
+- `docs/adr/0016-scaling-strategy.md`
+
+Files removed:
+
+- None.
+
+Database changes:
+
+- None.
+
+API changes:
+
+- None.
+
+Architecture changes:
+
+- Completed Sprint 1 system architecture documentation.
+- Documented frontend, backend, database, API, authentication, authorization,
+  organization hierarchy, project hierarchy, file storage, realtime, AI,
+  future mobile compatibility, deployment, and scaling architecture.
+- Added ADR coverage for Sprint 1 architectural decisions.
+- Reaffirmed that no feature code, database schema, API endpoints, migrations,
+  or placeholder package folders were created.
+
+Performance improvements:
+
+- None.
+
+Bugs fixed:
+
+- None.
+
+Known bugs:
+
+- Hostinger deployment confirmation may still be pending outside the repository.
+
+Technical debt:
+
+- `apps/api` and `packages/*` remain intentionally deferred until they contain
+  real code or shared contracts.
+- Provider choices for object storage, email, jobs, monitoring, search, AI, and
+  mobile remain deferred decisions.
+
+Next task:
+
+- Wait for explicit user approval before Sprint 2.
+
+## 2026-07-04 Development Direction Update
+
+Current milestone: Phase 1 - foundation and planning
+
+Completion percentage: 60%
+
+Features completed:
+
+- None.
+
+Features started:
+
+- None.
+
+Files modified:
+
+- `AI_RULES.md`
+- `MASTER_INDEX.md`
+- `docs/architecture.md`
+- `docs/api.md`
+- `docs/context.md`
+- `docs/decisions.md`
+- `docs/roadmap.md`
+- `docs/session.md`
+- `docs/progress.md`
+- `docs/adr/README.md`
+
+Files created:
+
+- `docs/adr/0017-frontend-backend-independence.md`
+
+Files removed:
+
+- None.
+
+Database changes:
+
+- None. Database, Prisma, SQL, migrations, and backend persistence are owned by
+  the backend developer and are outside this frontend workstream.
+
+API changes:
+
+- No backend endpoints were implemented.
+- Documented the frontend API contract workflow.
+- Documented that frontend features must define public API contracts and use
+  mock services until backend APIs exist.
+
+Architecture changes:
+
+- Recorded the two-developer development model.
+- Established frontend/backend independence as ADR 0017.
+- Updated project rules so frontend work treats the backend as a black box.
+- Documented that frontend code must not depend on Prisma, SQL, database
+  logic, backend business logic, backend validation implementations, NestJS
+  internals, storage internals, queues, or backend infrastructure.
+- Documented the required frontend feature sequence: design UI, define API
+  contract, create mock service, build components, connect components, handle
+  loading, empty, error, and success states, then update documentation.
+
+Performance improvements:
+
+- None.
+
+Bugs fixed:
+
+- None.
+
+Known bugs:
+
+- Hostinger deployment confirmation may still be pending outside the repository.
+
+Technical debt:
+
+- Frontend state-management and server-state/query library choices remain
+  deferred.
+- Mock service organization and testing strategy remain deferred.
+
+Next task:
+
+- Continue with frontend-only development. For every backend dependency, define
+  an API contract and mock service rather than implementing backend behavior.
+
+## 2026-07-04 Base Frontend Scope
+
+Current milestone: Phase 2 - frontend application scaffold
+
+Completion percentage: 68%
+
+Features completed:
+
+- Mock-backed login page.
+- House creation form.
+- House join form.
+- House management overview.
+- Discord-style production role display.
+- Task scheduler and task assigner.
+- Chat room interface with mock message sending.
+
+Features started:
+
+- Frontend base workspace.
+
+Files modified:
+
+- `apps/web/src/app/page.tsx`
+- `apps/web/src/app/globals.css`
+- `docs/api.md`
+- `docs/progress.md`
+
+Files created:
+
+- `apps/web/src/components/base-workspace.tsx`
+- `apps/web/src/services/base-workspace.service.ts`
+- `apps/web/src/types/base.ts`
+
+Files removed:
+
+- None.
+
+Database changes:
+
+- None. No backend, Prisma, SQL, migrations, or database logic were added.
+
+API changes:
+
+- No backend endpoints were implemented.
+- Documented public frontend contracts for login, workspace snapshot, house
+  creation, house joining, task creation, and chat message sending.
+
+Architecture changes:
+
+- Added the first frontend service abstraction and realistic mock service.
+- Kept UI components separate from backend implementation details.
+
+Performance improvements:
+
+- None.
+
+Bugs fixed:
+
+- None.
+
+Known bugs:
+
+- The interface uses mock data only.
+
+Technical debt:
+
+- State is local to the base workspace. A dedicated server-state and app-state
+  strategy still needs a formal decision.
+- Design system components are currently local CSS/classes and should be
+  extracted when reuse grows.
+
+Next task:
+
+- Validate the frontend build and continue refining the base experience.
