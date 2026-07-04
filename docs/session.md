@@ -228,3 +228,123 @@ Next session objective:
 
 - Refine the frontend base UX, extract reusable design-system primitives when
   duplication appears, and choose the frontend state/server-state strategy.
+
+## Session 7
+
+Date: 2026-07-04
+
+Goal:
+
+- Redesign the login page to match the provided Fylmico visual reference.
+
+Completed work:
+
+- Rebuilt the logged-out screen as a light cinematic split login page.
+- Added brand mark, left-side production headline, feature cards, quote panel,
+  right-side auth card, login/signup tabs, forgot-password link, social login
+  buttons, and security note.
+- Generated and added a project-local cinematic production background image at
+  `apps/web/public/images/login-production-set.png`.
+- Preserved the existing mock login service behavior and workspace entry flow.
+
+Problems encountered:
+
+- The first pass was too tall for a 1280x720 viewport and had visual overlap
+  between the security note and social buttons.
+- Tightened spacing and adjusted supporting panels to remove visible overlap.
+
+Decisions made:
+
+- Use a generated project-local background asset instead of embedding the
+  provided screenshot as a page background.
+- Keep the login redesign frontend-only with no backend implementation changes.
+
+Next session objective:
+
+- Continue polishing the frontend base workspace and extract reusable auth/UI
+  primitives when patterns settle.
+
+## Session 8
+
+Date: 2026-07-04
+
+Goal:
+
+- Apply the provided post-login page references to the next frontend states.
+
+Completed work:
+
+- Added a no-house onboarding screen after login.
+- Added a light Fylmico app shell with sidebar navigation, search, create
+  action, notification control, and user avatar.
+- Added a production dashboard with stat cards, upcoming schedule, my tasks,
+  recent projects, recent activity, house management, task scheduler, and chat.
+- Updated mock login to start without a house.
+- Updated mock create-house and join-house flows to activate a populated
+  dashboard state.
+
+Problems encountered:
+
+- A form reset ran after an awaited mock service call when React had already
+  released `event.currentTarget`, causing a runtime error.
+- Fixed by capturing the form element before awaiting.
+
+Decisions made:
+
+- Keep these next pages frontend-only and mock-backed.
+- Use the provided references as layout and visual direction while preserving
+  the existing API-contract/mock-service boundary.
+
+Next session objective:
+
+- Refine responsive dashboard layouts and begin extracting repeated card,
+  sidebar, form, and panel patterns into reusable UI primitives.
+
+## Session 9
+
+Date: 2026-07-04
+
+Goal:
+
+- Make the current frontend base interactive and polished without implementing
+  backend functionality.
+
+Completed work:
+
+- Added local app-shell interaction state for active navigation, create menu,
+  notifications, and search preview.
+- Added local dashboard interactions for schedule selection, task completion,
+  project selection, chat room switching, and mock message sending.
+- Added polished motion and state styling for panels, controls, popovers,
+  progress bars, schedule rows, task rows, and project cards.
+- Preserved the mock-service boundary and did not add database, backend,
+  Prisma, SQL, or server implementation work.
+
+Problems encountered:
+
+- The in-app browser tab lost its localhost connection after the production
+  build, so the dev server had to be restarted.
+- Some browser Playwright clicks timed out on visible controls, so verification
+  used the visible DOM interaction path for those controls.
+
+Decisions made:
+
+- Keep interactivity in frontend-local state until public backend APIs exist.
+- Leave backend work as explicit tasks for authenticated workspace snapshots,
+  house APIs, schedule persistence, task persistence, project details,
+  notifications, chat rooms, websocket delivery, and message persistence.
+- Add reduced-motion support alongside the new animations.
+
+Validation:
+
+- `npm run lint` passed.
+- `npm run typecheck` passed.
+- `npm run build` passed outside the sandbox.
+- Browser-verified login, create-house transition, create menu, notification
+  popover, search preview, schedule selection, task completion, project
+  selection, room switching, and mock message sending.
+
+Next session objective:
+
+- Extract repeated UI into design-system primitives and continue building the
+  frontend against API contracts/mock services only.
