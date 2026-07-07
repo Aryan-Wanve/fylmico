@@ -16,14 +16,14 @@ import {
 export type NavItem = {
   id: string;
   label: string;
-  href: "/" | "/calendar" | null;
+  href: "/" | "/calendar" | "/projects" | null;
   icon: LucideIcon;
   badge?: string;
 };
 
 export const navItems: NavItem[] = [
   { id: "home", label: "Home", href: "/", icon: Home },
-  { id: "projects", label: "Projects", href: null, icon: FolderKanban },
+  { id: "projects", label: "Projects", href: "/projects", icon: FolderKanban },
   { id: "calendar", label: "Calendar", href: "/calendar", icon: Calendar },
   { id: "tasks", label: "Tasks", href: null, icon: ListChecks },
   { id: "crews", label: "Crews", href: null, icon: Users },
