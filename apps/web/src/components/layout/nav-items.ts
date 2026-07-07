@@ -16,7 +16,16 @@ import {
 export type NavItem = {
   id: string;
   label: string;
-  href: "/" | "/calendar" | "/projects" | "/tasks" | null;
+  href:
+    | "/"
+    | "/calendar"
+    | "/projects"
+    | "/tasks"
+    | "/crews"
+    | "/files"
+    | "/storyboard"
+    | "/messages"
+    | null;
   icon: LucideIcon;
   badge?: string;
 };
@@ -26,13 +35,18 @@ export const navItems: NavItem[] = [
   { id: "projects", label: "Projects", href: "/projects", icon: FolderKanban },
   { id: "calendar", label: "Calendar", href: "/calendar", icon: Calendar },
   { id: "tasks", label: "Tasks", href: "/tasks", icon: ListChecks },
-  { id: "crews", label: "Crews", href: null, icon: Users },
-  { id: "files", label: "Files", href: null, icon: Folder },
-  { id: "storyboard", label: "Storyboard", href: null, icon: Clapperboard },
+  { id: "crews", label: "Crews", href: "/crews", icon: Users },
+  { id: "files", label: "Files", href: "/files", icon: Folder },
+  {
+    id: "storyboard",
+    label: "Storyboard",
+    href: "/storyboard",
+    icon: Clapperboard
+  },
   {
     id: "messages",
     label: "Messages",
-    href: null,
+    href: "/messages",
     icon: MessageSquare,
     badge: "4"
   },
