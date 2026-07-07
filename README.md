@@ -9,11 +9,17 @@ workspace, from client onboarding to final delivery.
 
 ## Current Phase
 
-Phase 1: foundation and planning.
+Phase 1 (foundation and planning) is complete. The project is in Phase 2/3:
+frontend application scaffold and early authentication UI.
 
-No application code should be written until the architecture, documentation,
-database plan, permissions model, authentication model, deployment approach, and
-coding standards are clear.
+Shipped so far in `apps/web`: Tailwind v4 + shadcn/ui design system, a
+pixel-matched login screen wired to a mock auth service, an authenticated app
+shell (sidebar/topbar with compact and full modes), a home dashboard, and a
+no-house onboarding flow. All screens use real Next.js routes and mock
+services per [ADR 0017](docs/adr/0017-frontend-backend-independence.md); no
+backend implementation lives in this workstream. See
+[docs/progress.md](docs/progress.md) for the latest session log and
+[docs/roadmap.md](docs/roadmap.md) for what is still planned.
 
 ## Required Reading Before Implementation
 

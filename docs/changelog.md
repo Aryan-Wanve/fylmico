@@ -29,3 +29,34 @@ Breaking changes:
 Migration notes:
 
 - None.
+
+## 0.2.0 - 2026-07-07
+
+Summary:
+
+- Adopted Tailwind v4 + shadcn/ui as the project's actual design system
+  (previously specified in docs but not used in code).
+- Rebuilt the login screen, app shell (sidebar/topbar), home dashboard, and
+  no-house onboarding flow as real Next.js routes under an `(app)` route
+  group, replacing the single-component `BaseWorkspace` view-switcher.
+- Removed `base-workspace.tsx`, the old root `page.tsx`, and ~1900 lines of
+  dead hand-written CSS.
+- Removed accidentally-committed tool cache (`.codex-remote-attachments/`)
+  and dead login icon assets.
+- Merged `frontend` into `main`, which had not been updated since PR #1.
+
+Note: intervening feature work between 0.0.1 and this entry (the initial
+mock-backed login/dashboard/houses UI built directly on hand-written CSS)
+was not logged here at the time; see `docs/session.md` sessions 6-9 for that
+history.
+
+Breaking changes:
+
+- The frontend no longer uses the hand-written CSS classes from earlier
+  sessions (`.login-*`, `.app-shell*`, `.dashboard-*`, etc.) or the
+  `BaseWorkspace` component; any external references to them are stale.
+
+Migration notes:
+
+- None. Mock service contracts (`services/base-workspace.service.ts`,
+  `types/base.ts`) are unchanged, so no data-shape migration is needed.

@@ -348,3 +348,71 @@ Next session objective:
 
 - Extract repeated UI into design-system primitives and continue building the
   frontend against API contracts/mock services only.
+
+## Session 10
+
+Date: 2026-07-07
+
+Goal:
+
+- Adopt the documented Tailwind v4 + shadcn/ui design system and rebuild the
+  base frontend (login, app shell, dashboard, onboarding) on real Next.js
+  routes, matching provided reference mockups.
+
+Completed work:
+
+- Bootstrapped shadcn/ui on Tailwind v4 and rebuilt the login screen
+  pixel-matched to the design reference, replacing the hand-written CSS
+  version.
+- Introduced an `(app)` route group with a shared authenticated layout (auth
+  gate, workspace bootstrap, house-presence redirect), replacing the
+  single-component `BaseWorkspace` view-switcher entirely.
+- Built the app shell (compact/full sidebar, topbar), a home dashboard
+  (stat cards with sparklines, schedule, tasks, projects, activity), and a
+  no-house onboarding screen, each pixel-matched to shared reference
+  mockups.
+- Sourced and vetted free-license stock photos for project thumbnails and
+  team avatars.
+- Deleted the superseded `base-workspace.tsx`, the old root `page.tsx`, and
+  roughly 1900 lines of now-dead hand-written CSS.
+- Audited the repository for residue: removed an accidentally-committed
+  cache folder from a different AI coding tool, and three dead icon assets
+  left over from the pre-rebuild login markup.
+- Discovered `main` had not been updated with this branch's work since PR
+  #1; merged `frontend` into `main` and pushed both.
+- Brought README, MASTER_INDEX-adjacent docs, roadmap, context, and progress
+  logs back in line with actual shipped state (they still said "Phase 1,
+  no features implemented").
+
+Problems encountered:
+
+- A `useSyncExternalStore` hydration race let an already-logged-in user
+  bounce to `/login` before the real session value settled; fixed with an
+  explicit post-hydration mount guard.
+- Flex/grid children without `min-w-0` caused horizontal overflow on the
+  dashboard at common viewport widths; fixed by adding `min-w-0` to the
+  affected grid items.
+- Root-level Hostinger static-export artifacts and documentation had drifted
+  significantly out of sync with the actual codebase state.
+
+Decisions made:
+
+- Keep `services/base-workspace.service.ts` and `types/base.ts` as single
+  files for now; domain-splitting them is deferred until a feature actually
+  needs the separation.
+- Leave remaining sidebar nav items (Projects, Calendar, Tasks, Crews,
+  Files, Storyboard, Messages, Bookings, Analytics, Settings) as
+  non-navigating placeholders rather than scaffolding throwaway routes.
+
+Validation:
+
+- `npm run lint`, `npm run typecheck`, `npm run build`, and
+  `npm run build:hostinger` all passed.
+- Browser-verified the full flow: login, no-house onboarding, house
+  creation, dashboard rendering, task checkbox toggle, non-navigating nav
+  items.
+
+Next session objective:
+
+- Build the next dedicated page (Projects, Calendar, or Tasks) one at a
+  time, using the shared reference mockups as ground truth.

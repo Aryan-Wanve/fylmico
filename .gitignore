@@ -33,5 +33,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Local tooling config
+.claude/
+.codex-remote-attachments/
+
 # Docker
 .docker-cache/
