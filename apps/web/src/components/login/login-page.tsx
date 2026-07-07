@@ -2,13 +2,26 @@
 
 import Image from "next/image";
 import { FormEvent, useState } from "react";
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export type LoginAsyncState = "idle" | "loading" | "success" | "error";
+
+type AuthMode = "login" | "signup";
+
+const authModeCopy: Record<AuthMode, { heading: string; subtitle: string }> = {
+  login: {
+    heading: "Welcome back \u{1F44B}",
+    subtitle: "Log in to continue to Fylmico"
+  },
+  signup: {
+    heading: "Create your account",
+    subtitle: "Start planning your next production with Fylmico"
+  }
+};
 
 type LoginPageProps = {
   authState: LoginAsyncState;
@@ -49,8 +62,31 @@ const socialProviders: Array<{ id: string; label: string; icon: string }> = [
   { id: "microsoft", label: "Microsoft", icon: "/images/login/microsoft.png" }
 ];
 
+const authTabs: Array<{ id: AuthMode; label: string }> = [
+  { id: "login", label: "Log In" },
+  { id: "signup", label: "Sign Up" }
+];
+
 export function LoginPage({ authState, error, onLogin }: LoginPageProps) {
+  const [mode, setMode] = useState<AuthMode>("login");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
+    useState(false);
+  const [isSignupSubmitting, setIsSignupSubmitting] = useState(false);
+  const [signupNotice, setSignupNotice] = useState("");
+
+  function handleSignupSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSignupSubmitting(true);
+    setSignupNotice("");
+
+    window.setTimeout(() => {
+      setIsSignupSubmitting(false);
+      setSignupNotice(
+        "Sign up isn't open yet in this preview. Ask your house owner for an invite instead."
+      );
+    }, 500);
+  }
 
   return (
     <main className="relative grid min-h-screen grid-cols-1 overflow-hidden md:grid-cols-2">
@@ -151,48 +187,57 @@ export function LoginPage({ authState, error, onLogin }: LoginPageProps) {
         aria-label="Authentication"
         className="relative flex flex-col items-center justify-center px-6 py-16 sm:px-10"
       >
-        <div className="absolute top-8 right-8 flex items-center gap-3 sm:top-10 sm:right-10">
-          <span className="text-sm font-medium text-[#3d4052]">New here?</span>
-          <Button
-            className="h-10 rounded-lg bg-[#efeaff] px-4 font-bold text-[#654cff] hover:bg-[#e5daff]"
-            type="button"
-            variant="secondary"
-          >
-            Sign up
-          </Button>
-        </div>
-
         <section className="w-full max-w-[27rem] rounded-2xl border border-black/[0.06] bg-white p-8 shadow-[0_1.8rem_5rem_rgba(55,48,120,0.12)] sm:p-11">
-          <header>
-            <h2 className="text-[1.85rem] font-black text-[#11142c]">
-              Welcome back 👋
-            </h2>
-            <p className="mt-2 font-semibold text-[#75798a]">
-              Log in to continue to Fylmico
-            </p>
-          </header>
-
-          <Tabs className="mt-7" defaultValue="login">
-            <TabsList
-              className="grid h-auto w-full grid-cols-2 rounded-none border-b border-[#11142c1a] bg-transparent p-0"
-              variant="line"
+          <AnimatePresence initial={false} mode="wait">
+            <motion.header
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6 }}
+              initial={{ opacity: 0, y: -6 }}
+              key={mode}
+              transition={{ duration: 0.18, ease: "easeOut" }}
             >
-              <TabsTrigger
-                className="h-11 rounded-none text-[0.95rem] font-extrabold text-[#6d7080] after:h-[2px] after:bg-[#654cff] data-active:text-[#654cff]"
-                value="login"
-              >
-                Log In
-              </TabsTrigger>
-              <TabsTrigger
-                className="h-11 rounded-none text-[0.95rem] font-extrabold text-[#6d7080] after:h-[2px] after:bg-[#654cff] data-active:text-[#654cff]"
-                value="signup"
-              >
-                Sign Up
-              </TabsTrigger>
-            </TabsList>
+              <h2 className="text-[1.85rem] font-black text-[#11142c]">
+                {authModeCopy[mode].heading}
+              </h2>
+              <p className="mt-2 font-semibold text-[#75798a]">
+                {authModeCopy[mode].subtitle}
+              </p>
+            </motion.header>
+          </AnimatePresence>
 
-            <TabsContent value="login">
-              <form className="mt-7 grid gap-5" onSubmit={onLogin}>
+          <div className="mt-7 grid grid-cols-2 border-b border-[#11142c1a]">
+            {authTabs.map((tab) => (
+              <button
+                className={`relative h-11 text-[0.95rem] font-extrabold transition-colors ${
+                  mode === tab.id ? "text-[#654cff]" : "text-[#6d7080]"
+                }`}
+                key={tab.id}
+                onClick={() => setMode(tab.id)}
+                type="button"
+              >
+                {tab.label}
+                {mode === tab.id ? (
+                  <motion.span
+                    className="absolute inset-x-0 -bottom-px h-[2px] bg-[#654cff]"
+                    layoutId="auth-tab-indicator"
+                    transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                  />
+                ) : null}
+              </button>
+            ))}
+          </div>
+
+          <AnimatePresence initial={false} mode="wait">
+            {mode === "login" ? (
+              <motion.form
+                animate={{ opacity: 1, x: 0 }}
+                className="mt-7 grid gap-5"
+                exit={{ opacity: 0, x: -12 }}
+                initial={{ opacity: 0, x: -12 }}
+                key="login-form"
+                onSubmit={onLogin}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
                 <div className="grid gap-2">
                   <Label
                     className="text-[0.86rem] font-extrabold text-[#15172b]"
@@ -269,20 +314,149 @@ export function LoginPage({ authState, error, onLogin }: LoginPageProps) {
                   {authState === "loading" ? "Logging in..." : "Log In"}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
-              </form>
-            </TabsContent>
+              </motion.form>
+            ) : (
+              <motion.form
+                animate={{ opacity: 1, x: 0 }}
+                className="mt-7 grid gap-5"
+                exit={{ opacity: 0, x: 12 }}
+                initial={{ opacity: 0, x: 12 }}
+                key="signup-form"
+                onSubmit={handleSignupSubmit}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                <div className="grid gap-2">
+                  <Label
+                    className="text-[0.86rem] font-extrabold text-[#15172b]"
+                    htmlFor="signup-name"
+                  >
+                    Full name
+                  </Label>
+                  <div className="relative">
+                    <User className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e]" />
+                    <Input
+                      autoComplete="name"
+                      className="h-[3.55rem] rounded-lg border-[#11142c1c] pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a]"
+                      id="signup-name"
+                      name="name"
+                      placeholder="Enter your full name"
+                      type="text"
+                    />
+                  </div>
+                </div>
 
-            <TabsContent value="signup">
-              <div className="mt-7 grid gap-2 rounded-lg border border-dashed border-[#11142c29] p-6 text-center">
-                <strong className="text-[#11142c]">
-                  Sign up is coming soon
-                </strong>
-                <span className="text-sm text-[#5f667d]">
-                  Ask your house owner for an invite in the meantime.
-                </span>
-              </div>
-            </TabsContent>
-          </Tabs>
+                <div className="grid gap-2">
+                  <Label
+                    className="text-[0.86rem] font-extrabold text-[#15172b]"
+                    htmlFor="signup-email"
+                  >
+                    Email address
+                  </Label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e]" />
+                    <Input
+                      autoComplete="email"
+                      className="h-[3.55rem] rounded-lg border-[#11142c1c] pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a]"
+                      id="signup-email"
+                      name="email"
+                      placeholder="Enter your email"
+                      type="email"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label
+                    className="text-[0.86rem] font-extrabold text-[#15172b]"
+                    htmlFor="signup-password"
+                  >
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e]" />
+                    <Input
+                      autoComplete="new-password"
+                      className="h-[3.55rem] rounded-lg border-[#11142c1c] pr-11 pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a]"
+                      id="signup-password"
+                      name="password"
+                      placeholder="Create a password"
+                      type={isPasswordVisible ? "text" : "password"}
+                    />
+                    <button
+                      aria-label={
+                        isPasswordVisible ? "Hide password" : "Show password"
+                      }
+                      className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[#8a8e9e]"
+                      onClick={() => setIsPasswordVisible((value) => !value)}
+                      type="button"
+                    >
+                      {isPasswordVisible ? (
+                        <EyeOff className="h-[1.1rem] w-[1.1rem]" />
+                      ) : (
+                        <Eye className="h-[1.1rem] w-[1.1rem]" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label
+                    className="text-[0.86rem] font-extrabold text-[#15172b]"
+                    htmlFor="signup-confirm-password"
+                  >
+                    Confirm password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e]" />
+                    <Input
+                      autoComplete="new-password"
+                      className="h-[3.55rem] rounded-lg border-[#11142c1c] pr-11 pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a]"
+                      id="signup-confirm-password"
+                      name="confirmPassword"
+                      placeholder="Re-enter your password"
+                      type={isConfirmPasswordVisible ? "text" : "password"}
+                    />
+                    <button
+                      aria-label={
+                        isConfirmPasswordVisible
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                      className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[#8a8e9e]"
+                      onClick={() =>
+                        setIsConfirmPasswordVisible((value) => !value)
+                      }
+                      type="button"
+                    >
+                      {isConfirmPasswordVisible ? (
+                        <EyeOff className="h-[1.1rem] w-[1.1rem]" />
+                      ) : (
+                        <Eye className="h-[1.1rem] w-[1.1rem]" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {signupNotice ? (
+                  <p className="rounded-lg border border-[#654cff33] bg-[#654cff0d] px-3.5 py-2.5 text-sm font-semibold text-[#4a3bd1]">
+                    {signupNotice}
+                  </p>
+                ) : null}
+
+                <Button
+                  className="h-[3.25rem] w-full rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] text-base font-bold text-white shadow-[0_1rem_2.1rem_rgba(101,76,255,0.28)] hover:opacity-95"
+                  data-testid="signup-submit"
+                  disabled={isSignupSubmitting}
+                  type="submit"
+                >
+                  {isSignupSubmitting
+                    ? "Creating account..."
+                    : "Create Account"}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </motion.form>
+            )}
+          </AnimatePresence>
 
           <div className="my-6 flex items-center gap-4 text-[0.86rem] font-semibold text-[#838797]">
             <span className="h-px flex-1 bg-[#11142c1a]" />
