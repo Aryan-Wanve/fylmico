@@ -4,3 +4,15 @@ coverage
 dist
 node_modules
 package-lock.json
+
+# Generated Hostinger static-export mirror at the repository root.
+# Root-anchored (leading /) so these don't also match real source
+# folders like apps/web/src/app/login or apps/web/src/components/login.
+/_next
+/_not-found
+/houses
+/login
+/images
+/*.html
+/*.txt
+/__next.*
