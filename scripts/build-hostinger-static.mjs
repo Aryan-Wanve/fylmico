@@ -8,28 +8,58 @@ const repositoryRoot = path.resolve(path.dirname(__filename), "..");
 const webRoot = path.join(repositoryRoot, "apps", "web");
 const staticOutput = path.join(webRoot, "out");
 const hostingerOutput = path.join(repositoryRoot, "dist", "hostinger");
-const rootStaticArtifacts = [
-  "_next",
-  "_not-found",
-  "index.html",
-  "index.txt",
-  "404.html",
-  "_not-found.html",
-  "_not-found.txt",
-  "__next._full.txt",
-  "__next._head.txt",
-  "__next._index.txt",
-  "__next._tree.txt",
-  "__next.__PAGE__.txt"
-];
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+
+// Everything at the repository root that is NOT this list is considered
+// disposable static-export output and gets wiped before every rebuild. This
+// must be an allowlist of real source/config paths (not a denylist of known
+// export artifacts) so that route/asset changes in the Next.js app can never
+// leave stale files behind at the repository root.
+const protectedRootEntries = new Set([
+  ".agents",
+  ".claude",
+  ".codex-remote-attachments",
+  ".dockerignore",
+  ".editorconfig",
+  ".env",
+  ".env.example",
+  ".git",
+  ".gitattributes",
+  ".github",
+  ".gitignore",
+  ".htaccess",
+  ".husky",
+  ".npmrc",
+  ".prettierignore",
+  ".prettierrc.mjs",
+  "AI_RULES.md",
+  "Dockerfile",
+  "MASTER_INDEX.md",
+  "PRODUCT_PRINCIPLES.md",
+  "PROJECT_SPEC.md",
+  "README.md",
+  "apps",
+  "dist",
+  "docker-compose.yml",
+  "docs",
+  "eslint.config.mjs",
+  "node_modules",
+  "package-lock.json",
+  "package.json",
+  "scripts",
+  "server.js"
+]);
 
 await rm(hostingerOutput, { force: true, recursive: true });
 await rm(staticOutput, { force: true, recursive: true });
+
+const existingRootEntries = await readdir(repositoryRoot);
 await Promise.all(
-  rootStaticArtifacts.map((artifact) =>
-    rm(path.join(repositoryRoot, artifact), { force: true, recursive: true })
-  )
+  existingRootEntries
+    .filter((entry) => !protectedRootEntries.has(entry))
+    .map((entry) =>
+      rm(path.join(repositoryRoot, entry), { force: true, recursive: true })
+    )
 );
 
 const build = spawnSync(
