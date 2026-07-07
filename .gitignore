@@ -35,6 +35,7 @@ Thumbs.db
 
 # Local tooling config
 .claude/
+.codex-remote-attachments/
 
 # Docker
 .docker-cache/
