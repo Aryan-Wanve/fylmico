@@ -416,3 +416,90 @@ Next session objective:
 
 - Build the next dedicated page (Projects, Calendar, or Tasks) one at a
   time, using the shared reference mockups as ground truth.
+
+## Session 11
+
+Date: 2026-07-07
+
+Goal:
+
+- Build the Calendar page (`/calendar`) as a real Next.js route,
+  pixel-matched to a provided design reference, following the established
+  route + Tailwind/shadcn + colocated-mock-data pattern.
+
+Completed work:
+
+- Added `apps/web/src/lib/calendar-utils.ts` (Monday-start month grid,
+  date formatting/comparison helpers) and
+  `apps/web/src/components/calendar/calendar-data.ts` (event categories,
+  calendar sources, mock events matching the reference).
+- Built the Calendar page and its components: header (date navigation,
+  month/year jump popover, Month/Week/Day tabs, category filters popover),
+  month grid with colored event pills and a legend, a mini calendar
+  synced to the same month cursor, a "Calendars" checklist panel, and an
+  "Upcoming (Next 7 Days)" panel.
+- Week and Day tabs intentionally render a "coming soon" empty state
+  instead of fake grids, since only the Month view was designed.
+- Turned the sidebar's Calendar entry from a non-navigating placeholder
+  into a real link (`nav-items.ts`).
+- Made "New Event" a working create flow (`new-event-popover.tsx`,
+  replacing the decorative `new-event-button.tsx`): a `Popover` form
+  (title, date, time, location, event-type pills, calendar pills) -
+  the app's first "create" UI (`createTask`/`createHouse` exist as mock
+  services with no UI wired to them yet). Lifted `calendarEvents` into
+  page-local state in `calendar-page.tsx` (same pattern as
+  `completedTaskIds` in `home-dashboard.tsx`) so created events can be
+  appended without a backend; on create, the active filters expand to
+  include the new event's category/calendar and the grid/mini calendar
+  jump to its date so it's always immediately visible. Deduplicated
+  `CATEGORY_ORDER` (previously copy-pasted in two files) into
+  `calendar-data.ts` once a third consumer needed it.
+
+Problems encountered:
+
+- `getMonthGrid` had a date-construction bug: padding days were computed as
+  `new Date(year, month, gridStart.getDate() + i)`, which reused the
+  previous month's day-of-month against the current month index once the
+  leading offset rolled back across a month boundary, rendering a
+  nonexistent "June 31" instead of "July 1". Fixed by computing every grid
+  day directly as an offset from the 1st of the visible month.
+- The page's `Tabs`/`TabsContent` (a flex column) had no `min-w-0`, so its
+  month-grid child refused to shrink at narrow viewports and inflated the
+  flex box past its column. Fixed by adding `min-w-0` at the usage site and
+  giving the month grid its own `overflow-x-auto` with a `min-w-[42rem]`
+  inner track, so the inherently-wide 7-column grid scrolls locally instead
+  of widening the page.
+- Confirmed (not introduced by this change): the app shell's sidebar/topbar
+  have no responsive breakpoint at all (`compact` is only tied to the
+  `/houses/new` route), so every authenticated page overflows horizontally
+  at narrow mobile widths; the existing home dashboard overflows more than
+  the new Calendar page at the same width. Left as-is; fixing it is shared
+  app-shell work outside this page's scope.
+
+Decisions made:
+
+- Kept Calendar mock data colocated in `components/calendar/calendar-data.ts`
+  rather than adding to `types/base.ts`, matching the existing
+  `components/dashboard/*-data.ts` convention.
+- Scoped Week/Day views to an empty state rather than building fake grids,
+  since only the Month view had a design reference.
+
+Validation:
+
+- `npm run lint`, `npm run typecheck`, `npm run build` all passed (both for
+  the initial page and again after adding event creation).
+- Browser-verified `/calendar`: month grid dates and events, prev/next/
+  Today navigation, month/year jump popover (kept the mini calendar in
+  sync), Month/Week/Day tab switching, category filters and calendar-source
+  checkboxes hiding/showing events on both the grid and the Upcoming panel.
+- Browser-verified New Event: submitting with an empty title/time showed
+  the inline "Title and time are required." error and kept the popover
+  open; a valid submit for today closed the popover and the event appeared
+  on the month grid, the Upcoming panel, and the mini calendar's dot; a
+  valid submit for a different month (August) auto-jumped the grid and
+  mini calendar to that month and showed the event on the correct day.
+
+Next session objective:
+
+- Build the next dedicated page (Projects or Tasks), following the same
+  route + Tailwind/shadcn + mock-service pattern.

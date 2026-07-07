@@ -668,3 +668,119 @@ Next task:
   using the previously-shared design mockups as ground truth, following the
   same route + Tailwind/shadcn + mock-service pattern established this
   session.
+
+## 2026-07-07 Calendar Page
+
+Current milestone: Phase 2/3 - frontend application scaffold and early
+authentication UI
+
+Completion percentage: 91%
+
+Features completed:
+
+- Built the Calendar page (`/calendar`) as a real route, pixel-matched to a
+  provided design reference: header with prev/today/next controls, a
+  month/year jump popover, Month/Week/Day tabs, and a category filters
+  popover; a full month grid with colored event pills and a bottom legend; a
+  right rail with a mini month calendar (synced to the same month cursor), a
+  "Calendars" panel (checkbox source filters), and an "Upcoming (Next 7
+  Days)" panel.
+- Week and Day tabs render a "coming soon" empty state rather than fake
+  grids, since only Month was designed/requested.
+- Turned the Calendar sidebar entry from a non-navigating placeholder into a
+  real link.
+- Made "New Event" a working create flow: the button opens a `Popover` form
+  (title, date, time, location, event-type pills, calendar pills) - the
+  first "create" UI in the app (`createTask`/`createHouse` exist as mock
+  services but had no UI wired to them). Validates title/time are present,
+  appends the new event to page-local state (mirrors the `completedTaskIds`
+  pattern in `home-dashboard.tsx`; no backend), expands the active filters so
+  the new event's category/calendar can't be hidden by an existing filter,
+  and jumps the month grid/mini calendar to the event's date so it's always
+  immediately visible.
+
+Features started:
+
+- None beyond the above; remaining sidebar nav items (Projects, Tasks,
+  Crews, Files, Storyboard, Messages, Bookings, Analytics, Settings) are
+  still non-navigating placeholders.
+
+Files modified:
+
+- `apps/web/src/components/layout/nav-items.ts` (widened `NavItem.href` to
+  include `"/calendar"`)
+- `docs/features.md`, `docs/roadmap.md` (Calendar status)
+
+Files created:
+
+- `apps/web/src/app/(app)/calendar/page.tsx`
+- `apps/web/src/components/calendar/*` (page, header, month/year dropdown,
+  view tabs, filters popover, month grid, event pill, legend, empty view,
+  mini calendar, calendars panel, upcoming panel, new-event popover form,
+  mock data)
+- `apps/web/src/lib/calendar-utils.ts` (Monday-start month grid, date
+  formatting/comparison helpers shared by the main grid, mini calendar, and
+  month/year jump)
+
+Files removed:
+
+- `apps/web/src/components/calendar/new-event-button.tsx` (superseded by
+  `new-event-popover.tsx`, which renders the same trigger button plus the
+  create-event form)
+
+Database changes:
+
+- None. Calendar events, sources, and categories are frontend mock data
+  colocated in `components/calendar/calendar-data.ts`, matching the existing
+  `components/dashboard/*-data.ts` convention.
+
+API changes:
+
+- None.
+
+Architecture changes:
+
+- None. Follows the existing route + Tailwind/shadcn + colocated-mock-data
+  pattern used by the dashboard and houses screens.
+- `CATEGORY_ORDER` was copy-pasted in `calendar-legend.tsx` and
+  `calendar-filters-popover.tsx`; adding a third consumer (the new-event
+  form) crossed the line from coincidental to real duplication, so it moved
+  to a single export in `calendar-data.ts`.
+
+Bugs fixed:
+
+- `getMonthGrid` originally reconstructed padding days as
+  `new Date(year, month, gridStart.getDate() + i)`, which reused the
+  rolled-over previous month's day-of-month against the _current_ month
+  index once the leading offset crossed a month boundary (e.g. rendering a
+  nonexistent "June 31" instead of "July 1"). Fixed by computing every grid
+  day as an offset from the 1st of the visible month directly.
+- The Calendar page's `Tabs`/`TabsContent` (a flex column) had no
+  `min-w-0`, so at narrow viewports its month-grid child refused to shrink
+  and inflated the flex box past its allotted column width. Added `min-w-0`
+  at the usage site (matching the fix already applied once for the
+  dashboard, per the entry above) and gave the month grid its own
+  `overflow-x-auto` with a `min-w-[42rem]` inner track so an unavoidably
+  wide 7-column grid scrolls locally instead of widening the page.
+
+Known bugs:
+
+- None currently tracked for this page. Separately confirmed (not
+  introduced by this change): the app shell's sidebar/topbar have no
+  responsive breakpoint yet (`compact` is only tied to the `/houses/new`
+  route, not viewport width), so every authenticated page overflows
+  horizontally on narrow mobile widths; the existing home dashboard
+  overflows more than this page at the same width. Fixing that is shared
+  app-shell work, out of scope for this page.
+
+Technical debt:
+
+- Same as the entry above (remaining nav destinations, `base-workspace.service.ts`
+  / `types/base.ts` single-file mock domains).
+- Mobile-responsive sidebar/topbar (see "Known bugs" above) is unaddressed
+  app-shell debt, pre-existing before this session.
+
+Next task:
+
+- Build the next dedicated page (Projects or Tasks), following the same
+  route + Tailwind/shadcn + mock-service pattern.

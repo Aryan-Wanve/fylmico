@@ -41,11 +41,12 @@ Progress:
 - Frontend state-management boundaries: local per-panel state, one shared
   workspace context for cross-page data. No server-state/query library
   chosen yet since only mock data exists.
-- Loading/empty/error/success states: present on the login and onboarding
-  flows; not yet audited across every dashboard panel.
-- Remaining nav destinations (Projects, Calendar, Tasks, Crews, Files,
-  Storyboard, Messages, Bookings, Analytics, Settings) are scaffolded as
-  non-navigating sidebar entries only; no routes exist for them yet.
+- Loading/empty/error/success states: present on the login, onboarding, and
+  calendar flows; not yet audited across every dashboard panel.
+- Calendar is now a real route (`/calendar`); see Phase 5 below.
+- Remaining nav destinations (Projects, Tasks, Crews, Files, Storyboard,
+  Messages, Bookings, Analytics, Settings) are scaffolded as non-navigating
+  sidebar entries only; no routes exist for them yet.
 
 ### Phase 3: Frontend Authentication and Organizations
 
@@ -92,7 +93,7 @@ Scope:
 
 ### Phase 5: Frontend Collaboration Core
 
-Status: Planned
+Status: In progress
 
 Priority: High
 
@@ -106,6 +107,16 @@ Scope:
 - Kanban UI.
 - Calendar UI.
 - Realtime public event contracts and mocked realtime behavior.
+
+Progress:
+
+- Calendar UI: complete for Month view (`/calendar`, pixel-matched to
+  design reference) - header with date navigation, month/year jump,
+  Month/Week/Day tabs, and event-type filters; a month grid with colored
+  event pills and a legend; a mini calendar, calendar-source checklist,
+  and upcoming-events panel in the right rail. Week and Day tabs show a
+  "coming soon" state; no other collaboration-core UI (chat, notifications,
+  tasks, kanban) has started.
 
 ### Phase 6: Frontend Creative Production Modules
 
