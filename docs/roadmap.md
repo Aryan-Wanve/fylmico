@@ -1,68 +1,17 @@
 # Roadmap
 
-## Current Milestone
-
-### Phase 1: Foundation and Planning
-
-Status: In progress
-
-Priority: Critical
-
-Estimated completion: TBD
-
-Scope:
-
-- Complete architecture design.
-- Complete frontend folder structure design.
-- Complete frontend/backend independence model.
-- Complete public API contract workflow.
-- Complete mock service workflow.
-- Complete frontend state-management boundaries.
-- Complete design-system direction.
-- Complete coding standards.
-- Create ADR system.
-- Create project memory files.
-
-Exit criteria:
-
-- Architecture is documented and has ADR coverage.
-- Frontend/backend independence is documented.
-- API contract workflow is documented before frontend features are built.
-- Mock service workflow is documented before frontend features are built.
-- Backend implementation remains outside this workstream.
-- Permanent AI and product principle documents exist.
-- Session log and master index are maintained.
-
-Progress:
-
-- Documentation scaffold: complete.
-- Permanent AI/product docs: complete.
-- Baseline ADRs: complete.
-- Sprint 1 complete technical architecture: complete.
-- Database architecture baseline: complete.
-- API architecture baseline: complete.
-- Authentication and authorization architecture baseline: complete.
-- Organization and project hierarchy baseline: complete.
-- File storage architecture baseline: complete.
-- Realtime architecture baseline: complete.
-- AI integration architecture baseline: complete.
-- Future mobile compatibility baseline: complete.
-- Deployment and scaling architecture baseline: complete.
-- Frontend/backend independence ADR: complete.
-- Application features: not started.
-
-Current development rule:
+## Standing Development Rule
 
 - Build frontend only.
 - Define API contracts and mock services whenever backend functionality is
   needed.
 - Never implement backend functionality in this workstream.
 
-## Future Milestones
+## Current Milestone
 
 ### Phase 2: Frontend Application Scaffold / Sprint 2
 
-Status: Planned
+Status: In progress
 
 Priority: Critical
 
@@ -79,9 +28,28 @@ Scope:
 - Add loading, empty, error, and success state patterns.
 - Add scaffold documentation updates and validation commands.
 
+Progress:
+
+- Design-system foundation (Tailwind v4 + shadcn/ui, `components/ui/*`):
+  complete.
+- Real Next.js routing under an `(app)` route group, replacing the earlier
+  single-component view-switcher: complete.
+- App shell (compact and full sidebar, topbar with search/create/
+  notifications): complete.
+- Workspace bootstrap and auth-gate context (`lib/workspace-context.tsx`):
+  complete.
+- Frontend state-management boundaries: local per-panel state, one shared
+  workspace context for cross-page data. No server-state/query library
+  chosen yet since only mock data exists.
+- Loading/empty/error/success states: present on the login and onboarding
+  flows; not yet audited across every dashboard panel.
+- Remaining nav destinations (Projects, Calendar, Tasks, Crews, Files,
+  Storyboard, Messages, Bookings, Analytics, Settings) are scaffolded as
+  non-navigating sidebar entries only; no routes exist for them yet.
+
 ### Phase 3: Frontend Authentication and Organizations
 
-Status: Planned
+Status: In progress
 
 Priority: Critical
 
@@ -95,6 +63,16 @@ Scope:
 - Organization switcher and workspace UI.
 - Organization/member API contracts.
 - Mock organization and membership data.
+
+Progress:
+
+- Authentication UI and mock auth service: complete (`/login`, pixel-matched
+  to design reference).
+- House creation/join onboarding UI (this product's equivalent of an
+  "organization" is a House): complete (`/houses/new`).
+- Organization/house switcher (for users in multiple houses): not started.
+- Public API contracts for auth/houses beyond the base set already in
+  `docs/api.md`: not started.
 
 ### Phase 4: Frontend Projects and Clients
 
@@ -170,7 +148,11 @@ Scope:
 
 ## Completed Milestones
 
-None.
+### Phase 1: Foundation and Planning
+
+Baseline architecture, ADR coverage (0001-0017), frontend/backend
+independence model, and permanent AI/product principle documents are all in
+place. See [docs/adr](docs/adr) for the full decision record.
 
 ## Backlog
 

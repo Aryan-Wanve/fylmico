@@ -109,19 +109,24 @@ API remains the enforcement source.
 
 ## Current Milestone
 
-Phase 1: foundation and planning. Sprint 1 system architecture documentation is
-complete. The workflow has changed to frontend-only development with a
-black-box backend and public API contracts.
+Phase 1 (foundation and planning) is complete. The project is now in Phase
+2/3: frontend application scaffold and early authentication UI, built
+frontend-only with a black-box backend and public API contracts (ADR 0017).
 
 ## Current Progress
 
-Sprint 0 foundation scaffold exists. The repository has a root npm workspace,
-Next.js App Router app in `apps/web`, TypeScript, TailwindCSS, ESLint,
-Prettier, Husky, lint-staged, Docker, GitHub Actions CI, and a Hostinger
-standalone startup entry.
-Because the deployed Hostinger site continued returning HTTP 403, Sprint 0 also
-supports a static Git deployment path with `npm run build:hostinger`, which
-publishes to `dist/hostinger`.
+The repository has a root npm workspace, Next.js App Router app in
+`apps/web`, TypeScript, ESLint, Prettier, Husky, lint-staged, Docker, GitHub
+Actions CI, and both a Hostinger Node.js standalone startup entry and a
+static Git deployment path (`npm run build:hostinger`, publishing to
+`dist/hostinger` and mirroring to the repository root).
+
+`apps/web` now uses Tailwind v4 + shadcn/ui as its actual design system
+(`components/ui/*`). Real routes exist under an `(app)` route group: a home
+dashboard (`/`), a no-house onboarding flow (`/houses/new`), and a login
+screen (`/login`) outside the group. All are backed by the mock service in
+`services/base-workspace.service.ts` per ADR 0017 — no backend
+implementation exists in this workstream.
 
 Sprint 1 architecture documentation is complete in `docs/architecture.md` with
 ADR coverage through ADR 0016. It covers overall system architecture, frontend,
@@ -129,7 +134,7 @@ backend, database, API, authentication, authorization, organization hierarchy,
 project hierarchy, file storage, realtime, AI integration, future mobile
 compatibility, deployment, and scaling strategy.
 
-ADR 0017 records the new frontend/backend independence model.
+ADR 0017 records the frontend/backend independence model.
 
 ## Current Blockers
 
@@ -147,13 +152,19 @@ ADR 0017 records the new frontend/backend independence model.
 
 ## Latest Implemented Feature
 
-None. No product features have been implemented.
+Full frontend rebuild on the new design system: login screen, authenticated
+app shell (sidebar/topbar), home dashboard (stat cards, schedule, tasks,
+projects, activity), and no-house onboarding. See
+[docs/progress.md](progress.md) for the detailed session log.
 
 ## Next Feature
 
-The next frontend feature should be built as if the backend already exists:
-design UI, define API contract, create mock service, build components, connect
-to mocks, handle loading/empty/error/success states, and update documentation.
+The remaining sidebar destinations (Projects, Calendar, Tasks, Crews, Files,
+Storyboard, Messages, Bookings, Analytics, Settings) each need their own
+route, following the same pattern already established: design UI against the
+shared reference mockups, define/extend the API contract, create or extend a
+mock service, build components, connect to mocks, handle loading/empty/error/
+success states, and update documentation.
 
 ## Things Never To Change Without Explicit Decision
 

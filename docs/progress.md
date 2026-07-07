@@ -555,3 +555,116 @@ Next task:
 
 - Extract repeated buttons, panels, fields, popovers, and dashboard cards into
   reusable design-system primitives while continuing frontend-only development.
+
+## 2026-07-07 Design System Migration and Route-Based Rebuild
+
+Current milestone: Phase 2/3 - frontend application scaffold and early
+authentication UI
+
+Completion percentage: 88%
+
+Features completed:
+
+- Migrated the design system from hand-written CSS to Tailwind v4 + shadcn/ui
+  (`components/ui/*`, Base UI primitives, "base-nova" style).
+- Rebuilt the login screen as a real route (`/login`), pixel-matched to a
+  provided design reference, wired to the existing mock auth service.
+- Replaced the single-component, state-switched `BaseWorkspace` with real
+  Next.js routes under an `(app)` route group: a shared authenticated layout
+  (auth gate, workspace bootstrap, house-presence redirect), a home dashboard
+  (`/`), and a no-house onboarding screen (`/houses/new`).
+- Built the app shell: sidebar (compact icon-rail on onboarding, full labelled
+  nav elsewhere, upgrade card, user footer) and topbar (search, create menu,
+  notification popover, avatar).
+- Home dashboard: greeting header, stat cards with inline SVG sparklines,
+  upcoming schedule, my tasks (working checkbox toggle), recent projects
+  (real sourced photos), recent activity (real sourced avatar photos).
+- Sourced and vetted free-license stock photos for project thumbnails and
+  team avatars; rejected one candidate for a visible third-party brand logo.
+
+Features started:
+
+- None beyond the above; remaining sidebar nav items (Projects, Calendar,
+  Tasks, Crews, Files, Storyboard, Messages, Bookings, Analytics, Settings)
+  are intentionally left as non-navigating placeholders for future passes.
+
+Files modified:
+
+- `apps/web/src/app/globals.css` (stripped ~1900 lines of dead hand-written
+  CSS, kept theme tokens/resets/shadcn layer)
+- `apps/web/src/app/layout.tsx` (shadcn font wiring)
+- `apps/web/package.json`, `package-lock.json` (new dependencies)
+- `README.md`, `docs/roadmap.md` (phase/milestone status)
+
+Files created:
+
+- `apps/web/components.json` and `apps/web/src/components/ui/*` (shadcn
+  primitives)
+- `apps/web/src/components/login/login-page.tsx`,
+  `apps/web/src/app/login/page.tsx`, `apps/web/src/lib/session.ts`
+- `apps/web/src/app/(app)/layout.tsx`,
+  `apps/web/src/lib/workspace-context.tsx`,
+  `apps/web/src/components/layout/*`
+- `apps/web/src/app/(app)/houses/new/page.tsx`,
+  `apps/web/src/components/houses/*`
+- `apps/web/src/app/(app)/page.tsx`, `apps/web/src/components/dashboard/*`
+- `apps/web/public/images/login-hero.png`,
+  `apps/web/public/images/dashboard/*`
+
+Files removed:
+
+- `apps/web/src/components/base-workspace.tsx` (superseded entirely)
+- `apps/web/src/app/page.tsx` (redirect logic moved into `(app)/layout.tsx`)
+- `apps/web/public/images/login/{mail,lock,eye}.png` (replaced by
+  lucide-react icons)
+- `.codex-remote-attachments/` (accidentally-committed cache from a
+  different AI coding tool, unrelated to this project)
+
+Database changes:
+
+- None. `services/base-workspace.service.ts` and `types/base.ts` intentionally
+  left as a single file each this pass; domain-splitting them is deferred
+  until a feature actually needs it.
+
+API changes:
+
+- None. Existing mock service contracts continue to power the frontend.
+
+Architecture changes:
+
+- Adopted Tailwind v4 + shadcn/ui as the project's actual design system,
+  matching what `docs/tech-stack.md` and `PROJECT_SPEC.md` already specified
+  but the code had never used.
+- Introduced a `WorkspaceContext` as the single source of truth for the
+  authenticated workspace snapshot, replacing ad hoc re-fetching after every
+  mutation.
+- Confirmed (and fixed) that `main` had not been merged with the latest
+  `frontend` work; this session's commits were merged into `main` and pushed.
+
+Bugs fixed:
+
+- A `useSyncExternalStore` hydration race in the auth gate could redirect an
+  already-logged-in user to `/login` before the real session value settled;
+  fixed with an explicit post-hydration guard.
+- Flex/grid children without `min-w-0` were forcing horizontal overflow on
+  the dashboard (stat cards, recent projects strip) at common viewport
+  widths.
+
+Known bugs:
+
+- None currently tracked for the shipped screens.
+
+Technical debt:
+
+- Remaining sidebar destinations have no routes yet (by design, deferred).
+- `base-workspace.service.ts` / `types/base.ts` still bundle all mock
+  domains in one file each; splitting per `docs/api.md`'s recommended
+  `lib/api/<domain>.ts` + `services/<domain>.service.ts` pattern is deferred
+  until the next domain (tasks, chat, etc.) gets its own dedicated page.
+
+Next task:
+
+- Build the next dedicated page (Projects, Calendar, or Tasks) one at a time,
+  using the previously-shared design mockups as ground truth, following the
+  same route + Tailwind/shadcn + mock-service pattern established this
+  session.
