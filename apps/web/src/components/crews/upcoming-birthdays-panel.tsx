@@ -1,0 +1,94 @@
+import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AVATAR_IMAGES,
+  getInitials,
+  type CrewMember
+} from "@/components/crews/crew-data";
+
+function daysUntilBirthday(birthday: string, today: Date): number {
+  const [month, day] = birthday.split("-").map(Number);
+  let next = new Date(today.getFullYear(), month - 1, day);
+  next.setHours(0, 0, 0, 0);
+
+  const start = new Date(today);
+  start.setHours(0, 0, 0, 0);
+
+  if (next.getTime() < start.getTime()) {
+    next = new Date(today.getFullYear() + 1, month - 1, day);
+  }
+
+  return Math.round((next.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+export function UpcomingBirthdaysPanel({
+  members
+}: {
+  members: CrewMember[];
+}) {
+  const today = new Date();
+
+  const upcoming = members
+    .filter((member): member is CrewMember & { birthday: string } =>
+      Boolean(member.birthday)
+    )
+    .map((member) => ({
+      member,
+      daysAway: daysUntilBirthday(member.birthday, today)
+    }))
+    .sort((a, b) => a.daysAway - b.daysAway)
+    .slice(0, 4);
+
+  return (
+    <DashboardPanel action={{ label: "View all" }} title="Upcoming Birthdays">
+      <div className="grid">
+        {upcoming.length > 0 ? (
+          upcoming.map(({ member }) => {
+            const [month, day] = member.birthday.split("-").map(Number);
+            const monthLabel = new Date(2000, month - 1, 1).toLocaleDateString(
+              "en-US",
+              { month: "short" }
+            );
+            const avatarImage = member.avatarId
+              ? AVATAR_IMAGES[member.avatarId]
+              : undefined;
+
+            return (
+              <div
+                className="flex items-center gap-3 border-b border-black/5 px-6 py-3.5 last:border-b-0"
+                key={member.id}
+              >
+                <Avatar>
+                  {avatarImage ? (
+                    <AvatarImage alt="" src={avatarImage} />
+                  ) : null}
+                  <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <strong className="block truncate text-sm font-semibold text-[#11142c]">
+                    {member.name}
+                  </strong>
+                  <span className="text-xs text-[#8a90a3]">
+                    {member.jobTitle}
+                  </span>
+                </div>
+                <span className="grid shrink-0 place-items-center rounded-lg bg-[#654cff]/[0.08] px-2.5 py-1 text-center">
+                  <span className="text-[0.65rem] font-bold text-[#654cff] uppercase">
+                    {monthLabel}
+                  </span>
+                  <span className="text-sm font-black text-[#654cff]">
+                    {day}
+                  </span>
+                </span>
+              </div>
+            );
+          })
+        ) : (
+          <p className="px-6 py-6 text-center text-sm text-[#8a90a3]">
+            No birthdays coming up.
+          </p>
+        )}
+      </div>
+    </DashboardPanel>
+  );
+}
