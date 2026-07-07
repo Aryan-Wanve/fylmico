@@ -21,15 +21,15 @@ export function AppSidebar({
     <aside
       className={
         compact
-          ? "flex w-20 flex-col items-center gap-6 border-r border-black/5 bg-white/70 py-6 backdrop-blur-xl"
-          : "flex w-[17rem] flex-col gap-6 border-r border-black/5 bg-white/70 px-5 py-6 backdrop-blur-xl"
+          ? "flex h-full w-20 shrink-0 flex-col items-center gap-6 overflow-hidden border-r border-black/5 bg-white/70 py-6 backdrop-blur-xl"
+          : "flex h-full w-[17rem] shrink-0 flex-col gap-6 overflow-hidden border-r border-black/5 bg-white/70 px-5 py-6 backdrop-blur-xl"
       }
     >
       <Link
         className={
           compact
-            ? "grid place-items-center"
-            : "flex items-center gap-2.5 px-1.5"
+            ? "grid shrink-0 place-items-center"
+            : "flex shrink-0 items-center gap-2.5 px-1.5"
         }
         href="/"
       >
@@ -44,7 +44,7 @@ export function AppSidebar({
         ) : null}
       </Link>
 
-      <nav className="flex flex-1 flex-col gap-1">
+      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.href !== null && pathname === item.href;
@@ -102,10 +102,10 @@ export function AppSidebar({
       </nav>
 
       {!compact ? (
-        <>
+        <div className="grid shrink-0 gap-6">
           <UpgradeCard />
           <SidebarUserFooter user={user} />
-        </>
+        </div>
       ) : null}
     </aside>
   );

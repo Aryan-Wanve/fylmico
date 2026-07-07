@@ -10,7 +10,7 @@ export function AppTopbar({ compact }: { compact: boolean }) {
   const { workspace } = useWorkspace();
 
   return (
-    <header className="flex h-20 items-center justify-between gap-4 border-b border-black/5 bg-white/60 px-8 backdrop-blur-xl">
+    <header className="flex h-20 shrink-0 items-center justify-between gap-4 border-b border-black/5 bg-white/60 px-8 backdrop-blur-xl">
       {!compact ? (
         <div className="flex h-11 w-full max-w-md items-center gap-2.5 rounded-xl border border-black/10 bg-white px-3.5">
           <Search className="h-4 w-4 text-[#8a90a3]" />
