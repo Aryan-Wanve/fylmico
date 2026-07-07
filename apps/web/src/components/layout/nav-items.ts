@@ -16,7 +16,7 @@ import {
 export type NavItem = {
   id: string;
   label: string;
-  href: "/" | null;
+  href: "/" | "/calendar" | null;
   icon: LucideIcon;
   badge?: string;
 };
@@ -24,7 +24,7 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { id: "home", label: "Home", href: "/", icon: Home },
   { id: "projects", label: "Projects", href: null, icon: FolderKanban },
-  { id: "calendar", label: "Calendar", href: null, icon: Calendar },
+  { id: "calendar", label: "Calendar", href: "/calendar", icon: Calendar },
   { id: "tasks", label: "Tasks", href: null, icon: ListChecks },
   { id: "crews", label: "Crews", href: null, icon: Users },
   { id: "files", label: "Files", href: null, icon: Folder },

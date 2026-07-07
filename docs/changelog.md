@@ -60,3 +60,32 @@ Migration notes:
 
 - None. Mock service contracts (`services/base-workspace.service.ts`,
   `types/base.ts`) are unchanged, so no data-shape migration is needed.
+
+## 0.3.0 - 2026-07-07
+
+Summary:
+
+- Added the Calendar page (`/calendar`) as a real Next.js route,
+  pixel-matched to a provided design reference: month grid with colored
+  event pills and a legend, header with date navigation/month-year
+  jump/Month-Week-Day tabs/category filters, and a right rail with a mini
+  calendar, calendar-source checklist, and an upcoming-events panel.
+- Week and Day tabs show a "coming soon" empty state; only Month is fully
+  built out.
+- Turned the sidebar's Calendar entry from a non-navigating placeholder
+  into a real link.
+- Added `lib/calendar-utils.ts` (month-grid and date helpers) and
+  `components/calendar/calendar-data.ts` (mock events, categories, and
+  calendar sources), following the existing colocated-mock-data convention.
+- Made "New Event" a working create flow: a Popover form (title, date,
+  time, location, event-type, and calendar) that appends to page-local
+  event state, expands active filters so the new event is never hidden,
+  and jumps the grid/mini calendar to the new event's date.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- None.
