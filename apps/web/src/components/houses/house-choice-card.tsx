@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Plus, UserRoundPlus, Users } from "lucide-react";
 import { HouseChoiceRow } from "@/components/houses/house-choice-row";
 
@@ -42,12 +43,12 @@ export function HouseChoiceCard({
         />
       </div>
 
-      <a
+      <Link
         className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-[#654cff]"
-        href="#learn-houses"
+        href="/houses/learn"
       >
         Learn more about houses →
-      </a>
+      </Link>
     </section>
   );
 }
