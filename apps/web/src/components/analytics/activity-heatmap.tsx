@@ -1,0 +1,51 @@
+import { activityHeatmap } from "@/components/analytics/analytics-data";
+
+const INTENSITY_CLASSES = [
+  "bg-black/[0.04]",
+  "bg-[#654cff]/20",
+  "bg-[#654cff]/40",
+  "bg-[#654cff]/65",
+  "bg-[#654cff]/90"
+];
+
+export function ActivityHeatmap() {
+  const { dayLabels, timeLabels, matrix } = activityHeatmap;
+
+  return (
+    <div>
+      <div className="grid grid-cols-[2.5rem_repeat(6,1fr)] gap-1.5 px-6 pt-2">
+        <div />
+        {timeLabels.map((label) => (
+          <div
+            className="text-center text-[0.65rem] font-semibold text-[#8a90a3]"
+            key={label}
+          >
+            {label}
+          </div>
+        ))}
+        {dayLabels.map((day, rowIndex) => (
+          <div className="contents" key={day}>
+            <div className="flex items-center text-xs font-semibold text-[#8a90a3]">
+              {day}
+            </div>
+            {matrix[rowIndex].map((intensity, colIndex) => (
+              <div
+                className={`h-7 rounded-md ${INTENSITY_CLASSES[intensity]}`}
+                key={colIndex}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-end gap-2 px-6 py-3 text-xs font-medium text-[#8a90a3]">
+        <span>Less activity</span>
+        <div className="flex gap-1">
+          {INTENSITY_CLASSES.map((cls) => (
+            <span className={`h-3 w-3 rounded-sm ${cls}`} key={cls} />
+          ))}
+        </div>
+        <span>More activity</span>
+      </div>
+    </div>
+  );
+}
