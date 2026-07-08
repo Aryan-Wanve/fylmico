@@ -26,6 +26,8 @@ export type NavItem = {
     | "/storyboard"
     | "/messages"
     | "/settings"
+    | "/analytics"
+    | "/bookings"
     | null;
   icon: LucideIcon;
   badge?: string;
@@ -51,7 +53,17 @@ export const navItems: NavItem[] = [
     icon: MessageSquare,
     badge: "4"
   },
-  { id: "bookings", label: "Bookings", href: null, icon: CalendarClock },
-  { id: "analytics", label: "Analytics", href: null, icon: BarChart3 },
+  {
+    id: "bookings",
+    label: "Bookings",
+    href: "/bookings",
+    icon: CalendarClock
+  },
+  {
+    id: "analytics",
+    label: "Analytics",
+    href: "/analytics",
+    icon: BarChart3
+  },
   { id: "settings", label: "Settings", href: "/settings", icon: Settings }
 ];
