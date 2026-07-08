@@ -24,7 +24,7 @@ export function StatCard({
   note: string;
   noteTone?: "default" | "positive";
   tone: "violet" | "blue" | "green" | "orange";
-  sparklinePoints: number[];
+  sparklinePoints?: number[];
   extra?: React.ReactNode;
 }) {
   return (
@@ -48,7 +48,9 @@ export function StatCard({
         </p>
         {extra}
       </div>
-      <Sparkline points={sparklinePoints} tone={tone} />
+      {sparklinePoints ? (
+        <Sparkline points={sparklinePoints} tone={tone} />
+      ) : null}
     </article>
   );
 }
