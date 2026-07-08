@@ -1,0 +1,77 @@
+"use client";
+
+import { useState } from "react";
+import { SettingsNav } from "@/components/settings/settings-nav";
+import { SettingsSidebar } from "@/components/settings/settings-sidebar";
+import { ProfileSection } from "@/components/settings/profile-section";
+import { WorkspaceSection } from "@/components/settings/workspace-section";
+import { MembersSection } from "@/components/settings/members-section";
+import { NotificationsSection } from "@/components/settings/notifications-section";
+import { AppearanceSection } from "@/components/settings/appearance-section";
+import { IntegrationsSection } from "@/components/settings/integrations-section";
+import { SecuritySection } from "@/components/settings/security-section";
+import { BillingSection } from "@/components/settings/billing-section";
+import { AdvancedSection } from "@/components/settings/advanced-section";
+import type { SettingsSectionId } from "@/components/settings/settings-data";
+
+const SECTION_CONTENT: Record<SettingsSectionId, React.ComponentType> = {
+  profile: ProfileSection,
+  workspace: WorkspaceSection,
+  members: MembersSection,
+  notifications: NotificationsSection,
+  appearance: AppearanceSection,
+  integrations: IntegrationsSection,
+  security: SecuritySection,
+  billing: BillingSection,
+  advanced: AdvancedSection
+};
+
+export function SettingsPage() {
+  const [activeSection, setActiveSection] =
+    useState<SettingsSectionId>("profile");
+
+  const ActiveSection = SECTION_CONTENT[activeSection];
+
+  function handleDeleteAccount() {
+    window.confirm(
+      "This would permanently delete your account. This is a preview — nothing will actually be deleted."
+    );
+  }
+
+  return (
+    <div className="grid gap-6 p-8">
+      <div>
+        <h1 className="text-3xl font-black text-[#11142c]">Settings</h1>
+        <p className="mt-1 text-[#5f667d]">
+          Manage your account, preferences and workspace settings.
+        </p>
+      </div>
+
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[16rem_1fr_20rem]">
+        <SettingsNav
+          activeSection={activeSection}
+          onSelectSection={setActiveSection}
+        />
+        <div className="min-w-0">
+          <ActiveSection />
+        </div>
+        <SettingsSidebar onDeleteAccount={handleDeleteAccount} />
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/5 pt-4 text-xs text-[#8a90a3]">
+        <span>&copy; 2026 Fylmico. All rights reserved.</span>
+        <div className="flex items-center gap-4">
+          <button className="font-semibold hover:text-[#4b5268]" type="button">
+            Privacy Policy
+          </button>
+          <button className="font-semibold hover:text-[#4b5268]" type="button">
+            Terms of Service
+          </button>
+          <button className="font-semibold hover:text-[#4b5268]" type="button">
+            Support
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
