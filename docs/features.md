@@ -183,7 +183,7 @@ added without rewriting core production workflows.
 | Approvals       | Planned     | High     |
 | Version control | Planned     | High     |
 | Publishing      | Planned     | Medium   |
-| Analytics       | Planned     | Medium   |
+| Analytics       | In progress | Medium   |
 | Dashboards      | Planned     | High     |
 | Global search   | Planned     | Medium   |
 | Templates       | Planned     | Medium   |

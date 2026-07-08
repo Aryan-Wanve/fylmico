@@ -784,3 +784,195 @@ Next task:
 
 - Build the next dedicated page (Projects or Tasks), following the same
   route + Tailwind/shadcn + mock-service pattern.
+
+## 2026-07-08 Analytics Page
+
+Current milestone: Phase 2/3 - frontend application scaffold and early
+authentication UI
+
+Completion percentage: 92%
+
+Features completed:
+
+- Built the Analytics page (`/analytics`) as a real route, pixel-matched to
+  a provided design reference: header (date-range/Filters/Export, all
+  decorative labels - no working date picker/filtering, matching the
+  "Add Calendar" decorative-button precedent), 5 stat cards (reusing
+  `dashboard/stat-card.tsx` + `sparkline.tsx` as-is), a multi-series
+  project-progress line/area chart, a task-status donut, a weekly
+  time-logged mini chart with a peak callout, a time-distribution donut, an
+  activity heatmap, and top-active-projects/top-contributors/team-workload
+  list panels, plus a bottom insight banner.
+- No charting library was added; every chart is hand-rolled inline SVG,
+  extending the pattern `dashboard/sparkline.tsx` already established
+  (multi-line chart and donut chart are new reusable primitives under
+  `components/analytics/`).
+- Turned the sidebar's Analytics entry from a non-navigating placeholder
+  into a real link.
+- Reused existing sourced assets instead of inventing new ones: project
+  thumbnails from `public/images/dashboard/project-*.jpg` for Top Active
+  Projects, and member avatars via the existing `AvatarWithStatus`
+  component for Top Contributors/Team Workload.
+
+Features started:
+
+- None beyond the above. This page is read-only/reporting - no mutating
+  interactions, unlike Calendar's event-creation flow.
+
+Files modified:
+
+- `apps/web/src/components/layout/nav-items.ts` (added `"/analytics"` to
+  the `NavItem.href` union; pointed the analytics entry at it)
+- `docs/features.md`, `docs/roadmap.md` (Analytics status)
+
+Files created:
+
+- `apps/web/src/app/(app)/analytics/page.tsx`
+- `apps/web/src/components/analytics/*` (page, header, stat-cards-row,
+  project-progress-panel, task-status-panel, time-logged-panel,
+  time-distribution-panel, activity-heatmap-panel, top-active-projects-panel,
+  top-contributors-panel, team-workload-panel, insight-banner, chart
+  primitives `multi-line-chart.tsx`/`donut-chart.tsx`/`mini-area-chart.tsx`/
+  `activity-heatmap.tsx`, mock data)
+
+Database changes:
+
+- None. Analytics data is frontend mock data colocated in
+  `components/analytics/analytics-data.ts`, matching the existing
+  `*-data.ts` convention.
+
+API changes:
+
+- None.
+
+Architecture changes:
+
+- None new. Extends the established route + Tailwind/shadcn +
+  colocated-mock-data pattern; the only structural addition is the
+  hand-rolled SVG chart primitives (`multi-line-chart.tsx`, `donut-chart.tsx`,
+  `mini-area-chart.tsx`), reusable by any future reporting page.
+
+Bugs fixed:
+
+- `donut-chart.tsx` originally mutated a `cumulative` closure variable
+  inside the `.map()` used directly in JSX (to compute each arc's
+  `strokeDashoffset`), which the React Compiler's immutability rule
+  correctly flags as unsafe (`react-hooks/immutability`). Fixed by
+  precomputing all arc offsets in a plain `for` loop before the JSX return,
+  so no mutation happens inside the render-time map callback.
+
+Known bugs:
+
+- Same pre-existing app-shell sidebar/topbar mobile-overflow issue noted
+  under Calendar above; not introduced or worsened by this page.
+- Unrelated to this page's own code: mid-session, `npm run lint` and
+  `npm run typecheck` surfaced failures from other, already-committed work
+  that landed in parallel on this branch during this session (Projects,
+  Tasks, Crews, Files, Storyboard, Messages, Settings pages) -
+  `crews-page.tsx` and `storage-overview-panel.tsx` have the same
+  React-Compiler "reassign after render" issue this session's own
+  `donut-chart.tsx` had (see Bugs fixed) but were left as-is since they
+  belong to work this session didn't do; `profile-section.tsx` and
+  `settings-data.ts` have a pre-existing `<img>` warning and an unused
+  import. Also found: `node_modules` was missing the newly-added `motion`
+  dependency and `.next/types/routes.d.ts` was stale for the new routes
+  until a fresh `npm install` + `npm run build` resolved both.
+
+Technical debt:
+
+- Same as the entries above (remaining `Bookings` nav placeholder,
+  `base-workspace.service.ts` / `types/base.ts` single-file mock domains,
+  mobile-responsive sidebar/topbar).
+
+Next task:
+
+- Build the next dedicated page (Projects and several others already
+  landed outside this session - confirm with the team what's actually
+  left, e.g. Bookings), following the same route + Tailwind/shadcn +
+  mock-service pattern.
+
+## 2026-07-08 Bookings Page
+
+Current milestone: Phase 2/3 - frontend application scaffold and early
+authentication UI
+
+Completion percentage: 93%
+
+Features completed:
+
+- Built the Bookings page (`/bookings`) as a real route, pixel-matched to
+  a provided design reference: header, a status/scope tabs bar (All
+  Bookings/My Bookings/Pending Approval/Confirmed/Cancelled - the first
+  four filter the table client-side, Cancelled too) with "New Booking"
+  and "Filters" as decorative buttons, 4 stat cards (reusing
+  `dashboard/stat-card.tsx`), a bookings table (resource thumbnail/name,
+  category tag, project + phase, dates, status pill, booked-by avatar),
+  decorative pagination, and a right rail with a "Bookings by Type" donut
+  (reusing `analytics/donut-chart.tsx`), an Upcoming Bookings list, and a
+  mini "Booking Calendar" (reusing `calendar/mini-calendar.tsx`).
+- Turned the sidebar's Bookings entry from a non-navigating placeholder
+  into a real link - this was the last remaining placeholder nav item.
+- Made `StatCard`'s `sparklinePoints` prop optional (was required) so the
+  "Pending Approval" card can render without a sparkline, matching the
+  design reference. Backward-compatible; existing callers unaffected.
+
+Features started:
+
+- None beyond the above.
+
+Files modified:
+
+- `apps/web/src/components/dashboard/stat-card.tsx` (`sparklinePoints`
+  made optional)
+- `apps/web/src/components/layout/nav-items.ts` (added `"/bookings"` to
+  the `NavItem.href` union; pointed the bookings entry at it)
+- `docs/roadmap.md` (Bookings/Calendar status)
+
+Files created:
+
+- `apps/web/src/app/(app)/bookings/page.tsx`
+- `apps/web/src/components/bookings/*` (page, header, tabs-bar,
+  stat-cards, table, pagination, bookings-by-type-panel,
+  upcoming-bookings-panel, booking-calendar-panel, mock data)
+
+Database changes:
+
+- None. Booking data is frontend mock data colocated in
+  `components/bookings/bookings-data.ts`, matching the existing
+  `*-data.ts` convention. No real equipment/venue photo assets exist for
+  this domain, so table/panel thumbnails use tinted category icon tiles
+  (Building2/Camera/DoorOpen) instead of photos, rather than sourcing new
+  stock images for a mock page.
+
+API changes:
+
+- None.
+
+Architecture changes:
+
+- None new. This page is the first to reuse UI primitives across feature
+  folders (Calendar's `MiniCalendar`, Analytics's `DonutChart`), which
+  worked cleanly since both were already generic/presentational with no
+  domain coupling.
+
+Bugs fixed:
+
+- None new this session.
+
+Known bugs:
+
+- Same pre-existing app-shell sidebar/topbar mobile-overflow issue noted
+  under Calendar/Analytics above; not introduced or worsened by this page.
+
+Technical debt:
+
+- Same as prior entries (`base-workspace.service.ts` / `types/base.ts`
+  single-file mock domains, mobile-responsive sidebar/topbar). The
+  sidebar now has no remaining non-navigating placeholder items.
+
+Next task:
+
+- Confirm with the team what's actually left to build given how much
+  landed in parallel across sessions; consider backfilling
+  progress/session/changelog documentation for the Projects/Tasks/Crews/
+  Files/Storyboard/Messages/Settings work if that wasn't done elsewhere.

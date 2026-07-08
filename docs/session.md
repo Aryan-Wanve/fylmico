@@ -503,3 +503,164 @@ Next session objective:
 
 - Build the next dedicated page (Projects or Tasks), following the same
   route + Tailwind/shadcn + mock-service pattern.
+
+## Session 12
+
+Date: 2026-07-08
+
+Goal:
+
+- Build the Analytics page (`/analytics`) as a real Next.js route,
+  pixel-matched to a provided design reference.
+
+Completed work:
+
+- Added `components/analytics/analytics-data.ts` (stat cards, project
+  progress series, task status, weekly time-logged series, time
+  distribution, activity heatmap matrix, top projects, contributors, and
+  workload - all colocated mock data, no backend).
+- Added reusable hand-rolled SVG chart primitives: `multi-line-chart.tsx`
+  (multi-series line/area chart with end-of-line value badges),
+  `donut-chart.tsx` (segment-based donut, reused by both Task Status and
+  Time Distribution panels), `mini-area-chart.tsx` (small weekly area chart
+  with a peak callout), and `activity-heatmap.tsx` (day x time-of-day
+  intensity grid). No charting library was added; this extends the pattern
+  already established by `dashboard/sparkline.tsx`.
+- Built the Analytics page and its panels: header, 5 stat cards (reusing
+  `dashboard/stat-card.tsx`/`sparkline.tsx` unmodified), Project Progress,
+  Task Status, Time Logged, Time Distribution, Activity Heatmap, Top Active
+  Projects, Top Contributors, Team Workload, and a bottom insight banner.
+- Reused existing sourced assets (project thumbnails, member avatars via
+  `AvatarWithStatus`) instead of inventing new ones.
+- Turned the sidebar's Analytics entry from a non-navigating placeholder
+  into a real link.
+
+Problems encountered:
+
+- `donut-chart.tsx` initially mutated a `cumulative` variable inside the
+  `.map()` used in JSX to compute each arc's `strokeDashoffset`, which
+  violates the React Compiler's immutability rule
+  (`react-hooks/immutability`, "Cannot reassign variable after render
+  completes"). Fixed by precomputing all arc offsets in a plain `for` loop
+  before the JSX return.
+- Substantial other work landed on this branch in parallel during this
+  session (Projects, Tasks, Crews, Files, Storyboard, Messages, Settings
+  pages all got real routes) without corresponding `docs/progress.md`/
+  `docs/session.md`/`docs/changelog.md` entries. Left that work's own
+  documentation as-is rather than guessing at decisions this session
+  wasn't part of; only updated the `Analytics` row in `docs/features.md`
+  and corrected the now-stale "non-navigating placeholder" list in
+  `docs/roadmap.md` Phase 2 to reflect which routes actually exist now.
+  `node_modules` was also missing the `motion` dependency those commits
+  added, and `.next/types/routes.d.ts` was stale for the new routes;
+  `npm install` + `npm run build` fixed both before `npm run lint`/
+  `npm run typecheck` could pass cleanly for this session's own files
+  (unrelated pre-existing errors remain in `crews-page.tsx`,
+  `storage-overview-panel.tsx`, `profile-section.tsx`, and
+  `settings-data.ts` - not this session's files, left untouched).
+- The local browser-preview tooling got stuck mid-session (an orphaned
+  `next dev` process from earlier in the session was holding Next.js's
+  single-instance lock, so new preview servers silently failed to start).
+  Diagnosed via the dev server's own error output and stopped that specific
+  process (not a broad process kill) to unblock it.
+
+Decisions made:
+
+- No charting library - hand-rolled SVG only, consistent with
+  `sparkline.tsx` and to avoid a new dependency for a page that's still
+  frontend-mock-only.
+- Analytics is read-only/reporting; the header's date-range, Filters, and
+  Export controls are decorative labels only (no working date picker or
+  export), matching the existing "Add Calendar" decorative-button
+  precedent from Calendar - explicitly scoped out rather than half-built.
+
+Validation:
+
+- `npm install`, `npm run lint`, `npm run typecheck`, `npm run build` all
+  passed for this session's files (pre-existing errors in other sessions'
+  files, listed above, are unrelated and unchanged).
+- Browser-verified `/analytics`: all 5 stat cards render with sparklines;
+  the multi-line chart renders 4 distinct series with a legend and correct
+  end-of-line percentage badges; both donut charts render correct-looking
+  arcs with matching legends; the heatmap grid renders with its legend;
+  Top Active Projects/Top Contributors/Team Workload render with the reused
+  avatar/project images and progress bars; sidebar "Analytics" now
+  navigates and shows the active state.
+
+Next session objective:
+
+- Confirm with the team what's actually left to build given how much
+  landed in parallel this session (Bookings appears to be the only
+  remaining non-navigating sidebar placeholder); backfill
+  progress/session/changelog documentation for the Projects/Tasks/Crews/
+  Files/Storyboard/Messages/Settings work if that wasn't done elsewhere.
+
+## Session 13
+
+Date: 2026-07-08
+
+Goal:
+
+- Build the Bookings page (`/bookings`) as a real Next.js route,
+  pixel-matched to a provided design reference.
+
+Completed work:
+
+- Added `components/bookings/bookings-data.ts` (booking rows, stat
+  cards, bookings-by-type segments, upcoming bookings, tab counts - all
+  colocated mock data, no backend).
+- Built the Bookings page and its components: header, a status/scope
+  tabs bar (`Tabs`/`TabsList variant="line"`) that filters the table by
+  All/My Bookings (current-user match)/Pending/Confirmed/Cancelled, 4
+  stat cards, a bookings table (category icon tile, resource, project +
+  phase, dates, status pill, booked-by avatar, row menu), decorative
+  pagination, and a right rail (Bookings by Type donut, Upcoming
+  Bookings, Booking Calendar).
+- Reused generic UI across feature folders instead of rebuilding: the
+  Calendar page's `MiniCalendar` for the Booking Calendar panel, and the
+  Analytics page's `DonutChart` for Bookings by Type - both worked
+  directly since neither had domain coupling.
+- Made `dashboard/stat-card.tsx`'s `sparklinePoints` prop optional
+  (backward-compatible) so the "Pending Approval" stat card can render
+  without a sparkline, matching the reference.
+- Turned the sidebar's Bookings entry from a non-navigating placeholder
+  into a real link - the last remaining placeholder nav item.
+- Since there are no sourced equipment/venue photos in this app (unlike
+  projects/avatars), booking thumbnails use tinted category icon tiles
+  (Building2/Camera/DoorOpen) rather than sourcing new stock photos for a
+  mock page.
+
+Problems encountered:
+
+- Reusing `MiniCalendar` directly inside a `DashboardPanel` would have
+  nested two bordered cards (it already renders its own card chrome),
+  violating the "avoid nested cards" coding standard. Fixed by dropping
+  the `DashboardPanel` wrapper for that one panel and using a plain
+  title/link row above the calendar instead.
+- The local preview tooling got stuck again (same root cause as Session
+  12: orphaned `next dev` processes from earlier in the session holding
+  ports 3001 and 3002). Diagnosed via `curl` against those ports and
+  stopped the two specific PIDs (not a broad process kill) to unblock it.
+
+Decisions made:
+
+- Tab filtering is real (client-side, against the mock row array); "New
+  Booking," "Filters," and pagination remain decorative, matching the
+  established precedent for secondary controls not central to the page's
+  core ask.
+
+Validation:
+
+- `npm run lint`, `npm run typecheck`, `npm run build` all passed for
+  this session's files (same unrelated pre-existing errors in other
+  sessions' files noted in Session 12 remain, untouched).
+- Browser-verified `/bookings`: stat cards, table rows, status pill
+  colors, and right-rail panels all render correctly; clicking
+  "Cancelled" filtered the table to the 1 matching row; clicking "My
+  Bookings" filtered to the 2 rows booked by the current user; resetting
+  to "All Bookings" restored all 10 rows.
+
+Next session objective:
+
+- Same as Session 12: confirm with the team what's left, and consider
+  backfilling documentation for the parallel work.

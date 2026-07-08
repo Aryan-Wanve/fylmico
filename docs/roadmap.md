@@ -44,9 +44,11 @@ Progress:
 - Loading/empty/error/success states: present on the login, onboarding, and
   calendar flows; not yet audited across every dashboard panel.
 - Calendar is now a real route (`/calendar`); see Phase 5 below.
-- Remaining nav destinations (Projects, Tasks, Crews, Files, Storyboard,
-  Messages, Bookings, Analytics, Settings) are scaffolded as non-navigating
-  sidebar entries only; no routes exist for them yet.
+- Analytics is now a real route (`/analytics`); see Phase 7 below.
+- Bookings is now a real route (`/bookings`); see Phase 6 below.
+- Projects, Tasks, Crews, Files, Storyboard, Messages, and Settings also
+  now have real routes (built outside this session; see their own
+  commits/docs for details). No non-navigating sidebar placeholders remain.
 
 ### Phase 3: Frontend Authentication and Organizations
 
@@ -114,13 +116,14 @@ Progress:
   design reference) - header with date navigation, month/year jump,
   Month/Week/Day tabs, and event-type filters; a month grid with colored
   event pills and a legend; a mini calendar, calendar-source checklist,
-  and upcoming-events panel in the right rail. Week and Day tabs show a
-  "coming soon" state; no other collaboration-core UI (chat, notifications,
-  tasks, kanban) has started.
+  and upcoming-events panel in the right rail; a working "New Event"
+  create flow. Week and Day tabs show a "coming soon" state; chat,
+  notifications, and kanban have not started (Tasks got a real route
+  outside this session - see its own docs).
 
 ### Phase 6: Frontend Creative Production Modules
 
-Status: Planned
+Status: In progress
 
 Priority: High
 
@@ -138,9 +141,23 @@ Scope:
 - Location UI.
 - Public API contracts and mock services.
 
+Progress:
+
+- Equipment/venue booking UI: complete (`/bookings`, pixel-matched to
+  design reference) - 4 stat cards, status/scope tabs (All/My Bookings/
+  Pending Approval/Confirmed/Cancelled) filtering a bookings table
+  (resource, project, dates, status, booked-by), and a right rail with a
+  "Bookings by Type" donut, an upcoming-bookings list, and a mini booking
+  calendar (reusing the Calendar page's `MiniCalendar` and the Analytics
+  page's `DonutChart` primitives). "New Booking" and "Filters" are
+  decorative for now, matching the same not-yet-wired precedent as other
+  pages' secondary controls. Storyboard and Crew already have real routes
+  built outside this session - see their own docs. Moodboard, Script,
+  Shot list, and Call sheet UI have not started.
+
 ### Phase 7: Frontend Review, Delivery, and Analytics
 
-Status: Planned
+Status: In progress
 
 Priority: High
 
@@ -156,6 +173,18 @@ Scope:
 - Publishing UI.
 - Analytics UI.
 - Public API contracts and mock services.
+
+Progress:
+
+- Analytics UI: complete (`/analytics`, pixel-matched to design reference) -
+  5 stat cards with sparklines, a multi-series project-progress line/area
+  chart, task-status and time-distribution donut charts, a weekly
+  time-logged mini chart, an activity heatmap, and top-projects/top-
+  contributors/team-workload list panels. All hand-rolled inline SVG (no
+  charting library), following the `sparkline.tsx` precedent. Read-only
+  reporting page - no mutating interactions, unlike Calendar. No other
+  review/delivery UI (asset management, video review, approvals, version
+  control, publishing) has started.
 
 ## Completed Milestones
 

@@ -89,3 +89,55 @@ Breaking changes:
 Migration notes:
 
 - None.
+
+## 0.4.0 - 2026-07-08
+
+Summary:
+
+- Added the Analytics page (`/analytics`) as a real Next.js route,
+  pixel-matched to a provided design reference: 5 stat cards, a
+  multi-series project-progress line/area chart, a task-status donut, a
+  weekly time-logged mini chart, a time-distribution donut, an activity
+  heatmap, top-active-projects/top-contributors/team-workload panels, and
+  an insight banner.
+- Added hand-rolled SVG chart primitives (`multi-line-chart.tsx`,
+  `donut-chart.tsx`, `mini-area-chart.tsx`, `activity-heatmap.tsx`) under
+  `components/analytics/` - no charting library was introduced.
+- Turned the sidebar's Analytics entry from a non-navigating placeholder
+  into a real link.
+- Note: Projects, Tasks, Crews, Files, Storyboard, Messages, and Settings
+  also gained real routes during this same period via work done outside
+  this changelog entry's session; see their own commits for details.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- None.
+
+## 0.5.0 - 2026-07-08
+
+Summary:
+
+- Added the Bookings page (`/bookings`) as a real Next.js route,
+  pixel-matched to a provided design reference: 4 stat cards, a
+  status/scope tabs bar filtering a bookings table, and a right rail with
+  a Bookings-by-Type donut, an Upcoming Bookings list, and a mini Booking
+  Calendar.
+- Reused generic UI across feature folders for the first time:
+  Calendar's `MiniCalendar` and Analytics's `DonutChart`, both directly,
+  with no changes needed.
+- Made `dashboard/stat-card.tsx`'s `sparklinePoints` prop optional
+  (backward-compatible).
+- Turned the sidebar's Bookings entry from a non-navigating placeholder
+  into a real link - the last remaining placeholder nav item.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- None.
