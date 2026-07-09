@@ -5,6 +5,7 @@ import { AuthModule } from "./auth/auth.module";
 import { ChatModule } from "./chat/chat.module";
 import { ClientsModule } from "./clients/clients.module";
 import { HealthModule } from "./health/health.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 import { OrganizationsModule } from "./organizations/organizations.module";
 import { ProjectsModule } from "./projects/projects.module";
 import { TasksModule } from "./tasks/tasks.module";
@@ -16,6 +17,7 @@ import { WorkspaceModule } from "./workspace/workspace.module";
     DatabaseModule,
     HealthModule,
     AuthModule,
+    NotificationsModule,
     OrganizationsModule,
     TasksModule,
     ChatModule,

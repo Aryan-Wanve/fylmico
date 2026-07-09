@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { Prisma, PrismaService } from "@fylmico/database";
 import { AppException } from "../common/exceptions/app.exception";
+import { NotificationsService } from "../notifications/notifications.service";
 import { CreateHouseDto } from "./dto/create-house.dto";
 import { JoinHouseDto } from "./dto/join-house.dto";
 
@@ -51,7 +52,10 @@ type OrganizationWithRelations = Prisma.OrganizationGetPayload<{
 
 @Injectable()
 export class OrganizationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService
+  ) {}
 
   async createHouse(userId: string, dto: CreateHouseDto) {
     const existingHandle = await this.prisma.organization.findUnique({
@@ -126,8 +130,45 @@ export class OrganizationsService {
       data: { organizationId: organization.id, userId, roleId: memberRole.id }
     });
     await this.setActiveOrganization(userId, organization.id);
+    await this.notifyOwnersOfNewMember(
+      organization.id,
+      organization.name,
+      userId
+    );
 
     return this.getHouseDto(organization.id, userId);
+  }
+
+  private async notifyOwnersOfNewMember(
+    organizationId: string,
+    organizationName: string,
+    joiningUserId: string
+  ): Promise<void> {
+    const ownerRole = await this.prisma.role.findUnique({
+      where: { organizationId_name: { organizationId, name: "Owner" } }
+    });
+    if (!ownerRole) {
+      return;
+    }
+
+    const [joiningUser, owners] = await Promise.all([
+      this.prisma.user.findUniqueOrThrow({ where: { id: joiningUserId } }),
+      this.prisma.organizationMembership.findMany({
+        where: { organizationId, roleId: ownerRole.id },
+        select: { userId: true }
+      })
+    ]);
+
+    await Promise.all(
+      owners.map((owner) =>
+        this.notificationsService.create(
+          owner.userId,
+          "house_joined",
+          `${joiningUser.name} joined ${organizationName}`,
+          `${joiningUser.name} joined ${organizationName} as a Member.`
+        )
+      )
+    );
   }
 
   private async getOrCreateMemberRole(organizationId: string) {

@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { PrismaService, type Task } from "@fylmico/database";
 import { AppException } from "../common/exceptions/app.exception";
+import { NotificationsService } from "../notifications/notifications.service";
 import { OrganizationsService } from "../organizations/organizations.service";
 import { CreateTaskDto } from "./dto/create-task.dto";
 
@@ -8,7 +9,8 @@ import { CreateTaskDto } from "./dto/create-task.dto";
 export class TasksService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly organizationsService: OrganizationsService
+    private readonly organizationsService: OrganizationsService,
+    private readonly notificationsService: NotificationsService
   ) {}
 
   async createTask(userId: string, dto: CreateTaskDto) {
@@ -55,6 +57,15 @@ export class TasksService {
         dueDate: dto.dueDate
       }
     });
+
+    if (dto.assigneeId !== userId) {
+      await this.notificationsService.create(
+        dto.assigneeId,
+        "task_assigned",
+        `New task: ${task.title}`,
+        `You were assigned "${task.title}" on ${task.project}, due ${task.dueDate}.`
+      );
+    }
 
     return toTaskDto(task, assigneeMembership.user.name);
   }
