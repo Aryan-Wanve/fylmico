@@ -67,13 +67,40 @@ Current ADRs:
 - [0015-future-mobile-compatibility.md](docs/adr/0015-future-mobile-compatibility.md)
 - [0016-scaling-strategy.md](docs/adr/0016-scaling-strategy.md)
 - [0017-frontend-backend-independence.md](docs/adr/0017-frontend-backend-independence.md)
+- [0018-backend-bootstrap.md](docs/adr/0018-backend-bootstrap.md)
+- [0019-auth-module.md](docs/adr/0019-auth-module.md)
+- [0020-organizations-houses-module.md](docs/adr/0020-organizations-houses-module.md)
+- [0021-tasks-chat-module.md](docs/adr/0021-tasks-chat-module.md)
+- [0022-projects-clients-module.md](docs/adr/0022-projects-clients-module.md)
+- [0023-notifications-module.md](docs/adr/0023-notifications-module.md)
+- [0024-comments-module.md](docs/adr/0024-comments-module.md)
+- [0025-frontend-backend-integration.md](docs/adr/0025-frontend-backend-integration.md)
 
 ## Current Sprint Gate
 
-Development workflow has changed. Fylmico frontend and backend are independent
-workstreams. This workstream focuses only on frontend. Treat the backend as a
-black box and communicate only through documented public API contracts. Do not
-implement backend functionality here.
+Backend implementation has started (ADR 0018), superseding ADR 0017's
+"backend is a black box" framing for this workstream. `apps/api` (NestJS) and
+`packages/database` (Prisma) have working identity/auth (ADR 0019),
+organizations/houses (ADR 0020), tasks/chat (ADR 0021), projects/clients
+(ADR 0022), notifications (ADR 0023), and comments (ADR 0024) domains, all
+backed by real tables and curl-verified end to end.
+
+**`apps/web` is now wired to the real backend for its core loop** (ADR
+0025): signup, login, logout, house creation, and house joining all call
+the real API — verified live in-browser with two real accounts creating and
+joining a real house. Everything else (`/tasks`, `/crews`, `/files`,
+`/storyboard`, `/calendar`, `/bookings`, `/analytics`, `/settings`, and the
+dashboard's "Recent Projects"/"Recent Activity" panels) still runs on
+independent local mock data colocated per page — those were never wired to
+`base-workspace.service.ts` to begin with, and wiring them up requires
+backend modules that don't exist yet. The frontend silently refreshes an
+expired access token on a `401` (verified live). No realtime delivery
+(Socket.IO, ADR 0005) exists anywhere yet — notifications and chat are both
+REST/poll-based for now.
+
+To run both sides locally: `docker compose up -d postgres`, then start the
+`api` and `web` dev servers (`.claude/launch.json` has both configured).
+`apps/api/.env` and root `.env.example` document the required variables.
 
 ## Required Startup Flow
 

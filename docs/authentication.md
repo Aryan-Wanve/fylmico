@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted planning baseline. No authentication code has been implemented.
+Implemented per ADR 0019: email+password signup/login, JWT access tokens,
+rotated opaque refresh tokens, logout/logout-all, email verification, and
+password reset. OAuth and a real email provider are not implemented.
 
 ## Goals
 
@@ -87,7 +89,20 @@ Future flows:
 
 ## Open Implementation Choices
 
-- Final password hashing library.
-- Cookie strategy for web sessions.
+Resolved (see ADR 0019):
+
+- Password hashing library: `argon2id` (the `argon2` npm package).
+- Token delivery: both access and refresh tokens are returned in the JSON
+  response body, not cookies, until a frontend integration makes a cookie/
+  CORS/CSRF design concrete.
+
+Still open:
+
+- Cookie strategy for web sessions (if/when token delivery moves off body
+  responses).
 - OAuth provider priority.
-- Email provider.
+- Email provider (verification/reset tokens are currently logged
+  server-side instead of emailed).
+- Refresh-token reuse detection is simplified (no session-family tracking
+  yet — see ADR 0019).
+- Rate limiting strategy.

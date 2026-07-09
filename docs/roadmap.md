@@ -2,10 +2,14 @@
 
 ## Standing Development Rule
 
-- Build frontend only.
-- Define API contracts and mock services whenever backend functionality is
-  needed.
-- Never implement backend functionality in this workstream.
+- Backend implementation is now in scope for this workstream (see ADR 0018,
+  superseding the frontend-only rule that used to live here under ADR 0017).
+- Frontend work still follows the API-contract-first, mock-service workflow
+  from ADR 0017 — that process discipline stays even though the "someone
+  else owns the backend" constraint is gone.
+- Backend work follows the architecture already decided in ADRs 0001-0016
+  (NestJS modular monolith, PostgreSQL + Prisma, JWT + rotated refresh
+  tokens, RBAC + policy authorization, Socket.IO realtime, versioned REST).
 
 ## Current Milestone
 
@@ -185,6 +189,100 @@ Progress:
   reporting page - no mutating interactions, unlike Calendar. No other
   review/delivery UI (asset management, video review, approvals, version
   control, publishing) has started.
+
+### Phase 8: Backend Bootstrap
+
+Status: In progress
+
+Priority: Critical
+
+Estimated completion: TBD
+
+Scope:
+
+- Scaffold `apps/api` (NestJS) and `packages/database` (Prisma), wired into
+  the npm workspaces monorepo and docker-compose.
+- Health-check endpoint only; no domain models, auth, or business logic.
+- Add PostgreSQL as a docker-compose service.
+- Identity/auth module: signup, login, refresh, logout, logout-all, email
+  verification, password reset.
+- Organizations/houses module: create house, join house, workspace snapshot.
+- Tasks/chat module: create task, send chat message, fill in workspace's
+  tasks/chatRooms.
+- Projects/clients module: create/list/read/update/archive project,
+  create/list/read/update client, link clients to projects.
+- Notifications module: list/mark-read, triggered by task assignment and
+  house join.
+- Comments module: create/list comments on tasks and projects.
+
+Progress:
+
+- Backend scaffold complete: `apps/api` boots, applies the `/api/v1` global
+  prefix and `{ "data": ... }` response envelope (ADR 0010) to
+  `GET /api/v1/health`, and connects to PostgreSQL via `packages/database`'s
+  `PrismaService`/`DatabaseModule` (ADR 0008). See ADR 0018.
+- Auth module complete: `users`/`auth_accounts`/`sessions`/
+  `email_verification_tokens`/`password_reset_tokens` Prisma models; all 9
+  endpoints from `docs/api.md` implemented (signup, login, refresh, logout,
+  logout-all, verify-email, request-password-reset, reset-password, me);
+  argon2id password hashing, rotated opaque refresh tokens, a global
+  `ValidationPipe` + `HttpExceptionFilter` matching ADR 0010's response
+  envelope. See ADR 0019.
+- Organizations/houses module complete: `organizations`/`roles`/
+  `organization_memberships` Prisma models; `POST /api/v1/houses`,
+  `POST /api/v1/houses/join`, and `GET /api/v1/workspace` implemented,
+  matching the mock service's `House`/`HouseRole`/`HouseMember` shapes
+  exactly. `users` gained `name` (now required at signup) and
+  `activeOrganizationId` (now included in the JWT access token claims). See
+  ADR 0020.
+- Tasks/chat module complete: `tasks`/`conversations`/`messages` Prisma
+  models (single-assignee tasks, house-wide named channels - simpler than
+  the originally planned `task_assignees`/`conversation_members` join
+  tables, deferred until multi-assignee/private-conversation features are
+  actually needed); `POST /api/v1/tasks` and
+  `POST /api/v1/chat/rooms/:roomId/messages` implemented; 3 default
+  conversations (general/edit-bay/shoot-floor) now seeded at house
+  creation; `GET /api/v1/workspace`'s `tasks`/`chatRooms` are fully real
+  now (scoped to the caller's active house). See ADR 0021.
+- Projects/clients module complete: `projects`/`clients`/`project_clients`
+  Prisma models; the first module with no pre-existing frontend mock, so
+  its API contract (routes, fields, error codes) was designed from scratch
+  following established conventions (`houses`-prefixed routes, membership-
+  only authorization, action endpoints for lifecycle changes). Also the
+  first real use of ADR 0010's cursor-pagination envelope
+  (`apps/api/src/common/pagination.ts`), on the new project/client list
+  endpoints. See ADR 0022.
+- Notifications module complete: `notifications` Prisma model;
+  `GET /api/v1/notifications`, `POST /api/v1/notifications/:id/read`,
+  `POST /api/v1/notifications/read-all` implemented. No public create
+  endpoint - wired into two existing flows instead (task assignment
+  notifies the assignee; house join notifies the house's Owner(s)). No
+  realtime delivery yet (ADR 0005 not implemented) - poll-only. See ADR 0023.
+- Comments module complete: `comments` Prisma model, resolving the
+  previously-deferred "comment target modeling strategy" via a
+  `commentableType`/`commentableId` pair;
+  `POST`/`GET /api/v1/tasks/:taskId/comments` and
+  `POST`/`GET /api/v1/projects/:projectId/comments` implemented. Create +
+  list only, no edit/delete yet. See ADR 0024.
+- **Frontend/backend integration**: `apps/web` now calls the real API for
+  its core loop instead of the in-memory mock -
+  `base-workspace.service.ts` rewritten to call `apps/api` directly (same
+  exported function signatures, so consuming components were largely
+  unaffected); real signup UI wired up (was a "not open yet" placeholder);
+  house creation/join forms now take real input instead of hardcoded demo
+  values; added a working logout (previously didn't exist at all). Verified
+  live in-browser: two real accounts signing up, one creating a house, the
+  other joining it via a real invite code, session persisting across
+  reload, logout, and re-login, with real backend error messages (wrong
+  password, duplicate handle) surfacing correctly in the UI. See ADR 0025.
+  Everything outside this core loop (`/tasks`, `/crews`, `/files`,
+  `/storyboard`, `/calendar`, `/bookings`, `/analytics`, `/settings`) still
+  runs on independent local mock data - those pages were never wired to
+  the shared service and have no backend module yet.
+- Next: activity feed (last remaining Collaboration-group item), creative-
+  production modules (storyboards, shot lists, call sheets, assets) now
+  that projects exist for them to attach to, or wiring more frontend pages
+  to real data as their backend modules get built.
 
 ## Completed Milestones
 

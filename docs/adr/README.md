@@ -35,6 +35,14 @@ Use sequential numbers and a short slug:
 - `0015-future-mobile-compatibility.md`
 - `0016-scaling-strategy.md`
 - `0017-frontend-backend-independence.md`
+- `0018-backend-bootstrap.md`
+- `0019-auth-module.md`
+- `0020-organizations-houses-module.md`
+- `0021-tasks-chat-module.md`
+- `0022-projects-clients-module.md`
+- `0023-notifications-module.md`
+- `0024-comments-module.md`
+- `0025-frontend-backend-integration.md`
 
 ## Required Sections
 

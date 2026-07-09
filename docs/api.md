@@ -88,56 +88,111 @@ or clarity.
 
 ## Authentication
 
-Access tokens identify the user, session, and active organization. The API must
-load and enforce permissions server-side.
+Access tokens identify the user, session, and active organization
+(`activeOrganizationId`, added per ADR 0020 — `null` until the user creates
+or joins a house; only as fresh as the token's own issuance, see ADR 0020).
+The API must load and enforce permissions server-side.
 
-Planned auth endpoints:
+Implemented per ADR 0019/0020 (`apps/api/src/auth/*`):
 
-- `POST /api/v1/auth/signup`
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/refresh`
-- `POST /api/v1/auth/logout`
-- `POST /api/v1/auth/logout-all`
-- `POST /api/v1/auth/verify-email`
-- `POST /api/v1/auth/request-password-reset`
-- `POST /api/v1/auth/reset-password`
-- `GET /api/v1/auth/me`
+### `POST /api/v1/auth/signup`
+
+Authentication: public. Body:
+`{ "email": string, "password": string (min 8), "name": string }`.
+Response: `{ "data": { "user": { "id", "email", "name", "avatarLabel", "emailVerifiedAt", "createdAt" }, "accessToken", "refreshToken" } }`
+(`avatarLabel` is derived from `name`, e.g. "Aryan Sharma" -> "AS" — not
+stored).
+Errors: `400 invalid_request`, `409 email_already_registered`.
+Also creates an `email_verification_tokens` row and logs the plaintext token
+server-side (no email provider is chosen yet).
+
+### `POST /api/v1/auth/login`
+
+Authentication: public. Body: `{ "email": string, "password": string }`.
+Response: same shape as signup.
+Errors: `400 invalid_request`, `401 invalid_credentials`.
+
+### `POST /api/v1/auth/refresh`
+
+Authentication: public (requires a valid refresh token). Body:
+`{ "refreshToken": string }`. Response: `{ "data": { "accessToken", "refreshToken" } }`
+— rotates the refresh token; the old one stops working immediately.
+Errors: `401 invalid_refresh_token`.
+
+### `POST /api/v1/auth/logout`
+
+Authentication: required (Bearer access token). Revokes the current session
+only. Response: `{ "data": { "success": true } }`. Errors: `401 unauthenticated`.
+
+### `POST /api/v1/auth/logout-all`
+
+Authentication: required. Revokes every session for the user. Response:
+`{ "data": { "success": true } }`. Errors: `401 unauthenticated`.
+
+### `POST /api/v1/auth/verify-email`
+
+Authentication: public. Body: `{ "token": string }`. Response:
+`{ "data": { "success": true } }`. Errors: `400 invalid_or_expired_token`.
+
+### `POST /api/v1/auth/request-password-reset`
+
+Authentication: public. Body: `{ "email": string }`. Always responds
+`{ "data": { "success": true } }` regardless of whether the email is
+registered, to avoid leaking account existence. Errors: `400 invalid_request`
+(malformed email only).
+
+### `POST /api/v1/auth/reset-password`
+
+Authentication: public. Body: `{ "token": string, "newPassword": string (min 8) }`.
+Response: `{ "data": { "success": true } }`. Also revokes every session for
+the affected user. Errors: `400 invalid_or_expired_token`.
+
+### `GET /api/v1/auth/me`
+
+Authentication: required. Response:
+`{ "data": { "id", "email", "name", "avatarLabel", "emailVerifiedAt", "createdAt" } }`.
+Errors: `401 unauthenticated`.
 
 ## Planned Endpoint Areas
 
 Organizations:
 
-- Create organization.
-- List current user's organizations.
-- Read organization.
+- ~~Create organization.~~ Implemented (`POST /api/v1/houses`, see above).
+- ~~Join organization by invite code.~~ Implemented (`POST /api/v1/houses/join`).
+- List current user's organizations as a standalone endpoint (currently only
+  available bundled into `GET /api/v1/workspace`).
+- Read organization (single house detail beyond the workspace list).
 - Update organization.
-- Invite members.
-- Manage memberships.
+- Invite members with a specific role (currently only the single
+  house-wide `inviteCode` -> `"Member"` flow exists).
+- Manage memberships (change role, remove member).
 
 Projects:
 
-- Create project.
-- List organization projects.
-- Read project.
-- Update project.
-- Archive project.
-- Manage project members.
+- ~~Create, list, read, update, archive project.~~ Implemented (see
+  "Projects and Clients" above).
+- Manage project members (`project_memberships` - not implemented; every
+  house member can see/manage every project for now, see ADR 0022).
 
 Clients:
 
-- Create client.
-- List clients.
-- Read client.
-- Update client.
-- Link clients to projects.
+- ~~Create, list, read, update client; link clients to projects.~~
+  Implemented (see "Projects and Clients" above). Unlinking a client from a
+  project is not.
 
 Collaboration:
 
-- Tasks.
-- Conversations.
-- Messages.
-- Comments.
-- Notifications.
+- ~~Tasks (create).~~ Implemented (`POST /api/v1/tasks`, see above). Update/
+  status-change and multi-assignee support are not.
+- ~~Conversations, Messages (send).~~ Implemented
+  (`POST /api/v1/chat/rooms/:roomId/messages`, see above). Custom room
+  creation and private/DM conversations (`conversation_members`) are not.
+- ~~Comments (task/project, create + list).~~ Implemented (see "Comments"
+  above). No edit/delete; asset-version comments not yet (no assets
+  module).
+- ~~Notifications (list, mark read).~~ Implemented (see "Notifications"
+  above). Only 2 triggers exist (task assignment, house join); no
+  realtime delivery.
 - Activity feed.
 
 Creative production:
@@ -162,38 +217,77 @@ Administration:
 - Audit logs.
 - Settings.
 
-## Base Frontend API Contracts
+## Houses and Workspace (Implemented)
 
-These contracts support the initial frontend base scope: login, house creation,
-house joining, house management, production roles, task scheduling/assignment,
-and chat rooms. They are frontend contracts only; no backend implementation
-exists in this workstream.
+Implemented per ADR 0020 (`apps/api/src/organizations/*`,
+`apps/api/src/workspace/*`). `POST /api/v1/auth/login`'s real response does
+**not** include `activeHouseId`/`houses`/`tasks`/`chatRooms` (see the
+Authentication section above) — that snapshot is `GET /api/v1/workspace`'s
+job, a deliberate split from what this doc originally speculated before auth
+was implemented.
 
-### `POST /api/v1/auth/login`
+### `POST /api/v1/houses`
 
-Purpose:
-
-Authenticate a user and return the initial workspace snapshot needed by the
-frontend shell.
-
-Authentication:
-
-Public.
-
-Permissions:
-
-None before login.
-
-Request body:
+Authentication: required. Body:
+`{ "name": string, "handle": string (lowercase, url-safe, unique), "description"?: string }`.
+Response:
 
 ```json
 {
-  "email": "aryan@example.com",
-  "password": "example-password"
+  "data": {
+    "id": "house_123",
+    "name": "North Star Films",
+    "handle": "north-star",
+    "description": "Commercial film and launch content studio.",
+    "inviteCode": "NORT-2048",
+    "members": [
+      {
+        "id": "user_123",
+        "name": "Aryan Sharma",
+        "role": "Owner",
+        "status": "online"
+      }
+    ],
+    "roles": [
+      {
+        "id": "role_1",
+        "name": "Owner",
+        "color": "#654cff",
+        "description": "Controls house settings, roles, invites, and billing.",
+        "memberCount": 1
+      },
+      {
+        "id": "role_2",
+        "name": "Producer",
+        "color": "#16c784",
+        "description": "Plans shoots, schedules tasks, and coordinates delivery.",
+        "memberCount": 0
+      }
+    ]
+  }
 }
 ```
 
-Response:
+(5 default roles are seeded — Owner, Producer, Editor, Videographer,
+Photographer — matching `apps/web/src/services/base-workspace.service.ts`'s
+`defaultRoles` exactly; only Owner has a member until others join.)
+
+Errors: `400 invalid_request`, `401 unauthenticated`, `409 handle_unavailable`.
+Expected behavior: creates the organization, seeds default roles, makes the
+creator an `"Owner"` member, and sets the creator's active house.
+
+### `POST /api/v1/houses/join`
+
+Authentication: required. Body: `{ "inviteCode": string }`. Response: same
+`House` shape as create. New joiners get role `"Member"` (created lazily on
+first join if the house doesn't have one yet — see ADR 0020 for why "Member"
+rather than "Client" or a joiner-specified role).
+Errors: `400 invalid_request`, `401 unauthenticated`, `404 invite_not_found`,
+`409 already_member`.
+
+### `GET /api/v1/workspace`
+
+Authentication: required. Response:
 
 ```json
 {
@@ -205,225 +299,26 @@ Response:
       "avatarLabel": "AS"
     },
     "activeHouseId": "house_123",
-    "houses": [],
+    "houses": [/* House[], same shape as POST /houses */],
     "tasks": [],
     "chatRooms": []
   }
 }
 ```
 
-Errors:
+`houses`/`activeHouseId` are real (every house the caller belongs to, via
+`organization_memberships`). `tasks`/`chatRooms` are now also real per ADR
+0021 (scoped to the caller's `activeHouseId` — `[]` only if the user has no
+active house yet). Errors: `401 unauthenticated`.
 
-- `400 invalid_request`
-- `401 invalid_credentials`
-- `429 rate_limited`
+## Tasks and Chat (Implemented)
 
-Authorization requirements:
-
-None before login. Returned workspace data must include only houses the user may
-access.
-
-Validation requirements:
-
-- `email` must be a valid email address.
-- `password` is required.
-
-Expected behavior:
-
-The backend creates or refreshes the session according to the backend auth
-model. The frontend treats session storage as an API concern.
-
-### `GET /api/v1/workspace`
-
-Purpose:
-
-Return the current user's active frontend workspace snapshot.
-
-Authentication:
-
-Required.
-
-Permissions:
-
-Authenticated user.
-
-Response:
-
-```json
-{
-  "data": {
-    "user": {},
-    "activeHouseId": "house_123",
-    "houses": [],
-    "tasks": [],
-    "chatRooms": []
-  }
-}
-```
-
-Errors:
-
-- `401 unauthenticated`
-- `403 forbidden`
-
-Authorization requirements:
-
-Only return houses, tasks, rooms, and members visible to the current user.
-
-Validation requirements:
-
-None.
-
-Expected behavior:
-
-This endpoint is the frontend recovery/refetch endpoint after refresh,
-optimistic updates, or realtime events.
-
-### `POST /api/v1/houses`
-
-Purpose:
-
-Create a new creative production house.
-
-Authentication:
-
-Required.
-
-Permissions:
-
-Authenticated user may create a house unless account-level limits prevent it.
-
-Request body:
-
-```json
-{
-  "name": "North Star Films",
-  "handle": "north-star",
-  "description": "Commercial film and launch content studio."
-}
-```
-
-Response:
-
-```json
-{
-  "data": {
-    "id": "house_123",
-    "name": "North Star Films",
-    "handle": "north-star",
-    "description": "Commercial film and launch content studio.",
-    "inviteCode": "NORT-2048",
-    "members": [],
-    "roles": []
-  }
-}
-```
-
-Errors:
-
-- `400 invalid_request`
-- `401 unauthenticated`
-- `409 handle_unavailable`
-
-Authorization requirements:
-
-The creator becomes the first owner unless backend policy says otherwise.
-
-Validation requirements:
-
-- `name` is required.
-- `handle` is required, unique, lowercase URL-safe text.
-- `description` is optional.
-
-Expected behavior:
-
-Create the house, assign the creator an owner role, create default production
-roles, and return the created house.
-
-### `POST /api/v1/houses/join`
-
-Purpose:
-
-Join an existing house using an invite code.
-
-Authentication:
-
-Required.
-
-Permissions:
-
-Valid invite holder.
-
-Request body:
-
-```json
-{
-  "inviteCode": "NOVA-2048"
-}
-```
-
-Response:
-
-```json
-{
-  "data": {
-    "id": "house_123",
-    "name": "Nova Frame House",
-    "handle": "nova-frame",
-    "description": "Commercial films, reels, launch videos, and event edits.",
-    "inviteCode": "NOVA-2048",
-    "members": [],
-    "roles": []
-  }
-}
-```
-
-Errors:
-
-- `400 invalid_request`
-- `401 unauthenticated`
-- `404 invite_not_found`
-- `409 already_member`
-
-Authorization requirements:
-
-The invite controls which role or starting access the joining user receives.
-
-Validation requirements:
-
-- `inviteCode` is required.
-
-Expected behavior:
-
-Add the user to the house and return the joined house.
+Implemented per ADR 0021 (`apps/api/src/tasks/*`, `apps/api/src/chat/*`).
 
 ### `POST /api/v1/tasks`
 
-Purpose:
-
-Schedule and assign a production task.
-
-Authentication:
-
-Required.
-
-Permissions:
-
-User must be allowed to create tasks in the target house or project.
-
-Request body:
-
-```json
-{
-  "houseId": "house_123",
-  "title": "Prepare rough cut",
-  "project": "Cafe Noir Opening",
-  "assigneeId": "user_456",
-  "role": "Editor",
-  "dueDate": "2026-07-07"
-}
-```
-
+Authentication: required. Body:
+`{ "houseId": string, "title": string, "project": string, "assigneeId": string, "role": string, "dueDate": string }`.
 Response:
 
 ```json
@@ -442,88 +337,210 @@ Response:
 }
 ```
 
-Errors:
-
-- `400 invalid_request`
-- `401 unauthenticated`
-- `403 forbidden`
-- `404 assignee_not_found`
-
-Authorization requirements:
-
-Assignee must belong to the house or be visible in the target project context.
-
-Validation requirements:
-
-- `houseId`, `title`, `project`, `assigneeId`, `role`, and `dueDate` are
-  required.
-- `role` must be a public role name or id supported by the house.
-
-Expected behavior:
-
-Create a scheduled task and return it. Realtime task events may be emitted by
-the backend later.
+Errors: `400 invalid_request` (missing fields, or `role` isn't one of the
+house's role names), `401 unauthenticated`, `403 forbidden` (caller isn't a
+member of `houseId`), `404 assignee_not_found` (`assigneeId` isn't a member
+of `houseId`). Expected behavior: creates the task with
+`status: "scheduled"`, `priority: "medium"`; no status-update endpoint
+exists yet.
 
 ### `POST /api/v1/chat/rooms/:roomId/messages`
 
-Purpose:
-
-Send a message to a house chat room.
-
-Authentication:
-
-Required.
-
-Permissions:
-
-User must be a member of the house and have access to the room.
-
-Request params:
-
-- `roomId`
-
-Request body:
+Authentication: required. Request param: `roomId`. Body:
+`{ "body": string }`. Response is the **full updated room**, not just the
+new message (the mock service's actual `sendChatMessage(...): Promise<ChatRoom>`
+signature — the response shape below, not a bare message, is the real
+contract to build against):
 
 ```json
 {
-  "body": "Version 03 is ready for producer review."
+  "data": {
+    "id": "room_123",
+    "name": "general",
+    "topic": "Daily coordination and house-wide updates.",
+    "unreadCount": 0,
+    "messages": [
+      {
+        "id": "msg_123",
+        "authorId": "user_123",
+        "authorName": "Aryan Sharma",
+        "sentAt": "2026-07-04T10:25:00.000Z",
+        "body": "Version 03 is ready for producer review."
+      }
+    ]
+  }
 }
 ```
 
+Errors: `400 invalid_request` (empty `body`), `401 unauthenticated`,
+`403 forbidden` (caller isn't a member of the room's house),
+`404 room_not_found`. Expected behavior: 3 rooms (`"general"`, `"edit-bay"`,
+`"shoot-floor"`) are seeded automatically at house creation; there's no
+endpoint to create additional rooms yet, and `unreadCount` is always `0`
+(no read-tracking implemented).
+
+## Projects and Clients (Implemented)
+
+Implemented per ADR 0022 (`apps/api/src/projects/*`, `apps/api/src/clients/*`).
+The first module with no pre-existing frontend mock/contract — designed
+from scratch following the conventions above, including the first real use
+of the cursor-pagination envelope from "Response Shape" below.
+
+### `POST /api/v1/houses/:houseId/projects`
+
+Authentication: required. Body: `{ "name": string, "description"?: string }`.
 Response:
 
 ```json
 {
   "data": {
-    "id": "msg_123",
-    "authorId": "user_123",
-    "authorName": "Aryan Sharma",
-    "sentAt": "2026-07-04T10:25:00.000Z",
-    "body": "Version 03 is ready for producer review."
+    "id": "project_123",
+    "name": "Cafe Noir Opening",
+    "description": "Launch campaign film + stills.",
+    "status": "active",
+    "createdAt": "2026-07-08T10:00:00.000Z",
+    "updatedAt": "2026-07-08T10:00:00.000Z",
+    "clients": []
   }
 }
 ```
 
-Errors:
+Errors: `400 invalid_request`, `401 unauthenticated`, `403 forbidden`
+(caller isn't a member of `houseId`).
 
-- `400 invalid_request`
-- `401 unauthenticated`
-- `403 forbidden`
-- `404 room_not_found`
+### `GET /api/v1/houses/:houseId/projects`
 
-Authorization requirements:
+Authentication: required. Query: `limit?` (1-100, default 25), `cursor?`.
+Response: `{ "data": Project[], "page": { "limit", "cursor", "nextCursor" } }`
+(see "Response Shape" below) — includes every project regardless of
+`status` (no archived-filter yet). Errors: `401 unauthenticated`,
+`403 forbidden`.
 
-Room access is enforced by the backend. Frontend room visibility is only a user
-experience hint.
+### `GET /api/v1/projects/:projectId`
 
-Validation requirements:
+Authentication: required. Response: single `Project` (same shape as
+create). Errors: `401 unauthenticated`, `403 forbidden` (not a house
+member), `404 project_not_found`.
 
-- `body` is required and must not be empty.
+### `PATCH /api/v1/projects/:projectId`
 
-Expected behavior:
+Authentication: required. Body: `{ "name"?: string, "description"?: string }`.
+Response: updated `Project`. Errors: `400 invalid_request`,
+`401 unauthenticated`, `403 forbidden`, `404 project_not_found`.
 
-Persist the message and return it. Realtime delivery may be emitted by the
-backend later.
+### `POST /api/v1/projects/:projectId/archive`
+
+Authentication: required. No body. Response: updated `Project` with
+`status: "archived"`. A dedicated action endpoint rather than a `PATCH`
+status flag (matches `logout`/`logout-all`'s precedent). Errors:
+`401 unauthenticated`, `403 forbidden`, `404 project_not_found`.
+
+### `POST /api/v1/projects/:projectId/clients`
+
+Authentication: required. Body: `{ "clientId": string }`. Response: updated
+`Project` with the client now included in `clients`. Errors:
+`400 invalid_request` (`clientId` belongs to a different house),
+`401 unauthenticated`, `403 forbidden`, `404 project_not_found`,
+`409 already_linked`. Link-only — no unlink endpoint yet.
+
+### `POST /api/v1/houses/:houseId/clients`
+
+Authentication: required. Body:
+`{ "name": string, "contactName"?: string, "contactEmail"?: string }`.
+Response:
+
+```json
+{
+  "data": {
+    "id": "client_123",
+    "name": "North Star Films",
+    "contactName": "Dev Anand",
+    "contactEmail": "dev@northstarfilms.example",
+    "createdAt": "2026-07-08T10:00:00.000Z",
+    "updatedAt": "2026-07-08T10:00:00.000Z"
+  }
+}
+```
+
+Errors: `400 invalid_request` (missing `name`, or `contactEmail` isn't a
+valid email), `401 unauthenticated`, `403 forbidden`.
+
+### `GET /api/v1/houses/:houseId/clients`
+
+Authentication: required. Query: `limit?`, `cursor?` (same as projects).
+Response: `{ "data": Client[], "page": {...} }`. Errors:
+`401 unauthenticated`, `403 forbidden`.
+
+### `GET /api/v1/clients/:clientId` / `PATCH /api/v1/clients/:clientId`
+
+Same shape/error pattern as the corresponding project endpoints, scoped to
+a `Client` instead.
+
+## Notifications (Implemented)
+
+Implemented per ADR 0023 (`apps/api/src/notifications/*`). No public
+create endpoint — notifications are always server-triggered (currently:
+task assignment notifies the assignee; joining a house notifies its
+`"Owner"` member(s)). No realtime delivery yet (ADR 0005 not implemented) —
+poll `GET /api/v1/notifications`.
+
+### `GET /api/v1/notifications`
+
+Authentication: required. Query: `limit?` (1-100, default 25), `cursor?`.
+Response: `{ "data": Notification[], "page": {...} }` (cursor-paginated,
+newest-first — see "Response Shape" below):
+
+```json
+{
+  "data": [
+    {
+      "id": "notif_123",
+      "type": "task_assigned",
+      "title": "New task: Prepare rough cut",
+      "body": "You were assigned \"Prepare rough cut\" on Cafe Noir Opening, due 2026-07-07.",
+      "readAt": null,
+      "createdAt": "2026-07-08T10:00:00.000Z"
+    }
+  ],
+  "page": { "limit": 25, "cursor": null, "nextCursor": null }
+}
+```
+
+Errors: `401 unauthenticated`.
+
+### `POST /api/v1/notifications/:notificationId/read`
+
+Authentication: required. No body. Response: the updated `Notification`
+with `readAt` set. Errors: `401 unauthenticated`,
+`404 notification_not_found` (doesn't exist, or belongs to someone else).
+
+### `POST /api/v1/notifications/read-all`
+
+Authentication: required. No body. Response: `{ "data": { "success": true } }`.
+Idempotent — succeeds whether or not anything was unread. Errors:
+`401 unauthenticated`.
+
+## Comments (Implemented)
+
+Implemented per ADR 0024 (`apps/api/src/comments/*`). Resolves the
+previously-deferred "comment target modeling strategy" — a comment
+attaches to a task or a project via nested routes (not a generic
+`/api/v1/comments`).
+
+### `POST`/`GET /api/v1/tasks/:taskId/comments`
+
+Authentication: required. `POST` body: `{ "body": string }`. Response
+(both methods): `Comment` — `{ "id", "body", "authorId", "authorName", "createdAt", "updatedAt" }`
+(list is cursor-paginated, `createdAt asc` — see "Response Shape" below).
+Errors: `400 invalid_request` (empty `body`, `POST` only),
+`401 unauthenticated`, `403 forbidden` (not a member of the task's house),
+`404 task_not_found`.
+
+### `POST`/`GET /api/v1/projects/:projectId/comments`
+
+Same shape/error pattern as the task endpoints above, scoped to a
+`Project` (`404 project_not_found` instead). No edit/delete endpoint
+exists for either yet.
 
 ## Response Shape
 
@@ -606,8 +623,11 @@ PostgreSQL.
 
 ## Deferred API Decisions
 
-- Validation library.
-- Request ID implementation.
+- Request ID implementation (the auth module's error envelope currently uses
+  a per-response random UUID, not a request-scoped/traced one).
 - Rate limiting strategy.
 - Public API strategy.
 - API documentation generation.
+
+Resolved: validation library — `class-validator` + `class-transformer` with
+Nest's `ValidationPipe`, per ADR 0019.

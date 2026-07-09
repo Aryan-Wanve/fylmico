@@ -401,15 +401,16 @@ API principles:
 - Mock services are valid frontend infrastructure until the backend implements
   the documented contract.
 
-Baseline route shape:
+Baseline route shape (updated per ADR 0018/0022 — the product-facing route
+prefix is `houses`, not `organizations`, matching every route actually
+implemented so far):
 
 ```text
 POST /api/v1/auth/login
 GET  /api/v1/auth/me
-GET  /api/v1/organizations
-POST /api/v1/organizations
-GET  /api/v1/organizations/:organizationId/projects
-POST /api/v1/organizations/:organizationId/projects
+POST /api/v1/houses
+GET  /api/v1/houses/:houseId/projects
+POST /api/v1/houses/:houseId/projects
 GET  /api/v1/projects/:projectId
 GET  /api/v1/projects/:projectId/assets
 ```
