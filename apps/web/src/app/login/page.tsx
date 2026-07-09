@@ -4,7 +4,6 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoginPage, type LoginAsyncState } from "@/components/login/login-page";
 import { login } from "@/services/base-workspace.service";
-import { setMockSession } from "@/lib/session";
 
 export default function LoginRoute() {
   const router = useRouter();
@@ -24,7 +23,6 @@ export default function LoginRoute() {
         password: String(form.get("password") ?? "")
       });
       setAuthState("success");
-      setMockSession();
       router.push("/");
     } catch (loginError) {
       setAuthState("error");

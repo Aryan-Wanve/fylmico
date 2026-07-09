@@ -5,7 +5,8 @@ export type RoleName =
   | "Videographer"
   | "Photographer"
   | "Designer"
-  | "Client";
+  | "Client"
+  | "Member";
 
 export type TaskStatus = "scheduled" | "in-progress" | "review" | "done";
 
@@ -80,6 +81,21 @@ export type WorkspaceSnapshot = {
 export type LoginRequest = {
   email: string;
   password: string;
+};
+
+export type SignupRequest = {
+  name: string;
+  email: string;
+  password: string;
+};
+
+export type RequestPasswordResetRequest = {
+  email: string;
+};
+
+export type ResetPasswordRequest = {
+  token: string;
+  newPassword: string;
 };
 
 export type CreateHouseRequest = {

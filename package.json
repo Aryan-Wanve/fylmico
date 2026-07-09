@@ -37,7 +37,7 @@
       "prettier --write"
     ],
     "apps/web/**/*.{js,jsx,ts,tsx}": [
-      "eslint --max-warnings=0"
+      "eslint --max-warnings=0 --no-warn-ignored"
     ]
   },
   "devDependencies": {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getWorkspace } from "@/services/base-workspace.service";
-import { hasMockSession } from "@/lib/session";
+import { hasSession } from "@/lib/session";
 import { WorkspaceProvider } from "@/lib/workspace-context";
 import { AppShellGate } from "@/components/layout/app-shell-gate";
 import type { WorkspaceSnapshot } from "@/types/base";
@@ -33,25 +33,31 @@ export default function AuthenticatedLayout({
       return;
     }
 
-    if (!hasMockSession()) {
+    if (!hasSession()) {
       router.replace("/login");
       return;
     }
 
     let isMounted = true;
 
-    getWorkspace().then((snapshot) => {
-      if (isMounted) {
-        setWorkspace(snapshot);
-      }
-    });
+    getWorkspace()
+      .then((snapshot) => {
+        if (isMounted) {
+          setWorkspace(snapshot);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          router.replace("/login");
+        }
+      });
 
     return () => {
       isMounted = false;
     };
   }, [isHydrated, router]);
 
-  if (!isHydrated || !hasMockSession() || !workspace) {
+  if (!isHydrated || !hasSession() || !workspace) {
     return null;
   }
 
