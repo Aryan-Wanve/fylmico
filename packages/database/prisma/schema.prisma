@@ -21,6 +21,8 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
   organizationMemberships OrganizationMembership[]
+  assignedTasks           Task[]
+  messages                Message[]
 
   @@map("users")
 }
@@ -34,8 +36,10 @@ model Organization {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  roles       Role[]
-  memberships OrganizationMembership[]
+  roles         Role[]
+  memberships   OrganizationMembership[]
+  tasks         Task[]
+  conversations Conversation[]
 
   @@map("organizations")
 }
@@ -131,4 +135,55 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+model Task {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  title          String
+  project        String
+  assigneeId     String   @map("assignee_id")
+  role           String
+  dueDate        String   @map("due_date")
+  status         String   @default("scheduled")
+  priority       String   @default("medium")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignee     User         @relation(fields: [assigneeId], references: [id])
+
+  @@index([organizationId])
+  @@index([assigneeId])
+  @@map("tasks")
+}
+
+model Conversation {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  name           String
+  topic          String
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  messages     Message[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String   @map("conversation_id")
+  authorId       String   @map("author_id")
+  body           String
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  author       User         @relation(fields: [authorId], references: [id])
+
+  @@index([conversationId])
+  @@index([authorId])
+  @@map("messages")
 }

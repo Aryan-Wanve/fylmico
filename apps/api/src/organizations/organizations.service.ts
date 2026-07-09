@@ -34,6 +34,12 @@ const DEFAULT_ROLES = [
   }
 ];
 
+const DEFAULT_CONVERSATIONS = [
+  { name: "general", topic: "Daily coordination and house-wide updates." },
+  { name: "edit-bay", topic: "Cuts, revisions, exports, and feedback." },
+  { name: "shoot-floor", topic: "On-set coordination and capture notes." }
+];
+
 const houseInclude = {
   roles: true,
   memberships: { include: { user: true, role: true } }
@@ -69,7 +75,8 @@ export class OrganizationsService {
         handle: dto.handle,
         description,
         inviteCode,
-        roles: { create: DEFAULT_ROLES }
+        roles: { create: DEFAULT_ROLES },
+        conversations: { create: DEFAULT_CONVERSATIONS }
       },
       include: { roles: true }
     });
@@ -165,6 +172,20 @@ export class OrganizationsService {
     }
 
     throw new Error("Failed to generate a unique invite code.");
+  }
+
+  async requireMembership(organizationId: string, userId: string) {
+    const membership = await this.prisma.organizationMembership.findUnique({
+      where: { organizationId_userId: { organizationId, userId } }
+    });
+    if (!membership) {
+      throw new AppException(
+        HttpStatus.FORBIDDEN,
+        "forbidden",
+        "You are not a member of this house."
+      );
+    }
+    return membership;
   }
 
   async getHousesForUser(userId: string) {
