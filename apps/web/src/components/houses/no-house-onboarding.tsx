@@ -11,16 +11,16 @@ export function NoHouseOnboarding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleCreateHouse() {
+  async function handleCreateHouse(data: {
+    name: string;
+    handle: string;
+    description: string;
+  }) {
     setIsSubmitting(true);
     setError("");
 
     try {
-      await createHouse({
-        name: "Nova Frame House",
-        handle: "nova-frame",
-        description: "Commercial films, reels, launch videos, and event edits."
-      });
+      await createHouse(data);
       await refreshWorkspace();
     } catch (createError) {
       setError(getErrorMessage(createError));
@@ -28,12 +28,12 @@ export function NoHouseOnboarding() {
     }
   }
 
-  async function handleJoinHouse() {
+  async function handleJoinHouse(data: { inviteCode: string }) {
     setIsSubmitting(true);
     setError("");
 
     try {
-      await joinHouse({ inviteCode: "NOVA-2048" });
+      await joinHouse(data);
       await refreshWorkspace();
     } catch (joinError) {
       setError(getErrorMessage(joinError));

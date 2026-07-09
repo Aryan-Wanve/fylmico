@@ -94,12 +94,12 @@ export function LoginPage({ authState, error, onLogin }: LoginPageProps) {
             </div>
           </div>
 
-          <a
+          <Link
             className="-mt-1 justify-self-end text-[0.86rem] font-extrabold text-[#654cff] no-underline"
-            href="#forgot-password"
+            href="/forgot-password"
           >
             Forgot password?
-          </a>
+          </Link>
 
           {error ? (
             <p className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600">

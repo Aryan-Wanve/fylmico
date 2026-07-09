@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,25 +11,49 @@ import { Label } from "@/components/ui/label";
 import { AuthLayout } from "@/components/login/auth-layout";
 import { AuthSocialProviders } from "@/components/login/auth-social-providers";
 import { AuthSecurityNote } from "@/components/login/auth-security-note";
+import { signup } from "@/services/base-workspace.service";
 
 export function SignupPage() {
+  const router = useRouter();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setIsSubmitting(true);
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get("name") ?? "").trim();
+    const email = String(form.get("email") ?? "").trim();
+    const password = String(form.get("password") ?? "");
+    const confirmPassword = String(form.get("confirmPassword") ?? "");
+
     setNotice("");
 
-    window.setTimeout(() => {
-      setIsSubmitting(false);
+    if (password !== confirmPassword) {
+      setNotice("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setNotice("Password must be at least 8 characters.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await signup({ name, email, password });
+      router.push("/");
+    } catch (signupError) {
       setNotice(
-        "Sign up isn't open yet in this preview. Ask your house owner for an invite instead."
+        signupError instanceof Error
+          ? signupError.message
+          : "Something went wrong."
       );
-    }, 500);
+      setIsSubmitting(false);
+    }
   }
 
   return (
