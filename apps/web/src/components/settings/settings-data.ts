@@ -5,7 +5,6 @@ import {
   KeyRound,
   Palette,
   Plug,
-  Shield,
   User,
   Users,
   type LucideIcon

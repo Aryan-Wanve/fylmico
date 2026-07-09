@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { CalendarCheck, Clock3, Users, Briefcase } from "lucide-react";
 import { CrewsHeader } from "@/components/crews/crews-header";
 import { CrewStatCard } from "@/components/crews/crew-stat-card";
@@ -30,8 +30,7 @@ export function CrewsPage() {
 
   const counts: Record<CrewsTab, number> = {
     all: members.length,
-    available: members.filter((member) => member.status === "available")
-      .length,
+    available: members.filter((member) => member.status === "available").length,
     "on-set": members.filter((member) => member.status === "on-set").length,
     unavailable: members.filter((member) => member.status === "unavailable")
       .length,
@@ -76,12 +75,10 @@ export function CrewsPage() {
     safePage * perPage
   );
 
-  const groupedByDepartment = useMemo(() => {
-    return DEPARTMENT_ORDER.map((dept) => ({
-      department: dept,
-      members: searched.filter((member) => member.department === dept)
-    })).filter((group) => group.members.length > 0);
-  }, [searched]);
+  const groupedByDepartment = DEPARTMENT_ORDER.map((dept) => ({
+    department: dept,
+    members: searched.filter((member) => member.department === dept)
+  })).filter((group) => group.members.length > 0);
 
   function updateFilter<T>(setter: (value: T) => void, value: T) {
     setter(value);
@@ -116,8 +113,9 @@ export function CrewsPage() {
   const availableToday = members.filter(
     (member) => member.status === "available"
   ).length;
-  const onSetToday = members.filter((member) => member.status === "on-set")
-    .length;
+  const onSetToday = members.filter(
+    (member) => member.status === "on-set"
+  ).length;
   const departmentsWithMembers = DEPARTMENT_ORDER.filter((dept) =>
     members.some((member) => member.department === dept)
   ).length;
@@ -158,7 +156,7 @@ export function CrewsPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
-        <div className="grid min-w-0 gap-4 content-start">
+        <div className="grid min-w-0 content-start gap-4">
           <CrewsToolbar
             activeTab={activeTab}
             counts={counts}

@@ -7,7 +7,18 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function StorageOverviewPanel() {
   const usedGb = storageBreakdown.reduce((sum, entry) => sum + entry.sizeGb, 0);
+
+  const arcs: {
+    entry: (typeof storageBreakdown)[number];
+    dash: number;
+    offset: number;
+  }[] = [];
   let cumulative = 0;
+  for (const entry of storageBreakdown) {
+    const dash = (entry.sizeGb / usedGb) * CIRCUMFERENCE;
+    arcs.push({ entry, dash, offset: cumulative });
+    cumulative += dash;
+  }
 
   return (
     <DashboardPanel action={{ label: "View all" }} title="Storage Overview">
@@ -22,25 +33,19 @@ export function StorageOverviewPanel() {
               stroke="#f1f1f6"
               strokeWidth={STROKE_WIDTH}
             />
-            {storageBreakdown.map((entry) => {
-              const dash = (entry.sizeGb / usedGb) * CIRCUMFERENCE;
-              const offset = cumulative;
-              cumulative += dash;
-
-              return (
-                <circle
-                  cx="60"
-                  cy="60"
-                  fill="none"
-                  key={entry.label}
-                  r={RADIUS}
-                  stroke={entry.color}
-                  strokeDasharray={`${dash} ${CIRCUMFERENCE - dash}`}
-                  strokeDashoffset={-offset}
-                  strokeWidth={STROKE_WIDTH}
-                />
-              );
-            })}
+            {arcs.map(({ entry, dash, offset }) => (
+              <circle
+                cx="60"
+                cy="60"
+                fill="none"
+                key={entry.label}
+                r={RADIUS}
+                stroke={entry.color}
+                strokeDasharray={`${dash} ${CIRCUMFERENCE - dash}`}
+                strokeDashoffset={-offset}
+                strokeWidth={STROKE_WIDTH}
+              />
+            ))}
           </svg>
           <div className="absolute inset-0 grid place-items-center">
             <div className="text-center">

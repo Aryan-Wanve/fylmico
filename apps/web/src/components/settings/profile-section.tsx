@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Camera, Laptop, MoreVertical, Smartphone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -60,7 +61,9 @@ export function ProfileSection() {
   }
 
   function handleRevoke(sessionId: string) {
-    setSessions((current) => current.filter((session) => session.id !== sessionId));
+    setSessions((current) =>
+      current.filter((session) => session.id !== sessionId)
+    );
   }
 
   return (
@@ -86,9 +89,11 @@ export function ProfileSection() {
         <div className="flex flex-wrap items-start gap-8">
           <div className="relative shrink-0">
             <div className="relative h-20 w-20 overflow-hidden rounded-full">
-              <img
+              <Image
                 alt=""
-                className="h-full w-full object-cover"
+                className="object-cover"
+                fill
+                sizes="5rem"
                 src={profile.avatar}
               />
             </div>
