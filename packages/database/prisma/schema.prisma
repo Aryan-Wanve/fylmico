@@ -24,6 +24,7 @@ model User {
   assignedTasks           Task[]
   messages                Message[]
   notifications           Notification[]
+  comments                Comment[]
 
   @@map("users")
 }
@@ -43,6 +44,7 @@ model Organization {
   conversations Conversation[]
   projects      Project[]
   clients       Client[]
+  comments      Comment[]
 
   @@map("organizations")
 }
@@ -251,4 +253,22 @@ model Notification {
 
   @@index([userId])
   @@map("notifications")
+}
+
+model Comment {
+  id              String   @id @default(cuid())
+  organizationId  String   @map("organization_id")
+  commentableType String   @map("commentable_type")
+  commentableId   String   @map("commentable_id")
+  authorId        String   @map("author_id")
+  body            String
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  author       User         @relation(fields: [authorId], references: [id])
+
+  @@index([organizationId])
+  @@index([commentableType, commentableId])
+  @@map("comments")
 }
