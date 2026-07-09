@@ -3,8 +3,10 @@ import { ConfigModule } from "@nestjs/config";
 import { DatabaseModule } from "@fylmico/database";
 import { AuthModule } from "./auth/auth.module";
 import { ChatModule } from "./chat/chat.module";
+import { ClientsModule } from "./clients/clients.module";
 import { HealthModule } from "./health/health.module";
 import { OrganizationsModule } from "./organizations/organizations.module";
+import { ProjectsModule } from "./projects/projects.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { WorkspaceModule } from "./workspace/workspace.module";
 
@@ -17,6 +19,8 @@ import { WorkspaceModule } from "./workspace/workspace.module";
     OrganizationsModule,
     TasksModule,
     ChatModule,
+    ProjectsModule,
+    ClientsModule,
     WorkspaceModule
   ]
 })
