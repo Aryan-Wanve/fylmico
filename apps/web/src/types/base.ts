@@ -148,6 +148,90 @@ export type CalendarEvent = {
   organizationId: string;
 };
 
+export type TimeEntryPhase =
+  "Pre-Production" | "Production" | "Post-Production" | "Planning";
+
+export type TimeEntry = {
+  id: string;
+  organizationId: string;
+  projectId: string | null;
+  userId: string;
+  phase: TimeEntryPhase;
+  hours: number;
+  date: string;
+  note: string | null;
+};
+
+export type TaskStatusBreakdownEntry = {
+  status: string;
+  label: string;
+  color: string;
+  count: number;
+};
+
+export type TimeLoggedDay = {
+  date: string;
+  label: string;
+  hours: number;
+};
+
+export type TimeDistributionEntry = {
+  phase: TimeEntryPhase;
+  color: string;
+  hours: number;
+};
+
+export type AnalyticsTopProject = {
+  id: string;
+  title: string;
+  progress: number;
+  coverGradient: string | null;
+  coverIcon: string | null;
+};
+
+export type AnalyticsProjectHoursSeries = {
+  id: string;
+  label: string;
+  color: string;
+  points: number[];
+};
+
+export type AnalyticsContributor = {
+  userId: string;
+  name: string;
+  hours: number;
+};
+
+export type AnalyticsWorkloadEntry = {
+  userId: string;
+  name: string;
+  jobTitle: string | null;
+  percentage: number;
+};
+
+export type ActivityHeatmap = {
+  dayLabels: string[];
+  timeLabels: string[];
+  matrix: number[][];
+};
+
+export type Analytics = {
+  totalProjects: number;
+  activeProjects: number;
+  tasksTotal: number;
+  tasksCompleted: number;
+  hoursLoggedTotal: number;
+  teamEfficiency: number;
+  taskStatusBreakdown: TaskStatusBreakdownEntry[];
+  timeLoggedByDay: TimeLoggedDay[];
+  timeDistribution: TimeDistributionEntry[];
+  topActiveProjects: AnalyticsTopProject[];
+  projectHoursSeries: AnalyticsProjectHoursSeries[];
+  topContributors: AnalyticsContributor[];
+  teamWorkload: AnalyticsWorkloadEntry[];
+  activityHeatmap: ActivityHeatmap;
+};
+
 export type ChatMessage = {
   id: string;
   authorId: string;
@@ -252,6 +336,14 @@ export type CreateCalendarEventRequest = {
   location?: string;
   category?: CalendarEventCategory;
   projectId?: string;
+};
+
+export type CreateTimeEntryRequest = {
+  date: string;
+  hours: number;
+  phase?: TimeEntryPhase;
+  projectId?: string;
+  note?: string;
 };
 
 export type UpdateCrewProfileRequest = Partial<{

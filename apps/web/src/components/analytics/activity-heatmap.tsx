@@ -1,4 +1,4 @@
-import { activityHeatmap } from "@/components/analytics/analytics-data";
+import type { ActivityHeatmap as ActivityHeatmapData } from "@/types/base";
 
 const INTENSITY_CLASSES = [
   "bg-black/[0.04]",
@@ -8,8 +8,8 @@ const INTENSITY_CLASSES = [
   "bg-[#654cff]/90"
 ];
 
-export function ActivityHeatmap() {
-  const { dayLabels, timeLabels, matrix } = activityHeatmap;
+export function ActivityHeatmap({ heatmap }: { heatmap: ActivityHeatmapData }) {
+  const { dayLabels, timeLabels, matrix } = heatmap;
 
   return (
     <div>

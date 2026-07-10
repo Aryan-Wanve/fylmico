@@ -1,6 +1,7 @@
 import { apiRequest } from "@/lib/api/client";
 import { clearSession, setSession } from "@/lib/session";
 import type {
+  Analytics,
   CalendarEvent,
   ChatRoom,
   CreateCalendarEventRequest,
@@ -8,6 +9,7 @@ import type {
   CreateHouseRequest,
   CreateProjectRequest,
   CreateTaskRequest,
+  CreateTimeEntryRequest,
   CrewMember,
   House,
   JoinHouseRequest,
@@ -18,6 +20,7 @@ import type {
   ResetPasswordRequest,
   SendChatMessageRequest,
   SignupRequest,
+  TimeEntry,
   UpdateCrewProfileRequest,
   UpdateProjectRequest,
   UpdateTaskRequest,
@@ -284,6 +287,39 @@ export async function createCalendarEvent(
     method: "POST",
     body: request
   });
+}
+
+export async function listTimeEntries(): Promise<TimeEntry[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing time entries.");
+  }
+
+  return apiRequest<TimeEntry[]>(`/houses/${activeHouseId}/time-entries`);
+}
+
+export async function createTimeEntry(
+  request: CreateTimeEntryRequest
+): Promise<TimeEntry> {
+  if (!request.date.trim() || !(request.hours > 0)) {
+    throw new Error("Date and a positive number of hours are required.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before logging time.");
+  }
+
+  return apiRequest<TimeEntry>(`/houses/${activeHouseId}/time-entries`, {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function getAnalytics(): Promise<Analytics> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing analytics.");
+  }
+
+  return apiRequest<Analytics>(`/houses/${activeHouseId}/analytics`);
 }
 
 export async function sendChatMessage(

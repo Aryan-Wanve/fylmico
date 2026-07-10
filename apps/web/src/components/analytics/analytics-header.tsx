@@ -1,6 +1,7 @@
-import { Calendar, Download, SlidersHorizontal } from "lucide-react";
+import type { ReactNode } from "react";
+import { SlidersHorizontal } from "lucide-react";
 
-export function AnalyticsHeader() {
+export function AnalyticsHeader({ logTimeSlot }: { logTimeSlot?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
@@ -16,23 +17,10 @@ export function AnalyticsHeader() {
           className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03]"
           type="button"
         >
-          <Calendar className="h-4 w-4" />
-          Jul 1 – Jul 7, 2026
-        </button>
-        <button
-          className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03]"
-          type="button"
-        >
           <SlidersHorizontal className="h-4 w-4" />
           Filters
         </button>
-        <button
-          className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03]"
-          type="button"
-        >
-          <Download className="h-4 w-4" />
-          Export
-        </button>
+        {logTimeSlot}
       </div>
     </div>
   );

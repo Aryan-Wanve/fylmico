@@ -1,4 +1,9 @@
-import type { ProjectProgressSeries } from "@/components/analytics/analytics-data";
+export type ChartSeries = {
+  id: string;
+  label: string;
+  color: string;
+  points: number[];
+};
 
 const WIDTH = 700;
 const HEIGHT = 260;
@@ -8,26 +13,35 @@ const PADDING_TOP = 10;
 const PADDING_BOTTOM = 24;
 const PLOT_WIDTH = WIDTH - PADDING_LEFT - PADDING_RIGHT;
 const PLOT_HEIGHT = HEIGHT - PADDING_TOP - PADDING_BOTTOM;
-const GRID_VALUES = [0, 25, 50, 75, 100];
 
 function xAt(index: number, count: number): number {
   return PADDING_LEFT + (index / (count - 1)) * PLOT_WIDTH;
 }
 
-function yAt(value: number): number {
-  return PADDING_TOP + (1 - value / 100) * PLOT_HEIGHT;
-}
-
 export function MultiLineChart({
   series,
-  xLabels
+  xLabels,
+  valueSuffix = "%",
+  maxValue
 }: {
-  series: ProjectProgressSeries[];
+  series: ChartSeries[];
   xLabels: string[];
+  valueSuffix?: string;
+  maxValue?: number;
 }) {
+  const scaleMax =
+    maxValue ?? Math.max(1, ...series.flatMap((line) => line.points), 100);
+  const gridValues = [0, 0.25, 0.5, 0.75, 1].map((fraction) =>
+    Math.round(fraction * scaleMax)
+  );
+
+  function yAt(value: number): number {
+    return PADDING_TOP + (1 - value / scaleMax) * PLOT_HEIGHT;
+  }
+
   return (
     <svg className="h-64 w-full" viewBox={`0 0 ${WIDTH} ${HEIGHT}`}>
-      {GRID_VALUES.map((value) => (
+      {gridValues.map((value) => (
         <g key={value}>
           <line
             stroke="rgba(0,0,0,0.05)"
@@ -42,7 +56,8 @@ export function MultiLineChart({
             x={PADDING_LEFT - 8}
             y={yAt(value) + 3}
           >
-            {value}%
+            {value}
+            {valueSuffix}
           </text>
         </g>
       ))}
@@ -104,7 +119,8 @@ export function MultiLineChart({
               x={lastX + 25}
               y={lastY + 3}
             >
-              {line.points[line.points.length - 1]}%
+              {line.points[line.points.length - 1]}
+              {valueSuffix}
             </text>
           </g>
         );
