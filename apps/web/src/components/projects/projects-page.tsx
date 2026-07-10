@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useWorkspace } from "@/lib/workspace-context";
+import {
+  archiveProject,
+  createProject,
+  listProjects
+} from "@/services/base-workspace.service";
 import { ProjectsHeader } from "@/components/projects/projects-header";
 import {
   ProjectsToolbar,
@@ -13,18 +19,48 @@ import { ProjectsEmptyState } from "@/components/projects/projects-empty-state";
 import { ProjectTimelinePanel } from "@/components/projects/project-timeline-panel";
 import { RecentActivityPanel } from "@/components/dashboard/recent-activity-panel";
 import {
-  projects as defaultProjects,
   PROJECT_TYPES,
   type Project
 } from "@/components/projects/project-data";
 
 export function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>(defaultProjects);
+  const { activeHouse } = useWorkspace();
+  const members = useMemo(() => activeHouse?.members ?? [], [activeHouse]);
+
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ProjectTab>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [activeTypes, setActiveTypes] = useState<Set<string>>(
     () => new Set(PROJECT_TYPES)
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    listProjects()
+      .then((data) => {
+        if (!cancelled) {
+          setProjects(data);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          window.alert(
+            error instanceof Error ? error.message : "Could not load projects."
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const counts = useMemo(() => {
     return {
@@ -42,7 +78,7 @@ export function ProjectsPage() {
 
   const filteredProjects = projects.filter((project) => {
     const matchesTab = activeTab === "all" || project.status === activeTab;
-    const matchesType = activeTypes.has(project.type);
+    const matchesType = !project.type || activeTypes.has(project.type);
     return matchesTab && matchesType;
   });
 
@@ -60,56 +96,76 @@ export function ProjectsPage() {
     });
   }
 
-  function handleDuplicate(projectId: string) {
-    setProjects((current) => {
-      const source = current.find((project) => project.id === projectId);
+  async function handleDuplicate(projectId: string) {
+    const source = projects.find((project) => project.id === projectId);
+    if (!source) {
+      return;
+    }
 
-      if (!source) {
-        return current;
-      }
-
-      const index = current.indexOf(source);
-      const copy: Project = {
-        ...source,
-        id: `${source.id}-copy-${Date.now()}`,
-        title: `${source.title} (Copy)`
-      };
-      const next = [...current];
-      next.splice(index + 1, 0, copy);
-      return next;
-    });
+    try {
+      const copy = await createProject({
+        name: `${source.title} (Copy)`,
+        description: source.description ?? undefined,
+        type: source.type ?? undefined,
+        genre: source.genre ?? undefined,
+        stage: source.stage,
+        progress: source.progress,
+        coverGradient: source.coverGradient ?? undefined,
+        coverIcon: source.coverIcon ?? undefined,
+        dueDate: source.dueDate ?? undefined,
+        teamIds: source.teamIds
+      });
+      setProjects((current) => {
+        const index = current.indexOf(source);
+        const next = [...current];
+        next.splice(index + 1, 0, copy);
+        return next;
+      });
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not duplicate the project."
+      );
+    }
   }
 
-  function handleArchive(projectId: string) {
-    setProjects((current) =>
-      current.filter((project) => project.id !== projectId)
-    );
+  async function handleArchive(projectId: string) {
+    try {
+      await archiveProject(projectId);
+      setProjects((current) =>
+        current.filter((project) => project.id !== projectId)
+      );
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not archive the project."
+      );
+    }
   }
 
-  function handleNewProject() {
+  async function handleNewProject() {
     const title = window.prompt("Name your new project");
 
     if (!title || !title.trim()) {
       return;
     }
 
-    const project: Project = {
-      id: `project-${Date.now()}`,
-      title: title.trim(),
-      type: "Short Film",
-      genre: "New",
-      description: "A new production ready to move into pre-production.",
-      stage: "Development",
-      status: "active",
-      progress: 0,
-      coverGradient: "from-slate-400 via-slate-600 to-slate-800",
-      dueDate: "TBD",
-      teamIds: ["user-aryan"],
-      teamOverflow: 0
-    };
-
-    setProjects((current) => [project, ...current]);
-    setActiveTab("all");
+    try {
+      const project = await createProject({
+        name: title.trim(),
+        description: "A new production ready to move into pre-production.",
+        stage: "Development",
+        coverGradient: "from-slate-400 via-slate-600 to-slate-800"
+      });
+      setProjects((current) => [project, ...current]);
+      setActiveTab("all");
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not create the project."
+      );
+    }
   }
 
   return (
@@ -125,13 +181,14 @@ export function ProjectsPage() {
         viewMode={viewMode}
       />
 
-      {filteredProjects.length === 0 ? (
+      {!loading && filteredProjects.length === 0 ? (
         <ProjectsEmptyState />
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {filteredProjects.map((project) => (
             <ProjectGridCard
               key={project.id}
+              members={members}
               onArchive={() => handleArchive(project.id)}
               onDuplicate={() => handleDuplicate(project.id)}
               project={project}
@@ -143,6 +200,7 @@ export function ProjectsPage() {
           {filteredProjects.map((project) => (
             <ProjectListRow
               key={project.id}
+              members={members}
               onArchive={() => handleArchive(project.id)}
               onDuplicate={() => handleDuplicate(project.id)}
               project={project}

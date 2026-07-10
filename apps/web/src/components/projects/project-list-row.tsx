@@ -1,42 +1,35 @@
-import Image from "next/image";
 import {
+  COVER_ICONS,
   STAGE_BADGE_STYLES,
   isProjectOverdue,
   type Project
 } from "@/components/projects/project-data";
 import { TeamAvatarStack } from "@/components/projects/team-avatar-stack";
 import { ProjectCardMenu } from "@/components/projects/project-card-menu";
+import type { HouseMember } from "@/types/base";
 
 export function ProjectListRow({
   project,
+  members,
   onDuplicate,
   onArchive
 }: {
   project: Project;
+  members: HouseMember[];
   onDuplicate: () => void;
   onArchive: () => void;
 }) {
-  const Icon = project.coverIcon;
+  const Icon = project.coverIcon ? COVER_ICONS[project.coverIcon] : null;
   const overdue = isProjectOverdue(project);
 
   return (
     <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015]">
       <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg">
-        {project.image ? (
-          <Image
-            alt=""
-            className="object-cover"
-            fill
-            sizes="80px"
-            src={project.image}
-          />
-        ) : (
-          <div
-            className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${project.coverGradient}`}
-          >
-            {Icon ? <Icon className="h-5 w-5 text-white/30" /> : null}
-          </div>
-        )}
+        <div
+          className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${project.coverGradient ?? "from-slate-400 via-slate-600 to-slate-800"}`}
+        >
+          {Icon ? <Icon className="h-5 w-5 text-white/30" /> : null}
+        </div>
       </div>
 
       <div className="min-w-0 flex-1">
@@ -67,16 +60,13 @@ export function ProjectListRow({
       </div>
 
       <div className="hidden shrink-0 lg:block">
-        <TeamAvatarStack
-          overflow={project.teamOverflow}
-          teamIds={project.teamIds}
-        />
+        <TeamAvatarStack members={members} teamIds={project.teamIds} />
       </div>
 
       <span
         className={`hidden w-24 shrink-0 text-xs font-semibold sm:block ${overdue ? "text-red-600" : "text-[#8a90a3]"}`}
       >
-        {project.dueDate}
+        {project.dueDate ?? "TBD"}
       </span>
 
       <ProjectCardMenu onArchive={onArchive} onDuplicate={onDuplicate} />

@@ -10,6 +10,30 @@ export type RoleName =
 
 export type TaskStatus = "todo" | "in-progress" | "on-hold" | "done";
 
+export type ProjectStage =
+  | "Development"
+  | "Pre-Production"
+  | "In Production"
+  | "In Progress"
+  | "Post-Production"
+  | "On Hold"
+  | "Completed";
+
+export type ProjectStatus = "active" | "in-progress" | "on-hold" | "completed";
+
+export type ProjectType =
+  | "Short Film"
+  | "Documentary"
+  | "Commercial"
+  | "Music Video"
+  | "Feature Film"
+  | "Corporate Video"
+  | "Web Series"
+  | "Wedding Film";
+
+export type ProjectCoverIcon =
+  "camera" | "clapperboard" | "heart" | "megaphone" | "mic" | "music";
+
 export type UserProfile = {
   id: string;
   name: string;
@@ -53,6 +77,22 @@ export type ProductionTask = {
   status: TaskStatus;
   priority: "low" | "medium" | "high";
   commentCount?: number;
+};
+
+export type Project = {
+  id: string;
+  title: string;
+  type: ProjectType | null;
+  genre: string | null;
+  description: string | null;
+  stage: ProjectStage;
+  status: ProjectStatus;
+  progress: number;
+  coverGradient: string | null;
+  coverIcon: ProjectCoverIcon | null;
+  dueDate: string | null;
+  teamIds: string[];
+  clients: { id: string; name: string }[];
 };
 
 export type ChatMessage = {
@@ -131,3 +171,18 @@ export type SendChatMessageRequest = {
   roomId: string;
   body: string;
 };
+
+export type CreateProjectRequest = {
+  name: string;
+  description?: string;
+  type?: ProjectType;
+  genre?: string;
+  stage?: ProjectStage;
+  progress?: number;
+  coverGradient?: string;
+  coverIcon?: ProjectCoverIcon;
+  dueDate?: string;
+  teamIds?: string[];
+};
+
+export type UpdateProjectRequest = Partial<CreateProjectRequest>;

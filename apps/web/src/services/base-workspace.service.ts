@@ -3,15 +3,18 @@ import { clearSession, setSession } from "@/lib/session";
 import type {
   ChatRoom,
   CreateHouseRequest,
+  CreateProjectRequest,
   CreateTaskRequest,
   House,
   JoinHouseRequest,
   LoginRequest,
   ProductionTask,
+  Project,
   RequestPasswordResetRequest,
   ResetPasswordRequest,
   SendChatMessageRequest,
   SignupRequest,
+  UpdateProjectRequest,
   UpdateTaskRequest,
   WorkspaceSnapshot
 } from "../types/base";
@@ -172,6 +175,49 @@ export async function updateTask(
 export async function deleteTask(taskId: string): Promise<void> {
   await apiRequest<{ success: boolean }>(`/tasks/${taskId}`, {
     method: "DELETE"
+  });
+}
+
+export async function listProjects(): Promise<Project[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing projects.");
+  }
+
+  return apiRequest<Project[]>(`/houses/${activeHouseId}/projects`, {
+    query: { limit: 100 }
+  });
+}
+
+export async function createProject(
+  request: CreateProjectRequest
+): Promise<Project> {
+  if (!request.name.trim()) {
+    throw new Error("Give the project a name.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before creating projects.");
+  }
+
+  return apiRequest<Project>(`/houses/${activeHouseId}/projects`, {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function updateProject(
+  projectId: string,
+  request: UpdateProjectRequest
+): Promise<Project> {
+  return apiRequest<Project>(`/projects/${projectId}`, {
+    method: "PATCH",
+    body: request
+  });
+}
+
+export async function archiveProject(projectId: string): Promise<Project> {
+  return apiRequest<Project>(`/projects/${projectId}/archive`, {
+    method: "POST"
   });
 }
 

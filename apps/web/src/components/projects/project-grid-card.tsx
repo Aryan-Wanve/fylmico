@@ -1,42 +1,35 @@
-import Image from "next/image";
 import {
+  COVER_ICONS,
   STAGE_BADGE_STYLES,
   isProjectOverdue,
   type Project
 } from "@/components/projects/project-data";
 import { TeamAvatarStack } from "@/components/projects/team-avatar-stack";
 import { ProjectCardMenu } from "@/components/projects/project-card-menu";
+import type { HouseMember } from "@/types/base";
 
 export function ProjectGridCard({
   project,
+  members,
   onDuplicate,
   onArchive
 }: {
   project: Project;
+  members: HouseMember[];
   onDuplicate: () => void;
   onArchive: () => void;
 }) {
-  const Icon = project.coverIcon;
+  const Icon = project.coverIcon ? COVER_ICONS[project.coverIcon] : null;
   const overdue = isProjectOverdue(project);
 
   return (
     <article className="flex min-w-0 flex-col rounded-2xl border border-black/[0.06] bg-white p-3 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
       <div className="relative h-36 w-full overflow-hidden rounded-xl">
-        {project.image ? (
-          <Image
-            alt=""
-            className="object-cover"
-            fill
-            sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
-            src={project.image}
-          />
-        ) : (
-          <div
-            className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${project.coverGradient}`}
-          >
-            {Icon ? <Icon className="h-10 w-10 text-white/30" /> : null}
-          </div>
-        )}
+        <div
+          className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${project.coverGradient ?? "from-slate-400 via-slate-600 to-slate-800"}`}
+        >
+          {Icon ? <Icon className="h-10 w-10 text-white/30" /> : null}
+        </div>
         <span
           className={`absolute top-2.5 right-2.5 rounded-full px-2.5 py-1 text-xs font-bold text-white ${STAGE_BADGE_STYLES[project.stage]}`}
         >
@@ -70,15 +63,12 @@ export function ProjectGridCard({
       </div>
 
       <div className="mt-3 flex items-center justify-between border-t border-black/5 pt-3">
-        <TeamAvatarStack
-          overflow={project.teamOverflow}
-          teamIds={project.teamIds}
-        />
+        <TeamAvatarStack members={members} teamIds={project.teamIds} />
         <span
           className={`text-xs font-semibold ${overdue ? "text-red-600" : "text-[#8a90a3]"}`}
         >
           {overdue ? "Overdue · " : ""}
-          {project.dueDate}
+          {project.dueDate ?? "TBD"}
         </span>
       </div>
     </article>

@@ -2,29 +2,42 @@ import {
   Avatar,
   AvatarFallback,
   AvatarGroup,
-  AvatarGroupCount,
-  AvatarImage
+  AvatarGroupCount
 } from "@/components/ui/avatar";
-import {
-  MEMBER_AVATARS,
-  MEMBER_LABELS
-} from "@/components/projects/project-data";
+import type { HouseMember } from "@/types/base";
+
+const MAX_VISIBLE = 4;
+
+function toInitials(name: string): string {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("");
+  return initials.toUpperCase() || "?";
+}
 
 export function TeamAvatarStack({
   teamIds,
-  overflow
+  members
 }: {
   teamIds: string[];
-  overflow: number;
+  members: HouseMember[];
 }) {
+  const visibleIds = teamIds.slice(0, MAX_VISIBLE);
+  const overflow = teamIds.length - visibleIds.length;
+
   return (
     <AvatarGroup>
-      {teamIds.map((memberId) => (
-        <Avatar key={memberId} size="sm">
-          <AvatarImage alt="" src={MEMBER_AVATARS[memberId]} />
-          <AvatarFallback>{MEMBER_LABELS[memberId] ?? "?"}</AvatarFallback>
-        </Avatar>
-      ))}
+      {visibleIds.map((memberId) => {
+        const member = members.find((candidate) => candidate.id === memberId);
+        return (
+          <Avatar key={memberId} size="sm">
+            <AvatarFallback>{toInitials(member?.name ?? "?")}</AvatarFallback>
+          </Avatar>
+        );
+      })}
       {overflow > 0 ? (
         <AvatarGroupCount className="size-6 text-xs">
           +{overflow}
