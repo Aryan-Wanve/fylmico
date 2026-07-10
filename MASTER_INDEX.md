@@ -78,6 +78,7 @@ Current ADRs:
 - [0026-tasks-page-extension.md](docs/adr/0026-tasks-page-extension.md)
 - [0027-projects-page-extension.md](docs/adr/0027-projects-page-extension.md)
 - [0028-crews-module.md](docs/adr/0028-crews-module.md)
+- [0029-messages-page-extension.md](docs/adr/0029-messages-page-extension.md)
 
 ## Current Sprint Gate
 
@@ -114,20 +115,35 @@ really removes the member (`DELETE /api/v1/houses/:houseId/crew/:userId`,
 this codebase's first member-removal capability - blocked only from
 emptying a house entirely, with no finer-grained "only Owners can do
 this" check yet). Verified live in-browser, including the last-member
-guard correctly blocking removal. Everything else (`/files`,
-`/storyboard`, `/calendar`, `/bookings`, `/analytics`, `/settings`, the
-dashboard's "Recent Projects"/"Recent Activity" panels, and the standalone
-`/messages` page) still runs on independent local mock data colocated per
-page — those pages' designs are materially richer than their matching
-(or, for files/storyboard/calendar/bookings/analytics, nonexistent)
-backend models, so wiring each one up means extending its Prisma schema
-first, not just swapping a mock for a fetch call. No object storage
-exists anywhere in the backend yet - a concrete, named prerequisite for
-project cover photos and the entire `/files` page. Real RBAC (who can
-remove/edit what) is now a concretely scoped gap across every module, not
-just one. The frontend silently refreshes an expired access token on a
-`401` (verified live). No realtime delivery (Socket.IO, ADR 0005) exists
-anywhere yet — notifications and chat are both REST/poll-based for now.
+guard correctly blocking removal. **The standalone `/messages` page's
+core chat is real too** (ADR 0029): viewing house channels and sending
+messages already flowed through the real `chatRooms`/`sendChatMessage`
+API built in ADR 0021; this pass adds
+`POST /api/v1/houses/:houseId/conversations` so "New Chat" creates a real
+channel too (curl-verified, including duplicate-name rejection). The DM
+concept is dropped entirely (every real conversation is a house-wide
+group channel); the Files/Tasks/Events tabs and file attachments remain
+in the UI but are honestly always-empty (no object storage, no per-
+channel task/event backend exists) rather than deleted or faked.
+**Live browser verification for Messages specifically was not completed**
+
+- the browser preview tooling was unavailable during that pass; it's
+  curl- and typecheck/lint/build-verified only, and should get the same
+  live in-browser pass the other three pages received once tooling is back.
+  Everything else (`/files`, `/storyboard`, `/calendar`, `/bookings`,
+  `/analytics`, `/settings`, and the dashboard's "Recent Projects"/"Recent
+  Activity" panels) still runs on independent local mock data colocated per
+  page — those pages' designs are materially richer than their matching
+  (or, for files/storyboard/calendar/bookings/analytics, nonexistent)
+  backend models, so wiring each one up means extending its Prisma schema
+  first, not just swapping a mock for a fetch call. No object storage
+  exists anywhere in the backend yet - a concrete, named prerequisite for
+  project cover photos, message attachments, and the entire `/files` page.
+  Real RBAC (who can remove/edit what) is now a concretely scoped gap
+  across every module, not just one. The frontend silently refreshes an
+  expired access token on a `401` (verified live). No realtime delivery
+  (Socket.IO, ADR 0005) exists anywhere yet — notifications and chat are
+  both REST/poll-based for now.
 
 To run both sides locally: `docker compose up -d postgres`, then start the
 `api` and `web` dev servers (`.claude/launch.json` has both configured).

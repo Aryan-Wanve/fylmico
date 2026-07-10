@@ -393,9 +393,21 @@ contract to build against):
 Errors: `400 invalid_request` (empty `body`), `401 unauthenticated`,
 `403 forbidden` (caller isn't a member of the room's house),
 `404 room_not_found`. Expected behavior: 3 rooms (`"general"`, `"edit-bay"`,
-`"shoot-floor"`) are seeded automatically at house creation; there's no
-endpoint to create additional rooms yet, and `unreadCount` is always `0`
-(no read-tracking implemented).
+`"shoot-floor"`) are seeded automatically at house creation; `unreadCount`
+is always `0` (no read-tracking implemented).
+
+### `POST /api/v1/houses/:houseId/conversations`
+
+Added per ADR 0029. Authentication: required. Body:
+`{ "name": string, "topic"?: string }`. Response: the new room, same
+shape as the create-message response above (with an empty `messages`
+array). Errors: `400 invalid_request` (missing `name`),
+`401 unauthenticated`, `403 forbidden` (caller isn't a member of
+`houseId`), `409 channel_name_taken` (a conversation with this name
+already exists in the house - names are unique per house). Every house
+member can post in any conversation once created; there's no
+channel-level membership restriction, and no way to create a private/DM
+(1:1) conversation - every conversation is a house-wide group channel.
 
 ## Projects and Clients (Implemented)
 

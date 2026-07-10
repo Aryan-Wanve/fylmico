@@ -490,10 +490,14 @@ within a house.
 
 Permissions: 3 default conversations (`"general"`, `"edit-bay"`,
 `"shoot-floor"`) are seeded automatically at house creation, matching the
-mock's `defaultChatRooms`. No endpoint to create custom rooms exists yet.
-Every house member can see and post to every conversation in their house -
-there is no `conversation_members` table yet, so there's no concept of a
-private/restricted room.
+mock's `defaultChatRooms`. As of ADR 0029, house members can also create
+additional conversations via `POST /api/v1/houses/:houseId/conversations`
+(rejects a duplicate name within the house with `409 channel_name_taken`,
+enforced by the existing unique constraint). Every house member can see
+and post to every conversation in their house - there is no
+`conversation_members` table yet, so there's no concept of a
+private/restricted room, and no direct-message (1:1) capability exists at
+all - every conversation is a house-wide group channel.
 
 Reasoning: named "conversations" (matching `docs/database.md`'s original
 Collaboration group naming) rather than a new "chat_rooms" table, even

@@ -2466,3 +2466,75 @@ Next task:
   Messages' backend to match its embedded-widget UI, wire up an edit-crew-
   profile form now that the endpoint exists, or pick up Files/Storyboard/
   Bookings/Analytics/Calendar (all still local mock data).
+
+## 2026-07-10 Messages Page Extension
+
+Current milestone: Phase 8 - backend bootstrap (wiring more existing
+frontend pages to real data, continuing from the Crews module above)
+
+Completion percentage: N/A
+
+Features completed:
+
+- Recognized the Messages page's mock was structurally bigger than real
+  chat (ADR 0021) supports at all - not just missing fields, but entire
+  concepts with no backend counterpart: per-message file attachments,
+  per-channel embedded Files/Tasks/Events sub-resources, a DM (`kind:
+"dm"`) distinction with no 1:1 messaging model, and a realtime "typing…"
+  indicator with no websocket transport. Scoped this pass to what's real
+  and reasonably extendable, not a full rebuild of every mock concept.
+- Wired the core "Messages" tab to real `Conversation`/`Message` data -
+  this was already fully available via `workspace.chatRooms` and the
+  existing `sendChatMessage` API, same pattern as Tasks' `workspace.tasks`.
+  No new fetch needed.
+- Added `POST /api/v1/houses/:houseId/conversations` so "New Chat"
+  creates a real channel instead of a fabricated local-only one -
+  rejects duplicate names within a house (`409 channel_name_taken`).
+- Dropped the DM concept entirely (`Channel.kind` is now a literal
+  `"group"`, not a union) since every real `Conversation` is a
+  house-wide group channel - let `ChannelAvatar`/`ChannelInfoPanel` drop
+  their now-dead DM branches. Dropped file attachments from messages and
+  the composer (no object storage, same reasoning as Tasks/Projects).
+- Kept the Files/Tasks/Events tabs rather than removing them (would have
+  meant a bigger UI refactor across `chat-tabs.tsx` and three list
+  components) but they now render truthfully empty - no fabricated
+  content, no per-channel backend exists for any of the three yet.
+- `unreadCount` stays exactly what the backend already returns (always
+  `0` - no read-cursor tracking exists) rather than inventing a
+  client-only approximation that would reset on reload and misrepresent
+  itself as a real feature. Dropped `pinned` entirely (nothing in the UI
+  ever actually toggled it, even in the mock).
+- Member list now uses real house members (every house member can see/
+  post in every conversation - no per-channel membership table exists).
+- See ADR 0029.
+
+Validation:
+
+- `npm run typecheck`, `npm run lint`, and `npm run build:api` all pass
+  cleanly.
+- curl-verified: created a new conversation with a topic, confirmed the
+  response shape; attempted to create a duplicate-named conversation and
+  confirmed `409 channel_name_taken`.
+- **Live browser verification was not completed this pass** - both the
+  standard preview browser tooling and the Chrome extension reported
+  "not connected" partway through this work and remained unavailable.
+  Unlike ADR 0026/0027/0028 (all verified live in-browser), this pass is
+  curl- and typecheck/lint/build-verified only. Flagged explicitly as
+  owed follow-up rather than silently skipped.
+
+Technical debt:
+
+- Live browser verification for the Messages page is still owed.
+- Files/Tasks/Events tabs are permanently empty until their own backend
+  domains exist - present in the UI but currently dead weight.
+- No DMs, no attachments, no realtime typing indicator, no working
+  unread tracking.
+
+Next task:
+
+- Live-verify the Messages page in-browser once preview tooling is back.
+- Object storage is now a named prerequisite for three separate features
+  (project cover photos, message attachments, the entire `/files` page)
+  - worth solving once. Otherwise: pick up Files/Storyboard/Calendar/
+    Bookings/Analytics (all local mock data, each needing its own backend
+    domain), wire up the Crews edit-profile form, or address real RBAC.

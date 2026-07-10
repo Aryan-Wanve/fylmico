@@ -312,13 +312,26 @@ Progress:
   entirely). `/crews` lists and removes through the real API - verified
   live in-browser, including the last-member guard correctly blocking
   removal. See ADR 0028.
-- Next: object storage is now a named prerequisite for project cover
-  photos and the entire `/files` page - worth solving once. Real RBAC
-  (who can remove/edit what) is a concretely scoped gap across every
-  module now, worth solving broadly rather than per-endpoint. Otherwise,
-  extend Messages' backend to match its embedded-widget UI, or pick up
-  the activity feed / creative-production modules (storyboards, shot
-  lists, call sheets, assets).
+- **Messages page's core chat wired to real data**: viewing house
+  channels and sending messages already worked through the real
+  `chatRooms`/`sendChatMessage` API (ADR 0021); added
+  `POST /api/v1/houses/:houseId/conversations` so "New Chat" creates a
+  real channel (curl-verified, including duplicate-name rejection).
+  Dropped the DM concept entirely (every real conversation is a
+  house-wide group channel) and file attachments (no object storage);
+  kept the Files/Tasks/Events tabs but left them honestly always-empty
+  rather than deleted or faked, since no per-channel backend exists for
+  any of them. Live browser verification wasn't completed for this pass
+  - the preview tooling was unavailable - so it's curl/typecheck/lint/
+    build-verified only; still owed a live in-browser pass. See ADR 0029.
+- Next: live-verify the Messages page in-browser once tooling is
+  available. Object storage is now a named prerequisite for project cover
+  photos, message attachments, and the entire `/files` page - worth
+  solving once. Real RBAC (who can remove/edit what) is a concretely
+  scoped gap across every module now, worth solving broadly rather than
+  per-endpoint. Otherwise, pick up Files/Storyboard/Calendar/Bookings/
+  Analytics (all still local mock data, each needing its own backend
+  domain), or the activity feed / creative-production modules.
 
 ## Completed Milestones
 
