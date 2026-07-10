@@ -655,6 +655,45 @@ Response: `{ "data": { "success": true } }`. Errors: `400 invalid_request`
 (last member), `401 unauthenticated`, `403 forbidden` (caller or target
 isn't a house member), `404`.
 
+## Calendar (Implemented)
+
+Implemented per ADR 0030 (`apps/api/src/calendar/*`). A house's
+"calendars" are "My Schedule" (events with no `projectId`) plus one entry
+per real `Project` in the house - no separate calendar table exists.
+
+### `GET /api/v1/houses/:houseId/calendar-events`
+
+Authentication: required. Response: `{ "data": CalendarEvent[] }`, sorted
+`date asc, time asc` (not paginated). Errors: `401 unauthenticated`,
+`403 forbidden`.
+
+```json
+{
+  "data": [
+    {
+      "id": "event_123",
+      "title": "Location Recce",
+      "date": "2026-07-05",
+      "time": "10:00 AM",
+      "location": null,
+      "category": "pre-production",
+      "projectId": "project_456",
+      "organizationId": "house_789"
+    }
+  ]
+}
+```
+
+### `POST /api/v1/houses/:houseId/calendar-events`
+
+Authentication: required. Body:
+`{ "title": string, "date": string, "time": string, "location"?: string, "category"?: string, "projectId"?: string }`.
+`category` must be one of `"shoot" | "post-production" | "meeting" |
+"pre-production" | "delivery" | "other"` (defaults to `"other"`). If
+`projectId` is given, it must belong to the same house. Response: created
+`CalendarEvent`. Errors: `400 invalid_request`, `401 unauthenticated`,
+`403 forbidden`, `404 project_not_found`.
+
 ## Response Shape
 
 Successful single-resource response:

@@ -2538,3 +2538,78 @@ Next task:
   - worth solving once. Otherwise: pick up Files/Storyboard/Calendar/
     Bookings/Analytics (all local mock data, each needing its own backend
     domain), wire up the Crews edit-profile form, or address real RBAC.
+
+## 2026-07-11 Calendar Page Extension
+
+Current milestone: Phase 8 - backend bootstrap (wiring more existing
+frontend pages to real data, continuing from the Messages module above)
+
+Completion percentage: N/A
+
+Features completed:
+
+- Recognized that, unlike Tasks/Projects/Crews, Calendar had no matching
+  backend model at all to extend - not even a partial one. Its mock
+  needed time-of-day, an optional location, a 6-value category, and an
+  association with one of several "calendars," none of which exist on
+  `Task` or `Project`. Ruled out deriving events from `Task.dueDate`
+  after comparing shapes directly.
+- Added a new `CalendarEvent` Prisma model (`organizationId`, optional
+  `projectId` with `onDelete: SetNull`, `createdById`, `title`, `date`,
+  `time`, `location`, `category` default `"other"`) and migration
+  `20260710221800_calendar_events`.
+- Built `apps/api/src/calendar/*` (module/service/controller/DTO):
+  `GET`/`POST /api/v1/houses/:houseId/calendar-events`,
+  membership-gated, validating `category` against the frontend's
+  existing 6-value enum and `projectId` against the same house when
+  given (`404 project_not_found` otherwise). List sorted `date asc, time
+asc`.
+- Decided "calendars" are not a separate table: a house's calendar list
+  is "My Schedule" (events with no `projectId`) plus one real entry per
+  house `Project` - replacing the mock's 4 hardcoded fake production
+  names with the house's actual projects. Toggling a calendar in the UI
+  now filters by real `projectId`, not a decorative id.
+- Rewired `calendar-data.ts` (kept the static category label/style maps,
+  replaced the mock `calendarEvents`/`calendarSources` arrays with
+  `buildCalendarSources(projects)` and `toCalendarEvent(apiEvent)`),
+  `calendar-page.tsx` (fetches real projects + events on mount via
+  `Promise.all`, tracks calendar visibility as an inactive-id set to
+  avoid a setState-in-effect lint violation when new projects arrive),
+  `new-event-popover.tsx` (now takes `calendarSources` as a prop and an
+  async `onCreateEvent`, shows inline errors on API failure), and
+  `calendars-panel.tsx` (takes `calendarSources` as a prop instead of a
+  static import).
+- See ADR 0030.
+
+Validation:
+
+- `npm run typecheck`, `npm run lint`, and `npm run build:api`/
+  `build:web` all pass cleanly (root workspaces).
+- curl-verified: created an event with a real `projectId` and one with
+  none (lands under "My Schedule"), confirmed chronological list
+  ordering, confirmed `404 project_not_found` for a nonexistent/
+  cross-house project id, `400 invalid_request` for a missing title, and
+  `401 unauthenticated` with no token.
+- **Live browser verification completed** - the preview tooling that was
+  unavailable during the Messages pass (ADR 0029) was back for this one.
+  Logged in as a real test account, saw two curl-seeded events render on
+  the correct calendar days, opened "New Event," selected a real project
+  as the calendar, submitted, and watched the new event appear
+  immediately in both the month grid and the upcoming-events panel.
+
+Technical debt:
+
+- No update/delete endpoint for calendar events yet (create + list only,
+  matching Comments/Messages' first-pass scope).
+- Week/Day tab views remain the pre-existing decorative empty state -
+  out of scope for this pass.
+- Live browser verification for the Messages page (ADR 0029) is still
+  owed as a separate follow-up.
+
+Next task:
+
+- Live-verify the Messages page in-browser (still owed from ADR 0029).
+- Object storage remains a named prerequisite for project cover photos,
+  message attachments, and the entire `/files` page. Otherwise: pick up
+  Files/Storyboard/Bookings/Analytics (all local mock data, each needing
+  its own backend domain), or address real RBAC.

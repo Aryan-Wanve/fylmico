@@ -324,12 +324,29 @@ Progress:
   any of them. Live browser verification wasn't completed for this pass
   - the preview tooling was unavailable - so it's curl/typecheck/lint/
     build-verified only; still owed a live in-browser pass. See ADR 0029.
-- Next: live-verify the Messages page in-browser once tooling is
-  available. Object storage is now a named prerequisite for project cover
-  photos, message attachments, and the entire `/files` page - worth
-  solving once. Real RBAC (who can remove/edit what) is a concretely
-  scoped gap across every module now, worth solving broadly rather than
-  per-endpoint. Otherwise, pick up Files/Storyboard/Calendar/Bookings/
+- **Calendar page wired to real data**: added a new `CalendarEvent` model
+  (title, date, time, location, category, optional `projectId`) - no
+  matching backend model existed at all before this pass, unlike Tasks/
+  Projects/Crews. `GET`/`POST /api/v1/houses/:houseId/calendar-events`
+  implemented, membership-gated, with `projectId` validated against the
+  house when given. "Calendars" in the UI are no longer 4 hardcoded fake
+  production names - they're "My Schedule" (events with no `projectId`)
+  plus one real entry per house `Project`, so toggling a calendar's
+  visibility is a real `projectId` filter. `/calendar` creates and lists
+  through the real API - verified live in-browser (logged in, saw
+  curl-seeded events render on the correct days, created a new event
+  through the popover with a real project selected, watched it appear
+  immediately in the month grid and upcoming-events panel) and
+  curl-verified (create with/without a project, chronological ordering,
+  `404` on a cross-house `projectId`, `400` on a missing title). See
+  ADR 0030.
+- Next: live-verify the Messages page in-browser once tooling allows (it
+  was unavailable during ADR 0029's pass but has since come back for
+  Calendar's verification). Object storage is now a named prerequisite
+  for project cover photos, message attachments, and the entire `/files`
+  page - worth solving once. Real RBAC (who can remove/edit what) is a
+  concretely scoped gap across every module now, worth solving broadly
+  rather than per-endpoint. Otherwise, pick up Files/Storyboard/Bookings/
   Analytics (all still local mock data, each needing its own backend
   domain), or the activity feed / creative-production modules.
 

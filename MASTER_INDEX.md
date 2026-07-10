@@ -79,6 +79,7 @@ Current ADRs:
 - [0027-projects-page-extension.md](docs/adr/0027-projects-page-extension.md)
 - [0028-crews-module.md](docs/adr/0028-crews-module.md)
 - [0029-messages-page-extension.md](docs/adr/0029-messages-page-extension.md)
+- [0030-calendar-page-extension.md](docs/adr/0030-calendar-page-extension.md)
 
 ## Current Sprint Gate
 
@@ -129,21 +130,29 @@ channel task/event backend exists) rather than deleted or faked.
 
 - the browser preview tooling was unavailable during that pass; it's
   curl- and typecheck/lint/build-verified only, and should get the same
-  live in-browser pass the other three pages received once tooling is back.
-  Everything else (`/files`, `/storyboard`, `/calendar`, `/bookings`,
-  `/analytics`, `/settings`, and the dashboard's "Recent Projects"/"Recent
-  Activity" panels) still runs on independent local mock data colocated per
-  page — those pages' designs are materially richer than their matching
-  (or, for files/storyboard/calendar/bookings/analytics, nonexistent)
-  backend models, so wiring each one up means extending its Prisma schema
-  first, not just swapping a mock for a fetch call. No object storage
-  exists anywhere in the backend yet - a concrete, named prerequisite for
-  project cover photos, message attachments, and the entire `/files` page.
-  Real RBAC (who can remove/edit what) is now a concretely scoped gap
-  across every module, not just one. The frontend silently refreshes an
-  expired access token on a `401` (verified live). No realtime delivery
-  (Socket.IO, ADR 0005) exists anywhere yet — notifications and chat are
-  both REST/poll-based for now.
+  live in-browser pass the other pages received once tooling is back.
+  **The standalone `/calendar` page is real too** (ADR 0030): a new
+  `CalendarEvent` model (title, date, time, location, category, optional
+  `projectId`) backs `GET`/`POST /api/v1/houses/:houseId/calendar-events`;
+  the Calendars panel's filter list is "My Schedule" plus one real entry
+  per house `Project` rather than fake hardcoded production names,
+  curl-verified (including cross-house `projectId` rejection) and
+  live-browser-verified (created an event through the popover with a real
+  project selected, watched it render immediately in the month grid and
+  upcoming-events panel). Everything else (`/files`, `/storyboard`,
+  `/bookings`, `/analytics`, `/settings`, and the dashboard's "Recent
+  Projects"/"Recent Activity" panels) still runs on independent local mock
+  data colocated per page — those pages' designs are materially richer
+  than their matching (or, for files/storyboard/bookings/analytics,
+  nonexistent) backend models, so wiring each one up means extending its
+  Prisma schema first, not just swapping a mock for a fetch call. No
+  object storage exists anywhere in the backend yet - a concrete, named
+  prerequisite for project cover photos, message attachments, and the
+  entire `/files` page. Real RBAC (who can remove/edit what) is now a
+  concretely scoped gap across every module, not just one. The frontend
+  silently refreshes an expired access token on a `401` (verified live).
+  No realtime delivery (Socket.IO, ADR 0005) exists anywhere yet —
+  notifications and chat are both REST/poll-based for now.
 
 To run both sides locally: `docker compose up -d postgres`, then start the
 `api` and `web` dev servers (`.claude/launch.json` has both configured).

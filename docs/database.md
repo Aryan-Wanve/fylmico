@@ -770,6 +770,46 @@ every other module's "no RBAC yet" posture.
 
 Migration history: `20260710174050_crew_profiles`.
 
+### Table: `calendar_events`
+
+Purpose: a scheduled event on a house's calendar - the data the Calendar
+page's designed UI needs (shoot days, meetings, deliveries) with no prior
+backend equivalent (ADR 0030).
+
+Ownership: belongs to one `organization`; optionally belongs to one
+`project` (nullable - an event with no project is a "My Schedule" entry);
+records who created it via `created_by_id`.
+
+Columns: `id`, `organization_id`, `project_id` (nullable), `created_by_id`,
+`title`, `date` (string, `YYYY-MM-DD` - opaque string like
+`tasks.due_date`, not a real `DateTime`), `time` (freeform string, e.g.
+`"2:00 PM"` or `"EOD"` - matches the frontend's non-24-hour input, not
+validated as a real time value), `location` (nullable), `category`
+(default `"other"`; one of 6 fixed values -
+`shoot`/`post-production`/`meeting`/`pre-production`/`delivery`/`other` -
+validated at the DTO layer), `created_at`, `updated_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`projects` (`onDelete: SetNull` - deleting a project keeps its past
+calendar events, just detaches them back to "My Schedule" rather than
+deleting event history); belongs to `users` via `created_by_id` (no
+cascade rule specified beyond the default restrict).
+
+Indexes: index on `organization_id`; index on `project_id`.
+
+Constraints: none beyond required foreign keys.
+
+Permissions: created/read via `POST`/`GET
+/api/v1/houses/:houseId/calendar-events` by any house member. No
+update/delete endpoint yet.
+
+Reasoning: a real "calendar" concept per house isn't a separate table -
+"calendars" in the UI are just "My Schedule" (events with `project_id =
+null`) plus one entry per real `Project`, so filtering by calendar is
+filtering by `project_id`, no additional join table needed (ADR 0030).
+
+Migration history: `20260710221800_calendar_events`.
+
 ## Table Documentation Template
 
 Use this template for every table once schema work begins.
