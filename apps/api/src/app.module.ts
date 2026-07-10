@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { DatabaseModule } from "@fylmico/database";
+import { AnalyticsModule } from "./analytics/analytics.module";
 import { AuthModule } from "./auth/auth.module";
 import { CalendarModule } from "./calendar/calendar.module";
 import { ChatModule } from "./chat/chat.module";
@@ -12,6 +13,7 @@ import { NotificationsModule } from "./notifications/notifications.module";
 import { OrganizationsModule } from "./organizations/organizations.module";
 import { ProjectsModule } from "./projects/projects.module";
 import { TasksModule } from "./tasks/tasks.module";
+import { TimeEntriesModule } from "./time-entries/time-entries.module";
 import { WorkspaceModule } from "./workspace/workspace.module";
 
 @Module({
@@ -29,6 +31,8 @@ import { WorkspaceModule } from "./workspace/workspace.module";
     CommentsModule,
     CrewsModule,
     CalendarModule,
+    TimeEntriesModule,
+    AnalyticsModule,
     WorkspaceModule
   ]
 })

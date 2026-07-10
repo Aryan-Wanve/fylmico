@@ -27,6 +27,7 @@ model User {
   comments                Comment[]
   crewProfiles            CrewProfile[]
   calendarEvents          CalendarEvent[]
+  timeEntries             TimeEntry[]
 
   @@map("users")
 }
@@ -49,6 +50,7 @@ model Organization {
   comments       Comment[]
   crewProfiles   CrewProfile[]
   calendarEvents CalendarEvent[]
+  timeEntries    TimeEntry[]
 
   @@map("organizations")
 }
@@ -217,6 +219,7 @@ model Project {
   organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   clients        ProjectClient[]
   calendarEvents CalendarEvent[]
+  timeEntries    TimeEntry[]
 
   @@index([organizationId])
   @@map("projects")
@@ -329,4 +332,26 @@ model CalendarEvent {
   @@index([organizationId])
   @@index([projectId])
   @@map("calendar_events")
+}
+
+model TimeEntry {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  projectId      String?  @map("project_id")
+  userId         String   @map("user_id")
+  phase          String   @default("Production")
+  hours          Float
+  date           String
+  note           String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("time_entries")
 }
