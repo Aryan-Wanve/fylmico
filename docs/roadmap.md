@@ -290,10 +290,23 @@ Progress:
   Calendar, Bookings, and Analytics remain on local mock data; each needs
   backend schema work first since their designs are richer than any
   matching (or, in most cases, nonexistent) backend model. See ADR 0026.
-- Next: extend Projects' backend schema to match its designed UI (genre,
-  stage, progress, cover art, team assignments) and wire it up the same
-  way, or pick up the activity feed / creative-production modules
-  (storyboards, shot lists, call sheets, assets).
+- **Projects page wired to real data**: extended `Project` with `type`,
+  `genre`, a 7-value `stage` enum, `progress`, cover art
+  (`coverGradient`/`coverIcon`, no photo upload - no object storage
+  exists), and `teamIds` (validated against real house membership, not
+  foreign-keyed). The API's `status` field is computed server-side from
+  `stage` rather than stored directly, keeping it separate from the DB's
+  own archive-tracking `status` column. `GET .../projects` now excludes
+  archived projects (an ADR 0022 gap this closes). `/projects` creates,
+  duplicates, and archives through the real API - verified live in-browser
+  for all three, plus curl verification of stage/teamIds validation and
+  the stage-to-status derivation. See ADR 0027.
+- Next: object storage is now a named prerequisite for project cover
+  photos and the entire `/files` page - worth solving once. Otherwise,
+  extend Messages' backend to match its embedded-widget UI, or pick up
+  Crews (needs a department/status/availability model distinct from the
+  existing house Role system), or the activity feed / creative-production
+  modules (storyboards, shot lists, call sheets, assets).
 
 ## Completed Milestones
 

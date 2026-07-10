@@ -2312,3 +2312,78 @@ Next task:
 - Extend the `Project` model to match its designed UI (genre, type, stage,
   progress, cover art, team) and wire up `/projects`, or continue with
   Messages, or pick up the activity feed / creative-production modules.
+
+## 2026-07-10 Projects Page Extension
+
+Current milestone: Phase 8 - backend bootstrap (wiring more existing
+frontend pages to real data, continuing from the Tasks extension above)
+
+Completion percentage: N/A
+
+Features completed:
+
+- Extended `Project` (ADR 0022's minimal `name`/`description`/`status`)
+  with `type`, `genre`, `stage` (7-value enum, default `"Development"`),
+  `progress` (0-100), `coverGradient`/`coverIcon`, `dueDate`, and `teamIds`
+  (`String[]`, validated against real house membership at write time, not
+  foreign-keyed) - matching every field the Projects page's designed UI
+  actually renders.
+- Resolved a naming collision between the DB's archive-tracking `status`
+  column (`active`/`archived`, from ADR 0022) and the frontend's
+  display-status field (`active | in-progress | on-hold | completed`,
+  from the mock): the API response's `status` is now computed
+  server-side from `stage` via the same mapping the frontend mock already
+  had, while the DB column keeps tracking archive state privately -
+  never returned in any response.
+- `GET /api/v1/houses/:houseId/projects` now excludes archived projects
+  (previously returned everything regardless of status - a gap noted but
+  left open in ADR 0022).
+- Dropped the mock's `image`/cover-photo field entirely rather than
+  leaving it as a permanently-`null` placeholder - no object storage
+  exists anywhere in the backend, so every real project now falls back to
+  `coverGradient`/`coverIcon`. `teamOverflow` is no longer a stored,
+  arbitrary number; `TeamAvatarStack` now genuinely computes it (shows up
+  to 4 real member avatars, `+N` for the rest).
+- Rewired `apps/web/src/components/projects/projects-page.tsx` off its
+  12-item hardcoded mock array onto a real `listProjects()` fetch on
+  mount; create/duplicate/archive now call the real API. Retired two
+  hardcoded lookup tables (`MEMBER_LABELS`/`MEMBER_AVATARS`) in favor of
+  real `HouseMember` data passed down to `TeamAvatarStack`.
+- See ADR 0027.
+
+Validation:
+
+- `npm run typecheck`, `npm run lint`, and `npm run build:api` all pass
+  cleanly. Migration applied cleanly against the dev database.
+- curl-verified: created a project with every new field populated
+  (confirmed `status` correctly derived from `stage`), confirmed
+  `400 invalid_request` for a bad `stage` value and for a `teamIds` entry
+  that isn't a real house member, `PATCH`ed `stage` to `"Completed"`
+  (confirmed `status` flips to `"completed"`), archived it, and confirmed
+  the archived project no longer appears in the list endpoint.
+- Verified live in-browser end-to-end: created a project via the "New
+  Project" button (real `POST`, visible immediately with the correct
+  Development-stage badge, gradient cover, 0% progress, "TBD" due date),
+  and archived it via the card menu (real `POST .../archive`, the project
+  disappeared from the list and every tab count returned to 0). Zero
+  console errors throughout.
+
+Technical debt:
+
+- `teamIds` has no DB-level referential integrity - a member removed from
+  a house can leave a stale id in an old project's `teamIds` until that
+  project is next updated.
+- No cover-photo upload exists; every real project uses a gradient/icon.
+- The Project Timeline and Recent Activity panels on the Projects page
+  are still unrelated local mock data (unchanged since ADR 0025) - easy to
+  mistake the whole page for "fully real" when only the project list
+  itself is.
+
+Next task:
+
+- Object storage is now a concrete, named prerequisite for two separate
+  features (project cover photos, the entire `/files` page) - worth
+  solving once. Otherwise: extend Messages' backend to match its
+  embedded-widget UI, or Crews (needs a department/status/availability
+  model distinct from the existing house Role system), or pick up the
+  activity feed / creative-production modules.

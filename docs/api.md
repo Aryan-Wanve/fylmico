@@ -399,23 +399,38 @@ endpoint to create additional rooms yet, and `unreadCount` is always `0`
 
 ## Projects and Clients (Implemented)
 
-Implemented per ADR 0022 (`apps/api/src/projects/*`, `apps/api/src/clients/*`).
-The first module with no pre-existing frontend mock/contract — designed
-from scratch following the conventions above, including the first real use
-of the cursor-pagination envelope from "Response Shape" below.
+Implemented per ADR 0022 (`apps/api/src/projects/*`, `apps/api/src/clients/*`),
+extended per ADR 0027 (production type/genre/stage/progress/cover art/team,
+matching the designed Projects page UI).
 
 ### `POST /api/v1/houses/:houseId/projects`
 
-Authentication: required. Body: `{ "name": string, "description"?: string }`.
+Authentication: required. Body:
+`{ "name": string, "description"?: string, "type"?: string, "genre"?: string, "stage"?: string, "progress"?: number, "coverGradient"?: string, "coverIcon"?: string, "dueDate"?: string, "teamIds"?: string[] }`.
+`type` must be one of a fixed production-type list (`"Short Film"`,
+`"Documentary"`, `"Commercial"`, `"Music Video"`, `"Feature Film"`,
+`"Corporate Video"`, `"Web Series"`, `"Wedding Film"`); `stage` one of
+`"Development" | "Pre-Production" | "In Production" | "In Progress" |
+"Post-Production" | "On Hold" | "Completed"` (default `"Development"`);
+`coverIcon` one of `"camera" | "clapperboard" | "heart" | "megaphone" |
+"mic" | "music"`; `teamIds` must all be current members of `houseId`.
 Response:
 
 ```json
 {
   "data": {
     "id": "project_123",
-    "name": "Cafe Noir Opening",
+    "title": "Cafe Noir Opening",
+    "type": "Short Film",
+    "genre": "Drama",
     "description": "Launch campaign film + stills.",
+    "stage": "Development",
     "status": "active",
+    "progress": 0,
+    "coverGradient": "from-slate-400 via-slate-600 to-slate-800",
+    "coverIcon": null,
+    "dueDate": null,
+    "teamIds": [],
     "createdAt": "2026-07-08T10:00:00.000Z",
     "updatedAt": "2026-07-08T10:00:00.000Z",
     "clients": []
@@ -423,16 +438,24 @@ Response:
 }
 ```
 
-Errors: `400 invalid_request`, `401 unauthenticated`, `403 forbidden`
-(caller isn't a member of `houseId`).
+Note the response field is `title`, not `name` — it echoes back under the
+name the frontend's designed `Project` type already used before this
+endpoint existed (ADR 0027). `status` is **not** stored directly; it's
+computed server-side from `stage` (see `docs/database.md`'s `projects`
+table doc for the mapping) and is distinct from the DB's own
+active/archived tracking column.
+
+Errors: `400 invalid_request` (missing `name`, bad `type`/`stage`/
+`coverIcon` value, or a `teamIds` entry that isn't a house member),
+`401 unauthenticated`, `403 forbidden` (caller isn't a member of `houseId`).
 
 ### `GET /api/v1/houses/:houseId/projects`
 
 Authentication: required. Query: `limit?` (1-100, default 25), `cursor?`.
 Response: `{ "data": Project[], "page": { "limit", "cursor", "nextCursor" } }`
-(see "Response Shape" below) — includes every project regardless of
-`status` (no archived-filter yet). Errors: `401 unauthenticated`,
-`403 forbidden`.
+(see "Response Shape" below) — excludes archived projects as of ADR 0027
+(previously returned every project regardless of status). Errors:
+`401 unauthenticated`, `403 forbidden`.
 
 ### `GET /api/v1/projects/:projectId`
 
@@ -442,8 +465,9 @@ member), `404 project_not_found`.
 
 ### `PATCH /api/v1/projects/:projectId`
 
-Authentication: required. Body: `{ "name"?: string, "description"?: string }`.
-Response: updated `Project`. Errors: `400 invalid_request`,
+Authentication: required. Body: any subset of the create body's fields
+(all optional). Reassigning `teamIds` re-validates every id is a current
+house member. Response: updated `Project`. Errors: `400 invalid_request`,
 `401 unauthenticated`, `403 forbidden`, `404 project_not_found`.
 
 ### `POST /api/v1/projects/:projectId/archive`

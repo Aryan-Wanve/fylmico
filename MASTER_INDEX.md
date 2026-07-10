@@ -76,6 +76,7 @@ Current ADRs:
 - [0024-comments-module.md](docs/adr/0024-comments-module.md)
 - [0025-frontend-backend-integration.md](docs/adr/0025-frontend-backend-integration.md)
 - [0026-tasks-page-extension.md](docs/adr/0026-tasks-page-extension.md)
+- [0027-projects-page-extension.md](docs/adr/0027-projects-page-extension.md)
 
 ## Current Sprint Gate
 
@@ -94,19 +95,27 @@ joining a real house. **The standalone `/tasks` page is now real too** (ADR
 `POST`/`PATCH`/`DELETE /api/v1/tasks`, verified live in-browser. Wiring it up
 required unifying the task status vocabulary (the dashboard's task panel and
 the standalone Tasks page previously used two different, incompatible sets)
-and adding update/delete endpoints that didn't exist before. Everything else
-(`/crews`, `/files`, `/storyboard`, `/calendar`, `/bookings`, `/analytics`,
-`/settings`, and the dashboard's "Recent Projects"/"Recent Activity" panels,
-plus the standalone `/projects` and `/messages` pages) still runs on
-independent local mock data colocated per page — those pages' designs are
-materially richer than their matching (or, for crews/files/storyboard/
-calendar/bookings/analytics, nonexistent) backend models, so wiring each one
-up means extending its Prisma schema first, not just swapping a mock for a
-fetch call (see ADR 0026's Future Implications). The frontend silently
-refreshes an expired access token on a `401` (verified live). No realtime
-delivery (Socket.IO, ADR 0005) exists anywhere yet — notifications and chat
-are both
-REST/poll-based for now.
+and adding update/delete endpoints that didn't exist before. **The
+standalone `/projects` page is real too** (ADR 0027): create, duplicate,
+and archive round-trip through `POST`/`PATCH`/`POST .../archive
+/api/v1/houses/:houseId/projects` and `/api/v1/projects/:projectId`,
+verified live in-browser. `Project` gained `type`/`genre`/`stage`/
+`progress`/cover-art/`teamIds` fields to match its designed UI, with the
+API's `status` field computed server-side from `stage` rather than stored
+directly (the DB `status` column keeps its original archive-tracking
+meaning). Everything else (`/crews`, `/files`, `/storyboard`, `/calendar`,
+`/bookings`, `/analytics`, `/settings`, the dashboard's "Recent
+Projects"/"Recent Activity" panels, and the standalone `/messages` page)
+still runs on independent local mock data colocated per page — those
+pages' designs are materially richer than their matching (or, for
+crews/files/storyboard/calendar/bookings/analytics, nonexistent) backend
+models, so wiring each one up means extending its Prisma schema first, not
+just swapping a mock for a fetch call (see ADR 0027's Future
+Implications). No object storage exists anywhere in the backend yet -
+a concrete, named prerequisite for project cover photos and the entire
+`/files` page. The frontend silently refreshes an expired access token on
+a `401` (verified live). No realtime delivery (Socket.IO, ADR 0005) exists
+anywhere yet — notifications and chat are both REST/poll-based for now.
 
 To run both sides locally: `docker compose up -d postgres`, then start the
 `api` and `web` dev servers (`.claude/launch.json` has both configured).

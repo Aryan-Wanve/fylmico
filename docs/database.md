@@ -536,12 +536,28 @@ modules (assets, schedules, storyboards) will attach to this.
 
 Ownership: belongs to one `organization`.
 
-Columns: `id`, `organization_id`, `name`, `description` (nullable),
-`status` (`"active"` | `"archived"`, default `"active"`), `created_at`,
-`updated_at`.
+Columns: `id`, `organization_id`, `name`, `description` (nullable), `type`
+(nullable; one of a fixed production-type list validated at the service
+layer, e.g. `"Short Film"`, `"Documentary"`), `genre` (nullable freeform
+string), `stage` (default `"Development"`; one of `"Development" |
+"Pre-Production" | "In Production" | "In Progress" | "Post-Production" |
+"On Hold" | "Completed"` - as of ADR 0027), `progress` (`Int`, default `0`,
+0-100), `cover_gradient` (nullable, a Tailwind gradient class string),
+`cover_icon` (nullable; one of a fixed icon-key list, e.g. `"camera"`,
+mapped to a Lucide icon component client-side), `due_date` (nullable
+freeform string - same non-real-date choice as `tasks.due_date`),
+`team_ids` (`String[]`, Postgres native array of `users.id` values),
+`status` (`"active"` | `"archived"`, default `"active"` - archive tracking
+only, distinct from the display-facing status derived from `stage`),
+`created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); has many
-`project_clients` (linking to `clients`).
+`project_clients` (linking to `clients`). `team_ids` is **not** a foreign
+key or join table - it's a plain array of user ids, validated at the
+service layer (every id must be a current member of the project's house)
+but with no DB-level referential integrity, so a removed member's id can
+silently linger in a project's `team_ids` until the project is next
+updated.
 
 Indexes: index on `organization_id`.
 
@@ -556,9 +572,18 @@ Reasoning: `status` is a plain string rather than an enum type, matching
 the same choice made for `tasks.status`/`tasks.priority` - archiving is
 modeled as a status value, set via a dedicated
 `POST /api/v1/projects/:projectId/archive` action endpoint rather than a
-generic `PATCH`.
+generic `PATCH`. As of ADR 0027, the API's response `status` field is
+**not** this column's value - it's computed server-side from `stage` (a
+`Development|Pre-Production|In Production -> active`,
+`In Progress|Post-Production -> in-progress`, `On Hold -> on-hold`,
+`Completed -> completed` mapping) to match the frontend's designed status
+vocabulary, while the DB column continues tracking archive state
+separately. No `image`/cover-photo upload field exists - no object storage
+system exists yet anywhere in the backend, so new projects fall back to
+`cover_gradient`/`cover_icon` only.
 
-Migration history: `20260708172602_projects_clients`.
+Migration history: `20260708172602_projects_clients`,
+`20260710172256_project_designed_ui_fields`.
 
 ### Table: `clients`
 
