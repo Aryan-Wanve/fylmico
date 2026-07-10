@@ -75,6 +75,7 @@ Current ADRs:
 - [0023-notifications-module.md](docs/adr/0023-notifications-module.md)
 - [0024-comments-module.md](docs/adr/0024-comments-module.md)
 - [0025-frontend-backend-integration.md](docs/adr/0025-frontend-backend-integration.md)
+- [0026-tasks-page-extension.md](docs/adr/0026-tasks-page-extension.md)
 
 ## Current Sprint Gate
 
@@ -88,14 +89,23 @@ backed by real tables and curl-verified end to end.
 **`apps/web` is now wired to the real backend for its core loop** (ADR
 0025): signup, login, logout, house creation, and house joining all call
 the real API — verified live in-browser with two real accounts creating and
-joining a real house. Everything else (`/tasks`, `/crews`, `/files`,
-`/storyboard`, `/calendar`, `/bookings`, `/analytics`, `/settings`, and the
-dashboard's "Recent Projects"/"Recent Activity" panels) still runs on
-independent local mock data colocated per page — those were never wired to
-`base-workspace.service.ts` to begin with, and wiring them up requires
-backend modules that don't exist yet. The frontend silently refreshes an
-expired access token on a `401` (verified live). No realtime delivery
-(Socket.IO, ADR 0005) exists anywhere yet — notifications and chat are both
+joining a real house. **The standalone `/tasks` page is now real too** (ADR
+0026): create, status toggle, duplicate, and delete all round-trip through
+`POST`/`PATCH`/`DELETE /api/v1/tasks`, verified live in-browser. Wiring it up
+required unifying the task status vocabulary (the dashboard's task panel and
+the standalone Tasks page previously used two different, incompatible sets)
+and adding update/delete endpoints that didn't exist before. Everything else
+(`/crews`, `/files`, `/storyboard`, `/calendar`, `/bookings`, `/analytics`,
+`/settings`, and the dashboard's "Recent Projects"/"Recent Activity" panels,
+plus the standalone `/projects` and `/messages` pages) still runs on
+independent local mock data colocated per page — those pages' designs are
+materially richer than their matching (or, for crews/files/storyboard/
+calendar/bookings/analytics, nonexistent) backend models, so wiring each one
+up means extending its Prisma schema first, not just swapping a mock for a
+fetch call (see ADR 0026's Future Implications). The frontend silently
+refreshes an expired access token on a `401` (verified live). No realtime
+delivery (Socket.IO, ADR 0005) exists anywhere yet — notifications and chat
+are both
 REST/poll-based for now.
 
 To run both sides locally: `docker compose up -d postgres`, then start the

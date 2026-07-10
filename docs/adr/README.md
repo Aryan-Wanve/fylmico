@@ -43,6 +43,7 @@ Use sequential numbers and a short slug:
 - `0023-notifications-module.md`
 - `0024-comments-module.md`
 - `0025-frontend-backend-integration.md`
+- `0026-tasks-page-extension.md`
 
 ## Required Sections
 

@@ -435,12 +435,16 @@ Purpose: a single production task scheduled and assigned within a house.
 Ownership: belongs to one `organization`.
 
 Columns: `id`, `organization_id`, `title`, `project` (plain string label, not
-a foreign key - no `projects` table exists yet), `assignee_id`, `role`
-(plain string, validated against the house's `roles.name` values at the
-service layer, not a DB foreign key), `due_date` (plain string, not a real
-`DATE`/`TIMESTAMP` - the frontend only ever displays it, never computes
-against it), `status` (default `"scheduled"`), `priority` (default
-`"medium"`), `created_at`, `updated_at`.
+a foreign key - even though a real `projects` table exists as of ADR 0022,
+a task's `project` is still freeform text, not a `project_id` FK; see
+Reasoning below), `assignee_id`, `role` (plain string, auto-derived from the
+assignee's current `roles.name` at create/reassign time as of ADR 0026 - not
+a DB foreign key, and no longer a client-supplied field), `due_date` (plain
+string, not a real `DATE`/`TIMESTAMP` - the frontend only ever displays it,
+never computes against it), `status` (default `"todo"` as of ADR 0026;
+`"todo" | "in-progress" | "on-hold" | "done"`, the same vocabulary the
+dashboard's task panel and the standalone Tasks page both use), `priority`
+(default `"medium"`; `"low" | "medium" | "high"`), `created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
 `users` via `assignee_id` (no cascade - a task shouldn't vanish if its
@@ -451,16 +455,20 @@ Indexes: indexes on `organization_id` and `assignee_id`.
 
 Constraints: none beyond required foreign keys.
 
-Permissions: created via `POST /api/v1/tasks` by any member of the target
-house (ADR 0021 - no finer-grained role check yet). No update/delete
-endpoint exists yet.
+Permissions: create/update/delete via `POST` / `PATCH` / `DELETE
+/api/v1/tasks(/:taskId)` by any member of the task's house (ADR 0021 and
+0026 - no finer-grained role check yet).
 
 Reasoning: single `assignee_id` rather than a `task_assignees` join table -
 matches what `docs/api.md`'s contract and the mock actually need
 (one assignee per task); a many-to-many upgrade is deferred until a real
-multi-assignee feature exists (ADR 0021).
+multi-assignee feature exists (ADR 0021). `project` stays freeform text
+rather than becoming a `project_id` FK (ADR 0026) - the Tasks page lets
+someone type an ad-hoc project label when creating a task without first
+having to create a real `Project` row; linking the two is future work once
+task creation flows through a project-picker instead of free text.
 
-Migration history: `20260708165828_tasks_chat`.
+Migration history: `20260708165828_tasks_chat`, `20260710170043_task_status_default_todo`.
 
 ### Table: `conversations`
 

@@ -313,13 +313,16 @@ active house yet). Errors: `401 unauthenticated`.
 
 ## Tasks and Chat (Implemented)
 
-Implemented per ADR 0021 (`apps/api/src/tasks/*`, `apps/api/src/chat/*`).
+Implemented per ADR 0021 (`apps/api/src/tasks/*`, `apps/api/src/chat/*`),
+extended per ADR 0026 (unified status vocabulary, update/delete, auto-derived
+role).
 
 ### `POST /api/v1/tasks`
 
 Authentication: required. Body:
-`{ "houseId": string, "title": string, "project": string, "assigneeId": string, "role": string, "dueDate": string }`.
-Response:
+`{ "houseId": string, "title": string, "project": string, "assigneeId": string, "dueDate": string, "priority"?: "low"|"medium"|"high", "status"?: "todo"|"in-progress"|"on-hold"|"done" }`.
+`role` is **not** part of the request — it's derived automatically from the
+assignee's current house role. Response:
 
 ```json
 {
@@ -331,18 +334,33 @@ Response:
     "assigneeName": "Mira Kapoor",
     "role": "Editor",
     "dueDate": "2026-07-07",
-    "status": "scheduled",
+    "status": "todo",
     "priority": "medium"
   }
 }
 ```
 
-Errors: `400 invalid_request` (missing fields, or `role` isn't one of the
-house's role names), `401 unauthenticated`, `403 forbidden` (caller isn't a
-member of `houseId`), `404 assignee_not_found` (`assigneeId` isn't a member
-of `houseId`). Expected behavior: creates the task with
-`status: "scheduled"`, `priority: "medium"`; no status-update endpoint
-exists yet.
+Errors: `400 invalid_request` (missing required fields, or `priority`/`status`
+isn't one of the accepted values), `401 unauthenticated`, `403 forbidden`
+(caller isn't a member of `houseId`), `404 assignee_not_found` (`assigneeId`
+isn't a member of `houseId`). Defaults: `status: "todo"`, `priority: "medium"`.
+
+### `PATCH /api/v1/tasks/:taskId`
+
+Authentication: required. Request param: `taskId`. Body: any subset of
+`{ "title": string, "project": string, "assigneeId": string, "dueDate": string, "priority": "low"|"medium"|"high", "status": "todo"|"in-progress"|"on-hold"|"done" }`.
+Response: the updated task, same shape as create. Reassigning `assigneeId`
+re-derives `role` from the new assignee's current house role and notifies
+them (`task_assigned`), same as create. Errors: `400 invalid_request`,
+`401 unauthenticated`, `403 forbidden` (caller isn't a member of the task's
+house), `404 task_not_found`, `404 assignee_not_found` (new `assigneeId`
+isn't a member of the house).
+
+### `DELETE /api/v1/tasks/:taskId`
+
+Authentication: required. Request param: `taskId`. Response:
+`{ "data": { "success": true } }`. Errors: `401 unauthenticated`,
+`403 forbidden`, `404 task_not_found`.
 
 ### `POST /api/v1/chat/rooms/:roomId/messages`
 

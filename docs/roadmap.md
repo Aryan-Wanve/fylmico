@@ -279,10 +279,21 @@ Progress:
   `/storyboard`, `/calendar`, `/bookings`, `/analytics`, `/settings`) still
   runs on independent local mock data - those pages were never wired to
   the shared service and have no backend module yet.
-- Next: activity feed (last remaining Collaboration-group item), creative-
-  production modules (storyboards, shot lists, call sheets, assets) now
-  that projects exist for them to attach to, or wiring more frontend pages
-  to real data as their backend modules get built.
+- **Tasks page wired to real data**: unified the task status vocabulary
+  across the dashboard's task panel and the standalone `/tasks` page
+  (previously two incompatible sets - `scheduled/review` vs `todo/on-hold`),
+  auto-derived `role` from the assignee's house role instead of requiring it
+  as an unpopulated form field, and added `PATCH`/`DELETE /api/v1/tasks/:id`
+  (only create existed before). `/tasks` now creates, toggles status,
+  duplicates, and deletes through the real API - verified live in-browser
+  for all four operations. Projects, Messages, Crews, Files, Storyboard,
+  Calendar, Bookings, and Analytics remain on local mock data; each needs
+  backend schema work first since their designs are richer than any
+  matching (or, in most cases, nonexistent) backend model. See ADR 0026.
+- Next: extend Projects' backend schema to match its designed UI (genre,
+  stage, progress, cover art, team assignments) and wire it up the same
+  way, or pick up the activity feed / creative-production modules
+  (storyboards, shot lists, call sheets, assets).
 
 ## Completed Milestones
 

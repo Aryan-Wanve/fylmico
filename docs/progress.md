@@ -2236,3 +2236,79 @@ Next task:
 - Continue backend build-out (activity feed, creative-production modules)
   per ADR 0012, or wire more existing frontend pages to real data as their
   backend modules get built.
+
+## 2026-07-10 Tasks Page Extension
+
+Current milestone: Phase 8 - backend bootstrap (wiring more existing
+frontend pages to real data, continuing from the integration pass above)
+
+Completion percentage: N/A
+
+Features completed:
+
+- Investigated wiring Projects, Tasks, and Messages to real data and found
+  every one of them has a frontend mock shape materially richer than its
+  matching backend model (Projects: genre/stage/progress/cover art/team;
+  Tasks: an incompatible status vocabulary and no update endpoint;
+  Messages: embedded per-channel files/tasks/events widgets). Decided (with
+  explicit user confirmation) to extend each backend model to match its
+  designed UI rather than trim the UI down, starting with Tasks since it
+  was closest to already matching.
+- Unified the task status vocabulary: the dashboard's task panel
+  (`ProductionTask`, wired since ADR 0025) used
+  `scheduled/in-progress/review/done`, while the standalone `/tasks` page's
+  mock used `todo/in-progress/on-hold/done` - two silently incompatible
+  sets backing the same underlying `Task` rows. Standardized on the Tasks
+  page's vocabulary (the purpose-built surface), changed `Task.status`'s DB
+  default from `"scheduled"` to `"todo"`, and backfilled existing rows via
+  migration (`scheduled -> todo`, `review -> in-progress`).
+- Auto-derived `Task.role` from the assignee's current house role instead
+  of requiring it as a `CreateTaskDto` field - the Tasks page's create flow
+  never actually had a role picker, so the field was previously either
+  wrong or unpopulated.
+- Added `PATCH /api/v1/tasks/:taskId` (title/project/assigneeId/dueDate/
+  priority/status, any subset; reassigning re-derives `role` and notifies
+  the new assignee) and `DELETE /api/v1/tasks/:taskId`. Only create existed
+  before.
+- Rewired `apps/web/src/components/tasks/tasks-page.tsx` off its 24-item
+  hardcoded mock array onto `workspace.tasks` from `useWorkspace()`;
+  create/duplicate/delete/status-toggle now call the real API and
+  `refreshWorkspace()` instead of mutating local state. Replaced two
+  hardcoded `user-id -> name/initials` lookup tables
+  (`MEMBER_NAMES`/`MEMBER_LABELS`) with the real `assigneeName` already on
+  each task DTO. Dropped `attachmentCount` from the UI entirely (no backend
+  concept exists for it) rather than faking it; kept `commentCount` as an
+  always-`undefined` optional field for now.
+- See ADR 0026.
+
+Validation:
+
+- `npm run typecheck`, `npm run lint`, and `npm run build:api` all pass
+  cleanly. `prisma migrate status` confirms the new migration applied
+  cleanly against the dev database.
+- curl-verified: created a task (confirmed `role` auto-derived, `status`
+  defaulted to `"todo"`), `PATCH`ed its status to `"done"` and separately
+  its `priority`/`title`, `DELETE`d it and confirmed it no longer appears
+  in `GET /workspace`. Confirmed `400 invalid_request` for a bogus `status`
+  value and `404 task_not_found` for a nonexistent task id.
+- Verified live in-browser end-to-end: logged in as a real account,
+  created a task via the "New Task" button (real `POST`, visible
+  immediately in the list and every side panel), toggled its status via
+  the row checkbox (real `PATCH`, task moved from "To Do" to "Completed"
+  group, tab counts and stat panels all recomputed), and deleted it via
+  the row's menu (real `DELETE`, list returned to its empty state). Zero
+  console errors throughout.
+
+Technical debt:
+
+- `commentCount` has no backing computation yet - always `undefined`.
+- `Task.project` remains freeform text, not a `Project` foreign key.
+- Projects and Messages still need the same "extend backend schema first"
+  treatment before they can be wired up; both are bigger lifts than Tasks
+  was.
+
+Next task:
+
+- Extend the `Project` model to match its designed UI (genre, type, stage,
+  progress, cover art, team) and wire up `/projects`, or continue with
+  Messages, or pick up the activity feed / creative-production modules.
