@@ -93,6 +93,7 @@ export class OrganizationsService {
     await this.prisma.organizationMembership.create({
       data: { organizationId: organization.id, userId, roleId: ownerRole.id }
     });
+    await this.seedCrewProfile(organization.id, userId, ownerRole.name);
     await this.setActiveOrganization(userId, organization.id);
 
     return this.getHouseDto(organization.id, userId);
@@ -129,6 +130,7 @@ export class OrganizationsService {
     await this.prisma.organizationMembership.create({
       data: { organizationId: organization.id, userId, roleId: memberRole.id }
     });
+    await this.seedCrewProfile(organization.id, userId, memberRole.name);
     await this.setActiveOrganization(userId, organization.id);
     await this.notifyOwnersOfNewMember(
       organization.id,
@@ -169,6 +171,47 @@ export class OrganizationsService {
         )
       )
     );
+  }
+
+  private async seedCrewProfile(
+    organizationId: string,
+    userId: string,
+    jobTitle: string
+  ): Promise<void> {
+    await this.prisma.crewProfile.create({
+      data: { organizationId, userId, jobTitle }
+    });
+  }
+
+  async removeMember(
+    organizationId: string,
+    requestingUserId: string,
+    targetUserId: string
+  ): Promise<void> {
+    await this.requireMembership(organizationId, requestingUserId);
+    await this.requireMembership(organizationId, targetUserId);
+
+    const memberCount = await this.prisma.organizationMembership.count({
+      where: { organizationId }
+    });
+    if (memberCount <= 1) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_request",
+        "Cannot remove the last member of a house."
+      );
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.organizationMembership.delete({
+        where: {
+          organizationId_userId: { organizationId, userId: targetUserId }
+        }
+      }),
+      this.prisma.crewProfile.deleteMany({
+        where: { organizationId, userId: targetUserId }
+      })
+    ]);
   }
 
   private async getOrCreateMemberRole(organizationId: string) {

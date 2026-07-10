@@ -25,6 +25,7 @@ model User {
   messages                Message[]
   notifications           Notification[]
   comments                Comment[]
+  crewProfiles            CrewProfile[]
 
   @@map("users")
 }
@@ -45,6 +46,7 @@ model Organization {
   projects      Project[]
   clients       Client[]
   comments      Comment[]
+  crewProfiles  CrewProfile[]
 
   @@map("organizations")
 }
@@ -279,4 +281,27 @@ model Comment {
   @@index([organizationId])
   @@index([commentableType, commentableId])
   @@map("comments")
+}
+
+model CrewProfile {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  userId         String   @map("user_id")
+  jobTitle       String   @map("job_title")
+  department     String   @default("Production")
+  roleCategory   String   @default("Other") @map("role_category")
+  status         String   @default("available")
+  currentProject String?  @map("current_project")
+  projectStage   String?  @map("project_stage")
+  availability   String?
+  birthday       String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@map("crew_profiles")
 }
