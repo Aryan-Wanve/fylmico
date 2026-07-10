@@ -8,7 +8,7 @@ import {
 } from "../common/pagination";
 import { AppException } from "../common/exceptions/app.exception";
 import { OrganizationsService } from "../organizations/organizations.service";
-import { CreateProjectDto } from "./dto/create-project.dto";
+import { CreateProjectDto, PROJECT_STAGES } from "./dto/create-project.dto";
 import { LinkClientDto } from "./dto/link-client.dto";
 import { UpdateProjectDto } from "./dto/update-project.dto";
 
@@ -20,6 +20,19 @@ type ProjectWithRelations = Prisma.ProjectGetPayload<{
   include: typeof projectInclude;
 }>;
 
+const STAGE_TO_DISPLAY_STATUS: Record<
+  (typeof PROJECT_STAGES)[number],
+  "active" | "in-progress" | "on-hold" | "completed"
+> = {
+  Development: "active",
+  "Pre-Production": "active",
+  "In Production": "active",
+  "In Progress": "in-progress",
+  "Post-Production": "in-progress",
+  "On Hold": "on-hold",
+  Completed: "completed"
+};
+
 @Injectable()
 export class ProjectsService {
   constructor(
@@ -30,11 +43,23 @@ export class ProjectsService {
   async create(userId: string, houseId: string, dto: CreateProjectDto) {
     await this.organizationsService.requireMembership(houseId, userId);
 
+    if (dto.teamIds?.length) {
+      await this.requireHouseMembers(houseId, dto.teamIds);
+    }
+
     const project = await this.prisma.project.create({
       data: {
         organizationId: houseId,
         name: dto.name.trim(),
-        description: dto.description?.trim() || null
+        description: dto.description?.trim() || null,
+        type: dto.type,
+        genre: dto.genre?.trim() || null,
+        ...(dto.stage ? { stage: dto.stage } : {}),
+        ...(dto.progress !== undefined ? { progress: dto.progress } : {}),
+        coverGradient: dto.coverGradient,
+        coverIcon: dto.coverIcon,
+        dueDate: dto.dueDate,
+        teamIds: dto.teamIds ?? []
       },
       include: projectInclude
     });
@@ -51,7 +76,7 @@ export class ProjectsService {
 
     const limit = resolveLimit(pagination);
     const projects = await this.prisma.project.findMany({
-      where: { organizationId: houseId },
+      where: { organizationId: houseId, status: { not: "archived" } },
       include: projectInclude,
       orderBy: { createdAt: "asc" },
       take: limit + 1,
@@ -80,13 +105,27 @@ export class ProjectsService {
       userId
     );
 
+    if (dto.teamIds?.length) {
+      await this.requireHouseMembers(project.organizationId, dto.teamIds);
+    }
+
     const updated = await this.prisma.project.update({
       where: { id: projectId },
       data: {
         ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
         ...(dto.description !== undefined
           ? { description: dto.description.trim() || null }
-          : {})
+          : {}),
+        ...(dto.type !== undefined ? { type: dto.type } : {}),
+        ...(dto.genre !== undefined ? { genre: dto.genre.trim() || null } : {}),
+        ...(dto.stage !== undefined ? { stage: dto.stage } : {}),
+        ...(dto.progress !== undefined ? { progress: dto.progress } : {}),
+        ...(dto.coverGradient !== undefined
+          ? { coverGradient: dto.coverGradient }
+          : {}),
+        ...(dto.coverIcon !== undefined ? { coverIcon: dto.coverIcon } : {}),
+        ...(dto.dueDate !== undefined ? { dueDate: dto.dueDate } : {}),
+        ...(dto.teamIds !== undefined ? { teamIds: dto.teamIds } : {})
       },
       include: projectInclude
     });
@@ -150,6 +189,23 @@ export class ProjectsService {
     return toProjectDto(updated);
   }
 
+  private async requireHouseMembers(
+    organizationId: string,
+    userIds: string[]
+  ): Promise<void> {
+    const memberships = await this.prisma.organizationMembership.findMany({
+      where: { organizationId, userId: { in: userIds } },
+      select: { userId: true }
+    });
+    if (memberships.length !== new Set(userIds).size) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_request",
+        "teamIds must all belong to this house."
+      );
+    }
+  }
+
   private async findProjectOrThrow(
     projectId: string
   ): Promise<ProjectWithRelations> {
@@ -169,11 +225,21 @@ export class ProjectsService {
 }
 
 function toProjectDto(project: ProjectWithRelations) {
+  const stage = project.stage as (typeof PROJECT_STAGES)[number];
+
   return {
     id: project.id,
-    name: project.name,
+    title: project.name,
+    type: project.type,
+    genre: project.genre,
     description: project.description,
-    status: project.status,
+    stage,
+    status: STAGE_TO_DISPLAY_STATUS[stage] ?? "active",
+    progress: project.progress,
+    coverGradient: project.coverGradient,
+    coverIcon: project.coverIcon,
+    dueDate: project.dueDate,
+    teamIds: project.teamIds,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
     clients: project.clients.map((link) => ({

@@ -198,6 +198,14 @@ model Project {
   organizationId String   @map("organization_id")
   name           String
   description    String?
+  type           String?
+  genre          String?
+  stage          String   @default("Development")
+  progress       Int      @default(0)
+  coverGradient  String?  @map("cover_gradient")
+  coverIcon      String?  @map("cover_icon")
+  dueDate        String?  @map("due_date")
+  teamIds        String[] @map("team_ids")
   status         String   @default("active")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
