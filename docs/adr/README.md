@@ -45,6 +45,7 @@ Use sequential numbers and a short slug:
 - `0025-frontend-backend-integration.md`
 - `0026-tasks-page-extension.md`
 - `0027-projects-page-extension.md`
+- `0028-crews-module.md`
 
 ## Required Sections
 

@@ -2387,3 +2387,82 @@ Next task:
   embedded-widget UI, or Crews (needs a department/status/availability
   model distinct from the existing house Role system), or pick up the
   activity feed / creative-production modules.
+
+## 2026-07-10 Crews Module
+
+Current milestone: Phase 8 - backend bootstrap (wiring more existing
+frontend pages to real data, continuing from the Projects extension above)
+
+Completion percentage: N/A
+
+Features completed:
+
+- Resolved a real product/backend mismatch before writing any code: the
+  Crews page's mock modeled crew members as a roster independent of real
+  house membership (fabricated ids/emails, an "Invite" flow that created
+  a fake person from a typed name with no real account). Decided a crew
+  member must always be a real house member - no shadow roster.
+- Added `CrewProfile` (department, role category, availability status,
+  current assignment, birthday), a 1:1 extension of a house membership
+  auto-seeded whenever someone creates or joins a house
+  (`OrganizationsService.createHouse`/`joinHouse`), with `jobTitle`
+  defaulted from the member's house role name. Every house member always
+  has a crew profile - there's no separate "create a crew member" step.
+- Built the `crews` module: `GET`/`PATCH /api/v1/houses/:houseId/crew(/:userId)`
+  for listing and editing crew profiles.
+- Added this codebase's first member-removal capability
+  (`OrganizationsService.removeMember` + `DELETE .../crew/:userId`):
+  deletes the target's `OrganizationMembership` and `CrewProfile` in one
+  transaction. Refuses to empty a house entirely (blocks removing the
+  last remaining member); no finer-grained "only Owners can remove
+  people" check exists yet - flagged explicitly as a real gap, not
+  silently shipped.
+- Reinterpreted "Invite Member" to reveal the house's real invite code
+  (`activeHouse.inviteCode`, already returned by the workspace snapshot)
+  instead of fabricating a member - the mock's version never created
+  anything a real person could actually use to join.
+- Rewired `apps/web/src/components/crews/crews-page.tsx` off its 24-item
+  hardcoded mock array onto a real `listCrew()` fetch on mount; remove
+  now calls the real API with a confirmation dialog first. Dropped a
+  hardcoded `userId -> avatar image` lookup table (no object storage
+  exists) in favor of initials-only avatars, matching Tasks/Projects.
+- See ADR 0028.
+
+Validation:
+
+- `npm run typecheck`, `npm run lint`, and `npm run build:api` all pass
+  cleanly. Migration applied cleanly against the dev database.
+- curl-verified with two real accounts: house creation auto-seeded the
+  owner's crew profile with `jobTitle: "Owner"`; the second account
+  joining via a real invite code auto-seeded theirs with
+  `jobTitle: "Member"`; `PATCH`ed the member's profile (department,
+  status, current project, birthday) and confirmed every field updated;
+  confirmed `400 invalid_request` for a bad `department` value; removed
+  the member and confirmed they no longer appear in the list; confirmed
+  `400 invalid_request` when attempting to remove the house's last
+  remaining member.
+- Verified live in-browser end-to-end: logged in as a real account, saw
+  the real crew member (department, status, job title all correct),
+  triggered "Invite Member" and confirmed it revealed the real invite
+  code, and triggered "Remove" on the only member - confirmed the real
+  `DELETE` request fired, got rejected with the last-member guard, and
+  the UI handled the error gracefully (no crash, member still listed).
+  Zero console errors throughout.
+
+Technical debt:
+
+- No RBAC on member removal - any member can remove any other member,
+  including the Owner. A real gap now that real users could be affected
+  by it, not just a theoretical one.
+- `PATCH .../crew/:userId` exists but the Crews page UI has no edit form
+  wired to it yet - the endpoint is ahead of the UI for it.
+- Removing a member has no undo and only a browser `confirm()` dialog as
+  a safety check.
+
+Next task:
+
+- Real RBAC (who can remove/edit what) is now a concretely scoped gap
+  across every module - worth solving once, broadly. Otherwise: extend
+  Messages' backend to match its embedded-widget UI, wire up an edit-crew-
+  profile form now that the endpoint exists, or pick up Files/Storyboard/
+  Bookings/Analytics/Calendar (all still local mock data).

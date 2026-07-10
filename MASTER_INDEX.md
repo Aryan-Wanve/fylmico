@@ -77,6 +77,7 @@ Current ADRs:
 - [0025-frontend-backend-integration.md](docs/adr/0025-frontend-backend-integration.md)
 - [0026-tasks-page-extension.md](docs/adr/0026-tasks-page-extension.md)
 - [0027-projects-page-extension.md](docs/adr/0027-projects-page-extension.md)
+- [0028-crews-module.md](docs/adr/0028-crews-module.md)
 
 ## Current Sprint Gate
 
@@ -103,18 +104,29 @@ verified live in-browser. `Project` gained `type`/`genre`/`stage`/
 `progress`/cover-art/`teamIds` fields to match its designed UI, with the
 API's `status` field computed server-side from `stage` rather than stored
 directly (the DB `status` column keeps its original archive-tracking
-meaning). Everything else (`/crews`, `/files`, `/storyboard`, `/calendar`,
-`/bookings`, `/analytics`, `/settings`, the dashboard's "Recent
-Projects"/"Recent Activity" panels, and the standalone `/messages` page)
-still runs on independent local mock data colocated per page — those
-pages' designs are materially richer than their matching (or, for
-crews/files/storyboard/calendar/bookings/analytics, nonexistent) backend
-models, so wiring each one up means extending its Prisma schema first, not
-just swapping a mock for a fetch call (see ADR 0027's Future
-Implications). No object storage exists anywhere in the backend yet -
-a concrete, named prerequisite for project cover photos and the entire
-`/files` page. The frontend silently refreshes an expired access token on
-a `401` (verified live). No realtime delivery (Socket.IO, ADR 0005) exists
+meaning). **The standalone `/crews` page is real too** (ADR 0028): a
+"crew member" is now always a real house member (`User` +
+`OrganizationMembership`), extended with a new `CrewProfile` (department,
+role category, availability status, current assignment), auto-seeded
+whenever someone creates or joins a house. "Invite Member" reveals the
+house's real invite code instead of fabricating a fake person; "Remove"
+really removes the member (`DELETE /api/v1/houses/:houseId/crew/:userId`,
+this codebase's first member-removal capability - blocked only from
+emptying a house entirely, with no finer-grained "only Owners can do
+this" check yet). Verified live in-browser, including the last-member
+guard correctly blocking removal. Everything else (`/files`,
+`/storyboard`, `/calendar`, `/bookings`, `/analytics`, `/settings`, the
+dashboard's "Recent Projects"/"Recent Activity" panels, and the standalone
+`/messages` page) still runs on independent local mock data colocated per
+page — those pages' designs are materially richer than their matching
+(or, for files/storyboard/calendar/bookings/analytics, nonexistent)
+backend models, so wiring each one up means extending its Prisma schema
+first, not just swapping a mock for a fetch call. No object storage
+exists anywhere in the backend yet - a concrete, named prerequisite for
+project cover photos and the entire `/files` page. Real RBAC (who can
+remove/edit what) is now a concretely scoped gap across every module, not
+just one. The frontend silently refreshes an expired access token on a
+`401` (verified live). No realtime delivery (Socket.IO, ADR 0005) exists
 anywhere yet — notifications and chat are both REST/poll-based for now.
 
 To run both sides locally: `docker compose up -d postgres`, then start the

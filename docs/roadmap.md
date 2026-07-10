@@ -301,12 +301,24 @@ Progress:
   duplicates, and archives through the real API - verified live in-browser
   for all three, plus curl verification of stage/teamIds validation and
   the stage-to-status derivation. See ADR 0027.
+- **Crews page wired to real data**: a "crew member" is now always a real
+  house member, not a fabricated roster entry - added `CrewProfile`
+  (department, role category, availability status, current assignment,
+  birthday), auto-seeded whenever someone creates or joins a house.
+  "Invite Member" now reveals the house's real invite code instead of
+  creating a fake person; "Remove" really deletes the member's house
+  membership (`OrganizationsService.removeMember`, this codebase's first
+  member-removal capability - blocked only from emptying a house
+  entirely). `/crews` lists and removes through the real API - verified
+  live in-browser, including the last-member guard correctly blocking
+  removal. See ADR 0028.
 - Next: object storage is now a named prerequisite for project cover
-  photos and the entire `/files` page - worth solving once. Otherwise,
+  photos and the entire `/files` page - worth solving once. Real RBAC
+  (who can remove/edit what) is a concretely scoped gap across every
+  module now, worth solving broadly rather than per-endpoint. Otherwise,
   extend Messages' backend to match its embedded-widget UI, or pick up
-  Crews (needs a department/status/availability model distinct from the
-  existing house Role system), or the activity feed / creative-production
-  modules (storyboards, shot lists, call sheets, assets).
+  the activity feed / creative-production modules (storyboards, shot
+  lists, call sheets, assets).
 
 ## Completed Milestones
 

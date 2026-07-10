@@ -708,6 +708,64 @@ not a schema migration (ADR 0024).
 
 Migration history: `20260708211532_comments`.
 
+### Table: `crew_profiles`
+
+Purpose: production-specific profile data for a house member (department,
+availability, current assignment) - the data the Crews page's designed UI
+needs but that doesn't belong on the core `User`/`OrganizationMembership`
+identity/membership models (ADR 0028).
+
+Ownership: belongs to one `organization` and one `user`; conceptually a
+1:1 extension of that pair's `organization_memberships` row (same
+`(organization_id, user_id)` uniqueness), not modeled as a literal foreign
+key to `organization_memberships` itself.
+
+Columns: `id`, `organization_id`, `user_id`, `job_title`, `department`
+(default `"Production"`; one of 7 fixed values, validated at the service
+layer), `role_category` (default `"Other"`; one of 6 fixed values),
+`status` (default `"available"`; `"available" | "on-set" | "on-leave" |
+"unavailable"` - a production-availability status, distinct from
+`organizations.toHouseDto`'s unrelated online/away/offline presence
+status returned elsewhere), `current_project` (nullable freeform string,
+not a `project_id` FK - same reasoning as `tasks.project`), `project_stage`
+(nullable freeform string), `availability` (nullable freeform display
+string, e.g. `"Jul 7 - Jul 15"` - not a real date range), `birthday`
+(nullable freeform `"MM-DD"` string, no year), `created_at`, `updated_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`users` (cascade delete - unlike `tasks.assignee_id`/`comments.author_id`,
+a crew profile has no reason to survive its user being removed from the
+system).
+
+Indexes: index on `organization_id`; unique constraint on
+`(organization_id, user_id)`.
+
+Constraints: unique `(organization_id, user_id)` - one profile per member
+per house.
+
+Permissions: auto-created (not via a public endpoint) when a user creates
+or joins a house (`OrganizationsService.createHouse`/`joinHouse`); read via
+`GET /api/v1/houses/:houseId/crew` by any house member; updated via
+`PATCH .../crew/:userId` by any house member (no restriction to "only the
+profile's own owner may edit it" - matches the app's existing lax
+authorization posture); deleted only as a side effect of
+`DELETE .../crew/:userId` removing the underlying house membership
+entirely (not a standalone delete endpoint).
+
+Reasoning: a separate table rather than adding these columns directly to
+`organization_memberships` - keeps identity/membership (who belongs to
+which house, with what role) cleanly separate from this page-specific
+profile data, and avoids widening the membership table with columns only
+the Crews UI cares about. `DELETE .../crew/:userId` is this codebase's
+first "remove a member from a house" capability
+(`OrganizationsService.removeMember`, ADR 0028) - it refuses to remove a
+house's last remaining member, but has no finer-grained permission check
+beyond "any current member," so any member can currently remove any other
+member including the Owner - a known, documented gap consistent with
+every other module's "no RBAC yet" posture.
+
+Migration history: `20260710174050_crew_profiles`.
+
 ## Table Documentation Template
 
 Use this template for every table once schema work begins.

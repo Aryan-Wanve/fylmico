@@ -584,6 +584,65 @@ Same shape/error pattern as the task endpoints above, scoped to a
 `Project` (`404 project_not_found` instead). No edit/delete endpoint
 exists for either yet.
 
+## Crews (Implemented)
+
+Implemented per ADR 0028 (`apps/api/src/crews/*`). A "crew member" is a
+real house member (`User` + `OrganizationMembership`) with an attached
+`CrewProfile` - department, role category, availability status, and so
+on. There is no separate/fake roster; every crew member is a real account.
+A `CrewProfile` row is auto-seeded (with the joining member's house role
+name as `jobTitle`) whenever someone creates or joins a house, so every
+house member always has one.
+
+### `GET /api/v1/houses/:houseId/crew`
+
+Authentication: required. Response: `{ "data": CrewMember[] }` (not
+paginated - matches the workspace snapshot's house member list, which is
+also unpaginated). Errors: `401 unauthenticated`, `403 forbidden`.
+
+```json
+{
+  "data": [
+    {
+      "id": "user_123",
+      "name": "Priya Sharma",
+      "email": "priya@example.com",
+      "jobTitle": "Production Designer",
+      "department": "Art",
+      "roleCategory": "Other",
+      "status": "available",
+      "currentProject": "Beyond Frames",
+      "projectStage": "Pre-Production",
+      "availability": "Jul 7 - Jul 15",
+      "birthday": "07-12"
+    }
+  ]
+}
+```
+
+### `PATCH /api/v1/houses/:houseId/crew/:userId`
+
+Authentication: required. Body: any subset of
+`{ "jobTitle": string, "department": string, "roleCategory": string, "status": string, "currentProject": string, "projectStage": string, "availability": string, "birthday": string }`.
+`department` must be one of the 7 fixed department names; `roleCategory`
+one of 6 fixed categories; `status` one of `"available" | "on-set" |
+"on-leave" | "unavailable"`. Response: updated `CrewMember`. Errors:
+`400 invalid_request`, `401 unauthenticated`, `403 forbidden`,
+`404 crew_profile_not_found`.
+
+### `DELETE /api/v1/houses/:houseId/crew/:userId`
+
+Removes a real member from the house - deletes their
+`OrganizationMembership` and `CrewProfile` in one transaction. Not
+reversible; the removed member loses access to the house immediately (any
+member can remove any other member, including the Owner - no
+finer-grained RBAC exists yet, same gap noted throughout ADR 0020's
+lineage). Refuses to remove the house's last remaining member
+(`400 invalid_request`) so a house can never end up with zero members.
+Response: `{ "data": { "success": true } }`. Errors: `400 invalid_request`
+(last member), `401 unauthenticated`, `403 forbidden` (caller or target
+isn't a house member), `404`.
+
 ## Response Shape
 
 Successful single-resource response:
