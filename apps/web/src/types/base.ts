@@ -206,6 +206,11 @@ export type SendChatMessageRequest = {
   body: string;
 };
 
+export type CreateConversationRequest = {
+  name: string;
+  topic?: string;
+};
+
 export type CreateProjectRequest = {
   name: string;
   description?: string;

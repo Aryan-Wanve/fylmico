@@ -1,8 +1,5 @@
 import { Download, FileText } from "lucide-react";
-import {
-  MEMBER_NAMES,
-  type ChannelFile
-} from "@/components/messages/message-data";
+import type { ChannelFile } from "@/components/messages/message-data";
 
 export function ChannelFilesList({ files }: { files: ChannelFile[] }) {
   if (files.length === 0) {
@@ -28,8 +25,7 @@ export function ChannelFilesList({ files }: { files: ChannelFile[] }) {
               {file.name}
             </strong>
             <span className="text-xs text-[#8a90a3]">
-              {file.size} &bull; {MEMBER_NAMES[file.authorId] ?? file.authorId}{" "}
-              &bull; {file.time}
+              {file.size} &bull; {file.authorId} &bull; {file.time}
             </span>
           </span>
           <button

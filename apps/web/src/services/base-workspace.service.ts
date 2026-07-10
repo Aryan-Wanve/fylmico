@@ -2,6 +2,7 @@ import { apiRequest } from "@/lib/api/client";
 import { clearSession, setSession } from "@/lib/session";
 import type {
   ChatRoom,
+  CreateConversationRequest,
   CreateHouseRequest,
   CreateProjectRequest,
   CreateTaskRequest,
@@ -266,5 +267,22 @@ export async function sendChatMessage(
   return apiRequest<ChatRoom>(`/chat/rooms/${request.roomId}/messages`, {
     method: "POST",
     body: { body: request.body }
+  });
+}
+
+export async function createConversation(
+  request: CreateConversationRequest
+): Promise<ChatRoom> {
+  if (!request.name.trim()) {
+    throw new Error("Give the channel a name.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before starting a channel.");
+  }
+
+  return apiRequest<ChatRoom>(`/houses/${activeHouseId}/conversations`, {
+    method: "POST",
+    body: request
   });
 }

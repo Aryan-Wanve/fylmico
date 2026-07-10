@@ -1,10 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  MEMBER_AVATARS,
-  currentUserId,
-  getInitials,
-  type Channel
-} from "@/components/messages/message-data";
+import type { Channel } from "@/components/messages/message-data";
 
 export function ChannelAvatar({
   channel,
@@ -13,21 +7,6 @@ export function ChannelAvatar({
   channel: Channel;
   size?: "sm" | "default" | "lg";
 }) {
-  if (channel.kind === "dm") {
-    const memberId =
-      channel.memberIds.find((id) => id !== currentUserId) ??
-      channel.memberIds[0];
-
-    return (
-      <Avatar size={size}>
-        {MEMBER_AVATARS[memberId] ? (
-          <AvatarImage alt="" src={MEMBER_AVATARS[memberId]} />
-        ) : null}
-        <AvatarFallback>{getInitials(memberId)}</AvatarFallback>
-      </Avatar>
-    );
-  }
-
   const Icon = channel.icon;
   const initials = channel.name
     .split(" ")

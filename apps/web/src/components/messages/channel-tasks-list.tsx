@@ -1,8 +1,5 @@
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  MEMBER_NAMES,
-  type ChannelTask
-} from "@/components/messages/message-data";
+import type { ChannelTask } from "@/components/messages/message-data";
 
 export function ChannelTasksList({
   tasks,
@@ -37,7 +34,7 @@ export function ChannelTasksList({
             {task.title}
           </span>
           <span className="shrink-0 text-xs font-medium text-[#8a90a3]">
-            {MEMBER_NAMES[task.assigneeId] ?? task.assigneeId}
+            {task.assigneeId}
           </span>
         </div>
       ))}

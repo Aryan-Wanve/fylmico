@@ -1,6 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useWorkspace } from "@/lib/workspace-context";
+import {
+  createConversation,
+  sendChatMessage
+} from "@/services/base-workspace.service";
 import {
   ChannelsSidebar,
   type ChannelsFilter
@@ -14,30 +19,29 @@ import { ChannelTasksList } from "@/components/messages/channel-tasks-list";
 import { ChannelEventsList } from "@/components/messages/channel-events-list";
 import { ChannelInfoPanel } from "@/components/messages/channel-info-panel";
 import { MessagesEmptyState } from "@/components/messages/messages-empty-state";
-import {
-  MEMBER_NAMES,
-  channels as defaultChannels,
-  currentUserId,
-  type Channel,
-  type ChatMessageItem
-} from "@/components/messages/message-data";
+import { toChannel, type Channel } from "@/components/messages/message-data";
 
 export function MessagesPage() {
-  const [channels, setChannels] = useState<Channel[]>(defaultChannels);
-  const [activeChannelId, setActiveChannelId] = useState("ad-campaign-team");
-  const [activeTab, setActiveTab] = useState<ChatTab>("messages");
-  const [filter, setFilter] = useState<ChannelsFilter>("unread");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [readChannelIds, setReadChannelIds] = useState<Set<string>>(
-    () => new Set()
+  const { workspace, activeHouse, refreshWorkspace } = useWorkspace();
+  const members = useMemo(() => activeHouse?.members ?? [], [activeHouse]);
+  const memberIds = useMemo(
+    () => members.map((member) => member.id),
+    [members]
   );
 
-  const effectiveChannels = channels.map((channel) => ({
-    ...channel,
-    unreadCount: readChannelIds.has(channel.id) ? 0 : channel.unreadCount
-  }));
+  const channels: Channel[] = useMemo(
+    () => workspace.chatRooms.map((room) => toChannel(room, memberIds)),
+    [workspace.chatRooms, memberIds]
+  );
 
-  const searched = effectiveChannels.filter((channel) =>
+  const [activeChannelId, setActiveChannelId] = useState(
+    () => workspace.chatRooms[0]?.id ?? ""
+  );
+  const [activeTab, setActiveTab] = useState<ChatTab>("messages");
+  const [filter, setFilter] = useState<ChannelsFilter>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const searched = channels.filter((channel) =>
     channel.name.toLowerCase().includes(searchTerm.trim().toLowerCase())
   );
 
@@ -51,85 +55,51 @@ export function MessagesPage() {
     return true;
   });
 
-  const pinnedChannels = filtered.filter((channel) => channel.pinned);
-  const recentChannels = filtered.filter((channel) => !channel.pinned);
-  const totalUnread = effectiveChannels.filter(
+  const recentChannels = filtered;
+  const totalUnread = channels.filter(
     (channel) => channel.unreadCount > 0
   ).length;
 
-  const activeChannel = effectiveChannels.find(
+  const activeChannel = channels.find(
     (channel) => channel.id === activeChannelId
   );
 
   function handleSelectChannel(id: string) {
     setActiveChannelId(id);
     setActiveTab("messages");
-    setReadChannelIds((current) => new Set(current).add(id));
   }
 
-  function handleSend(body: string) {
-    const message: ChatMessageItem = {
-      id: `msg-${Date.now()}`,
-      authorId: currentUserId,
-      time: "Just now",
-      body
-    };
+  async function handleSend(body: string) {
+    if (!activeChannelId) {
+      return;
+    }
 
-    setChannels((current) =>
-      current.map((channel) =>
-        channel.id === activeChannelId
-          ? {
-              ...channel,
-              messages: [...channel.messages, message],
-              lastMessagePreview: `You: ${body}`,
-              lastMessageTime: "Just now"
-            }
-          : channel
-      )
-    );
+    try {
+      await sendChatMessage({ roomId: activeChannelId, body });
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not send the message."
+      );
+    }
   }
 
-  function handleToggleTask(taskId: string) {
-    setChannels((current) =>
-      current.map((channel) =>
-        channel.id === activeChannelId
-          ? {
-              ...channel,
-              tasks: channel.tasks.map((task) =>
-                task.id === taskId ? { ...task, done: !task.done } : task
-              )
-            }
-          : channel
-      )
-    );
-  }
-
-  function handleNewChat() {
-    const name = window.prompt("Start a new chat — enter a name or topic");
+  async function handleNewChat() {
+    const name = window.prompt("Start a new channel — enter a name");
 
     if (!name || !name.trim()) {
       return;
     }
 
-    const channel: Channel = {
-      id: `channel-${Date.now()}`,
-      name: name.trim(),
-      kind: "group",
-      description: `Chat about ${name.trim()}.`,
-      memberIds: [currentUserId],
-      pinned: false,
-      unreadCount: 0,
-      lastMessagePreview: "No messages yet",
-      lastMessageTime: "Just now",
-      colorClass: "bg-slate-500",
-      messages: [],
-      files: [],
-      tasks: [],
-      events: []
-    };
-
-    setChannels((current) => [channel, ...current]);
-    handleSelectChannel(channel.id);
+    try {
+      const room = await createConversation({ name: name.trim() });
+      await refreshWorkspace();
+      handleSelectChannel(room.id);
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not create the channel."
+      );
+    }
   }
 
   return (
@@ -149,7 +119,7 @@ export function MessagesPage() {
           onNewChat={handleNewChat}
           onSearchChange={setSearchTerm}
           onSelectChannel={handleSelectChannel}
-          pinnedChannels={pinnedChannels}
+          pinnedChannels={[]}
           recentChannels={recentChannels}
           searchTerm={searchTerm}
           unreadCount={totalUnread}
@@ -179,12 +149,6 @@ export function MessagesPage() {
                       <MessageBubble key={message.id} message={message} />
                     ))}
                   </div>
-                  {activeChannel.typingAuthorId ? (
-                    <p className="py-2 text-xs font-medium text-[#8a90a3]">
-                      &bull;&bull;&bull;{" "}
-                      {MEMBER_NAMES[activeChannel.typingAuthorId]} is typing…
-                    </p>
-                  ) : null}
                 </div>
                 <div className="px-4 pb-4">
                   <MessageComposer onSend={handleSend} />
@@ -197,7 +161,7 @@ export function MessagesPage() {
             ) : activeTab === "tasks" ? (
               <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
                 <ChannelTasksList
-                  onToggle={handleToggleTask}
+                  onToggle={() => {}}
                   tasks={activeChannel.tasks}
                 />
               </div>
@@ -211,7 +175,11 @@ export function MessagesPage() {
           <MessagesEmptyState />
         )}
 
-        {activeChannel ? <ChannelInfoPanel channel={activeChannel} /> : <div />}
+        {activeChannel ? (
+          <ChannelInfoPanel channel={activeChannel} members={members} />
+        ) : (
+          <div />
+        )}
       </div>
     </div>
   );
