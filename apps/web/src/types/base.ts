@@ -8,7 +8,7 @@ export type RoleName =
   | "Client"
   | "Member";
 
-export type TaskStatus = "scheduled" | "in-progress" | "review" | "done";
+export type TaskStatus = "todo" | "in-progress" | "on-hold" | "done";
 
 export type UserProfile = {
   id: string;
@@ -52,6 +52,7 @@ export type ProductionTask = {
   dueDate: string;
   status: TaskStatus;
   priority: "low" | "medium" | "high";
+  commentCount?: number;
 };
 
 export type ChatMessage = {
@@ -112,9 +113,19 @@ export type CreateTaskRequest = {
   title: string;
   project: string;
   assigneeId: string;
-  role: RoleName;
   dueDate: string;
+  priority?: "low" | "medium" | "high";
+  status?: TaskStatus;
 };
+
+export type UpdateTaskRequest = Partial<{
+  title: string;
+  project: string;
+  assigneeId: string;
+  dueDate: string;
+  priority: "low" | "medium" | "high";
+  status: TaskStatus;
+}>;
 
 export type SendChatMessageRequest = {
   roomId: string;

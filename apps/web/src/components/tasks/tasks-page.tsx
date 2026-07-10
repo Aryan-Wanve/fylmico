@@ -2,6 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useWorkspace } from "@/lib/workspace-context";
+import {
+  createTask as createTaskApi,
+  deleteTask as deleteTaskApi,
+  updateTask as updateTaskApi
+} from "@/services/base-workspace.service";
 import { TasksHeader } from "@/components/tasks/tasks-header";
 import { TasksToolbar, type TasksTab } from "@/components/tasks/tasks-toolbar";
 import type { GroupByOption } from "@/components/tasks/tasks-group-by-menu";
@@ -14,13 +19,11 @@ import { TaskPriorityPanel } from "@/components/tasks/task-priority-panel";
 import { UpcomingDeadlinesPanel } from "@/components/tasks/upcoming-deadlines-panel";
 import { MyTasksStatPanel } from "@/components/tasks/my-tasks-stat-panel";
 import {
-  MEMBER_NAMES,
   PRIORITY_META,
   PRIORITY_ORDER,
   STATUS_META,
   STATUS_ORDER,
   getProjectColor,
-  tasks as defaultTasks,
   type Task,
   type TaskPriority
 } from "@/components/tasks/task-data";
@@ -68,20 +71,19 @@ function buildGroups(list: Task[], groupBy: GroupByOption): Group[] {
 
   return assigneeIds.map((assigneeId) => ({
     key: assigneeId,
-    label: MEMBER_NAMES[assigneeId] ?? "Unassigned",
+    label:
+      list.find((task) => task.assigneeId === assigneeId)?.assigneeName ??
+      "Unassigned",
     dotClassName: "bg-[#654cff]",
     tasks: list.filter((task) => task.assigneeId === assigneeId)
   }));
 }
 
 export function TasksPage() {
-  const { workspace } = useWorkspace();
+  const { workspace, refreshWorkspace } = useWorkspace();
   const currentUserId = workspace.user.id;
+  const tasks = workspace.tasks;
 
-  const [tasks, setTasks] = useState<Task[]>(defaultTasks);
-  const [completedIds, setCompletedIds] = useState<Set<string>>(
-    () => new Set()
-  );
   const [activeTab, setActiveTab] = useState<TasksTab>("all");
   const [groupBy, setGroupBy] = useState<GroupByOption>("status");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
@@ -91,27 +93,20 @@ export function TasksPage() {
     () => new Set(PRIORITY_ORDER)
   );
 
-  const effectiveTasks = useMemo(
-    () =>
-      tasks.map((task) => ({
-        ...task,
-        status: completedIds.has(task.id) ? ("done" as const) : task.status
-      })),
-    [tasks, completedIds]
+  const counts: Record<TasksTab, number> = useMemo(
+    () => ({
+      all: tasks.length,
+      "my-tasks": tasks.filter((task) => task.assigneeId === currentUserId)
+        .length,
+      "assigned-to-me": tasks.filter(
+        (task) => task.assigneeId === currentUserId && task.status !== "done"
+      ).length,
+      completed: tasks.filter((task) => task.status === "done").length
+    }),
+    [tasks, currentUserId]
   );
 
-  const counts: Record<TasksTab, number> = {
-    all: effectiveTasks.length,
-    "my-tasks": effectiveTasks.filter(
-      (task) => task.assigneeId === currentUserId
-    ).length,
-    "assigned-to-me": effectiveTasks.filter(
-      (task) => task.assigneeId === currentUserId && task.status !== "done"
-    ).length,
-    completed: effectiveTasks.filter((task) => task.status === "done").length
-  };
-
-  const tabFiltered = effectiveTasks.filter((task) => {
+  const tabFiltered = tasks.filter((task) => {
     if (activeTab === "my-tasks") {
       return task.assigneeId === currentUserId;
     }
@@ -154,49 +149,59 @@ export function TasksPage() {
     });
   }
 
-  function toggleComplete(taskId: string) {
-    setCompletedIds((current) => {
-      const next = new Set(current);
-      if (next.has(taskId)) {
-        next.delete(taskId);
-      } else {
-        next.add(taskId);
-      }
-      return next;
-    });
+  async function toggleComplete(taskId: string) {
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task) {
+      return;
+    }
+
+    try {
+      await updateTaskApi(taskId, {
+        status: task.status === "done" ? "todo" : "done"
+      });
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not update the task."
+      );
+    }
   }
 
-  function handleDuplicate(taskId: string) {
-    setTasks((current) => {
-      const source = current.find((task) => task.id === taskId);
-      if (!source) {
-        return current;
-      }
-      const index = current.indexOf(source);
-      const copy: Task = {
-        ...source,
-        id: `${source.id}-copy-${Date.now()}`,
-        title: `${source.title} (Copy)`
-      };
-      const next = [...current];
-      next.splice(index + 1, 0, copy);
-      return next;
-    });
+  async function handleDuplicate(taskId: string) {
+    const source = tasks.find((task) => task.id === taskId);
+    if (!source) {
+      return;
+    }
+
+    try {
+      await createTaskApi({
+        title: `${source.title} (Copy)`,
+        project: source.project,
+        assigneeId: source.assigneeId,
+        dueDate: source.dueDate,
+        priority: source.priority,
+        status: source.status
+      });
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not duplicate the task."
+      );
+    }
   }
 
-  function handleDelete(taskId: string) {
-    setTasks((current) => current.filter((task) => task.id !== taskId));
-    setCompletedIds((current) => {
-      if (!current.has(taskId)) {
-        return current;
-      }
-      const next = new Set(current);
-      next.delete(taskId);
-      return next;
-    });
+  async function handleDelete(taskId: string) {
+    try {
+      await deleteTaskApi(taskId);
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not delete the task."
+      );
+    }
   }
 
-  function createTask(defaults: Partial<Task>) {
+  async function createTask(defaults: Partial<Task>) {
     const title = window.prompt("Task title");
 
     if (!title || !title.trim()) {
@@ -206,17 +211,21 @@ export function TasksPage() {
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 7);
 
-    const task: Task = {
-      id: `task-${Date.now()}`,
-      title: title.trim(),
-      project: defaults.project ?? "General",
-      assigneeId: defaults.assigneeId ?? currentUserId,
-      dueDate: defaults.dueDate ?? dueDate.toISOString().slice(0, 10),
-      priority: defaults.priority ?? "medium",
-      status: defaults.status ?? "todo"
-    };
-
-    setTasks((current) => [task, ...current]);
+    try {
+      await createTaskApi({
+        title: title.trim(),
+        project: defaults.project ?? "General",
+        assigneeId: defaults.assigneeId ?? currentUserId,
+        dueDate: defaults.dueDate ?? dueDate.toISOString().slice(0, 10),
+        priority: defaults.priority ?? "medium",
+        status: defaults.status ?? "todo"
+      });
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not create the task."
+      );
+    }
   }
 
   return (
@@ -280,19 +289,19 @@ export function TasksPage() {
       </div>
 
       <aside className="grid min-w-0 content-start gap-6">
-        <TaskOverviewPanel tasks={effectiveTasks} />
-        <TaskPriorityPanel tasks={effectiveTasks} />
-        <UpcomingDeadlinesPanel tasks={effectiveTasks} />
+        <TaskOverviewPanel tasks={tasks} />
+        <TaskPriorityPanel tasks={tasks} />
+        <UpcomingDeadlinesPanel tasks={tasks} />
         <MyTasksStatPanel
           completed={
-            effectiveTasks.filter(
+            tasks.filter(
               (task) =>
                 task.assigneeId === currentUserId && task.status === "done"
             ).length
           }
           onViewAll={() => setActiveTab("my-tasks")}
           pending={
-            effectiveTasks.filter(
+            tasks.filter(
               (task) =>
                 task.assigneeId === currentUserId && task.status !== "done"
             ).length

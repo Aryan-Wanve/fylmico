@@ -12,6 +12,7 @@ import type {
   ResetPasswordRequest,
   SendChatMessageRequest,
   SignupRequest,
+  UpdateTaskRequest,
   WorkspaceSnapshot
 } from "../types/base";
 
@@ -155,6 +156,22 @@ export async function createTask(
   return apiRequest<ProductionTask>("/tasks", {
     method: "POST",
     body: { houseId: activeHouseId, ...request }
+  });
+}
+
+export async function updateTask(
+  taskId: string,
+  request: UpdateTaskRequest
+): Promise<ProductionTask> {
+  return apiRequest<ProductionTask>(`/tasks/${taskId}`, {
+    method: "PATCH",
+    body: request
+  });
+}
+
+export async function deleteTask(taskId: string): Promise<void> {
+  await apiRequest<{ success: boolean }>(`/tasks/${taskId}`, {
+    method: "DELETE"
   });
 }
 

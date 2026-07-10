@@ -3,8 +3,11 @@
 import { useRouter } from "next/navigation";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
-import { MEMBER_LABELS } from "@/components/projects/project-data";
-import { formatDueDate, type Task } from "@/components/tasks/task-data";
+import {
+  formatDueDate,
+  toInitials,
+  type Task
+} from "@/components/tasks/task-data";
 
 export function UpcomingDeadlinesPanel({ tasks }: { tasks: Task[] }) {
   const router = useRouter();
@@ -30,7 +33,7 @@ export function UpcomingDeadlinesPanel({ tasks }: { tasks: Task[] }) {
               key={task.id}
             >
               <AvatarWithStatus
-                label={MEMBER_LABELS[task.assigneeId] ?? "?"}
+                label={toInitials(task.assigneeName)}
                 userId={task.assigneeId}
               />
               <div className="min-w-0 flex-1">

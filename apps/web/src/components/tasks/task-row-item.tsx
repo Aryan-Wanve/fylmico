@@ -1,13 +1,12 @@
-import { MessageSquare, Paperclip } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  MEMBER_NAMES,
   PRIORITY_META,
   formatDueDate,
   getProjectColor,
+  toInitials,
   type Task
 } from "@/components/tasks/task-data";
-import { MEMBER_LABELS } from "@/components/projects/project-data";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import { TaskCardMenu } from "@/components/tasks/task-card-menu";
 
@@ -44,32 +43,24 @@ export function TaskRowItem({
         >
           {task.title}
         </strong>
-        {task.commentCount || task.attachmentCount ? (
+        {task.commentCount ? (
           <div className="mt-0.5 flex items-center gap-3 text-xs text-[#8a90a3]">
-            {task.commentCount ? (
-              <span className="flex items-center gap-1">
-                <MessageSquare className="h-3 w-3" />
-                {task.commentCount}
-              </span>
-            ) : null}
-            {task.attachmentCount ? (
-              <span className="flex items-center gap-1">
-                <Paperclip className="h-3 w-3" />
-                {task.attachmentCount}
-              </span>
-            ) : null}
+            <span className="flex items-center gap-1">
+              <MessageSquare className="h-3 w-3" />
+              {task.commentCount}
+            </span>
           </div>
         ) : null}
       </div>
 
       <div className="hidden w-32 shrink-0 items-center gap-2 sm:flex">
         <AvatarWithStatus
-          label={MEMBER_LABELS[task.assigneeId] ?? "?"}
+          label={toInitials(task.assigneeName)}
           size="sm"
           userId={task.assigneeId}
         />
         <span className="truncate text-sm text-[#4b5268]">
-          {MEMBER_NAMES[task.assigneeId]?.split(" ")[0] ?? "Unassigned"}
+          {task.assigneeName.split(" ")[0]}
         </span>
       </div>
 
