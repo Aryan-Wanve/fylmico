@@ -129,6 +129,25 @@ export type CrewMember = {
   birthday: string | null;
 };
 
+export type CalendarEventCategory =
+  | "shoot"
+  | "post-production"
+  | "meeting"
+  | "pre-production"
+  | "delivery"
+  | "other";
+
+export type CalendarEvent = {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string | null;
+  category: CalendarEventCategory;
+  projectId: string | null;
+  organizationId: string;
+};
+
 export type ChatMessage = {
   id: string;
   authorId: string;
@@ -225,6 +244,15 @@ export type CreateProjectRequest = {
 };
 
 export type UpdateProjectRequest = Partial<CreateProjectRequest>;
+
+export type CreateCalendarEventRequest = {
+  title: string;
+  date: string;
+  time: string;
+  location?: string;
+  category?: CalendarEventCategory;
+  projectId?: string;
+};
 
 export type UpdateCrewProfileRequest = Partial<{
   jobTitle: string;

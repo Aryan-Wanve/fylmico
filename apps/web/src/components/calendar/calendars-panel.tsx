@@ -1,13 +1,15 @@
 import { MoreVertical, Plus } from "lucide-react";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { Checkbox } from "@/components/ui/checkbox";
-import { calendarSources } from "@/components/calendar/calendar-data";
+import type { CalendarSource } from "@/components/calendar/calendar-data";
 
 export function CalendarsPanel({
   activeCalendarIds,
+  calendarSources,
   onToggleCalendar
 }: {
   activeCalendarIds: Set<string>;
+  calendarSources: CalendarSource[];
   onToggleCalendar: (calendarId: string) => void;
 }) {
   return (

@@ -1,7 +1,9 @@
 import { apiRequest } from "@/lib/api/client";
 import { clearSession, setSession } from "@/lib/session";
 import type {
+  CalendarEvent,
   ChatRoom,
+  CreateCalendarEventRequest,
   CreateConversationRequest,
   CreateHouseRequest,
   CreateProjectRequest,
@@ -255,6 +257,33 @@ export async function removeCrewMember(userId: string): Promise<void> {
     `/houses/${activeHouseId}/crew/${userId}`,
     { method: "DELETE" }
   );
+}
+
+export async function listCalendarEvents(): Promise<CalendarEvent[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing the calendar.");
+  }
+
+  return apiRequest<CalendarEvent[]>(
+    `/houses/${activeHouseId}/calendar-events`
+  );
+}
+
+export async function createCalendarEvent(
+  request: CreateCalendarEventRequest
+): Promise<CalendarEvent> {
+  if (!request.title.trim() || !request.date.trim() || !request.time.trim()) {
+    throw new Error("Title, date, and time are required.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before scheduling events.");
+  }
+
+  return apiRequest<CalendarEvent>(`/houses/${activeHouseId}/calendar-events`, {
+    method: "POST",
+    body: request
+  });
 }
 
 export async function sendChatMessage(

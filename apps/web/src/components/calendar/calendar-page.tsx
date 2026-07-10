@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { CalendarHeader } from "@/components/calendar/calendar-header";
 import { CalendarMonthGrid } from "@/components/calendar/calendar-month-grid";
@@ -9,14 +9,24 @@ import { CalendarEmptyView } from "@/components/calendar/calendar-empty-view";
 import { MiniCalendar } from "@/components/calendar/mini-calendar";
 import { CalendarsPanel } from "@/components/calendar/calendars-panel";
 import { UpcomingEventsPanel } from "@/components/calendar/upcoming-events-panel";
-import { NewEventPopover } from "@/components/calendar/new-event-popover";
 import {
-  calendarEvents,
-  calendarSources,
+  NewEventPopover,
+  type NewEventInput
+} from "@/components/calendar/new-event-popover";
+import {
+  buildCalendarSources,
+  MY_SCHEDULE_ID,
+  toCalendarEvent,
   type CalendarEvent,
   type EventCategory
 } from "@/components/calendar/calendar-data";
 import { addMonths, isSameMonth } from "@/lib/calendar-utils";
+import {
+  createCalendarEvent,
+  listCalendarEvents,
+  listProjects
+} from "@/services/base-workspace.service";
+import type { Project } from "@/types/base";
 
 type ViewMode = "month" | "week" | "day";
 
@@ -48,13 +58,55 @@ export function CalendarPage() {
     () => new Date(today.getFullYear(), today.getMonth(), 1)
   );
   const [selectedDate, setSelectedDate] = useState(today);
-  const [events, setEvents] = useState<CalendarEvent[]>(() => calendarEvents);
-  const [activeCalendarIds, setActiveCalendarIds] = useState(
-    () => new Set(calendarSources.map((source) => source.id))
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [inactiveCalendarIds, setInactiveCalendarIds] = useState<Set<string>>(
+    () => new Set()
   );
   const [activeCategories, setActiveCategories] = useState(
     () => new Set<EventCategory>(ALL_CATEGORIES)
   );
+
+  const calendarSources = useMemo(
+    () => buildCalendarSources(projects),
+    [projects]
+  );
+
+  const activeCalendarIds = useMemo(
+    () =>
+      new Set(
+        calendarSources
+          .map((source) => source.id)
+          .filter((id) => !inactiveCalendarIds.has(id))
+      ),
+    [calendarSources, inactiveCalendarIds]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    Promise.all([listProjects(), listCalendarEvents()])
+      .then(([projectsData, eventsData]) => {
+        if (cancelled) {
+          return;
+        }
+        setProjects(projectsData);
+        setEvents(eventsData.map(toCalendarEvent));
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          window.alert(
+            error instanceof Error
+              ? error.message
+              : "Could not load the calendar."
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function handleSelectDate(date: Date) {
     setSelectedDate(date);
@@ -64,10 +116,25 @@ export function CalendarPage() {
     }
   }
 
-  function handleCreateEvent(event: CalendarEvent) {
+  async function handleCreateEvent(input: NewEventInput) {
+    const created = await createCalendarEvent({
+      title: input.title,
+      date: input.date,
+      time: input.time,
+      location: input.location || undefined,
+      category: input.category,
+      projectId:
+        input.calendarId === MY_SCHEDULE_ID ? undefined : input.calendarId
+    });
+
+    const event = toCalendarEvent(created);
     setEvents((current) => [...current, event]);
     setActiveCategories((current) => new Set(current).add(event.category));
-    setActiveCalendarIds((current) => new Set(current).add(event.calendarId));
+    setInactiveCalendarIds((current) => {
+      const next = new Set(current);
+      next.delete(event.calendarId);
+      return next;
+    });
     handleSelectDate(new Date(`${event.date}T00:00:00`));
   }
 
@@ -142,14 +209,16 @@ export function CalendarPage() {
           />
           <CalendarsPanel
             activeCalendarIds={activeCalendarIds}
+            calendarSources={calendarSources}
             onToggleCalendar={(calendarId) =>
-              setActiveCalendarIds((current) =>
+              setInactiveCalendarIds((current) =>
                 toggleSetValue(current, calendarId)
               )
             }
           />
           <UpcomingEventsPanel events={filteredEvents} />
           <NewEventPopover
+            calendarSources={calendarSources}
             defaultDate={selectedDate}
             onCreateEvent={handleCreateEvent}
           />

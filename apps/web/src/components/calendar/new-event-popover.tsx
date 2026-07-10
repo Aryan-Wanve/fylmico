@@ -12,13 +12,21 @@ import { Label } from "@/components/ui/label";
 import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
-  calendarSources,
-  type CalendarEvent,
+  type CalendarSource,
   type EventCategory
 } from "@/components/calendar/calendar-data";
 import { toISODate } from "@/lib/calendar-utils";
 
 const DEFAULT_CATEGORY: EventCategory = "meeting";
+
+export type NewEventInput = {
+  title: string;
+  date: string;
+  time: string;
+  location?: string;
+  category: EventCategory;
+  calendarId: string;
+};
 
 function pillClassName(active: boolean): string {
   return `rounded-lg px-2.5 py-1 text-xs font-semibold ${
@@ -29,11 +37,13 @@ function pillClassName(active: boolean): string {
 }
 
 export function NewEventPopover({
+  calendarSources,
   defaultDate,
   onCreateEvent
 }: {
+  calendarSources: CalendarSource[];
   defaultDate: Date;
-  onCreateEvent: (event: CalendarEvent) => void;
+  onCreateEvent: (event: NewEventInput) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -41,8 +51,9 @@ export function NewEventPopover({
   const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState<EventCategory>(DEFAULT_CATEGORY);
-  const [calendarId, setCalendarId] = useState(calendarSources[0].id);
+  const [calendarId, setCalendarId] = useState(calendarSources[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
@@ -53,28 +64,39 @@ export function NewEventPopover({
       setTime("");
       setLocation("");
       setCategory(DEFAULT_CATEGORY);
-      setCalendarId(calendarSources[0].id);
+      setCalendarId(calendarSources[0]?.id ?? "");
       setError(null);
     }
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!title.trim() || !time.trim()) {
       setError("Title and time are required.");
       return;
     }
 
-    onCreateEvent({
-      id: `event-${Date.now()}`,
-      title: title.trim(),
-      date,
-      time: time.trim(),
-      location: location.trim() || undefined,
-      category,
-      calendarId
-    });
+    setSubmitting(true);
+    setError(null);
 
-    setOpen(false);
+    try {
+      await onCreateEvent({
+        title: title.trim(),
+        date,
+        time: time.trim(),
+        location: location.trim() || undefined,
+        category,
+        calendarId
+      });
+      setOpen(false);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Could not create this event."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -174,11 +196,12 @@ export function NewEventPopover({
           ) : null}
 
           <button
-            className="h-9 rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] text-sm font-bold text-white hover:opacity-95"
+            className="h-9 rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] text-sm font-bold text-white hover:opacity-95 disabled:opacity-60"
+            disabled={submitting}
             onClick={handleSubmit}
             type="button"
           >
-            Add Event
+            {submitting ? "Adding…" : "Add Event"}
           </button>
         </div>
       </PopoverContent>
