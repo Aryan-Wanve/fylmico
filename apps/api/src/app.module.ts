@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { DatabaseModule } from "@fylmico/database";
 import { AuthModule } from "./auth/auth.module";
+import { CalendarModule } from "./calendar/calendar.module";
 import { ChatModule } from "./chat/chat.module";
 import { ClientsModule } from "./clients/clients.module";
 import { CommentsModule } from "./comments/comments.module";
@@ -27,6 +28,7 @@ import { WorkspaceModule } from "./workspace/workspace.module";
     ClientsModule,
     CommentsModule,
     CrewsModule,
+    CalendarModule,
     WorkspaceModule
   ]
 })

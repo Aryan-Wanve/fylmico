@@ -26,6 +26,7 @@ model User {
   notifications           Notification[]
   comments                Comment[]
   crewProfiles            CrewProfile[]
+  calendarEvents          CalendarEvent[]
 
   @@map("users")
 }
@@ -45,8 +46,9 @@ model Organization {
   conversations Conversation[]
   projects      Project[]
   clients       Client[]
-  comments      Comment[]
-  crewProfiles  CrewProfile[]
+  comments       Comment[]
+  crewProfiles   CrewProfile[]
+  calendarEvents CalendarEvent[]
 
   @@map("organizations")
 }
@@ -212,8 +214,9 @@ model Project {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  clients      ProjectClient[]
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clients        ProjectClient[]
+  calendarEvents CalendarEvent[]
 
   @@index([organizationId])
   @@map("projects")
@@ -304,4 +307,26 @@ model CrewProfile {
   @@unique([organizationId, userId])
   @@index([organizationId])
   @@map("crew_profiles")
+}
+
+model CalendarEvent {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  projectId      String?  @map("project_id")
+  createdById    String   @map("created_by_id")
+  title          String
+  date           String
+  time           String
+  location       String?
+  category       String   @default("other")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy    User         @relation(fields: [createdById], references: [id])
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("calendar_events")
 }
