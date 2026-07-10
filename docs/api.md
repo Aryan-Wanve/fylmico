@@ -694,6 +694,102 @@ Authentication: required. Body:
 `CalendarEvent`. Errors: `400 invalid_request`, `401 unauthenticated`,
 `403 forbidden`, `404 project_not_found`.
 
+## Time Entries (Implemented)
+
+Implemented per ADR 0031 (`apps/api/src/time-entries/*`). A `TimeEntry`
+is a logged block of hours a house member spent on work, optionally
+tied to a project.
+
+### `GET /api/v1/houses/:houseId/time-entries`
+
+Authentication: required. Response: `{ "data": TimeEntry[] }`, sorted
+`date desc` (not paginated). Errors: `401 unauthenticated`,
+`403 forbidden`.
+
+### `POST /api/v1/houses/:houseId/time-entries`
+
+Authentication: required. Body:
+`{ "date": string, "hours": number, "phase"?: string, "projectId"?: string, "note"?: string }`.
+`hours` must be a positive number. `phase` must be one of
+`"Pre-Production" | "Production" | "Post-Production" | "Planning"`
+(defaults to `"Production"`). If `projectId` is given, it must belong to
+the same house. Response: created `TimeEntry`. Errors:
+`400 invalid_request`, `401 unauthenticated`, `403 forbidden`,
+`404 project_not_found`.
+
+## Analytics (Implemented)
+
+Implemented per ADR 0031 (`apps/api/src/analytics/*`). A single endpoint
+computes every aggregate the Analytics page needs, server-side, from
+real `Project`/`Task`/`TimeEntry`/`Message`/`Comment` data - the frontend
+does not re-derive any of these numbers itself.
+
+### `GET /api/v1/houses/:houseId/analytics`
+
+Authentication: required. Response: `{ "data": Analytics }`. Errors:
+`401 unauthenticated`, `403 forbidden`.
+
+```json
+{
+  "data": {
+    "totalProjects": 4,
+    "activeProjects": 2,
+    "tasksTotal": 12,
+    "tasksCompleted": 5,
+    "hoursLoggedTotal": 38.5,
+    "teamEfficiency": 42,
+    "taskStatusBreakdown": [
+      { "status": "done", "label": "Completed", "color": "#16c784", "count": 5 }
+    ],
+    "timeLoggedByDay": [{ "date": "2026-07-05", "label": "Sun", "hours": 3 }],
+    "timeDistribution": [
+      { "phase": "Production", "color": "#16c784", "hours": 20 }
+    ],
+    "topActiveProjects": [
+      {
+        "id": "project_1",
+        "title": "Beyond Frames",
+        "progress": 65,
+        "coverGradient": null,
+        "coverIcon": null
+      }
+    ],
+    "projectHoursSeries": [
+      {
+        "id": "project_1",
+        "label": "Beyond Frames",
+        "color": "#654cff",
+        "points": [0, 2, 0, 0, 4, 0, 0]
+      }
+    ],
+    "topContributors": [
+      { "userId": "user_1", "name": "Ana Lytics", "hours": 12.5 }
+    ],
+    "teamWorkload": [
+      {
+        "userId": "user_1",
+        "name": "Ana Lytics",
+        "jobTitle": "Owner",
+        "percentage": 24
+      }
+    ],
+    "activityHeatmap": {
+      "dayLabels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      "timeLabels": ["12 AM", "4 AM", "8 AM", "12 PM", "4 PM", "8 PM"],
+      "matrix": [[0, 1, 3, 4, 3, 1]]
+    }
+  }
+}
+```
+
+Metric definitions (see ADR 0031 for the full reasoning): `activeProjects`
+excludes projects staged `Completed` or `On Hold`; `teamEfficiency` is
+`tasksCompleted / tasksTotal * 100`; `teamWorkload.percentage` is hours
+logged in the last 7 days divided by a flat 40-hour weekly capacity,
+capped at 100; `activityHeatmap` buckets `Task`/`Message`/`Comment`/
+`TimeEntry` timestamps by weekday and 4-hour window, normalized 0-4
+relative to that house's busiest bucket.
+
 ## Response Shape
 
 Successful single-resource response:

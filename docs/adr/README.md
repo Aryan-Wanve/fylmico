@@ -48,6 +48,7 @@ Use sequential numbers and a short slug:
 - `0028-crews-module.md`
 - `0029-messages-page-extension.md`
 - `0030-calendar-page-extension.md`
+- `0031-time-tracking-and-analytics.md`
 
 ## Required Sections
 

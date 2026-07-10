@@ -340,15 +340,38 @@ Progress:
   curl-verified (create with/without a project, chronological ordering,
   `404` on a cross-house `projectId`, `400` on a missing title). See
   ADR 0030.
-- Next: live-verify the Messages page in-browser once tooling allows (it
-  was unavailable during ADR 0029's pass but has since come back for
-  Calendar's verification). Object storage is now a named prerequisite
-  for project cover photos, message attachments, and the entire `/files`
-  page - worth solving once. Real RBAC (who can remove/edit what) is a
-  concretely scoped gap across every module now, worth solving broadly
-  rather than per-endpoint. Otherwise, pick up Files/Storyboard/Bookings/
-  Analytics (all still local mock data, each needing its own backend
-  domain), or the activity feed / creative-production modules.
+- **Time tracking + Analytics page wired to real data**: unlike every
+  other page wired up this session, Analytics needed a genuinely new
+  feature first, not just a schema extension - added a `TimeEntry` model
+  (date, hours, phase, optional project) and
+  `GET`/`POST /api/v1/houses/:houseId/time-entries`, logged via a new
+  "Log Time" popover on the Analytics page itself (no separate
+  time-tracking page exists in the design). Added a single
+  `GET /api/v1/houses/:houseId/analytics` endpoint that computes every
+  number the page needs server-side: project/task totals, task-status
+  breakdown, daily hours logged, phase distribution, top active
+  projects, per-project daily hours (replacing the mock's fake
+  progress-over-time chart with real hours-logged-per-project), top
+  contributors, team workload (hours vs. a flat 40h/week capacity), and
+  an activity heatmap derived from real `Task`/`Message`/`Comment`/
+  `TimeEntry` timestamps. Sparklines, canned "+12%" growth notes, a
+  static date-range button, and an "Export" button were dropped rather
+  than faked - none had real data or function behind them. Curl-verified
+  (time-entry create/list/validation, full analytics payload) and
+  live-browser-verified (seeded data rendered correctly across every
+  panel; logging time through the popover updated Hours Logged, Time
+  Distribution, Team Workload, and the insight banner immediately). See
+  ADR 0031.
+- Next: live-verify the Messages page in-browser (still owed from ADR
+  0029 - tooling was unavailable then but has since come back for both
+  Calendar's and Analytics' verification passes). Object storage is now
+  a named prerequisite for project cover photos, message attachments,
+  and the entire `/files` page - worth solving once. Real RBAC (who can
+  remove/edit what) is a concretely scoped gap across every module now,
+  worth solving broadly rather than per-endpoint. Otherwise, pick up
+  Files/Storyboard/Bookings (all still local mock data, each needing its
+  own backend domain), or the activity feed / creative-production
+  modules.
 
 ## Completed Milestones
 

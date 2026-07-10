@@ -2613,3 +2613,101 @@ Next task:
   message attachments, and the entire `/files` page. Otherwise: pick up
   Files/Storyboard/Bookings/Analytics (all local mock data, each needing
   its own backend domain), or address real RBAC.
+
+## 2026-07-11 Time Tracking and Analytics
+
+Current milestone: Phase 8 - backend bootstrap (wiring more existing
+frontend pages to real data, continuing from the Calendar module above)
+
+Completion percentage: N/A
+
+Features completed:
+
+- Asked how to handle Analytics, since roughly half its mock (hours
+  logged, time-per-phase, team workload %, a per-project progress-over-
+  time trend) depended on time tracking, a feature that didn't exist
+  anywhere in the backend - unlike every prior page this session, this
+  wasn't just a schema extension. Chose to build time tracking as its
+  own feature first, then wire Analytics to genuine data from it.
+- Added a new `TimeEntry` Prisma model (`organizationId`, optional
+  `projectId` with `onDelete: SetNull`, `userId`, `phase` default
+  `"Production"`, `hours` as `Float`, `date`, optional `note`) and
+  migration `20260710223849_time_entries`.
+- Built `apps/api/src/time-entries/*`:
+  `GET`/`POST /api/v1/houses/:houseId/time-entries`, membership-gated,
+  validating `phase` against the same 4 values the mock's time-
+  distribution chart already used and `projectId` against the house.
+- Built `apps/api/src/analytics/*`: a single
+  `GET /api/v1/houses/:houseId/analytics` endpoint computing every
+  number the page needs server-side rather than shipping raw rows -
+  project/task totals, task-status breakdown (mapped from the real
+  `todo`/`in-progress`/`on-hold`/`done` vocabulary to the mock's
+  Completed/In Progress/To Do/Blocked labels), daily time-logged series,
+  phase distribution, top active projects, per-project daily hours,
+  top contributors, team workload, and an activity heatmap derived from
+  real `Task`/`Message`/`Comment`/`TimeEntry` timestamps. Defined
+  concretely what had previously been vibes-only numbers: active
+  projects (stage not Completed/On Hold), team efficiency (tasks
+  completed / total), team workload % (hours logged in the last 7 days
+  vs. a flat 40h/week capacity, capped at 100).
+- Caught and fixed a real timezone bug during curl verification: the
+  initial `toDateKey` helper mixed local-time day arithmetic
+  (`getDate`/`setDate`) with UTC serialization (`toISOString`), which
+  silently dropped "today"'s time entries from the last-7-days window
+  whenever the server's local date and UTC date diverged. Fixed to
+  format the date key entirely from local components.
+- Added a "Log Time" popover directly on the Analytics page (no separate
+  time-tracking page exists in the design) so logging hours and seeing
+  them reflected in the dashboard is one tight loop.
+- Rewired every Analytics panel component from static mock-array imports
+  to props sourced from the real `analytics` payload. Dropped rather
+  than faked the pieces with no real backing even after time tracking
+  exists: stat-card sparklines and "+12% this month" notes (no
+  historical daily snapshots exist), the header's static
+  "Jul 1 – Jul 7, 2026" button and "Export" button (both inert), and the
+  hardcoded "18% more completed tasks" line and Insight Banner copy
+  (replaced with a sentence computed from real totals).
+- Repurposed the "Project Progress" multi-line chart into "Hours Logged
+  by Project" (real per-project daily hours) rather than dropping it,
+  since the underlying chart component just needed a `valueSuffix`/
+  `maxValue` prop pair to stop being hardcoded to a 0-100% scale.
+- Replaced `TopActiveProjectsPanel`'s hardcoded fake image paths with
+  the same `coverGradient`/`coverIcon` rendering `ProjectGridCard`
+  already uses (ADR 0027) - no object storage exists, so a fake photo
+  path would now be actively misleading for a real project.
+- See ADR 0031.
+
+Validation:
+
+- `npm run typecheck`, `npm run lint`, and `npm run build:api`/
+  `build:web` all pass cleanly.
+- curl-verified: created time entries with and without a project,
+  confirmed list ordering, `404 project_not_found` for a cross-house
+  project, `400 invalid_request` for non-positive hours, and the full
+  `GET .../analytics` payload shape and values against manually-seeded
+  data (including catching and fixing the timezone bug above).
+- **Live browser verification completed**: logged in as a real test
+  account, confirmed every panel (stat cards, hours-by-project chart,
+  task status, time logged, time distribution, activity heatmap, top
+  contributors, top active projects, insight banner, team workload)
+  rendered correctly from curl-seeded data, then logged a new time entry
+  through the "Log Time" popover and watched Hours Logged, Time
+  Distribution, Team Workload, and the insight banner update
+  immediately with the new numbers.
+
+Technical debt:
+
+- No update/delete endpoint for time entries yet (create + list only,
+  matching every other module's first-pass scope this session).
+- Team workload's 40h/week capacity is a flat, stated assumption, not
+  configurable per person or house.
+- The activity heatmap will look sparse on a house with little history
+  - honest given real (small) sample sizes, not a bug.
+
+Next task:
+
+- Live-verify the Messages page in-browser (still owed from ADR 0029).
+- Object storage remains a named prerequisite for project cover photos,
+  message attachments, and the entire `/files` page. Otherwise: pick up
+  Files/Storyboard/Bookings (both local mock data, each needing its own
+  backend domain), or address real RBAC.

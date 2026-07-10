@@ -80,6 +80,7 @@ Current ADRs:
 - [0028-crews-module.md](docs/adr/0028-crews-module.md)
 - [0029-messages-page-extension.md](docs/adr/0029-messages-page-extension.md)
 - [0030-calendar-page-extension.md](docs/adr/0030-calendar-page-extension.md)
+- [0031-time-tracking-and-analytics.md](docs/adr/0031-time-tracking-and-analytics.md)
 
 ## Current Sprint Gate
 
@@ -143,16 +144,35 @@ channel task/event backend exists) rather than deleted or faked.
   `/bookings`, `/analytics`, `/settings`, and the dashboard's "Recent
   Projects"/"Recent Activity" panels) still runs on independent local mock
   data colocated per page — those pages' designs are materially richer
-  than their matching (or, for files/storyboard/bookings/analytics,
-  nonexistent) backend models, so wiring each one up means extending its
-  Prisma schema first, not just swapping a mock for a fetch call. No
-  object storage exists anywhere in the backend yet - a concrete, named
-  prerequisite for project cover photos, message attachments, and the
-  entire `/files` page. Real RBAC (who can remove/edit what) is now a
-  concretely scoped gap across every module, not just one. The frontend
-  silently refreshes an expired access token on a `401` (verified live).
-  No realtime delivery (Socket.IO, ADR 0005) exists anywhere yet —
-  notifications and chat are both REST/poll-based for now.
+  than their matching (or, for files/storyboard/bookings, nonexistent)
+  backend models, so wiring each one up means extending its Prisma schema
+  first, not just swapping a mock for a fetch call. **The standalone
+  `/analytics` page is real too** (ADR 0031), and needed a genuinely new
+  feature first: a `TimeEntry` model (date, hours, phase, optional
+  project) backing `GET`/`POST /api/v1/houses/:houseId/time-entries`,
+  logged from a "Log Time" popover right on the Analytics page (no
+  separate time-tracking page exists in the design). A single
+  `GET /api/v1/houses/:houseId/analytics` endpoint computes every number
+  the page shows - project/task totals, task-status breakdown, daily
+  hours, phase distribution, top active projects, top contributors, team
+  workload (hours vs. a flat 40h/week capacity), and an activity heatmap
+  derived from real `Task`/`Message`/`Comment`/`TimeEntry` timestamps -
+  server-side, so the frontend never re-derives these numbers itself.
+  Sparklines, canned growth percentages, a static date-range button, and
+  an "Export" button were dropped rather than faked, since none of them
+  had real data or functionality behind them. Curl-verified (time-entry
+  create/list/validation, full analytics payload shape) and
+  live-browser-verified (seeded data rendered correctly across every
+  panel; logging a new time entry through the popover updated Hours
+  Logged, Time Distribution, Team Workload, and the insight banner
+  immediately). No object storage exists anywhere in the backend yet - a
+  concrete, named prerequisite for project cover photos, message
+  attachments, and the entire `/files` page. Real RBAC (who can
+  remove/edit what) is now a concretely scoped gap across every module,
+  not just one. The frontend silently refreshes an expired access token
+  on a `401` (verified live). No realtime delivery (Socket.IO, ADR 0005)
+  exists anywhere yet — notifications and chat are both REST/poll-based
+  for now.
 
 To run both sides locally: `docker compose up -d postgres`, then start the
 `api` and `web` dev servers (`.claude/launch.json` has both configured).

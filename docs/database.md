@@ -810,6 +810,48 @@ filtering by `project_id`, no additional join table needed (ADR 0030).
 
 Migration history: `20260710221800_calendar_events`.
 
+### Table: `time_entries`
+
+Purpose: a logged block of hours a house member spent on work - the real
+backing data behind the Analytics page's hours/workload/phase-
+distribution panels, none of which had any real data source before this
+table existed (ADR 0031).
+
+Ownership: belongs to one `organization`; optionally belongs to one
+`project` (nullable - unassigned time still counts toward house-wide
+totals); belongs to the `user` who logged it.
+
+Columns: `id`, `organization_id`, `project_id` (nullable), `user_id`,
+`phase` (default `"Production"`; one of `Pre-Production`/`Production`/
+`Post-Production`/`Planning`, validated at the DTO layer - the same four
+phases the Analytics mock's time-distribution chart already used),
+`hours` (`Float`, so partial hours like `2.5` are representable), `date`
+(string, `YYYY-MM-DD` - opaque string like `tasks.due_date` and
+`calendar_events.date`, not a real `DateTime`), `note` (nullable),
+`created_at`, `updated_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`projects` (`onDelete: SetNull` - deleting a project keeps the logged
+hours as house-wide history rather than deleting them); belongs to
+`users` (cascade delete).
+
+Indexes: index on `organization_id`; index on `project_id`; index on
+`user_id`.
+
+Constraints: none beyond required foreign keys and `hours` being
+validated positive at the DTO layer (not a DB-level check constraint).
+
+Permissions: created/read via `POST`/`GET
+/api/v1/houses/:houseId/time-entries` by any house member. No
+update/delete endpoint yet.
+
+Reasoning: a dedicated table rather than an `hours` column on `Task` -
+time is logged per work session (possibly several times a day, possibly
+unrelated to any specific task), not once per task, and the Analytics
+page's phase/day/project breakdowns need many rows per person, not one.
+
+Migration history: `20260710223849_time_entries`.
+
 ## Table Documentation Template
 
 Use this template for every table once schema work begins.
