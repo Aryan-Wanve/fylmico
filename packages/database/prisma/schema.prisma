@@ -150,7 +150,7 @@ model Task {
   assigneeId     String   @map("assignee_id")
   role           String
   dueDate        String   @map("due_date")
-  status         String   @default("scheduled")
+  status         String   @default("todo")
   priority       String   @default("medium")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")

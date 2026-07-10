@@ -1,33 +1,26 @@
 import { IsIn, IsOptional, IsString, MinLength } from "class-validator";
+import { TASK_PRIORITIES, TASK_STATUSES } from "./create-task.dto";
 
-export const TASK_STATUSES = [
-  "todo",
-  "in-progress",
-  "on-hold",
-  "done"
-] as const;
-export const TASK_PRIORITIES = ["low", "medium", "high"] as const;
-
-export class CreateTaskDto {
+export class UpdateTaskDto {
+  @IsOptional()
   @IsString()
   @MinLength(1)
-  houseId!: string;
+  title?: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(1)
-  title!: string;
+  project?: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(1)
-  project!: string;
+  assigneeId?: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(1)
-  assigneeId!: string;
-
-  @IsString()
-  @MinLength(1)
-  dueDate!: string;
+  dueDate?: string;
 
   @IsOptional()
   @IsIn(TASK_PRIORITIES)
