@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarCheck, Clock3, Users, Briefcase } from "lucide-react";
+import { useWorkspace } from "@/lib/workspace-context";
+import { listCrew, removeCrewMember } from "@/services/base-workspace.service";
 import { CrewsHeader } from "@/components/crews/crews-header";
 import { CrewStatCard } from "@/components/crews/crew-stat-card";
 import { CrewsToolbar, type CrewsTab } from "@/components/crews/crews-toolbar";
@@ -15,18 +17,41 @@ import { PaginationFooter } from "@/components/layout/pagination-footer";
 import {
   DEPARTMENT_META,
   DEPARTMENT_ORDER,
-  crewMembers as defaultMembers,
   type CrewMember,
   type Department
 } from "@/components/crews/crew-data";
 
 export function CrewsPage() {
-  const [members, setMembers] = useState<CrewMember[]>(defaultMembers);
+  const { activeHouse } = useWorkspace();
+
+  const [members, setMembers] = useState<CrewMember[]>([]);
   const [activeTab, setActiveTab] = useState<CrewsTab>("all");
   const [department, setDepartment] = useState<Department | "all">("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    listCrew()
+      .then((data) => {
+        if (!cancelled) {
+          setMembers(data);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          window.alert(
+            error instanceof Error ? error.message : "Could not load the crew."
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const counts: Record<CrewsTab, number> = {
     all: members.length,
@@ -85,29 +110,36 @@ export function CrewsPage() {
     setPage(1);
   }
 
-  function handleRemove(memberId: string) {
-    setMembers((current) => current.filter((member) => member.id !== memberId));
-  }
-
-  function handleInvite() {
-    const name = window.prompt("Invite member — enter their name");
-
-    if (!name || !name.trim()) {
+  async function handleRemove(memberId: string) {
+    if (
+      !window.confirm(
+        "Remove this person from the house? They'll lose access immediately."
+      )
+    ) {
       return;
     }
 
-    const member: CrewMember = {
-      id: `crew-${Date.now()}`,
-      name: name.trim(),
-      email: `${name.trim().toLowerCase().replaceAll(" ", ".")}@example.com`,
-      jobTitle: "Production Assistant",
-      department: "Production",
-      roleCategory: "Production Assistant",
-      status: "available",
-      availability: "TBD"
-    };
+    try {
+      await removeCrewMember(memberId);
+      setMembers((current) =>
+        current.filter((member) => member.id !== memberId)
+      );
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not remove this member."
+      );
+    }
+  }
 
-    setMembers((current) => [member, ...current]);
+  function handleInvite() {
+    if (!activeHouse) {
+      return;
+    }
+
+    window.prompt(
+      "Share this invite code so a new member can join your house:",
+      activeHouse.inviteCode
+    );
   }
 
   const availableToday = members.filter(

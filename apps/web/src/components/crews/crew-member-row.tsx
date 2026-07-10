@@ -1,7 +1,6 @@
 import { Calendar } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  AVATAR_IMAGES,
   DEPARTMENT_META,
   STATUS_META,
   getInitials,
@@ -19,13 +18,11 @@ export function CrewMemberRow({
   const departmentMeta = DEPARTMENT_META[member.department];
   const DepartmentIcon = departmentMeta.icon;
   const statusMeta = STATUS_META[member.status];
-  const avatarImage = member.avatarId ? AVATAR_IMAGES[member.avatarId] : undefined;
 
   return (
     <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015]">
       <div className="flex w-56 min-w-0 shrink-0 items-center gap-3 sm:w-64">
         <Avatar>
-          {avatarImage ? <AvatarImage alt="" src={avatarImage} /> : null}
           <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">

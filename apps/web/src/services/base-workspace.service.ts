@@ -5,6 +5,7 @@ import type {
   CreateHouseRequest,
   CreateProjectRequest,
   CreateTaskRequest,
+  CrewMember,
   House,
   JoinHouseRequest,
   LoginRequest,
@@ -14,6 +15,7 @@ import type {
   ResetPasswordRequest,
   SendChatMessageRequest,
   SignupRequest,
+  UpdateCrewProfileRequest,
   UpdateProjectRequest,
   UpdateTaskRequest,
   WorkspaceSnapshot
@@ -219,6 +221,39 @@ export async function archiveProject(projectId: string): Promise<Project> {
   return apiRequest<Project>(`/projects/${projectId}/archive`, {
     method: "POST"
   });
+}
+
+export async function listCrew(): Promise<CrewMember[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing the crew.");
+  }
+
+  return apiRequest<CrewMember[]>(`/houses/${activeHouseId}/crew`);
+}
+
+export async function updateCrewProfile(
+  userId: string,
+  request: UpdateCrewProfileRequest
+): Promise<CrewMember> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before editing crew profiles.");
+  }
+
+  return apiRequest<CrewMember>(`/houses/${activeHouseId}/crew/${userId}`, {
+    method: "PATCH",
+    body: request
+  });
+}
+
+export async function removeCrewMember(userId: string): Promise<void> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before removing crew members.");
+  }
+
+  await apiRequest<{ success: boolean }>(
+    `/houses/${activeHouseId}/crew/${userId}`,
+    { method: "DELETE" }
+  );
 }
 
 export async function sendChatMessage(

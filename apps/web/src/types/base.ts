@@ -34,6 +34,26 @@ export type ProjectType =
 export type ProjectCoverIcon =
   "camera" | "clapperboard" | "heart" | "megaphone" | "mic" | "music";
 
+export type CrewDepartment =
+  | "Production"
+  | "Camera"
+  | "Art"
+  | "Electric"
+  | "Sound"
+  | "Costume"
+  | "Post-Production";
+
+export type CrewRoleCategory =
+  | "Director"
+  | "Producer"
+  | "Cinematographer"
+  | "Editor"
+  | "Production Assistant"
+  | "Other";
+
+export type CrewMemberStatus =
+  "available" | "on-set" | "on-leave" | "unavailable";
+
 export type UserProfile = {
   id: string;
   name: string;
@@ -93,6 +113,20 @@ export type Project = {
   dueDate: string | null;
   teamIds: string[];
   clients: { id: string; name: string }[];
+};
+
+export type CrewMember = {
+  id: string;
+  name: string;
+  email: string;
+  jobTitle: string;
+  department: CrewDepartment;
+  roleCategory: CrewRoleCategory;
+  status: CrewMemberStatus;
+  currentProject: string | null;
+  projectStage: string | null;
+  availability: string | null;
+  birthday: string | null;
 };
 
 export type ChatMessage = {
@@ -186,3 +220,14 @@ export type CreateProjectRequest = {
 };
 
 export type UpdateProjectRequest = Partial<CreateProjectRequest>;
+
+export type UpdateCrewProfileRequest = Partial<{
+  jobTitle: string;
+  department: CrewDepartment;
+  roleCategory: CrewRoleCategory;
+  status: CrewMemberStatus;
+  currentProject: string;
+  projectStage: string;
+  availability: string;
+  birthday: string;
+}>;

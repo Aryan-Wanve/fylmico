@@ -1,10 +1,6 @@
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  AVATAR_IMAGES,
-  getInitials,
-  type CrewMember
-} from "@/components/crews/crew-data";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials, type CrewMember } from "@/components/crews/crew-data";
 
 function daysUntilBirthday(birthday: string, today: Date): number {
   const [month, day] = birthday.split("-").map(Number);
@@ -21,11 +17,7 @@ function daysUntilBirthday(birthday: string, today: Date): number {
   return Math.round((next.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
 }
 
-export function UpcomingBirthdaysPanel({
-  members
-}: {
-  members: CrewMember[];
-}) {
+export function UpcomingBirthdaysPanel({ members }: { members: CrewMember[] }) {
   const today = new Date();
 
   const upcoming = members
@@ -49,19 +41,12 @@ export function UpcomingBirthdaysPanel({
               "en-US",
               { month: "short" }
             );
-            const avatarImage = member.avatarId
-              ? AVATAR_IMAGES[member.avatarId]
-              : undefined;
-
             return (
               <div
                 className="flex items-center gap-3 border-b border-black/5 px-6 py-3.5 last:border-b-0"
                 key={member.id}
               >
                 <Avatar>
-                  {avatarImage ? (
-                    <AvatarImage alt="" src={avatarImage} />
-                  ) : null}
                   <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
