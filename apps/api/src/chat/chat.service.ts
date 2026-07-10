@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from "@nestjs/common";
 import { Prisma, PrismaService } from "@fylmico/database";
 import { AppException } from "../common/exceptions/app.exception";
 import { OrganizationsService } from "../organizations/organizations.service";
+import { CreateConversationDto } from "./dto/create-conversation.dto";
 
 const roomInclude = {
   messages: { include: { author: true }, orderBy: { createdAt: "asc" } }
@@ -40,6 +41,35 @@ export class ChatService {
     });
 
     return this.getRoomDto(roomId);
+  }
+
+  async createConversation(
+    userId: string,
+    organizationId: string,
+    dto: CreateConversationDto
+  ) {
+    await this.organizationsService.requireMembership(organizationId, userId);
+
+    const existing = await this.prisma.conversation.findUnique({
+      where: { organizationId_name: { organizationId, name: dto.name.trim() } }
+    });
+    if (existing) {
+      throw new AppException(
+        HttpStatus.CONFLICT,
+        "channel_name_taken",
+        "A channel with this name already exists in this house."
+      );
+    }
+
+    const conversation = await this.prisma.conversation.create({
+      data: {
+        organizationId,
+        name: dto.name.trim(),
+        topic: dto.topic?.trim() || "No topic set."
+      }
+    });
+
+    return this.getRoomDto(conversation.id);
   }
 
   async getConversationsForOrganization(organizationId: string) {
