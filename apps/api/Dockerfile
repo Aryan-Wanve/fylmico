@@ -3,10 +3,11 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package.json package-lock.json* ./
+COPY apps/web/package.json ./apps/web/package.json
 COPY apps/api/package.json ./apps/api/package.json
 COPY packages/database/package.json ./packages/database/package.json
 COPY packages/database/prisma ./packages/database/prisma
-RUN npm install
+RUN npm ci
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
