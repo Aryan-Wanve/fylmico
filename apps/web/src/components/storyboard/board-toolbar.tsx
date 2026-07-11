@@ -1,7 +1,8 @@
 "use client";
 
 import { LayoutGrid, List, Minus, Plus, Play } from "lucide-react";
-import type { Board } from "@/components/storyboard/storyboard-data";
+import { formatRelativeTime } from "@/lib/relative-time";
+import type { Board } from "@/types/base";
 
 export type BoardViewMode = "grid" | "list";
 
@@ -23,16 +24,10 @@ export function BoardToolbar({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-black text-[#11142c]">{board.name}</h2>
-          {board.badge ? (
-            <span className="rounded-full bg-[#654cff]/10 px-2 py-0.5 text-xs font-bold text-[#654cff]">
-              {board.badge}
-            </span>
-          ) : null}
-        </div>
+        <h2 className="text-lg font-black text-[#11142c]">{board.name}</h2>
         <p className="text-sm text-[#8a90a3]">
-          {board.shots.length} frames &bull; Updated {board.updatedLabel}
+          {board.shots.length} frames &bull; Updated{" "}
+          {formatRelativeTime(board.updatedAt)}
         </p>
       </div>
 

@@ -1,4 +1,4 @@
-import type { Board } from "@/components/storyboard/storyboard-data";
+import type { Board } from "@/types/base";
 import { ShotListRow } from "@/components/storyboard/shot-list-row";
 
 export function ShotsListView({

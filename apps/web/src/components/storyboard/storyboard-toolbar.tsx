@@ -1,15 +1,15 @@
 "use client";
 
-import { ChevronDown, MoreHorizontal, Plus } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Project } from "@/types/base";
 
 export type StoryboardTab =
   "boards" | "shots" | "characters" | "locations" | "templates";
@@ -22,10 +22,11 @@ const TABS: Array<{ value: StoryboardTab; label: string }> = [
   { value: "templates", label: "Templates" }
 ];
 
-const PROJECTS = ["Beyond Frames", "Wanderers", "Lumee Ad Campaign", "Echoes"];
+const NO_PROJECT_VALUE = "__none__";
 
 export function StoryboardToolbar({
-  project,
+  projects,
+  projectId,
   onProjectChange,
   activeTab,
   onTabChange,
@@ -33,14 +34,19 @@ export function StoryboardToolbar({
   onDensityChange,
   onNewBoard
 }: {
-  project: string;
-  onProjectChange: (project: string) => void;
+  projects: Project[];
+  projectId: string | null;
+  onProjectChange: (projectId: string | null) => void;
   activeTab: StoryboardTab;
   onTabChange: (tab: StoryboardTab) => void;
   density: "compact" | "comfortable";
   onDensityChange: (density: "compact" | "comfortable") => void;
   onNewBoard: () => void;
 }) {
+  const activeProjectTitle =
+    projects.find((project) => project.id === projectId)?.title ??
+    "All Projects";
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-3">
@@ -52,19 +58,24 @@ export function StoryboardToolbar({
                 type="button"
               >
                 <span className="h-2 w-2 rounded-full bg-[#654cff]" />
-                {project}
+                {activeProjectTitle}
                 <ChevronDown className="h-4 w-4 text-[#8a90a3]" />
               </button>
             }
           />
           <DropdownMenuContent align="start" className="w-48">
             <DropdownMenuRadioGroup
-              onValueChange={onProjectChange}
-              value={project}
+              onValueChange={(value) =>
+                onProjectChange(value === NO_PROJECT_VALUE ? null : value)
+              }
+              value={projectId ?? NO_PROJECT_VALUE}
             >
-              {PROJECTS.map((name) => (
-                <DropdownMenuRadioItem key={name} value={name}>
-                  {name}
+              <DropdownMenuRadioItem value={NO_PROJECT_VALUE}>
+                All Projects
+              </DropdownMenuRadioItem>
+              {projects.map((project) => (
+                <DropdownMenuRadioItem key={project.id} value={project.id}>
+                  {project.title}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
@@ -91,7 +102,7 @@ export function StoryboardToolbar({
           <DropdownMenuTrigger
             render={
               <button
-                className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03]"
+                className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03]"
                 type="button"
               >
                 View
@@ -113,24 +124,6 @@ export function StoryboardToolbar({
                 Compact
               </DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <button
-                aria-label="More options"
-                className="grid h-9 w-9 place-items-center rounded-lg border border-black/10 bg-white text-[#4b5268] hover:bg-black/[0.03]"
-                type="button"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-            }
-          />
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem>Export board</DropdownMenuItem>
-            <DropdownMenuItem>Duplicate board</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 

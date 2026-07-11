@@ -1,14 +1,15 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { LayoutGrid, MoreVertical, Settings } from "lucide-react";
+import { LayoutGrid, MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import type { Board } from "@/components/storyboard/storyboard-data";
+import { formatRelativeTime } from "@/lib/relative-time";
+import type { Board } from "@/types/base";
 
 export function BoardsPanel({
   boards,
@@ -27,7 +28,7 @@ export function BoardsPanel({
     (sum, board) => sum + board.shots.length,
     0
   );
-  const lastUpdated = boards[0]?.updatedLabel ?? "—";
+  const lastUpdated = boards[0] ? formatRelativeTime(boards[0].updatedAt) : "—";
 
   return (
     <div className="grid content-start gap-4">
@@ -122,13 +123,6 @@ export function BoardsPanel({
           <span className="text-[#8a90a3]">Last Updated</span>
           <strong className="text-[#11142c]">{lastUpdated}</strong>
         </div>
-        <button
-          className="mt-1 flex items-center justify-center gap-2 rounded-lg border border-black/10 py-2 text-sm font-bold text-[#4b5268] hover:bg-black/[0.03]"
-          type="button"
-        >
-          <Settings className="h-4 w-4" />
-          Manage Boards
-        </button>
       </div>
     </div>
   );
