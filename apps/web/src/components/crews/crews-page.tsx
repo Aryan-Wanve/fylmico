@@ -162,9 +162,11 @@ export function CrewsPage() {
       return;
     }
 
+    const inviteUrl = `${window.location.origin}/houses/join/${activeHouse.inviteCode}`;
+    navigator.clipboard?.writeText(inviteUrl).catch(() => {});
     window.prompt(
-      "Share this invite code so a new member can join your house:",
-      activeHouse.inviteCode
+      "Share this join link with anyone you want to invite (copied to clipboard):",
+      inviteUrl
     );
   }
 

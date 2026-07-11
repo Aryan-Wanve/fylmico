@@ -23,6 +23,7 @@ import type {
   FilesSummary,
   House,
   HouseInvitation,
+  InviteCodePreview,
   InvitationPreview,
   JoinHouseRequest,
   LoginRequest,
@@ -237,6 +238,14 @@ export async function acceptInvitation(token: string): Promise<House> {
   });
   activeHouseId = house.id;
   return house;
+}
+
+export async function getInviteCodePreview(
+  code: string
+): Promise<InviteCodePreview> {
+  return apiRequest<InviteCodePreview>(`/houses/join/${code}/preview`, {
+    auth: false
+  });
 }
 
 export async function createTask(

@@ -139,8 +139,34 @@ class OrganizationsService {
   }
 
   async joinHouse(userId: string, dto: JoinHouseDto) {
+    const organization = await this.findOrganizationByInviteCode(
+      dto.inviteCode
+    );
+
+    await this.addMembership(organization.id, organization.name, userId);
+    return this.getHouseDto(organization.id, userId);
+  }
+
+  async getInviteCodePreview(inviteCode: string) {
+    const organization = await this.findOrganizationByInviteCode(inviteCode);
+    const memberCount = await this.prisma.organizationMembership.count({
+      where: { organizationId: organization.id }
+    });
+
+    return {
+      houseName: organization.name,
+      houseDescription: organization.description,
+      memberCount
+    };
+  }
+
+  buildInviteCodeUrl(inviteCode: string): string {
+    return `${this.appUrl}/houses/join/${inviteCode}`;
+  }
+
+  private async findOrganizationByInviteCode(inviteCode: string) {
     const organization = await this.prisma.organization.findUnique({
-      where: { inviteCode: dto.inviteCode.trim() }
+      where: { inviteCode: inviteCode.trim() }
     });
     if (!organization) {
       throw new AppException(
@@ -149,9 +175,7 @@ class OrganizationsService {
         "This invite code is not valid."
       );
     }
-
-    await this.addMembership(organization.id, organization.name, userId);
-    return this.getHouseDto(organization.id, userId);
+    return organization;
   }
 
   async inviteMember(

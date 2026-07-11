@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,22 @@ export function WorkspaceSection() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const inviteUrl =
+    activeHouse && typeof window !== "undefined"
+      ? `${window.location.origin}/houses/join/${activeHouse.inviteCode}`
+      : "";
+
+  async function handleCopyInviteLink() {
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      window.prompt("Copy this join link:", inviteUrl);
+    }
+  }
 
   async function handleSave() {
     setError("");
@@ -40,64 +57,92 @@ export function WorkspaceSection() {
   }
 
   return (
-    <SettingsCard
-      subtitle="Update the details every member of this house sees."
-      title="Workspace"
-    >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="grid gap-1.5">
-          <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-            Workspace Name
-          </Label>
-          <Input
-            onChange={(event) => {
-              setForm({ ...form, name: event.target.value });
-              setSaved(false);
-            }}
-            value={form.name}
-          />
-        </label>
-        <label className="grid gap-1.5">
-          <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-            Handle
-          </Label>
-          <Input
-            onChange={(event) => {
-              setForm({ ...form, handle: event.target.value });
-              setSaved(false);
-            }}
-            value={form.handle}
-          />
-        </label>
-        <label className="grid gap-1.5 sm:col-span-2">
-          <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-            Description
-          </Label>
-          <textarea
-            className="min-h-[4.5rem] rounded-lg border border-black/10 p-2.5 text-sm text-[#11142c] outline-none dark:border-white/10 dark:text-[#f1f2f8]"
-            onChange={(event) => {
-              setForm({ ...form, description: event.target.value });
-              setSaved(false);
-            }}
-            value={form.description}
-          />
-        </label>
-      </div>
+    <div className="grid gap-6">
+      <SettingsCard
+        subtitle="Share this link so anyone can join your house."
+        title="Invite People"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <Input className="min-w-0 flex-1" readOnly value={inviteUrl} />
+          <Button
+            className="shrink-0"
+            onClick={handleCopyInviteLink}
+            variant="outline"
+          >
+            {linkCopied ? (
+              <>
+                <Check className="h-4 w-4" />
+                Copied
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4" />
+                Copy link
+              </>
+            )}
+          </Button>
+        </div>
+      </SettingsCard>
 
-      {error ? (
-        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600">
-          {error}
-        </p>
-      ) : null}
-      {saved ? (
-        <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm font-semibold text-emerald-700">
-          Workspace settings saved.
-        </p>
-      ) : null}
+      <SettingsCard
+        subtitle="Update the details every member of this house sees."
+        title="Workspace"
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="grid gap-1.5">
+            <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
+              Workspace Name
+            </Label>
+            <Input
+              onChange={(event) => {
+                setForm({ ...form, name: event.target.value });
+                setSaved(false);
+              }}
+              value={form.name}
+            />
+          </label>
+          <label className="grid gap-1.5">
+            <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
+              Handle
+            </Label>
+            <Input
+              onChange={(event) => {
+                setForm({ ...form, handle: event.target.value });
+                setSaved(false);
+              }}
+              value={form.handle}
+            />
+          </label>
+          <label className="grid gap-1.5 sm:col-span-2">
+            <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
+              Description
+            </Label>
+            <textarea
+              className="min-h-[4.5rem] rounded-lg border border-black/10 p-2.5 text-sm text-[#11142c] outline-none dark:border-white/10 dark:text-[#f1f2f8]"
+              onChange={(event) => {
+                setForm({ ...form, description: event.target.value });
+                setSaved(false);
+              }}
+              value={form.description}
+            />
+          </label>
+        </div>
 
-      <Button className="mt-4" disabled={saving} onClick={handleSave}>
-        {saving ? "Saving..." : "Save Changes"}
-      </Button>
-    </SettingsCard>
+        {error ? (
+          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600">
+            {error}
+          </p>
+        ) : null}
+        {saved ? (
+          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm font-semibold text-emerald-700">
+            Workspace settings saved.
+          </p>
+        ) : null}
+
+        <Button className="mt-4" disabled={saving} onClick={handleSave}>
+          {saving ? "Saving..." : "Save Changes"}
+        </Button>
+      </SettingsCard>
+    </div>
   );
 }

@@ -304,6 +304,12 @@ export type InvitationPreview = {
   expiresAt: string;
 };
 
+export type InviteCodePreview = {
+  houseName: string;
+  houseDescription: string;
+  memberCount: number;
+};
+
 export type CreateTaskRequest = {
   title: string;
   project: string;
