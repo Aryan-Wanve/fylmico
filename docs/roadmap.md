@@ -362,11 +362,24 @@ Progress:
   panel; logging time through the popover updated Hours Logged, Time
   Distribution, Team Workload, and the insight banner immediately). See
   ADR 0031.
-- Next: live-verify the Messages page in-browser (still owed from ADR
-  0029 - tooling was unavailable then but has since come back for both
-  Calendar's and Analytics' verification passes). Object storage is now
-  a named prerequisite for project cover photos, message attachments,
-  and the entire `/files` page - worth solving once. Real RBAC (who can
+- **Continuous deployment set up**: the live Hostinger site had been
+  silently stuck ~2 weeks behind GitHub because its static export was
+  only ever rebuilt and committed by hand. Added
+  `.github/workflows/deploy-hostinger.yml` to rebuild and republish that
+  export automatically on every push to `main`. Separately, no backend
+  had ever been deployed anywhere - added `docker-compose.prod.yml` and
+  `.github/workflows/deploy-vps.yml` to deploy the API + Postgres to a
+  Hostinger VPS over SSH on every push, running `prisma migrate deploy`
+  automatically. Both need a one-time manual setup (SSH key, GitHub
+  secrets, DNS, certbot) documented step-by-step in ADR 0032 before
+  they'll actually do anything. See ADR 0032.
+- Next: complete the ADR 0032 one-time VPS setup so the deploy workflows
+  can actually run (SSH key, GitHub secrets, DNS, certbot), then
+  live-verify the Messages page in-browser (still owed from ADR 0029 -
+  tooling was unavailable then but has since come back for Calendar's
+  and Analytics' verification passes). Object storage is now a named
+  prerequisite for project cover photos, message attachments, and the
+  entire `/files` page - worth solving once. Real RBAC (who can
   remove/edit what) is a concretely scoped gap across every module now,
   worth solving broadly rather than per-endpoint. Otherwise, pick up
   Files/Storyboard/Bookings (all still local mock data, each needing its

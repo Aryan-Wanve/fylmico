@@ -81,6 +81,7 @@ Current ADRs:
 - [0029-messages-page-extension.md](docs/adr/0029-messages-page-extension.md)
 - [0030-calendar-page-extension.md](docs/adr/0030-calendar-page-extension.md)
 - [0031-time-tracking-and-analytics.md](docs/adr/0031-time-tracking-and-analytics.md)
+- [0032-continuous-deployment.md](docs/adr/0032-continuous-deployment.md)
 
 ## Current Sprint Gate
 
@@ -174,9 +175,22 @@ channel task/event backend exists) rather than deleted or faked.
   exists anywhere yet — notifications and chat are both REST/poll-based
   for now.
 
+**Continuous deployment is now real** (ADR 0032). The live Hostinger site
+had silently drifted ~2 weeks behind GitHub because its static export was
+only ever rebuilt and committed by hand
+(`docs/hostinger-deployment.md`). `.github/workflows/deploy-hostinger.yml`
+now rebuilds and republishes that export automatically on every push to
+`main`. Separately, no backend had ever been deployed anywhere -
+`.github/workflows/deploy-vps.yml` now deploys the API + Postgres to a
+Hostinger VPS via `docker-compose.prod.yml` on every push, applying
+migrations automatically. Both require a one-time manual setup (SSH key,
+GitHub secrets, DNS, certbot) documented step-by-step in ADR 0032 - until
+that's done, the workflows exist but can't do anything yet.
+
 To run both sides locally: `docker compose up -d postgres`, then start the
 `api` and `web` dev servers (`.claude/launch.json` has both configured).
 `apps/api/.env` and root `.env.example` document the required variables.
+For production, see `docs/deployment.md` and ADR 0032.
 
 ## Required Startup Flow
 

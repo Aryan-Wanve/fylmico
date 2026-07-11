@@ -49,6 +49,7 @@ Use sequential numbers and a short slug:
 - `0029-messages-page-extension.md`
 - `0030-calendar-page-extension.md`
 - `0031-time-tracking-and-analytics.md`
+- `0032-continuous-deployment.md`
 
 ## Required Sections
 

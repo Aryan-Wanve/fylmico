@@ -2711,3 +2711,81 @@ Next task:
   message attachments, and the entire `/files` page. Otherwise: pick up
   Files/Storyboard/Bookings (both local mock data, each needing its own
   backend domain), or address real RBAC.
+
+## 2026-07-11 Continuous Deployment
+
+Current milestone: Phase 8 - backend bootstrap / deployment
+
+Completion percentage: N/A
+
+Features completed:
+
+- User reported the live Hostinger site was showing an old version of
+  the app despite GitHub being current. Investigated and found the root
+  cause: Hostinger's static Git deployment serves whatever
+  `index.html`/`_next/*` files are committed at the repository root
+  (mirrored from `npm run build:hostinger`'s output per
+  `docs/hostinger-deployment.md`), and that rebuild had only ever been
+  run and committed by hand - last done 2026-07-07, silently falling
+  ~2 weeks behind as feature work (Tasks through Analytics) continued.
+- Also discovered no backend had ever been deployed anywhere - the live
+  site's login/signup/every real page would fail for actual users
+  regardless of how fresh the static export was, since there was nothing
+  for it to call. Asked the user how to proceed; chose to fix the stale
+  build automatically AND deploy a real backend, using an available
+  Hostinger VPS.
+- Added `.github/workflows/deploy-hostinger.yml`: rebuilds
+  `npm run build:hostinger` on every push to `main` and, only if the
+  output differs from what's committed, pushes a
+  `chore(deploy): ... [skip deploy]` commit updating the root static
+  files - closing the gap between GitHub and the live frontend
+  automatically going forward.
+- Added `docker-compose.prod.yml` (API + Postgres only - the frontend
+  stays on Hostinger's existing static hosting rather than moving onto
+  the VPS), `deploy/api.env.example` (the untracked secrets template for
+  the VPS), `deploy/nginx-api.conf.example` (reverse-proxy template for
+  the API subdomain), and `deploy/deploy.sh` (git pull, `docker compose
+up -d --build`, `prisma migrate deploy`, image prune - the script the
+  deploy workflow runs on the server).
+- Added `.github/workflows/deploy-vps.yml`: SSHs into the VPS
+  (`appleboy/ssh-action`) on every push to `main` and runs
+  `deploy/deploy.sh`, so backend code and schema changes ship
+  automatically alongside the code that needs them.
+- Documented a full one-time VPS setup runbook in ADR 0032 (install
+  Docker, clone the repo, create the `.env` secrets file, generate an
+  SSH deploy key, add GitHub secrets, point DNS, configure Nginx +
+  certbot) - these are credentialed, account-level steps that can't be
+  automated from here and must be done once by the user before either
+  pipeline can do anything.
+- Updated `docs/hostinger-deployment.md` and `docs/deployment.md` to
+  describe the new automatic pipelines and the still-outstanding
+  one-time setup.
+- See ADR 0032.
+
+Validation:
+
+- Could not run either deploy workflow end-to-end (no VPS SSH access or
+  Hostinger account access from this environment) - this pass is
+  design/implementation only. The Hostinger rebuild workflow's logic
+  (rebuild, diff, conditionally commit) mirrors the exact manual steps
+  already proven to work by the prior manual rebuilds in git history.
+
+Technical debt:
+
+- Both new workflows will fail (or no-op unhelpfully) until the ADR 0032
+  one-time setup is completed - no `VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY`
+  secrets or `NEXT_PUBLIC_API_URL` variable exist yet.
+- No automated Postgres backups on the VPS yet.
+- No staging environment - every push to `main` deploys straight to
+  production on both halves.
+- No zero-downtime deploy for the API container (brief restart on every
+  deploy).
+
+Next task:
+
+- Complete the ADR 0032 one-time VPS setup, then confirm both workflows
+  succeed on a real push.
+- Live-verify the Messages page in-browser (still owed from ADR 0029).
+- Object storage remains a named prerequisite for project cover photos,
+  message attachments, and the entire `/files` page. Otherwise: pick up
+  Files/Storyboard/Bookings, or address real RBAC.
