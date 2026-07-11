@@ -8,7 +8,13 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
-export function CrewCardMenu({ onRemove }: { onRemove: () => void }) {
+export function CrewCardMenu({
+  onRemove,
+  onMessage
+}: {
+  onRemove: () => void;
+  onMessage: () => void;
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -23,7 +29,7 @@ export function CrewCardMenu({ onRemove }: { onRemove: () => void }) {
         }
       />
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={onMessage}>
           <MessageSquare className="h-4 w-4" />
           Message
         </DropdownMenuItem>

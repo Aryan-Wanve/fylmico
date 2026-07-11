@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarCheck, Clock3, Users, Briefcase } from "lucide-react";
 import { useWorkspace } from "@/lib/workspace-context";
-import { listCrew, removeCrewMember } from "@/services/base-workspace.service";
+import {
+  createConversation,
+  listCrew,
+  removeCrewMember
+} from "@/services/base-workspace.service";
 import { CrewsHeader } from "@/components/crews/crews-header";
 import { CrewStatCard } from "@/components/crews/crew-stat-card";
 import { CrewsToolbar, type CrewsTab } from "@/components/crews/crews-toolbar";
@@ -22,7 +27,8 @@ import {
 } from "@/components/crews/crew-data";
 
 export function CrewsPage() {
-  const { activeHouse } = useWorkspace();
+  const { activeHouse, refreshWorkspace } = useWorkspace();
+  const router = useRouter();
 
   const [members, setMembers] = useState<CrewMember[]>([]);
   const [activeTab, setActiveTab] = useState<CrewsTab>("all");
@@ -108,6 +114,26 @@ export function CrewsPage() {
   function updateFilter<T>(setter: (value: T) => void, value: T) {
     setter(value);
     setPage(1);
+  }
+
+  async function handleMessage(member: CrewMember) {
+    try {
+      await createConversation({ name: member.name });
+      await refreshWorkspace();
+    } catch (error) {
+      if (
+        !(error instanceof Error) ||
+        !error.message.toLowerCase().includes("already exists")
+      ) {
+        window.alert(
+          error instanceof Error
+            ? error.message
+            : "Could not start a conversation."
+        );
+        return;
+      }
+    }
+    router.push("/messages");
   }
 
   async function handleRemove(memberId: string) {
@@ -229,6 +255,7 @@ export function CrewsPage() {
                       <CrewMemberRow
                         key={member.id}
                         member={member}
+                        onMessage={() => handleMessage(member)}
                         onRemove={() => handleRemove(member.id)}
                       />
                     ))}
@@ -245,6 +272,7 @@ export function CrewsPage() {
                     <CrewMemberRow
                       key={member.id}
                       member={member}
+                      onMessage={() => handleMessage(member)}
                       onRemove={() => handleRemove(member.id)}
                     />
                   ))}

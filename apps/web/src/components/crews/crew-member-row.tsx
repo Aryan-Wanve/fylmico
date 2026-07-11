@@ -10,10 +10,12 @@ import { CrewCardMenu } from "@/components/crews/crew-card-menu";
 
 export function CrewMemberRow({
   member,
-  onRemove
+  onRemove,
+  onMessage
 }: {
   member: CrewMember;
   onRemove: () => void;
+  onMessage: () => void;
 }) {
   const departmentMeta = DEPARTMENT_META[member.department];
   const DepartmentIcon = departmentMeta.icon;
@@ -75,7 +77,7 @@ export function CrewMemberRow({
         {member.availability}
       </span>
 
-      <CrewCardMenu onRemove={onRemove} />
+      <CrewCardMenu onMessage={onMessage} onRemove={onRemove} />
     </div>
   );
 }
