@@ -471,13 +471,23 @@ export async function updateHouse(request: UpdateHouseRequest): Promise<House> {
 }
 
 export async function updateMe(request: UpdateMeRequest): Promise<UserProfile> {
-  if (!request.name.trim()) {
+  if (request.name !== undefined && !request.name.trim()) {
     throw new Error("Enter your name.");
   }
 
   return apiRequest<UserProfile>("/auth/me", {
     method: "PATCH",
     body: request
+  });
+}
+
+export async function uploadAvatar(file: File): Promise<UserProfile> {
+  const formData = new FormData();
+  formData.set("file", file);
+
+  return apiRequest<UserProfile>("/auth/me/avatar", {
+    method: "POST",
+    body: formData
   });
 }
 

@@ -26,6 +26,8 @@ class WorkspaceService {
         id: user.id,
         name: user.name,
         email: user.email,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
         avatarLabel: toAvatarLabel(user.name),
         emailVerifiedAt: user.emailVerifiedAt
       },

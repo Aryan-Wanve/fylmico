@@ -58,6 +58,8 @@ export type UserProfile = {
   id: string;
   name: string;
   email: string;
+  username: string | null;
+  avatarUrl: string | null;
   avatarLabel: string;
   emailVerifiedAt: string | null;
 };
@@ -492,9 +494,10 @@ export type UpdateHouseRequest = Partial<{
   description: string;
 }>;
 
-export type UpdateMeRequest = {
+export type UpdateMeRequest = Partial<{
   name: string;
-};
+  username: string;
+}>;
 
 export type ChangePasswordRequest = {
   currentPassword: string;

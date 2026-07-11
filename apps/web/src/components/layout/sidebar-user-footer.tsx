@@ -29,6 +29,7 @@ export function SidebarUserFooter({ user }: { user: UserProfile }) {
             type="button"
           >
             <AvatarWithStatus
+              imageUrl={user.avatarUrl}
               label={user.avatarLabel}
               status="online"
               userId={user.id}

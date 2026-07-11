@@ -74,3 +74,11 @@ export async function getSignedDownloadUrl(path: string): Promise<string> {
 
   return data.signedUrl;
 }
+
+// Avatars need to render inline everywhere (topbar, sidebar, etc.) without
+// re-fetching a signed URL on every render, so they're served from a public
+// path instead - the bucket's "avatars/" prefix must have a public read
+// policy configured in Supabase for this URL to actually resolve.
+export function getPublicUrl(path: string): string {
+  return getClient().storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+}

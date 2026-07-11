@@ -19,6 +19,7 @@ export function AppTopbar({ compact }: { compact: boolean }) {
         <ThemeToggle compact />
         <NotificationBell />
         <AvatarWithStatus
+          imageUrl={workspace.user.avatarUrl}
           label={workspace.user.avatarLabel}
           status="online"
           userId={workspace.user.id}

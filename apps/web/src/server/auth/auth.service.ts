@@ -8,6 +8,7 @@ import {
   buildVerificationEmail
 } from "../mail/templates";
 import { prisma } from "../prisma";
+import { getPublicUrl, uploadObject } from "../storage/supabase-storage";
 import {
   buildGoogleAuthUrl,
   exchangeGoogleCode,
@@ -367,10 +368,46 @@ class AuthService {
     return toPublicUser(user);
   }
 
-  async updateMe(userId: string, name: string) {
+  async updateMe(
+    userId: string,
+    updates: { name?: string; username?: string }
+  ) {
+    if (updates.username) {
+      const existing = await this.prisma.user.findUnique({
+        where: { username: updates.username }
+      });
+      if (existing && existing.id !== userId) {
+        throw new AppException(
+          HttpStatus.CONFLICT,
+          "username_taken",
+          "This username is already taken."
+        );
+      }
+    }
+
     const user = await this.prisma.user.update({
       where: { id: userId },
-      data: { name: name.trim() }
+      data: {
+        ...(updates.name !== undefined ? { name: updates.name.trim() } : {}),
+        ...(updates.username !== undefined
+          ? { username: updates.username }
+          : {})
+      }
+    });
+    return toPublicUser(user);
+  }
+
+  async updateAvatar(
+    userId: string,
+    file: { name: string; buffer: ArrayBuffer; mimeType: string }
+  ) {
+    const storagePath = `avatars/${userId}-${generateOpaqueToken().slice(0, 8)}-${file.name}`;
+    await uploadObject(storagePath, file.buffer, file.mimeType);
+    const avatarUrl = getPublicUrl(storagePath);
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl }
     });
     return toPublicUser(user);
   }
@@ -514,6 +551,8 @@ function toPublicUser(user: User) {
     id: user.id,
     email: user.email,
     name: user.name,
+    username: user.username,
+    avatarUrl: user.avatarUrl,
     avatarLabel: toAvatarLabel(user.name),
     emailVerifiedAt: user.emailVerifiedAt,
     createdAt: user.createdAt

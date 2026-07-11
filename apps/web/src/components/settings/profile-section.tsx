@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Laptop, MoreVertical, Smartphone } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Camera, Laptop, MoreVertical, Smartphone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,8 @@ import {
   changePassword,
   listSessions,
   revokeSession,
-  updateMe
+  updateMe,
+  uploadAvatar
 } from "@/services/base-workspace.service";
 import type { AccountSession } from "@/types/base";
 
@@ -36,8 +37,13 @@ export function ProfileSection() {
   const { workspace, refreshWorkspace } = useWorkspace();
   const [isEditing, setIsEditing] = useState(false);
   const [draftName, setDraftName] = useState(workspace.user.name);
+  const [draftUsername, setDraftUsername] = useState(
+    workspace.user.username ?? ""
+  );
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState("");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [sessions, setSessions] = useState<AccountSession[]>([]);
   const [passwordError, setPasswordError] = useState("");
@@ -67,6 +73,7 @@ export function ProfileSection() {
 
   function startEditing() {
     setDraftName(workspace.user.name);
+    setDraftUsername(workspace.user.username ?? "");
     setProfileError("");
     setIsEditing(true);
   }
@@ -81,7 +88,10 @@ export function ProfileSection() {
     setProfileError("");
 
     try {
-      await updateMe({ name: draftName.trim() });
+      await updateMe({
+        name: draftName.trim(),
+        username: draftUsername.trim() || undefined
+      });
       await refreshWorkspace();
       setIsEditing(false);
     } catch (error) {
@@ -90,6 +100,20 @@ export function ProfileSection() {
       );
     } finally {
       setSavingProfile(false);
+    }
+  }
+
+  async function handleAvatarSelected(file: File) {
+    setUploadingAvatar(true);
+    try {
+      await uploadAvatar(file);
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not upload avatar."
+      );
+    } finally {
+      setUploadingAvatar(false);
     }
   }
 
@@ -164,11 +188,36 @@ export function ProfileSection() {
         title="Profile & Account"
       >
         <div className="flex flex-wrap items-start gap-8">
-          <AvatarWithStatus
-            label={workspace.user.avatarLabel}
-            size="lg"
-            userId={workspace.user.id}
-          />
+          <div className="relative shrink-0">
+            <AvatarWithStatus
+              imageUrl={workspace.user.avatarUrl}
+              label={workspace.user.avatarLabel}
+              size="lg"
+              userId={workspace.user.id}
+            />
+            <input
+              accept="image/*"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) {
+                  handleAvatarSelected(file);
+                }
+                event.target.value = "";
+              }}
+              ref={avatarInputRef}
+              type="file"
+            />
+            <button
+              aria-label="Change avatar"
+              className="absolute -right-1 -bottom-1 grid h-7 w-7 place-items-center rounded-full border-2 border-white bg-[#654cff] text-white hover:bg-[#5a41ea] disabled:opacity-60 dark:border-[#171a28]"
+              disabled={uploadingAvatar}
+              onClick={() => avatarInputRef.current?.click()}
+              type="button"
+            >
+              <Camera className="h-3.5 w-3.5" />
+            </button>
+          </div>
 
           {isEditing ? (
             <div className="grid min-w-[16rem] flex-1 gap-4 sm:grid-cols-2">
@@ -181,10 +230,32 @@ export function ProfileSection() {
                   value={draftName}
                 />
               </label>
+              <label className="grid gap-1.5">
+                <Label className="text-xs font-bold text-[#8a90a3] uppercase dark:text-[#7d8299]">
+                  Username
+                </Label>
+                <Input
+                  onChange={(event) =>
+                    setDraftUsername(
+                      event.target.value.toLowerCase().replace(/\s+/g, "_")
+                    )
+                  }
+                  placeholder="e.g. qa_tester"
+                  value={draftUsername}
+                />
+              </label>
             </div>
           ) : (
             <div className="grid flex-1 gap-2.5">
               <ProfileField label="Full Name" value={workspace.user.name} />
+              <ProfileField
+                label="Username"
+                value={
+                  workspace.user.username
+                    ? `@${workspace.user.username}`
+                    : "Not set"
+                }
+              />
               <ProfileField
                 label="Email"
                 value={

@@ -12,5 +12,5 @@ export const GET = withRoute(async (request: NextRequest) => {
 export const PATCH = withRoute(async (request: NextRequest) => {
   const user = requireUser(request);
   const dto = await validateDto(UpdateMeDto, await readJsonBody(request));
-  return authService.updateMe(user.id, dto.name);
+  return authService.updateMe(user.id, dto);
 });
