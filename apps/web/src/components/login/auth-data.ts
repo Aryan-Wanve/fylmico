@@ -29,8 +29,4 @@ export const authSocialProviders: Array<{
   id: string;
   label: string;
   icon: string;
-}> = [
-  { id: "google", label: "Google", icon: "/images/login/google.png" },
-  { id: "apple", label: "Apple", icon: "/images/login/apple.png" },
-  { id: "microsoft", label: "Microsoft", icon: "/images/login/microsoft.png" }
-];
+}> = [{ id: "google", label: "Google", icon: "/images/login/google.png" }];

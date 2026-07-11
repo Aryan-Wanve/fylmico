@@ -1,6 +1,10 @@
 import Image from "next/image";
 import { authSocialProviders } from "@/components/login/auth-data";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ??
+  "http://localhost:4000/api/v1";
+
 export function AuthSocialProviders() {
   return (
     <>
@@ -10,16 +14,16 @@ export function AuthSocialProviders() {
         <span className="h-px flex-1 bg-[#11142c1a]" />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="flex flex-col gap-4">
         {authSocialProviders.map((provider) => (
-          <button
+          <a
             className="flex h-[3.45rem] items-center justify-center gap-2.5 rounded-lg border border-[#11142c1a] bg-white font-extrabold text-[#15172b] shadow-[0_0.7rem_1.6rem_rgba(42,39,84,0.035)] transition hover:-translate-y-px"
+            href={`${API_BASE_URL}/auth/${provider.id}`}
             key={provider.id}
-            type="button"
           >
             <Image alt="" height={22} src={provider.icon} width={22} />
-            {provider.label}
-          </button>
+            Continue with {provider.label}
+          </a>
         ))}
       </div>
     </>
