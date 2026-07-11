@@ -2,16 +2,17 @@
 
 ## Status
 
-Accepted per ADR 0032 (frontend) and ADR 0033 (backend, superseding
-ADR 0032's VPS plan - no VPS turned out to be available). The frontend
-deploys to Hostinger's static Git hosting (auto-rebuilt on every push,
-see `docs/hostinger-deployment.md`); the API deploys to Render (built
-from `apps/api/Dockerfile` via `render.yaml`, auto-deployed on every push
-through Render's own GitHub integration); Postgres is hosted on Supabase.
+Accepted per ADR 0034 (frontend) and ADR 0033 (backend). The frontend
+deploys via Hostinger's own native GitHub-connected "Web App" hosting -
+no custom CI/CD needed, Hostinger builds and runs `apps/web` directly on
+every push (see `docs/hostinger-deployment.md`). The API deploys to
+Render (built from `apps/api/Dockerfile` via `render.yaml`, auto-deployed
+on every push through Render's own GitHub integration); Postgres is
+hosted on Supabase. Confirmed live end-to-end.
 
 ## Infrastructure Baseline
 
-- Hostinger static hosting (frontend)
+- Hostinger Web App hosting (frontend, native GitHub integration)
 - Render (API)
 - Supabase (Postgres)
 - GitHub
@@ -20,7 +21,7 @@ Originally planned as a self-managed Hostinger VPS + Docker + Nginx +
 PostgreSQL (ADR 0006, ADR 0032) - revised to managed services per
 ADR 0033 once no VPS turned out to be available.
 
-For current Hostinger static Git and Node.js deployment settings, see
+For current Hostinger Web App hosting details, see
 `docs/hostinger-deployment.md`.
 
 ## Deployment Goals
@@ -64,10 +65,11 @@ Requirements:
 
 Purpose: Live customer-facing environment.
 
-Status: Implemented per ADR 0032 (frontend) + ADR 0033 (backend):
+Status: Implemented per ADR 0034 (frontend) + ADR 0033 (backend):
 
-- **Frontend**: Hostinger static Git deployment. Rebuilt and republished
-  automatically on every push to `main` - see
+- **Frontend**: Hostinger's native GitHub-connected Web App hosting.
+  Hostinger builds (`npm run build`) and runs (`npm start`) `apps/web`
+  directly on every push to `main` with no custom workflow - see
   `docs/hostinger-deployment.md`.
 - **API**: Render web service built from `apps/api/Dockerfile`
   (`render.yaml` is the Blueprint). Render's own GitHub integration
@@ -94,9 +96,9 @@ setup runbook (Supabase project, Render Blueprint, env vars).
 
 ```text
 Internet
-  -> Hostinger static hosting (frontend)
+  -> Hostinger Web App hosting (frontend, native GitHub integration)
   -> Render (api container, built from apps/api/Dockerfile)
-    -> Supabase (Postgres, direct connection)
+    -> Supabase (Postgres, session pooler connection)
 ```
 
 Future additions:

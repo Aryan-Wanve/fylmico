@@ -51,6 +51,7 @@ Use sequential numbers and a short slug:
 - `0031-time-tracking-and-analytics.md`
 - `0032-continuous-deployment.md`
 - `0033-supabase-render-backend.md`
+- `0034-hostinger-native-web-app.md`
 
 ## Required Sections
 

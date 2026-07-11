@@ -2,13 +2,16 @@
 
 Date: 2026-07-11
 
-Status: Partially superseded by ADR 0033 - the frontend half (Hostinger
-static rebuild, `.github/workflows/deploy-hostinger.yml`) is still
-accepted and unchanged. The backend half (VPS + Docker Compose + SSH
+Status: Fully superseded. The backend half (VPS + Docker Compose + SSH
 deploy) turned out to not be viable - there was no VPS available after
-all - and is replaced by ADR 0033 (Supabase Postgres + Render). This
-document is kept for its problem-statement context and the still-valid
-frontend decision; do not follow its VPS setup steps.
+all - and is replaced by ADR 0033 (Supabase Postgres + Render). The
+frontend half (the Hostinger static-export rebuild workflow) turned out
+to target the wrong deployment model entirely - this Hostinger account
+uses native GitHub-connected Node.js hosting with no build step of its
+own needed - and is replaced by ADR 0034, which also documents two real
+incidents that workflow caused (a routing 403 and a deleted-source-code
+bug) before being removed. This document is kept only for historical
+problem-statement context; do not follow any of its setup steps.
 
 ## Problem
 

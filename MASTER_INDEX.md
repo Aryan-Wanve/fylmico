@@ -83,6 +83,7 @@ Current ADRs:
 - [0031-time-tracking-and-analytics.md](docs/adr/0031-time-tracking-and-analytics.md)
 - [0032-continuous-deployment.md](docs/adr/0032-continuous-deployment.md)
 - [0033-supabase-render-backend.md](docs/adr/0033-supabase-render-backend.md)
+- [0034-hostinger-native-web-app.md](docs/adr/0034-hostinger-native-web-app.md)
 
 ## Current Sprint Gate
 
@@ -176,21 +177,30 @@ channel task/event backend exists) rather than deleted or faked.
   exists anywhere yet — notifications and chat are both REST/poll-based
   for now.
 
-**Continuous deployment is now real** (ADR 0032, ADR 0033). The live
-Hostinger site had silently drifted ~2 weeks behind GitHub because its
-static export was only ever rebuilt and committed by hand
-(`docs/hostinger-deployment.md`). `.github/workflows/deploy-hostinger.yml`
-now rebuilds and republishes that export automatically on every push to
-`main`. Separately, no backend had ever been deployed anywhere - the
-original plan (ADR 0032) was a Hostinger VPS, but no VPS turned out to
-be available, so the backend now deploys instead to **Render** (the API,
-built from `apps/api/Dockerfile` via `render.yaml`, redeployed
-automatically by Render's own GitHub integration on every push, running
+**Continuous deployment is now real and live** (ADR 0033, ADR 0034). The
+live Hostinger site had silently drifted ~2 weeks behind GitHub because
+its static export was only ever rebuilt and committed by hand. The first
+fix attempt built a GitHub Actions workflow to automate that rebuild -
+but it turned out this Hostinger account actually uses Hostinger's own
+native GitHub-connected "Web App" hosting, which builds and runs
+`apps/web` directly on every push with **no help needed at all**
+(`docs/hostinger-deployment.md`). That custom workflow was not just
+unnecessary but actively harmful: it caused a real routing 403 (stale
+static files shadowing the real app) and, separately, an incomplete
+cleanup allowlist deleted `packages/database`'s entire source straight
+to `main` in one automated run. Both the workflow and the underlying
+script have been removed, every stale static-export artifact purged
+from the repository root, and `packages/database` restored - see
+ADR 0034 for the full incident writeup.
+Separately, no backend had ever been deployed anywhere - the original
+plan (ADR 0032) was a Hostinger VPS, but no VPS turned out to be
+available, so the backend deploys instead to **Render** (the API, built
+from `apps/api/Dockerfile` via `render.yaml`, redeployed automatically by
+Render's own GitHub integration on every push, running
 `prisma migrate deploy` on every container start) with **Supabase**
-hosting Postgres (ADR 0033). Both pipelines need a one-time manual setup
-(a Supabase project, a Render Blueprint connection, three dashboard env
-vars) documented step-by-step in ADR 0033 - until that's done, the API
-has nowhere to run yet.
+hosting Postgres (ADR 0033) - confirmed live end-to-end. Set
+`NEXT_PUBLIC_API_URL` directly in Hostinger's own Environment Variables
+UI to point the frontend at the live Render API.
 
 To run both sides locally: `docker compose up -d postgres`, then start the
 `api` and `web` dev servers (`.claude/launch.json` has both configured).
