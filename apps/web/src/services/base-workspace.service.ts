@@ -12,6 +12,8 @@ import type {
   CreateTimeEntryRequest,
   CrewMember,
   House,
+  HouseInvitation,
+  InvitationPreview,
   JoinHouseRequest,
   LoginRequest,
   ProductionTask,
@@ -148,6 +150,67 @@ export async function joinHouse(request: JoinHouseRequest): Promise<House> {
   const house = await apiRequest<House>("/houses/join", {
     method: "POST",
     body: request
+  });
+  activeHouseId = house.id;
+  return house;
+}
+
+export async function inviteMember(email: string): Promise<HouseInvitation> {
+  if (!email.trim()) {
+    throw new Error("Enter an email address to invite.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before inviting members.");
+  }
+
+  return apiRequest<HouseInvitation>(`/houses/${activeHouseId}/invitations`, {
+    method: "POST",
+    body: { email }
+  });
+}
+
+export async function listInvitations(): Promise<HouseInvitation[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing invitations.");
+  }
+
+  return apiRequest<HouseInvitation[]>(`/houses/${activeHouseId}/invitations`);
+}
+
+export async function revokeInvitation(invitationId: string): Promise<void> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before revoking invitations.");
+  }
+
+  await apiRequest<{ success: boolean }>(
+    `/houses/${activeHouseId}/invitations/${invitationId}`,
+    { method: "DELETE" }
+  );
+}
+
+export async function leaveHouse(): Promise<void> {
+  if (!activeHouseId) {
+    throw new Error("You are not in a house.");
+  }
+
+  await apiRequest<{ success: boolean }>(`/houses/${activeHouseId}/leave`, {
+    method: "POST"
+  });
+  activeHouseId = null;
+}
+
+export async function getInvitationPreview(
+  token: string
+): Promise<InvitationPreview> {
+  return apiRequest<InvitationPreview>(`/invitations/${token}`, {
+    auth: false
+  });
+}
+
+export async function acceptInvitation(token: string): Promise<House> {
+  const house = await apiRequest<House>(`/invitations/${token}/accept`, {
+    method: "POST"
   });
   activeHouseId = house.id;
   return house;

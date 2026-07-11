@@ -286,6 +286,23 @@ export type JoinHouseRequest = {
   inviteCode: string;
 };
 
+export type HouseInvitation = {
+  id: string;
+  email: string;
+  status: "pending" | "accepted" | "revoked";
+  createdAt: string;
+  expiresAt: string;
+  inviteUrl?: string;
+};
+
+export type InvitationPreview = {
+  houseName: string;
+  houseDescription: string;
+  email: string;
+  invitedByName: string;
+  expiresAt: string;
+};
+
 export type CreateTaskRequest = {
   title: string;
   project: string;
