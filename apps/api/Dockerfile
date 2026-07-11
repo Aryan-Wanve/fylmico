@@ -5,6 +5,7 @@ FROM base AS deps
 COPY package.json package-lock.json* ./
 COPY apps/api/package.json ./apps/api/package.json
 COPY packages/database/package.json ./packages/database/package.json
+COPY packages/database/prisma ./packages/database/prisma
 RUN npm install
 
 FROM base AS builder
