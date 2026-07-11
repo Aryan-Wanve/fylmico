@@ -3,12 +3,14 @@
 ## Status
 
 Accepted per ADR 0034, superseding the static-Git-export approach in
-ADR 0032. Confirmed live end-to-end: this account's site uses
-Hostinger's native "Web App" hosting product, connected directly to
-GitHub - not the manual static-Git or Node.js-Git deployment modes this
-document previously assumed. Two required one-time settings (Entry file,
-Environment Variables) had never been configured and caused the site to
-serve `403 Forbidden` on every route until fixed - see below.
+ADR 0032, and updated per ADR 0037 (backend merged into this same Next.js
+app - see that ADR for what moved and why). Confirmed live end-to-end:
+this account's site uses Hostinger's native "Web App" hosting product,
+connected directly to GitHub - not the manual static-Git or Node.js-Git
+deployment modes this document previously assumed. Two required one-time
+settings (Entry file, Environment Variables) had never been configured
+and caused the site to serve `403 Forbidden` on every route until fixed -
+see below.
 
 ## How It Actually Works
 
@@ -41,12 +43,16 @@ successfully but serve `403 Forbidden` on every route until they're set:
   requests ever reaching the process (not an error, just silence),
   because there's no process to reach. This is the setting that
   actually starts the standalone Next.js server described below.
-- **Environment Variables** -> add `NEXT_PUBLIC_API_URL`, set to the
-  live Render API's base URL plus `/api/v1` (see
-  `docs/adr/0033-supabase-render-backend.md`), e.g.
-  `https://fylmico-api.onrender.com/api/v1`. Without this, the frontend
-  falls back to `http://localhost:4000/api/v1` and every API call from
-  a real visitor's browser fails.
+- **Environment Variables** -> since ADR 0037 merged the backend into
+  this same app, this is now where every backend secret lives (there's no
+  separate Render service to configure anymore): `DATABASE_URL` (the
+  Supabase connection string), `JWT_ACCESS_SECRET`, `JWT_ACCESS_TTL`,
+  `JWT_REFRESH_TTL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+  `GOOGLE_CALLBACK_URL` (the live URL's `/api/v1/auth/google/callback`,
+  which must also be registered as an authorized redirect URI in the
+  Google Cloud Console OAuth client - see ADR 0035). `NEXT_PUBLIC_API_URL`
+  no longer applies - the frontend calls its own same-origin `/api/v1`
+  path now, not a separate host.
 
 Leave **Output directory** blank - this is a running Node process, not a
 static folder Hostinger copies files out of.

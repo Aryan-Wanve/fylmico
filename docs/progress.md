@@ -2969,3 +2969,106 @@ Next task:
 - Object storage, real RBAC, Files/Storyboard/Bookings remain the
   standing backlog. A future role-editing/ownership-transfer pass should
   resolve the solo-owner-leaving gap noted above.
+
+## 2026-07-11 Merge Backend into Next.js (Retire apps/api)
+
+Current milestone: Phase 8 - backend bootstrap / architecture
+
+Completion percentage: N/A
+
+Features completed:
+
+- User asked why the app even needed a separate backend service,
+  suspecting Render's free-tier cold start (spin-down after ~15 minutes
+  idle) was the real cause of reported slowness, and independently wanted
+  everything in "one big thing" rather than two services - partly with an
+  eye toward eventually packaging this as a single app.
+- Planned this as a full architectural migration (used plan mode given
+  the scope) and confirmed with the user to execute it as one continuous
+  pass rather than checkpointed module-by-module.
+- Ported the entire NestJS backend (`apps/api`, ~4,400 lines across 14
+  domains: auth incl. Google OAuth, houses/invitations, tasks, chat,
+  projects, clients, comments, crews, calendar, time-entries, analytics,
+  notifications, workspace, health) into Next.js Route Handlers under
+  `apps/web/src/app/api/v1/**`, backed by a new shared server-side
+  library at `apps/web/src/server/**`: `prisma.ts` (dev-safe singleton
+  replacing Nest's `PrismaService`), `http.ts` (`AppException`,
+  `withRoute`/`withParamsRoute` replacing the global exception filter +
+  per-controller envelope, `withPaginatedRoute`/`withPaginatedParamsRoute`
+  for the list endpoints that return `{ data, page }` unwrapped,
+  `validateDto` replacing `ValidationPipe`), `env.ts` replacing
+  `ConfigService`, and one folder per domain holding a ported service
+  (plain class, module-level singleton instance, `@Injectable()`/
+  constructor-DI dropped) plus its DTOs (`class-validator`/
+  `class-transformer` classes copied unchanged - they work standalone).
+  JWT signing switched from `@nestjs/jwt` to the plain `jsonwebtoken`
+  package; Google OAuth's cookie handling switched from `cookie-parser` to
+  `NextResponse`/`NextRequest`'s built-in cookie APIs, and its redirect
+  targets switched from building an absolute URL out of `CORS_ORIGIN` to
+  `new URL(path, request.url)` (no longer needed once same-origin).
+- Repointed `apps/web/src/lib/api/client.ts` and the Google login link
+  from `NEXT_PUBLIC_API_URL` to a hardcoded relative `/api/v1` base.
+- Added `@fylmico/database`, `argon2`, `class-validator`,
+  `class-transformer`, `jsonwebtoken`, `reflect-metadata` to
+  `apps/web/package.json`; added `experimentalDecorators`/
+  `emitDecoratorMetadata` to `apps/web/tsconfig.json`. No `@nestjs/*`
+  packages, `cookie-parser`, or `rxjs` anywhere in the repo anymore.
+- Deleted `apps/api` entirely. Updated root `package.json` (workspaces,
+  `dev`/`build` scripts now build `@fylmico/database` first since
+  `apps/web` depends on it directly), root `Dockerfile` (now copies and
+  builds `packages/database` before `apps/web`, which it previously never
+  needed to since only `apps/api` consumed it), `docker-compose.yml`
+  (removed the `api` service, added `DATABASE_URL` to `web`),
+  `.claude/launch.json` (removed the `api` launch config), and both
+  `.env.example` files (merged variables, dropped `CORS_ORIGIN`/
+  `API_PORT`, fixed `GOOGLE_CALLBACK_URL`'s port from 4000 to 3000).
+- See ADR 0037.
+
+Validation:
+
+- `npm run build`, `typecheck`, `lint`, `format:check` (single workspace
+  now) all pass clean, including after a full `npm install` from scratch
+  (workspace list changed) and a clean `npm run build` simulating a fresh
+  clone.
+- Live-verified every domain end-to-end via curl against the merged app
+  and real Postgres: signup, workspace snapshot, house creation, tasks,
+  chat (conversations + messages), projects, clients, comments (both task
+  and project), crew list, calendar events, time entries, analytics,
+  notifications, house invitations (create/list/preview), and the
+  leave-house last-member guard. Confirmed the Google OAuth redirect and
+  CSRF state cookie build correctly with the new same-origin callback
+  URL. Did one real in-browser walkthrough (login, dashboard, Settings ->
+  Members showing a pending invitation created moments earlier via curl)
+  to confirm the frontend's relative-path requests actually work end to
+  end, not just the API in isolation. Additionally ran the actual
+  production entrypoint (`node server.js` -> the built standalone
+  server) and confirmed it correctly reads environment variables and
+  queries the real database - the same path Hostinger's deployment uses.
+
+Technical debt:
+
+- The Google Cloud Console OAuth client's authorized redirect URI is
+  still registered for the old `:4000` local port and the old Render
+  live URL - needs updating to the merged app's actual URLs before Google
+  login works again outside this local `:3000` testing.
+- The root `Dockerfile`/`docker-compose.yml` full-stack path was updated
+  but not verified against a real Docker build in this pass (Hostinger's
+  actual deploy doesn't use this Dockerfile at all - only the plain
+  `npm run build` path, which was verified, including via the real
+  standalone server).
+- No automatic `prisma migrate deploy` step exists yet for the merged
+  Hostinger deployment (the old Render container ran it automatically on
+  every start; this equivalent hasn't been re-created).
+
+Next task:
+
+- User needs to add the merged environment variables
+  (`DATABASE_URL`/`JWT_ACCESS_SECRET`/`JWT_ACCESS_TTL`/`JWT_REFRESH_TTL`/
+  `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_CALLBACK_URL`) to
+  Hostinger's Environment Variables UI and update the Google Cloud
+  Console OAuth client's redirect URI to the live Hostinger URL, then
+  push to deploy the merged app and confirm it live. Decommission the
+  Render service once the merged app is confirmed live (external account
+  action). Otherwise: the same backlog as before - object storage, real
+  RBAC, Files/Storyboard/Bookings, and a migration-on-deploy step for the
+  new hosting shape.

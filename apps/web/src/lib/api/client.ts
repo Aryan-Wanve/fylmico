@@ -5,9 +5,7 @@ import {
   setSession
 } from "@/lib/session";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ??
-  "http://localhost:4000/api/v1";
+const API_BASE_URL = "/api/v1";
 
 type ApiErrorBody = {
   error: {
@@ -37,7 +35,11 @@ type RequestOptions = {
 };
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
-  const url = new URL(`${API_BASE_URL}${path}`);
+  // Same-origin now the API lives inside this Next.js app - `new URL` still
+  // needs an absolute base to parse from, so a throwaway one is used purely
+  // to build/encode the query string, then discarded in favor of a relative
+  // path+search string that `fetch` resolves against the real page origin.
+  const url = new URL(`${API_BASE_URL}${path}`, "http://localhost");
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined) {
@@ -45,7 +47,7 @@ function buildUrl(path: string, query?: RequestOptions["query"]): string {
       }
     }
   }
-  return url.toString();
+  return `${url.pathname}${url.search}`;
 }
 
 async function rawFetch<T>(

@@ -2,24 +2,27 @@
 
 ## Status
 
-Accepted per ADR 0034 (frontend) and ADR 0033 (backend). The frontend
-deploys via Hostinger's own native GitHub-connected "Web App" hosting -
-no custom CI/CD needed, Hostinger builds and runs `apps/web` directly on
-every push (see `docs/hostinger-deployment.md`). The API deploys to
-Render (built from `apps/api/Dockerfile` via `render.yaml`, auto-deployed
-on every push through Render's own GitHub integration); Postgres is
-hosted on Supabase. Confirmed live end-to-end.
+Accepted per ADR 0037 (merged backend), superseding the two-service split
+described in ADR 0034 (frontend) and ADR 0033 (backend). The backend
+(`apps/api`, NestJS) was ported into Next.js Route Handlers inside
+`apps/web` and deleted - there's now a single deployable app. It deploys
+via Hostinger's own native GitHub-connected "Web App" hosting - no custom
+CI/CD needed, Hostinger builds and runs `apps/web` directly on every push
+(see `docs/hostinger-deployment.md`). Postgres remains hosted on Supabase;
+Render is no longer part of this stack (decommissioned by the user as an
+external account action once the merged app was verified live).
 
 ## Infrastructure Baseline
 
-- Hostinger Web App hosting (frontend, native GitHub integration)
-- Render (API)
+- Hostinger Web App hosting (frontend + backend, native GitHub integration)
 - Supabase (Postgres)
 - GitHub
 
 Originally planned as a self-managed Hostinger VPS + Docker + Nginx +
-PostgreSQL (ADR 0006, ADR 0032) - revised to managed services per
-ADR 0033 once no VPS turned out to be available.
+PostgreSQL (ADR 0006, ADR 0032), then split across Hostinger (frontend) +
+Render (API) + Supabase (Postgres) per ADR 0033 once no VPS turned out to
+be available, then merged back into a single Hostinger-hosted app per
+ADR 0037 once the backend was ported into Next.js.
 
 For current Hostinger Web App hosting details, see
 `docs/hostinger-deployment.md`.
@@ -65,39 +68,38 @@ Requirements:
 
 Purpose: Live customer-facing environment.
 
-Status: Implemented per ADR 0034 (frontend) + ADR 0033 (backend):
+Status: Implemented per ADR 0037 (merged backend), on top of the
+Hostinger Web App hosting set up in ADR 0034:
 
-- **Frontend**: Hostinger's native GitHub-connected Web App hosting.
-  Hostinger builds (`npm run build`) and runs (`npm start`) `apps/web`
+- **Frontend + backend (one app)**: Hostinger's native GitHub-connected
+  Web App hosting. Hostinger builds (`npm run build`, which builds
+  `packages/database` then `apps/web`) and runs (`npm start`) `apps/web`
   directly on every push to `main` with no custom workflow - see
-  `docs/hostinger-deployment.md`.
-- **API**: Render web service built from `apps/api/Dockerfile`
-  (`render.yaml` is the Blueprint). Render's own GitHub integration
-  redeploys automatically on every push - no custom workflow needed.
-  Database migrations (`prisma migrate deploy`) run automatically as
-  part of the container's startup command.
-- **Postgres**: Supabase, using its direct (non-pooled) connection
-  string as `DATABASE_URL`.
+  `docs/hostinger-deployment.md`. The backend lives inside `apps/web` as
+  Next.js Route Handlers under `src/app/api/v1/**` (ADR 0037), so this one
+  build/run step covers both.
+- **Postgres**: Supabase, using its session pooler connection string as
+  `DATABASE_URL`.
+- Migrations (`prisma migrate deploy`) are not yet wired into an automatic
+  deploy step for this merged setup - run manually against the Supabase
+  database when the schema changes (see `docs/adr/0033-supabase-render-
+backend.md` for the original one-time Supabase setup, still applicable
+  for the database half).
 
 Requirements still outstanding:
 
-- SSL/custom domain for the API - Render provides HTTPS on its default
-  `*.onrender.com` domain automatically; a custom domain is optional and
-  not set up yet.
+- Automatic `prisma migrate deploy` on deploy (previously ran inside the
+  Render API container's startup command; no equivalent step exists yet
+  for the merged Hostinger deploy).
 - Backups beyond whatever Supabase's free tier includes by default.
-- Logging/monitoring beyond Render's and Supabase's own dashboards.
-- A documented rollback procedure beyond Render's "redeploy a previous
-  build" UI.
-
-See `docs/adr/0033-supabase-render-backend.md` for the full one-time
-setup runbook (Supabase project, Render Blueprint, env vars).
+- Logging/monitoring beyond Hostinger's and Supabase's own dashboards.
+- A documented rollback procedure beyond Hostinger's own deploy history.
 
 ## Runtime Topology
 
 ```text
 Internet
-  -> Hostinger Web App hosting (frontend, native GitHub integration)
-  -> Render (api container, built from apps/api/Dockerfile)
+  -> Hostinger Web App hosting (frontend + backend, native GitHub integration)
     -> Supabase (Postgres, session pooler connection)
 ```
 
@@ -121,8 +123,10 @@ Must be documented before deployment:
 - Email provider credentials.
 - Object storage credentials.
 - Public web URL.
-- API URL.
-- CORS origins.
+
+`API URL`/`CORS origins` no longer apply post-ADR-0037 - the backend is
+same-origin with the frontend now, so there's no separate API host to
+point at or allow-list.
 
 ## Migration Strategy
 

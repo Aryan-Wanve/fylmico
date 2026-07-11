@@ -9,20 +9,9 @@ services:
       NEXT_TELEMETRY_DISABLED: "1"
       NODE_ENV: production
       PORT: "3000"
+      DATABASE_URL: postgresql://fylmico:fylmico@postgres:5432/fylmico?schema=public
     ports:
       - "3000:3000"
-
-  api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-    environment:
-      NODE_ENV: production
-      PORT: "4000"
-      DATABASE_URL: postgresql://fylmico:fylmico@postgres:5432/fylmico?schema=public
-      CORS_ORIGIN: http://localhost:3000
-    ports:
-      - "4000:4000"
     depends_on:
       postgres:
         condition: service_healthy

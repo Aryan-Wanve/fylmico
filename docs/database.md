@@ -18,6 +18,12 @@ per ADR 0024 — see "Implemented Tables" below. `permissions`/
 `conversation_members`, `teams`/`departments`, `activity_events`, and all
 other groups remain planning only.
 
+`packages/database` (this schema, migrations, and generated Prisma client)
+is consumed directly by `apps/web` as of ADR 0037 — the backend that used
+to live in a separate `apps/api` (NestJS) was ported into Next.js Route
+Handlers and `apps/api` was deleted. Nothing about the schema or
+migrations themselves changed; only which app imports this package did.
+
 ## Database Stack
 
 - PostgreSQL

@@ -86,15 +86,26 @@ Current ADRs:
 - [0034-hostinger-native-web-app.md](docs/adr/0034-hostinger-native-web-app.md)
 - [0035-google-oauth-login.md](docs/adr/0035-google-oauth-login.md)
 - [0036-house-invitations-and-leave.md](docs/adr/0036-house-invitations-and-leave.md)
+- [0037-merge-backend-into-nextjs.md](docs/adr/0037-merge-backend-into-nextjs.md)
 
 ## Current Sprint Gate
 
+**The backend now lives inside `apps/web` as Next.js Route Handlers, not a
+separate app** (ADR 0037) - `apps/api` (the original NestJS backend
+described throughout the rest of this section's history) was ported into
+`apps/web/src/app/api/v1/**` + `apps/web/src/server/**` and deleted
+entirely. Every endpoint contract and every domain narrated below is
+unchanged in behavior; only where the code lives moved. Read ADR 0037
+first if anything below references `apps/api` - that path no longer
+exists, and the equivalent logic is now under `apps/web/src/server/<domain
+name>/`.
+
 Backend implementation has started (ADR 0018), superseding ADR 0017's
-"backend is a black box" framing for this workstream. `apps/api` (NestJS) and
-`packages/database` (Prisma) have working identity/auth (ADR 0019),
-organizations/houses (ADR 0020), tasks/chat (ADR 0021), projects/clients
-(ADR 0022), notifications (ADR 0023), and comments (ADR 0024) domains, all
-backed by real tables and curl-verified end to end.
+"backend is a black box" framing for this workstream. `packages/database`
+(Prisma) has working identity/auth (ADR 0019), organizations/houses
+(ADR 0020), tasks/chat (ADR 0021), projects/clients (ADR 0022),
+notifications (ADR 0023), and comments (ADR 0024) domains, all backed by
+real tables and curl-verified end to end.
 
 **`apps/web` is now wired to the real backend for its core loop** (ADR
 0025): signup, login, logout, house creation, and house joining all call
@@ -240,10 +251,28 @@ code and successfully left with membership/crew-profile rows and
 `active_organization_id` all confirmed cleaned up in the database, and
 leaving as the sole member was correctly blocked.
 
-To run both sides locally: `docker compose up -d postgres`, then start the
-`api` and `web` dev servers (`.claude/launch.json` has both configured).
-`apps/api/.env` and root `.env.example` document the required variables.
-For production, see `docs/deployment.md` and ADR 0032.
+**The backend was merged into `apps/web` and `apps/api` deleted** (ADR
+0037): ~4,400 lines across all 14 domains above (auth incl. Google OAuth,
+houses/invitations, tasks, chat, projects, clients, comments, crews,
+calendar, time-entries, analytics, notifications, workspace, health) were
+ported from NestJS controllers/services into Next.js Route Handlers
+(`apps/web/src/app/api/v1/**`) backed by plain-class services under
+`apps/web/src/server/**` - no `@nestjs/*` dependency remains anywhere in
+the repo. This was driven by two things together: a suspicion that
+Render's free-tier cold start was a real speed bottleneck, and an
+explicit preference for one unified app over two services. Full local
+live-verification (every domain re-tested via curl, one real in-browser
+walkthrough of login/settings/invitations, and a real production
+standalone-server run hitting the real database) passed before cutover.
+Render is no longer part of this stack; the user decommissions it
+separately (an external account action, not a repo change).
+
+To run locally now: `docker compose up -d postgres`, then start the
+single `web` dev server (`.claude/launch.json` has just the one
+configuration now). `apps/web/.env` and root `.env.example` document the
+required variables (merged - database, JWT, and Google OAuth vars all
+live in `apps/web`'s own env now, no separate `apps/api/.env`).
+For production, see `docs/deployment.md` and ADR 0037.
 
 ## Required Startup Flow
 

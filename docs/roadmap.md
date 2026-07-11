@@ -406,15 +406,37 @@ google` and `GET /api/v1/auth/google/callback`, a new
   left (membership/crew-profile rows and `active_organization_id` all
   confirmed cleaned up in the database), and leaving as the sole member
   was correctly blocked. See ADR 0036.
-- Next: object storage is still a named prerequisite for project cover
-  photos, message attachments, and the entire `/files` page. Real RBAC
-  (who can remove/edit what) is a concretely scoped gap across every
-  module now, worth solving broadly rather than per-endpoint. A house
-  ownership-transfer/role-editing flow would resolve the "solo owner
-  leaving a multi-member house" gap noted in ADR 0036. Otherwise, pick up
-  Files/Storyboard/Bookings (all still local mock data, each needing its
-  own backend domain), or the activity feed / creative-production
-  modules.
+- **Backend merged into `apps/web`, `apps/api` deleted**: user asked why a
+  separate API service was needed at all, suspecting Render's free-tier
+  cold start was a real speed bottleneck, and independently wanted one
+  unified app. Ported the entire NestJS backend (~4,400 lines, 14
+  domains - auth incl. Google OAuth, houses/invitations, tasks, chat,
+  projects, clients, comments, crews, calendar, time-entries, analytics,
+  notifications, workspace, health) into Next.js Route Handlers
+  (`apps/web/src/app/api/v1/**`) backed by plain-class services
+  (`apps/web/src/server/**`) - no `@nestjs/*` dependency remains. Chose
+  this over a lighter "redeploy apps/api unchanged on Hostinger too"
+  option (leaves two codebases, explicitly not wanted) and over a
+  custom-server NestJS-as-Express-middleware option (non-standard entry
+  point, the same category of fragile setup that already caused a real
+  Hostinger incident per ADR 0034). Full local verification (every domain
+  re-tested via curl, one real in-browser walkthrough, and a real
+  production standalone-server run against the real database) passed
+  before deleting `apps/api` and updating root `package.json`/
+  `Dockerfile`/`docker-compose.yml`/`.claude/launch.json`/both
+  `.env.example` files. See ADR 0037.
+- Next: the Google Cloud Console OAuth client's authorized redirect URI
+  needs updating for the new merged-app port (3000 locally; the live
+  Hostinger URL once redeployed) - it's still registered for the old
+  Render API URL. Object storage is still a named prerequisite for
+  project cover photos, message attachments, and the entire `/files`
+  page. Real RBAC (who can remove/edit what) is a concretely scoped gap
+  across every module now, worth solving broadly rather than per-
+  endpoint. A house ownership-transfer/role-editing flow would resolve
+  the "solo owner leaving a multi-member house" gap noted in ADR 0036.
+  Otherwise, pick up Files/Storyboard/Bookings (all still local mock
+  data, each needing its own backend domain), or the activity feed /
+  creative-production modules.
 
 ## Completed Milestones
 

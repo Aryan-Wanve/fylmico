@@ -9,9 +9,13 @@ backend separately.
 
 ## API Stack
 
-- NestJS
+- Next.js Route Handlers (`apps/web/src/app/api/v1/**`) — the backend
+  used to be a separate NestJS app (`apps/api`) until ADR 0037 merged it
+  into this same Next.js app; every endpoint contract documented below is
+  unchanged by that move, only its implementation location moved (business
+  logic lives in `apps/web/src/server/**`).
 - TypeScript
-- JWT authentication
+- JWT authentication (signed via the `jsonwebtoken` package directly)
 - Organization-aware authorization
 
 ## API Design Principles
@@ -93,7 +97,7 @@ Access tokens identify the user, session, and active organization
 or joins a house; only as fresh as the token's own issuance, see ADR 0020).
 The API must load and enforce permissions server-side.
 
-Implemented per ADR 0019/0020 (`apps/api/src/auth/*`):
+Implemented per ADR 0019/0020 (`apps/web/src/server/auth/*`):
 
 ### `POST /api/v1/auth/signup`
 
@@ -236,8 +240,8 @@ Administration:
 
 ## Houses and Workspace (Implemented)
 
-Implemented per ADR 0020 (`apps/api/src/organizations/*`,
-`apps/api/src/workspace/*`). `POST /api/v1/auth/login`'s real response does
+Implemented per ADR 0020 (`apps/web/src/server/organizations/*`,
+`apps/web/src/server/workspace/*`). `POST /api/v1/auth/login`'s real response does
 **not** include `activeHouseId`/`houses`/`tasks`/`chatRooms` (see the
 Authentication section above) — that snapshot is `GET /api/v1/workspace`'s
 job, a deliberate split from what this doc originally speculated before auth
@@ -401,7 +405,7 @@ active house yet). Errors: `401 unauthenticated`.
 
 ## Tasks and Chat (Implemented)
 
-Implemented per ADR 0021 (`apps/api/src/tasks/*`, `apps/api/src/chat/*`),
+Implemented per ADR 0021 (`apps/web/src/server/tasks/*`, `apps/web/src/server/chat/*`),
 extended per ADR 0026 (unified status vocabulary, update/delete, auto-derived
 role).
 
@@ -499,7 +503,7 @@ channel-level membership restriction, and no way to create a private/DM
 
 ## Projects and Clients (Implemented)
 
-Implemented per ADR 0022 (`apps/api/src/projects/*`, `apps/api/src/clients/*`),
+Implemented per ADR 0022 (`apps/web/src/server/projects/*`, `apps/web/src/server/clients/*`),
 extended per ADR 0027 (production type/genre/stage/progress/cover art/team,
 matching the designed Projects page UI).
 
@@ -620,7 +624,7 @@ a `Client` instead.
 
 ## Notifications (Implemented)
 
-Implemented per ADR 0023 (`apps/api/src/notifications/*`). No public
+Implemented per ADR 0023 (`apps/web/src/server/notifications/*`). No public
 create endpoint — notifications are always server-triggered (currently:
 task assignment notifies the assignee; joining a house notifies its
 `"Owner"` member(s)). No realtime delivery yet (ADR 0005 not implemented) —
@@ -664,7 +668,7 @@ Idempotent — succeeds whether or not anything was unread. Errors:
 
 ## Comments (Implemented)
 
-Implemented per ADR 0024 (`apps/api/src/comments/*`). Resolves the
+Implemented per ADR 0024 (`apps/web/src/server/comments/*`). Resolves the
 previously-deferred "comment target modeling strategy" — a comment
 attaches to a task or a project via nested routes (not a generic
 `/api/v1/comments`).
@@ -686,7 +690,7 @@ exists for either yet.
 
 ## Crews (Implemented)
 
-Implemented per ADR 0028 (`apps/api/src/crews/*`). A "crew member" is a
+Implemented per ADR 0028 (`apps/web/src/server/crews/*`). A "crew member" is a
 real house member (`User` + `OrganizationMembership`) with an attached
 `CrewProfile` - department, role category, availability status, and so
 on. There is no separate/fake roster; every crew member is a real account.
@@ -745,7 +749,7 @@ isn't a house member), `404`.
 
 ## Calendar (Implemented)
 
-Implemented per ADR 0030 (`apps/api/src/calendar/*`). A house's
+Implemented per ADR 0030 (`apps/web/src/server/calendar/*`). A house's
 "calendars" are "My Schedule" (events with no `projectId`) plus one entry
 per real `Project` in the house - no separate calendar table exists.
 
@@ -784,7 +788,7 @@ Authentication: required. Body:
 
 ## Time Entries (Implemented)
 
-Implemented per ADR 0031 (`apps/api/src/time-entries/*`). A `TimeEntry`
+Implemented per ADR 0031 (`apps/web/src/server/time-entries/*`). A `TimeEntry`
 is a logged block of hours a house member spent on work, optionally
 tied to a project.
 
@@ -807,7 +811,7 @@ the same house. Response: created `TimeEntry`. Errors:
 
 ## Analytics (Implemented)
 
-Implemented per ADR 0031 (`apps/api/src/analytics/*`). A single endpoint
+Implemented per ADR 0031 (`apps/web/src/server/analytics/*`). A single endpoint
 computes every aggregate the Analytics page needs, server-side, from
 real `Project`/`Task`/`TimeEntry`/`Message`/`Comment` data - the frontend
 does not re-derive any of these numbers itself.

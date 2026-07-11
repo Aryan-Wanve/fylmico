@@ -11,14 +11,11 @@
   "packageManager": "npm@10.9.2",
   "workspaces": [
     "apps/web",
-    "apps/api",
     "packages/database"
   ],
   "scripts": {
-    "dev": "npm --workspace @fylmico/web run dev",
-    "dev:api": "npm run build --workspace=@fylmico/database && npm --workspace @fylmico/api run start:dev",
-    "build": "npm --workspace @fylmico/web run build",
-    "build:api": "npm run build --workspace=@fylmico/database && npm run build --workspace=@fylmico/api",
+    "dev": "npm run build --workspace=@fylmico/database && npm --workspace @fylmico/web run dev",
+    "build": "npm run build --workspace=@fylmico/database && npm --workspace @fylmico/web run build",
     "build:hostinger": "node scripts/build-hostinger-static.mjs",
     "postbuild": "node scripts/sync-next-standalone-assets.mjs",
     "start": "node server.js",
