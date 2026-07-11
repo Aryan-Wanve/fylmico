@@ -4,16 +4,29 @@ import { useRouter } from "next/navigation";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { TaskRow } from "@/components/dashboard/task-row";
 import { useWorkspace } from "@/lib/workspace-context";
+import { updateTask } from "@/services/base-workspace.service";
 
-export function MyTasksPanel({
-  completedTaskIds,
-  onToggleTask
-}: {
-  completedTaskIds: Set<string>;
-  onToggleTask: (taskId: string) => void;
-}) {
-  const { workspace } = useWorkspace();
+export function MyTasksPanel() {
+  const { workspace, refreshWorkspace } = useWorkspace();
   const router = useRouter();
+
+  async function handleToggle(taskId: string) {
+    const task = workspace.tasks.find((item) => item.id === taskId);
+    if (!task) {
+      return;
+    }
+
+    try {
+      await updateTask(taskId, {
+        status: task.status === "done" ? "todo" : "done"
+      });
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not update the task."
+      );
+    }
+  }
 
   return (
     <DashboardPanel
@@ -23,9 +36,9 @@ export function MyTasksPanel({
       <div className="grid">
         {workspace.tasks.slice(0, 4).map((task) => (
           <TaskRow
-            completed={completedTaskIds.has(task.id)}
+            completed={task.status === "done"}
             key={task.id}
-            onToggle={onToggleTask}
+            onToggle={handleToggle}
             task={task}
           />
         ))}

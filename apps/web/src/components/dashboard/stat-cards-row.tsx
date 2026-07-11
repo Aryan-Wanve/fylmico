@@ -24,11 +24,7 @@ function formatShootDay(dateKey: string): string {
   });
 }
 
-export function StatCardsRow({
-  completedTaskIds
-}: {
-  completedTaskIds: Set<string>;
-}) {
+export function StatCardsRow() {
   const { workspace, activeHouse } = useWorkspace();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
 
@@ -51,7 +47,7 @@ export function StatCardsRow({
   }, []);
 
   const dueToday = workspace.tasks.filter(
-    (task) => task.status !== "done" && !completedTaskIds.has(task.id)
+    (task) => task.status !== "done"
   ).length;
 
   const members = activeHouse?.members ?? [];
