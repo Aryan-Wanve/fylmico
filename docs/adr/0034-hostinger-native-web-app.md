@@ -16,16 +16,19 @@ Hostinger's own managed Node.js hosting, which builds and runs
 
 Because the wrong assumption was baked into `.github/workflows/
 deploy-hostinger.yml` and `scripts/build-hostinger-static.mjs`, two real
-incidents followed once that workflow started running automatically:
+incidents followed once that workflow started running automatically -
+plus a third, separate misconfiguration that took longest to find:
 
 1. **A 403 on every route past the homepage.** The static-export
    mirror's per-route folders (e.g. `login/`, containing only Next.js
    prefetch-cache `.txt` files - no `index.html`) sat at the repository
    root alongside a `.htaccess` with Apache-style directory rewrite
-   rules from the same era. Hostinger's edge redirects a bare `/login`
-   to `/login/`, found that leftover directory with nothing to serve,
-   and returned `403 Forbidden` - even though the real Node.js app
-   underneath would have handled that route correctly.
+   rules from the same era. Hostinger's edge (`hcdn`) apparently serves
+   any static file it finds at the deployment root directly, falling
+   back to `403` when a requested path has no match - `/` happened to
+   match the leftover `index.html` and returned real-looking content,
+   which is what made this look like "the app works, just one route is
+   broken" rather than what it actually was (see point 3).
 2. **A production data-loss bug.** `build-hostinger-static.mjs` deletes
    every repository-root entry not on an explicit allowlist before each
    rebuild, to guarantee stale route files never linger. `packages` was
@@ -33,6 +36,20 @@ incidents followed once that workflow started running automatically:
    `packages/database`'s entire source (Prisma schema, service files,
    `package.json`) and committed the deletion straight to `main`
    (`eced150`).
+3. **The actual Node.js app had never been running at all.** After
+   removing the static-export files, _every_ route started returning
+   `403` (not just `/login`), and Hostinger's Runtime Logs showed zero
+   requests ever reaching the process. The Web App's **Entry file**
+   setting (Deployments -> Settings, "Node.js entry file that starts
+   your application") was blank the entire time - meaning `npm start`
+   was never actually invoked, and the "working" homepage before this
+   point was hcdn serving the leftover static `index.html` directly,
+   never the real app. Setting Entry file to `server.js` (this repo's
+   existing standalone-server entry point) was the fix that actually
+   made the site work. The Web App's own **Environment Variables**
+   section (separate from GitHub's repo variables, and separate from
+   Render's) was also empty - `NEXT_PUBLIC_API_URL` had to be added
+   there directly for the live frontend to reach the live API.
 
 ## Decision
 
@@ -53,15 +70,25 @@ incidents followed once that workflow started running automatically:
   re-updated to the `node16` module resolution fix from ADR (the
   TypeScript deprecation fix) that landed after that commit. Verified
   with a full local `build:api`/`typecheck`/`lint` pass.
+- **Set the Web App's Entry file to `server.js`** (Deployments ->
+  Settings -> Build and output settings) so Hostinger actually starts
+  the standalone Next.js server on deploy. Output directory stays blank
+  - this is a running process, not a static folder to copy.
+- **Added `NEXT_PUBLIC_API_URL` directly in the Web App's own
+  Environment Variables section**, pointing at the live Render API
+  (`https://fylmico-api.onrender.com/api/v1`) - this setting is scoped
+  to the Hostinger deployment itself, unrelated to any GitHub Actions
+  repository variable.
 - **Rewrite `docs/hostinger-deployment.md`** to describe what's actually
   running (Hostinger's native Web App: `npm install` -> `npm run build`
   -> `npm start` -> `node server.js` -> the Next.js standalone server),
   explicitly warn against recreating the removed static-export
-  machinery, and note that `NEXT_PUBLIC_API_URL` is set directly in
-  Hostinger's own Environment Variables UI, not baked in by a workflow.
-- **Verified live**: after cleanup, `curl -I` against the previously-
-  403ing route returned the real Next.js response instead of an Apache
-  403, confirming the fix.
+  machinery, and document the Entry file / Environment Variables
+  settings as required one-time configuration for this Hostinger
+  product.
+- **Verified live**: after all three fixes, `/login` and `/signup`
+  return real Next.js responses (not Apache 403s), and the live site
+  can reach the live Render API.
 
 ## Alternatives
 

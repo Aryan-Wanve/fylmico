@@ -177,21 +177,29 @@ channel task/event backend exists) rather than deleted or faked.
   exists anywhere yet — notifications and chat are both REST/poll-based
   for now.
 
-**Continuous deployment is now real and live** (ADR 0033, ADR 0034). The
-live Hostinger site had silently drifted ~2 weeks behind GitHub because
-its static export was only ever rebuilt and committed by hand. The first
-fix attempt built a GitHub Actions workflow to automate that rebuild -
-but it turned out this Hostinger account actually uses Hostinger's own
-native GitHub-connected "Web App" hosting, which builds and runs
-`apps/web` directly on every push with **no help needed at all**
-(`docs/hostinger-deployment.md`). That custom workflow was not just
-unnecessary but actively harmful: it caused a real routing 403 (stale
-static files shadowing the real app) and, separately, an incomplete
-cleanup allowlist deleted `packages/database`'s entire source straight
-to `main` in one automated run. Both the workflow and the underlying
-script have been removed, every stale static-export artifact purged
-from the repository root, and `packages/database` restored - see
-ADR 0034 for the full incident writeup.
+**Continuous deployment is now real and confirmed live end-to-end**
+(ADR 0033, ADR 0034). The live Hostinger site had silently drifted ~2
+weeks behind GitHub because its static export was only ever rebuilt and
+committed by hand. The first fix attempt built a GitHub Actions workflow
+to automate that rebuild - but it turned out this Hostinger account
+actually uses Hostinger's own native GitHub-connected "Web App" hosting,
+which builds and runs `apps/web` directly on every push with **no help
+needed at all** (`docs/hostinger-deployment.md`). That custom workflow
+was not just unnecessary but actively harmful: leftover static files it
+committed partially masked (and were mistaken for the cause of) a routing
+403, and, separately, an incomplete cleanup allowlist deleted
+`packages/database`'s entire source straight to `main` in one automated
+run. Both the workflow and the underlying script have been removed,
+every stale static-export artifact purged from the repository root, and
+`packages/database` restored. The 403 turned out to have a third,
+unrelated cause underneath the static-file noise: the Web App's **Entry
+file** setting (`server.js`) had simply never been configured, so
+Hostinger built the app but never actually ran it - fixed via Hostinger's
+own dashboard, along with adding `NEXT_PUBLIC_API_URL` to its Environment
+Variables section (a setting scoped to the Hostinger deployment itself,
+distinct from any GitHub Actions variable). See ADR 0034 for the full
+incident writeup. Live-verified: `/login` and `/signup` now return real
+Next.js responses instead of Apache 403s.
 Separately, no backend had ever been deployed anywhere - the original
 plan (ADR 0032) was a Hostinger VPS, but no VPS turned out to be
 available, so the backend deploys instead to **Render** (the API, built
