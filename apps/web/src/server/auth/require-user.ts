@@ -7,6 +7,16 @@ export interface AuthenticatedUser {
   sessionId: string;
 }
 
+export function extractRequestMeta(request: NextRequest): {
+  userAgent?: string;
+  ipAddress?: string;
+} {
+  const userAgent = request.headers.get("user-agent") ?? undefined;
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  const ipAddress = forwardedFor?.split(",")[0]?.trim() ?? undefined;
+  return { userAgent, ipAddress };
+}
+
 function extractBearerToken(request: NextRequest): string | undefined {
   const header = request.headers.get("authorization");
   if (!header?.startsWith("Bearer ")) {

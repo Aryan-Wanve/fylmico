@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { authService } from "@/server/auth/auth.service";
+import { extractRequestMeta } from "@/server/auth/require-user";
 
 const GOOGLE_OAUTH_STATE_COOKIE = "google_oauth_state";
 
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const { accessToken, refreshToken } =
-      await authService.handleGoogleCallback(code);
+      await authService.handleGoogleCallback(code, extractRequestMeta(request));
     const params = new URLSearchParams({ accessToken, refreshToken });
     return clearStateCookie(
       NextResponse.redirect(

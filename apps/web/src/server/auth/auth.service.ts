@@ -26,10 +26,20 @@ export interface TokenPair {
   refreshToken: string;
 }
 
+export interface SessionMeta {
+  userAgent?: string;
+  ipAddress?: string;
+}
+
 class AuthService {
   private readonly prisma = prisma;
 
-  async signup(email: string, password: string, name: string) {
+  async signup(
+    email: string,
+    password: string,
+    name: string,
+    meta?: SessionMeta
+  ) {
     const normalizedEmail = normalizeEmail(email);
 
     const existing = await this.prisma.authAccount.findUnique({
@@ -64,12 +74,12 @@ class AuthService {
     });
 
     await this.issueEmailVerificationToken(user.id, normalizedEmail);
-    const tokens = await this.issueSessionTokens(user);
+    const tokens = await this.issueSessionTokens(user, meta);
 
     return { user: toPublicUser(user), ...tokens };
   }
 
-  async login(email: string, password: string) {
+  async login(email: string, password: string, meta?: SessionMeta) {
     const normalizedEmail = normalizeEmail(email);
 
     const authAccount = await this.prisma.authAccount.findUnique({
@@ -93,7 +103,7 @@ class AuthService {
       );
     }
 
-    const tokens = await this.issueSessionTokens(authAccount.user);
+    const tokens = await this.issueSessionTokens(authAccount.user, meta);
     return { user: toPublicUser(authAccount.user), ...tokens };
   }
 
@@ -247,7 +257,7 @@ class AuthService {
     });
   }
 
-  async handleGoogleCallback(code: string) {
+  async handleGoogleCallback(code: string, meta?: SessionMeta) {
     const clientId = getOptionalEnv("GOOGLE_CLIENT_ID");
     const clientSecret = getOptionalEnv("GOOGLE_CLIENT_SECRET");
     if (!clientId || !clientSecret) {
@@ -325,7 +335,7 @@ class AuthService {
       });
     }
 
-    const tokens = await this.issueSessionTokens(authAccount.user);
+    const tokens = await this.issueSessionTokens(authAccount.user, meta);
     return { user: toPublicUser(authAccount.user), ...tokens };
   }
 
@@ -334,6 +344,86 @@ class AuthService {
       where: { id: userId }
     });
     return toPublicUser(user);
+  }
+
+  async updateMe(userId: string, name: string) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { name: name.trim() }
+    });
+    return toPublicUser(user);
+  }
+
+  async changePassword(
+    userId: string,
+    currentSessionId: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
+    const authAccount = await this.prisma.authAccount.findFirst({
+      where: { userId, provider: EMAIL_PROVIDER }
+    });
+
+    if (
+      !authAccount?.passwordHash ||
+      !(await verifyPassword(authAccount.passwordHash, currentPassword))
+    ) {
+      throw new AppException(
+        HttpStatus.UNAUTHORIZED,
+        "invalid_credentials",
+        "Current password is incorrect."
+      );
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+
+    await this.prisma.$transaction([
+      this.prisma.authAccount.update({
+        where: { id: authAccount.id },
+        data: { passwordHash }
+      }),
+      this.prisma.session.updateMany({
+        where: {
+          userId,
+          revokedAt: null,
+          id: { not: currentSessionId }
+        },
+        data: { revokedAt: new Date() }
+      })
+    ]);
+  }
+
+  async listSessions(userId: string, currentSessionId: string) {
+    const sessions = await this.prisma.session.findMany({
+      where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: "desc" }
+    });
+
+    return sessions.map((session) => ({
+      id: session.id,
+      userAgent: session.userAgent,
+      ipAddress: session.ipAddress,
+      current: session.id === currentSessionId,
+      createdAt: session.createdAt
+    }));
+  }
+
+  async revokeSession(userId: string, sessionId: string): Promise<void> {
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId }
+    });
+    if (!session || session.userId !== userId) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "session_not_found",
+        "This session does not exist."
+      );
+    }
+
+    await this.prisma.session.update({
+      where: { id: sessionId },
+      data: { revokedAt: new Date() }
+    });
   }
 
   private async issueEmailVerificationToken(
@@ -351,12 +441,17 @@ class AuthService {
     console.log(`Email verification token for ${email}: ${token}`);
   }
 
-  private async issueSessionTokens(user: User): Promise<TokenPair> {
+  private async issueSessionTokens(
+    user: User,
+    meta?: SessionMeta
+  ): Promise<TokenPair> {
     const refreshToken = generateOpaqueToken();
     const session = await this.prisma.session.create({
       data: {
         userId: user.id,
         refreshTokenHash: hashOpaqueToken(refreshToken),
+        userAgent: meta?.userAgent,
+        ipAddress: meta?.ipAddress,
         expiresAt: addDuration(new Date(), this.refreshTtl)
       }
     });

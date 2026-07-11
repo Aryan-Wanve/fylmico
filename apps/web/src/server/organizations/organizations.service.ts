@@ -11,6 +11,7 @@ import { prisma } from "../prisma";
 import type { CreateHouseDto } from "./dto/create-house.dto";
 import type { InviteMemberDto } from "./dto/invite-member.dto";
 import type { JoinHouseDto } from "./dto/join-house.dto";
+import type { UpdateHouseDto } from "./dto/update-house.dto";
 
 const MEMBER_ROLE_NAME = "Member";
 const INVITATION_TTL = "7d";
@@ -101,6 +102,40 @@ class OrganizationsService {
     await this.setActiveOrganization(userId, organization.id);
 
     return this.getHouseDto(organization.id, userId);
+  }
+
+  async updateHouse(
+    organizationId: string,
+    userId: string,
+    dto: UpdateHouseDto
+  ) {
+    await this.requireMembership(organizationId, userId);
+
+    if (dto.handle) {
+      const existingHandle = await this.prisma.organization.findUnique({
+        where: { handle: dto.handle }
+      });
+      if (existingHandle && existingHandle.id !== organizationId) {
+        throw new AppException(
+          HttpStatus.CONFLICT,
+          "handle_unavailable",
+          "This handle is already taken."
+        );
+      }
+    }
+
+    await this.prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
+        ...(dto.handle !== undefined ? { handle: dto.handle } : {}),
+        ...(dto.description !== undefined
+          ? { description: dto.description.trim() }
+          : {})
+      }
+    });
+
+    return this.getHouseDto(organizationId, userId);
   }
 
   async joinHouse(userId: string, dto: JoinHouseDto) {
