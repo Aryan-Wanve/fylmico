@@ -6,7 +6,7 @@ export function CharactersGrid({ characters }: { characters: Character[] }) {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {characters.map((character) => (
         <article
-          className="rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]"
+          className="rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]"
           key={character.id}
         >
           <div className="flex items-center gap-3">
@@ -14,7 +14,7 @@ export function CharactersGrid({ characters }: { characters: Character[] }) {
               <UserCircle2 className="h-6 w-6" />
             </span>
             <div className="min-w-0">
-              <strong className="block truncate text-sm font-bold text-[#11142c]">
+              <strong className="block truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                 {character.name}
               </strong>
               <span className="text-xs font-semibold text-[#654cff]">
@@ -22,7 +22,7 @@ export function CharactersGrid({ characters }: { characters: Character[] }) {
               </span>
             </div>
           </div>
-          <p className="mt-3 text-sm leading-relaxed text-[#5f667d]">
+          <p className="mt-3 text-sm leading-relaxed text-[#5f667d] dark:text-[#a8acbf]">
             {character.description}
           </p>
         </article>

@@ -8,7 +8,7 @@ import { HousesGuideCta } from "@/components/houses/learn/houses-guide-cta";
 
 export function HousesGuidePage() {
   return (
-    <main className="min-h-screen bg-[#f7f7fb]">
+    <main className="min-h-screen bg-[#f7f7fb] dark:bg-[#0e0f18]">
       <HousesGuideHeader />
       <HousesGuideHero />
       <HousesGuideFeatures />

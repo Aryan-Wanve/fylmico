@@ -16,7 +16,7 @@ export function RecentFileActivityPanel({
         {recent.length > 0 ? (
           recent.map((entry) => (
             <div
-              className="flex items-center gap-3 border-b border-black/5 px-6 py-3.5 last:border-b-0"
+              className="flex items-center gap-3 border-b border-black/5 px-6 py-3.5 last:border-b-0 dark:border-white/[0.06]"
               key={entry.id}
             >
               <AvatarWithStatus
@@ -30,14 +30,14 @@ export function RecentFileActivityPanel({
                   </strong>{" "}
                   uploaded {entry.name}
                 </p>
-                <span className="text-xs text-[#8a90a3]">
+                <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
                   {formatRelativeTime(entry.createdAt)}
                 </span>
               </div>
             </div>
           ))
         ) : (
-          <p className="px-6 py-6 text-center text-sm text-[#8a90a3]">
+          <p className="px-6 py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
             No activity yet.
           </p>
         )}

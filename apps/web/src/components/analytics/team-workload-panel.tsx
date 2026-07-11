@@ -10,7 +10,7 @@ export function TeamWorkloadPanel({
   return (
     <DashboardPanel title="Team Workload">
       {workload.length === 0 ? (
-        <p className="p-6 text-center text-sm text-[#8a90a3]">
+        <p className="p-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
           No time logged this week yet.
         </p>
       ) : (
@@ -24,19 +24,19 @@ export function TeamWorkloadPanel({
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <strong className="truncate text-sm font-semibold text-[#11142c]">
+                  <strong className="truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                     {member.name}
                   </strong>
-                  <span className="shrink-0 text-xs font-bold text-[#5f667d]">
+                  <span className="shrink-0 text-xs font-bold text-[#5f667d] dark:text-[#a8acbf]">
                     {member.percentage}%
                   </span>
                 </div>
                 {member.jobTitle ? (
-                  <span className="text-xs text-[#8a90a3]">
+                  <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
                     {member.jobTitle}
                   </span>
                 ) : null}
-                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.06]">
+                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
                   <div
                     className="h-full rounded-full bg-[#654cff]"
                     style={{ width: `${member.percentage}%` }}

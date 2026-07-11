@@ -37,11 +37,11 @@ export function CalendarMonthGrid({
   }
 
   return (
-    <div className="min-w-0 overflow-x-auto rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
-      <div className="grid min-w-[42rem] grid-cols-7 border-b border-black/5">
+    <div className="min-w-0 overflow-x-auto rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+      <div className="grid min-w-[42rem] grid-cols-7 border-b border-black/5 dark:border-white/[0.06]">
         {WEEKDAY_LABELS.map((label) => (
           <div
-            className="px-3 py-3 text-center text-xs font-bold tracking-wide text-[#8a90a3]"
+            className="px-3 py-3 text-center text-xs font-bold tracking-wide text-[#8a90a3] dark:text-[#7d8299]"
             key={label}
           >
             {label}
@@ -61,9 +61,11 @@ export function CalendarMonthGrid({
 
             return (
               <button
-                className={`flex min-h-28 flex-col gap-1 border-r border-b border-black/5 p-2 text-left [&:nth-child(7n)]:border-r-0 ${
-                  inCurrentMonth ? "bg-white" : "bg-black/[0.015]"
-                } ${isSelected ? "ring-2 ring-[#654cff]/40 ring-inset" : ""} hover:bg-black/[0.02]`}
+                className={`flex min-h-28 flex-col gap-1 border-r border-b border-black/5 p-2 text-left dark:border-white/[0.06] [&:nth-child(7n)]:border-r-0 ${
+                  inCurrentMonth
+                    ? "bg-white dark:bg-[#171a28]"
+                    : "bg-black/[0.015] dark:bg-white/[0.03]"
+                } ${isSelected ? "ring-2 ring-[#654cff]/40 ring-inset" : ""} hover:bg-black/[0.02] dark:hover:bg-white/[0.04]`}
                 key={day.toISOString()}
                 onClick={() => onSelectDate(day)}
                 type="button"
@@ -73,8 +75,8 @@ export function CalendarMonthGrid({
                     isToday
                       ? "bg-[#654cff] text-white"
                       : inCurrentMonth
-                        ? "text-[#11142c]"
-                        : "text-[#c3c7d4]"
+                        ? "text-[#11142c] dark:text-[#f1f2f8]"
+                        : "text-[#c3c7d4] dark:text-[#5c6178]"
                   }`}
                 >
                   {day.getDate()}
@@ -85,7 +87,7 @@ export function CalendarMonthGrid({
                     <CalendarEventPill event={event} key={event.id} />
                   ))}
                   {overflowCount > 0 ? (
-                    <span className="px-2 text-xs font-semibold text-[#8a90a3]">
+                    <span className="px-2 text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
                       +{overflowCount} more
                     </span>
                   ) : null}

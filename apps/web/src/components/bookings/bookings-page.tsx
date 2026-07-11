@@ -149,18 +149,18 @@ export function BookingsPage() {
           />
           <BookingsStatCards bookings={bookings} />
 
-          <div className="min-w-0 rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+          <div className="min-w-0 rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             {loading ? (
-              <p className="px-6 py-12 text-center text-sm text-[#8a90a3]">
+              <p className="px-6 py-12 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
                 Loading bookings...
               </p>
             ) : (
               <BookingsTable rows={filteredRows} />
             )}
-            <div className="flex items-center justify-between border-t border-black/5 px-6 py-4">
-              <span className="text-sm font-medium text-[#8a90a3]">
+            <div className="flex items-center justify-between border-t border-black/5 px-6 py-4 dark:border-white/[0.06]">
+              <span className="text-sm font-medium text-[#8a90a3] dark:text-[#7d8299]">
                 Showing{" "}
-                <span className="font-bold text-[#3a3f57]">
+                <span className="font-bold text-[#3a3f57] dark:text-[#b4b8cc]">
                   {filteredRows.length}
                 </span>{" "}
                 booking{filteredRows.length === 1 ? "" : "s"}

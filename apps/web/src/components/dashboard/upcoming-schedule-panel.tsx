@@ -65,42 +65,44 @@ export function UpcomingSchedulePanel() {
         {events.length > 0 ? (
           events.map((event, index) => (
             <button
-              className={`grid grid-cols-[5rem_auto_1fr_auto] items-center gap-4 border-b border-black/5 px-6 py-3.5 text-left last:border-b-0 hover:bg-black/[0.02] ${
+              className={`grid grid-cols-[5rem_auto_1fr_auto] items-center gap-4 border-b border-black/5 px-6 py-3.5 text-left last:border-b-0 hover:bg-black/[0.02] dark:border-white/[0.06] dark:hover:bg-white/[0.04] ${
                 index === selectedIndex ? "bg-[#654cff]/[0.04]" : ""
               }`}
               key={event.id}
               onClick={() => setSelectedIndex(index)}
               type="button"
             >
-              <time className="text-sm font-semibold text-[#4b5268]">
+              <time className="text-sm font-semibold text-[#4b5268] dark:text-[#c7cad9]">
                 {event.time}
               </time>
               <span
                 className={`h-2.5 w-2.5 rounded-full ${CATEGORY_DOT[event.category]}`}
               />
               <div className="min-w-0">
-                <strong className="block truncate text-sm font-semibold text-[#11142c]">
+                <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                   {event.title}
                 </strong>
-                <span className="text-xs text-[#8a90a3]">{event.date}</span>
+                <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                  {event.date}
+                </span>
               </div>
-              <span className="text-xs font-medium text-[#8a90a3]">
+              <span className="text-xs font-medium text-[#8a90a3] dark:text-[#7d8299]">
                 {event.location ?? ""}
               </span>
             </button>
           ))
         ) : (
-          <p className="px-6 py-6 text-center text-sm text-[#8a90a3]">
+          <p className="px-6 py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
             Nothing scheduled yet.
           </p>
         )}
       </div>
       {selected ? (
         <div className="m-4 rounded-xl bg-[#654cff]/[0.06] p-3.5">
-          <strong className="block text-sm font-bold text-[#11142c]">
+          <strong className="block text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
             {selected.title}
           </strong>
-          <span className="text-xs font-medium text-[#5f667d]">
+          <span className="text-xs font-medium text-[#5f667d] dark:text-[#a8acbf]">
             {selected.time} at {selected.location ?? "TBD"}
           </span>
         </div>

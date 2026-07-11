@@ -25,7 +25,7 @@ export function CrewsDepartmentMenu({
       <DropdownMenuTrigger
         render={
           <button
-            className="flex h-10 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03]"
+            className="flex h-10 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
             type="button"
           >
             {value === "all" ? "All Departments" : value}

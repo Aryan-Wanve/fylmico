@@ -24,7 +24,7 @@ export function FileListRow({
   const Icon = meta.icon;
 
   return (
-    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015]">
+    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03]">
       <button
         className="flex min-w-0 flex-1 items-center gap-3 text-left"
         disabled={!onOpen}
@@ -36,20 +36,20 @@ export function FileListRow({
         >
           <Icon className="h-4.5 w-4.5" />
         </span>
-        <strong className="truncate text-sm font-semibold text-[#11142c]">
+        <strong className="truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
           {file.name}
         </strong>
       </button>
 
-      <span className="hidden w-24 shrink-0 text-sm text-[#4b5268] sm:block">
+      <span className="hidden w-24 shrink-0 text-sm text-[#4b5268] sm:block dark:text-[#c7cad9]">
         {file.type === "folder" ? "—" : formatFileSize(file.size)}
       </span>
 
-      <span className="hidden w-24 shrink-0 text-sm text-[#4b5268] md:block">
+      <span className="hidden w-24 shrink-0 text-sm text-[#4b5268] md:block dark:text-[#c7cad9]">
         {meta.label}
       </span>
 
-      <span className="hidden w-36 shrink-0 text-sm text-[#4b5268] lg:block">
+      <span className="hidden w-36 shrink-0 text-sm text-[#4b5268] lg:block dark:text-[#c7cad9]">
         {formatRelativeTime(file.updatedAt)}
       </span>
 
@@ -59,7 +59,7 @@ export function FileListRow({
           size="sm"
           userId={file.uploadedById}
         />
-        <span className="truncate text-sm text-[#4b5268]">
+        <span className="truncate text-sm text-[#4b5268] dark:text-[#c7cad9]">
           {file.uploadedByName}
         </span>
       </div>

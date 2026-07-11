@@ -246,7 +246,7 @@ export function TasksPage() {
         {groups.length === 0 ? (
           <TasksEmptyState />
         ) : (
-          <div className="min-w-0 overflow-x-auto rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+          <div className="min-w-0 overflow-x-auto rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             <div className="min-w-[42rem]">
               <TaskListColumnHeader />
               {groups.map((group) => {

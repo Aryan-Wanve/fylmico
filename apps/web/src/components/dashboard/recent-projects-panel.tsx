@@ -42,12 +42,14 @@ export function RecentProjectsPanel() {
               <DashboardProjectCard key={project.id} project={project} />
             ))
           ) : (
-            <p className="py-6 text-sm text-[#8a90a3]">No projects yet.</p>
+            <p className="py-6 text-sm text-[#8a90a3] dark:text-[#7d8299]">
+              No projects yet.
+            </p>
           )}
         </div>
         <button
           aria-label="Show more projects"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-black/10 text-[#4b5268] hover:bg-black/[0.03]"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-black/10 text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
           onClick={() => router.push("/projects")}
           type="button"
         >

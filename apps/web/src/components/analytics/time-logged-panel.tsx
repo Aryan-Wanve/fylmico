@@ -17,10 +17,10 @@ export function TimeLoggedPanel({
   return (
     <DashboardPanel title="Time Logged">
       <div className="p-6 pt-4">
-        <strong className="block text-2xl font-black text-[#11142c]">
+        <strong className="block text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
           {formatHours(total)}
         </strong>
-        <span className="text-xs font-semibold text-[#8a90a3]">
+        <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
           Total this week
         </span>
         <div className="mt-4">
@@ -31,7 +31,7 @@ export function TimeLoggedPanel({
               xLabels={xLabels}
             />
           ) : (
-            <p className="py-6 text-center text-sm text-[#8a90a3]">
+            <p className="py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
               No time logged this week yet.
             </p>
           )}

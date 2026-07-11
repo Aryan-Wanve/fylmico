@@ -45,11 +45,11 @@ export function NoHouseOnboarding() {
     <section className="flex min-h-full items-center justify-center p-6 lg:p-10">
       <div className="grid w-full max-w-[68rem] grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
         <div>
-          <h1 className="max-w-md text-[2.75rem] leading-[1.08] font-black tracking-tight text-[#11142c]">
+          <h1 className="max-w-md text-[2.75rem] leading-[1.08] font-black tracking-tight text-[#11142c] dark:text-[#f1f2f8]">
             You&apos;re not in <span className="text-[#654cff]">a house</span>{" "}
             yet.
           </h1>
-          <p className="mt-4 max-w-sm text-[1.05rem] leading-relaxed text-[#5f667d]">
+          <p className="mt-4 max-w-sm text-[1.05rem] leading-relaxed text-[#5f667d] dark:text-[#a8acbf]">
             Houses are where teams plan, create and bring productions to life.
           </p>
           <div className="relative mt-8 h-64 w-full max-w-md overflow-hidden rounded-2xl shadow-[0_1.2rem_3rem_rgba(53,45,124,0.14)]">

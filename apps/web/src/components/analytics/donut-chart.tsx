@@ -53,10 +53,10 @@ export function DonutChart({
         ))}
       </svg>
       <div className="absolute grid place-items-center text-center leading-tight">
-        <strong className="text-2xl font-black text-[#11142c]">
+        <strong className="text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
           {centerLabel}
         </strong>
-        <span className="text-xs font-semibold text-[#8a90a3]">
+        <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
           {centerSublabel}
         </span>
       </div>

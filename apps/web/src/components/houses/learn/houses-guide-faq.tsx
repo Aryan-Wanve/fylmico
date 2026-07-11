@@ -10,7 +10,7 @@ import { guideFaqs } from "@/components/houses/learn/houses-guide-data";
 export function HousesGuideFaq() {
   return (
     <HousesGuideSection eyebrow="FAQ" title="Common questions">
-      <div className="rounded-2xl border border-black/[0.06] bg-white px-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+      <div className="rounded-2xl border border-black/[0.06] bg-white px-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
         <Accordion multiple>
           {guideFaqs.map((faq) => (
             <AccordionItem key={faq.question} value={faq.question}>

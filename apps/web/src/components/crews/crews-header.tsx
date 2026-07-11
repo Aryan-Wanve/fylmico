@@ -4,8 +4,10 @@ export function CrewsHeader({ onInvite }: { onInvite: () => void }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 className="text-3xl font-black text-[#11142c]">Crews</h1>
-        <p className="mt-1 text-[#5f667d]">
+        <h1 className="text-3xl font-black text-[#11142c] dark:text-[#f1f2f8]">
+          Crews
+        </h1>
+        <p className="mt-1 text-[#5f667d] dark:text-[#a8acbf]">
           Manage your team, roles, and availability across all productions.
         </p>
       </div>

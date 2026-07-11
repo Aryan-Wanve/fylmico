@@ -128,21 +128,21 @@ export function MembersSection() {
         ) : null}
 
         {invitations.length > 0 ? (
-          <div className="mt-5 grid gap-2 border-t border-black/[0.06] pt-4">
-            <h3 className="text-xs font-bold tracking-wide text-[#8a90a3] uppercase">
+          <div className="mt-5 grid gap-2 border-t border-black/[0.06] pt-4 dark:border-white/[0.08]">
+            <h3 className="text-xs font-bold tracking-wide text-[#8a90a3] uppercase dark:text-[#7d8299]">
               Pending Invitations
             </h3>
             {invitations.map((invitation) => (
               <div
-                className="flex items-center justify-between gap-3 rounded-xl border border-black/[0.06] px-3.5 py-2.5"
+                className="flex items-center justify-between gap-3 rounded-xl border border-black/[0.06] px-3.5 py-2.5 dark:border-white/[0.08]"
                 key={invitation.id}
               >
-                <span className="min-w-0 truncate text-sm font-semibold text-[#11142c]">
+                <span className="min-w-0 truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                   {invitation.email}
                 </span>
                 <button
                   aria-label="Revoke invitation"
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] hover:text-red-600"
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] hover:text-red-600 dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
                   onClick={() => handleRevoke(invitation.id)}
                   type="button"
                 >
@@ -161,7 +161,7 @@ export function MembersSection() {
         <div className="grid gap-2">
           {members.map((member) => (
             <div
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/[0.06] px-3.5 py-3"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/[0.06] px-3.5 py-3 dark:border-white/[0.08]"
               key={member.id}
             >
               <div className="flex min-w-0 items-center gap-3">
@@ -171,10 +171,10 @@ export function MembersSection() {
                   userId={member.id}
                 />
                 <div className="min-w-0">
-                  <strong className="block truncate text-sm font-semibold text-[#11142c]">
+                  <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                     {member.name}
                   </strong>
-                  <span className="text-xs text-[#8a90a3] capitalize">
+                  <span className="text-xs text-[#8a90a3] capitalize dark:text-[#7d8299]">
                     {member.status}
                   </span>
                 </div>
@@ -185,7 +185,7 @@ export function MembersSection() {
             </div>
           ))}
           {members.length === 0 ? (
-            <p className="py-6 text-center text-sm text-[#8a90a3]">
+            <p className="py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
               No members yet.
             </p>
           ) : null}
@@ -199,19 +199,19 @@ export function MembersSection() {
         <div className="grid gap-2 sm:grid-cols-2">
           {roles.map((role) => (
             <div
-              className="rounded-xl border border-black/[0.06] px-3.5 py-3"
+              className="rounded-xl border border-black/[0.06] px-3.5 py-3 dark:border-white/[0.08]"
               key={role.id}
             >
               <div className="flex items-center justify-between">
-                <strong className="text-sm font-bold text-[#11142c]">
+                <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                   {role.name}
                 </strong>
-                <span className="text-xs font-semibold text-[#8a90a3]">
+                <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
                   {role.memberCount}{" "}
                   {role.memberCount === 1 ? "member" : "members"}
                 </span>
               </div>
-              <p className="mt-1 text-xs leading-relaxed text-[#8a90a3]">
+              <p className="mt-1 text-xs leading-relaxed text-[#8a90a3] dark:text-[#7d8299]">
                 {role.description}
               </p>
             </div>
@@ -219,19 +219,19 @@ export function MembersSection() {
         </div>
       </SettingsCard>
 
-      <section className="rounded-2xl border border-red-100 bg-white p-6 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+      <section className="rounded-2xl border border-red-100 bg-white p-6 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:bg-[#171a28]">
         <h2 className="text-lg font-bold text-red-600">Danger Zone</h2>
-        <p className="mt-1 text-sm text-[#8a90a3]">
+        <p className="mt-1 text-sm text-[#8a90a3] dark:text-[#7d8299]">
           Leaving a house removes your access to its projects, tasks, and chat.
           You can rejoin later with an invite.
         </p>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50/40 px-4 py-3.5">
           <div>
-            <strong className="block text-sm font-semibold text-[#11142c]">
+            <strong className="block text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
               Leave {activeHouse?.name ?? "this house"}
             </strong>
-            <span className="text-xs text-[#8a90a3]">
+            <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
               You&apos;ll need a new invite to rejoin.
             </span>
           </div>

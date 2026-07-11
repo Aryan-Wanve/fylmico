@@ -50,7 +50,11 @@ export function AnalyticsPage() {
   }
 
   if (!analytics) {
-    return <div className="p-8 text-sm text-[#8a90a3]">Loading analytics…</div>;
+    return (
+      <div className="p-8 text-sm text-[#8a90a3] dark:text-[#7d8299]">
+        Loading analytics…
+      </div>
+    );
   }
 
   return (

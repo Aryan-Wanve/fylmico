@@ -126,8 +126,10 @@ export function MessagesPage() {
   return (
     <div className="grid gap-6 p-8">
       <div>
-        <h1 className="text-3xl font-black text-[#11142c]">Messages</h1>
-        <p className="mt-1 text-[#5f667d]">
+        <h1 className="text-3xl font-black text-[#11142c] dark:text-[#f1f2f8]">
+          Messages
+        </h1>
+        <p className="mt-1 text-[#5f667d] dark:text-[#a8acbf]">
           Communicate with your team and keep everything in sync.
         </p>
       </div>
@@ -147,7 +149,7 @@ export function MessagesPage() {
         />
 
         {activeChannel ? (
-          <div className="flex min-h-0 flex-col gap-3 rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+          <div className="flex min-h-0 flex-col gap-3 rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             <ChatHeader
               channel={activeChannel}
               onRename={handleRenameChannel}
@@ -164,7 +166,7 @@ export function MessagesPage() {
               <>
                 <div className="min-h-0 flex-1 overflow-y-auto px-4">
                   <div className="mb-3 flex justify-center">
-                    <span className="rounded-full bg-black/[0.04] px-3 py-1 text-xs font-semibold text-[#8a90a3]">
+                    <span className="rounded-full bg-black/[0.04] px-3 py-1 text-xs font-semibold text-[#8a90a3] dark:bg-white/[0.06] dark:text-[#7d8299]">
                       Today
                     </span>
                   </div>

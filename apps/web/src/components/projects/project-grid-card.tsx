@@ -23,7 +23,7 @@ export function ProjectGridCard({
   const overdue = isProjectOverdue(project);
 
   return (
-    <article className="flex min-w-0 flex-col rounded-2xl border border-black/[0.06] bg-white p-3 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+    <article className="flex min-w-0 flex-col rounded-2xl border border-black/[0.06] bg-white p-3 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
       <div className="relative h-36 w-full overflow-hidden rounded-xl">
         <div
           className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${project.coverGradient ?? "from-slate-400 via-slate-600 to-slate-800"}`}
@@ -38,34 +38,34 @@ export function ProjectGridCard({
       </div>
 
       <div className="flex items-start justify-between gap-2 pt-3">
-        <strong className="truncate text-[0.95rem] font-bold text-[#11142c]">
+        <strong className="truncate text-[0.95rem] font-bold text-[#11142c] dark:text-[#f1f2f8]">
           {project.title}
         </strong>
         <ProjectCardMenu onArchive={onArchive} onDuplicate={onDuplicate} />
       </div>
-      <span className="text-xs text-[#8a90a3]">
+      <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
         {project.type} &bull; {project.genre}
       </span>
-      <p className="mt-1.5 line-clamp-2 text-sm text-[#5f667d]">
+      <p className="mt-1.5 line-clamp-2 text-sm text-[#5f667d] dark:text-[#a8acbf]">
         {project.description}
       </p>
 
       <div className="mt-3 flex items-center gap-2">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06]">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
           <div
             className="h-full rounded-full bg-[#654cff]"
             style={{ width: `${project.progress}%` }}
           />
         </div>
-        <span className="text-xs font-semibold text-[#5f667d]">
+        <span className="text-xs font-semibold text-[#5f667d] dark:text-[#a8acbf]">
           {project.progress}%
         </span>
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-black/5 pt-3">
+      <div className="mt-3 flex items-center justify-between border-t border-black/5 pt-3 dark:border-white/[0.06]">
         <TeamAvatarStack members={members} teamIds={project.teamIds} />
         <span
-          className={`text-xs font-semibold ${overdue ? "text-red-600" : "text-[#8a90a3]"}`}
+          className={`text-xs font-semibold ${overdue ? "text-red-600" : "text-[#8a90a3] dark:text-[#7d8299]"}`}
         >
           {overdue ? "Overdue · " : ""}
           {project.dueDate ?? "TBD"}

@@ -1,6 +1,6 @@
 export function FileListColumnHeader() {
   return (
-    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-2.5 text-xs font-bold tracking-wide text-[#8a90a3] uppercase">
+    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-2.5 text-xs font-bold tracking-wide text-[#8a90a3] uppercase dark:border-white/[0.06] dark:text-[#7d8299]">
       <span className="min-w-0 flex-1">Name</span>
       <span className="hidden w-24 shrink-0 sm:block">Size</span>
       <span className="hidden w-24 shrink-0 md:block">Type</span>

@@ -187,13 +187,13 @@ export function FilesPage() {
           </div>
 
           {loading ? (
-            <p className="py-16 text-center text-sm text-[#8a90a3]">
+            <p className="py-16 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
               Loading files...
             </p>
           ) : paginated.length === 0 ? (
             <FilesEmptyState />
           ) : viewMode === "list" ? (
-            <div className="min-w-0 overflow-x-auto rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+            <div className="min-w-0 overflow-x-auto rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
               <div className="min-w-[36rem]">
                 <FileListColumnHeader />
                 {paginated.map((entry) => (

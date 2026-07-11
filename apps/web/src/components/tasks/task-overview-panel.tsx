@@ -60,10 +60,10 @@ export function TaskOverviewPanel({ tasks }: { tasks: Task[] }) {
           </svg>
           <div className="absolute inset-0 grid place-items-center">
             <div className="text-center">
-              <strong className="block text-2xl font-black text-[#11142c]">
+              <strong className="block text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
                 {total}
               </strong>
-              <span className="text-[0.65rem] font-semibold text-[#8a90a3]">
+              <span className="text-[0.65rem] font-semibold text-[#8a90a3] dark:text-[#7d8299]">
                 Total Tasks
               </span>
             </div>
@@ -76,13 +76,15 @@ export function TaskOverviewPanel({ tasks }: { tasks: Task[] }) {
               className="flex items-center justify-between gap-2 text-sm"
               key={status}
             >
-              <span className="flex items-center gap-2 font-semibold text-[#4b5268]">
+              <span className="flex items-center gap-2 font-semibold text-[#4b5268] dark:text-[#c7cad9]">
                 <span
                   className={`h-2.5 w-2.5 rounded-full ${STATUS_META[status].dot}`}
                 />
                 {STATUS_META[status].label}
               </span>
-              <span className="font-bold text-[#11142c]">{count}</span>
+              <span className="font-bold text-[#11142c] dark:text-[#f1f2f8]">
+                {count}
+              </span>
             </div>
           ))}
         </div>

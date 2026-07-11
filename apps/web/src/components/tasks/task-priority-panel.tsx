@@ -25,9 +25,11 @@ export function TaskPriorityPanel({ tasks }: { tasks: Task[] }) {
                 >
                   {meta.label}
                 </span>
-                <span className="font-bold text-[#11142c]">{count}</span>
+                <span className="font-bold text-[#11142c] dark:text-[#f1f2f8]">
+                  {count}
+                </span>
               </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/[0.06]">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
                 <div
                   className={`h-full rounded-full ${meta.bar}`}
                   style={{ width: `${(count / total) * 100}%` }}

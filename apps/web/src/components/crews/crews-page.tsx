@@ -235,19 +235,19 @@ export function CrewsPage() {
 
                 return (
                   <div
-                    className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]"
+                    className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]"
                     key={group.department}
                   >
-                    <div className="flex items-center gap-2 border-b border-black/5 bg-[#fafafd] px-4 py-2.5">
+                    <div className="flex items-center gap-2 border-b border-black/5 bg-[#fafafd] px-4 py-2.5 dark:border-white/[0.06] dark:bg-[#1b1e2d]">
                       <span
                         className={`grid h-6 w-6 place-items-center rounded-md ${meta.bg} ${meta.color}`}
                       >
                         <Icon className="h-3.5 w-3.5" />
                       </span>
-                      <strong className="text-sm font-bold text-[#11142c]">
+                      <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                         {group.department} Department
                       </strong>
-                      <span className="rounded-full bg-black/[0.06] px-1.5 py-0.5 text-xs font-bold text-[#4b5268]">
+                      <span className="rounded-full bg-black/[0.06] px-1.5 py-0.5 text-xs font-bold text-[#4b5268] dark:bg-white/[0.08] dark:text-[#c7cad9]">
                         {group.members.length}
                       </span>
                     </div>
@@ -265,7 +265,7 @@ export function CrewsPage() {
             </div>
           ) : (
             <>
-              <div className="min-w-0 overflow-x-auto rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+              <div className="min-w-0 overflow-x-auto rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
                 <div className="min-w-[46rem]">
                   <CrewTableColumnHeader />
                   {paginated.map((member) => (

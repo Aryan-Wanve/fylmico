@@ -23,7 +23,7 @@ function AuthCallbackContent() {
   }, [router, searchParams]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center text-[#15172b]">
+    <div className="flex min-h-screen items-center justify-center text-[#15172b] dark:text-[#f1f2f8]">
       Signing you in...
     </div>
   );

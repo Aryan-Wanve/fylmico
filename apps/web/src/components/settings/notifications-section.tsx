@@ -24,7 +24,7 @@ export function NotificationsSection() {
       title="Notifications"
     >
       <div className="grid gap-1">
-        <div className="grid grid-cols-[1fr_5rem_5rem] gap-4 px-1 pb-2 text-xs font-bold tracking-wide text-[#8a90a3] uppercase">
+        <div className="grid grid-cols-[1fr_5rem_5rem] gap-4 px-1 pb-2 text-xs font-bold tracking-wide text-[#8a90a3] uppercase dark:text-[#7d8299]">
           <span>Preference</span>
           <span className="text-center">Email</span>
           <span className="text-center">Push</span>
@@ -35,10 +35,10 @@ export function NotificationsSection() {
             key={preference.id}
           >
             <div>
-              <strong className="block text-sm font-semibold text-[#11142c]">
+              <strong className="block text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                 {preference.label}
               </strong>
-              <span className="text-xs text-[#8a90a3]">
+              <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
                 {preference.description}
               </span>
             </div>

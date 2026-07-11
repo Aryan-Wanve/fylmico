@@ -89,13 +89,13 @@ export function ProjectTimelinePanel() {
     >
       <div className="p-4">
         <div className="flex items-center justify-between px-1 pb-3">
-          <strong className="text-sm font-bold text-[#11142c]">
+          <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
             {monthLabel}
           </strong>
           <div className="flex items-center gap-1">
             <button
               aria-label="Previous week"
-              className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04]"
+              className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
               onClick={() =>
                 setWeekStart((current) => {
                   const next = new Date(current);
@@ -109,7 +109,7 @@ export function ProjectTimelinePanel() {
             </button>
             <button
               aria-label="Next week"
-              className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04]"
+              className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
               onClick={() =>
                 setWeekStart((current) => {
                   const next = new Date(current);
@@ -136,7 +136,7 @@ export function ProjectTimelinePanel() {
                 onClick={() => setSelectedDate(day)}
                 type="button"
               >
-                <span className="text-[0.65rem] font-bold text-[#c3c7d4]">
+                <span className="text-[0.65rem] font-bold text-[#c3c7d4] dark:text-[#5c6178]">
                   {WEEKDAY_LABELS[index]}
                 </span>
                 <span
@@ -145,7 +145,7 @@ export function ProjectTimelinePanel() {
                       ? "bg-[#654cff] text-white"
                       : isToday
                         ? "bg-[#654cff]/10 text-[#654cff]"
-                        : "text-[#4b5268] hover:bg-black/[0.04]"
+                        : "text-[#4b5268] hover:bg-black/[0.04] dark:text-[#c7cad9] dark:hover:bg-white/[0.06]"
                   }`}
                 >
                   {day.getDate()}
@@ -156,18 +156,18 @@ export function ProjectTimelinePanel() {
         </div>
       </div>
 
-      <div className="border-t border-black/5">
+      <div className="border-t border-black/5 dark:border-white/[0.06]">
         {dayEvents.length > 0 ? (
           dayEvents.map((event) => (
             <div className="flex items-center gap-4 px-6 py-3.5" key={event.id}>
-              <time className="w-20 shrink-0 text-sm font-semibold text-[#4b5268]">
+              <time className="w-20 shrink-0 text-sm font-semibold text-[#4b5268] dark:text-[#c7cad9]">
                 {event.time}
               </time>
               <div className="min-w-0 flex-1">
-                <strong className="block truncate text-sm font-semibold text-[#11142c]">
+                <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                   {event.title}
                 </strong>
-                <span className="text-xs text-[#8a90a3]">
+                <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
                   {event.location ?? "TBD"}
                   {event.projectId && projectTitles[event.projectId]
                     ? ` • ${projectTitles[event.projectId]}`
@@ -180,7 +180,7 @@ export function ProjectTimelinePanel() {
             </div>
           ))
         ) : (
-          <p className="px-6 py-6 text-center text-sm text-[#8a90a3]">
+          <p className="px-6 py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
             No shoots scheduled for this day.
           </p>
         )}

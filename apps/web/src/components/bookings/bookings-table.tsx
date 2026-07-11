@@ -17,7 +17,7 @@ const CATEGORY_ICONS: Record<ResourceCategory, typeof Building2> = {
 export function BookingsTable({ rows }: { rows: Booking[] }) {
   if (rows.length === 0) {
     return (
-      <p className="px-6 py-12 text-center text-sm text-[#8a90a3]">
+      <p className="px-6 py-12 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
         No bookings match this filter.
       </p>
     );
@@ -27,7 +27,7 @@ export function BookingsTable({ rows }: { rows: Booking[] }) {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[64rem] border-collapse text-left">
         <thead>
-          <tr className="border-b border-black/5 text-xs font-bold tracking-wide text-[#8a90a3]">
+          <tr className="border-b border-black/5 text-xs font-bold tracking-wide text-[#8a90a3] dark:border-white/[0.06] dark:text-[#7d8299]">
             <th className="px-6 py-3 font-bold">Booking</th>
             <th className="px-6 py-3 font-bold">Resource</th>
             <th className="px-6 py-3 font-bold">Project</th>
@@ -44,7 +44,7 @@ export function BookingsTable({ rows }: { rows: Booking[] }) {
 
             return (
               <tr
-                className="border-b border-black/5 align-middle last:border-b-0 hover:bg-black/[0.015]"
+                className="border-b border-black/5 align-middle last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03]"
                 key={row.id}
               >
                 <td className="px-6 py-3.5">
@@ -55,17 +55,17 @@ export function BookingsTable({ rows }: { rows: Booking[] }) {
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
-                      <strong className="block truncate text-sm font-semibold text-[#11142c]">
+                      <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                         {row.resourceName}
                       </strong>
-                      <span className="block truncate text-xs text-[#8a90a3]">
+                      <span className="block truncate text-xs text-[#8a90a3] dark:text-[#7d8299]">
                         {row.resourceSubtitle ?? ""}
                       </span>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-3.5">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-[#5f667d]">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-[#5f667d] dark:text-[#a8acbf]">
                     <span
                       className={`rounded-md px-2 py-0.5 text-xs font-bold ${categoryStyle.tile}`}
                     >
@@ -75,11 +75,11 @@ export function BookingsTable({ rows }: { rows: Booking[] }) {
                   </div>
                 </td>
                 <td className="px-6 py-3.5">
-                  <strong className="block truncate text-sm font-semibold text-[#11142c]">
+                  <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                     {row.projectName ?? "—"}
                   </strong>
                   {row.projectPhase ? (
-                    <div className="flex items-center gap-1.5 text-xs text-[#8a90a3]">
+                    <div className="flex items-center gap-1.5 text-xs text-[#8a90a3] dark:text-[#7d8299]">
                       <span
                         className={`h-1.5 w-1.5 rounded-full ${categoryStyle.dot}`}
                       />
@@ -88,11 +88,11 @@ export function BookingsTable({ rows }: { rows: Booking[] }) {
                   ) : null}
                 </td>
                 <td className="px-6 py-3.5">
-                  <div className="flex items-center gap-1.5 text-sm font-semibold text-[#3a3f57]">
-                    <Calendar className="h-3.5 w-3.5 text-[#8a90a3]" />
+                  <div className="flex items-center gap-1.5 text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
+                    <Calendar className="h-3.5 w-3.5 text-[#8a90a3] dark:text-[#7d8299]" />
                     {formatDateRange(row.startDate, row.endDate)}
                   </div>
-                  <span className="text-xs text-[#8a90a3]">
+                  <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
                     {row.startTime} – {row.endTime}
                   </span>
                 </td>
@@ -111,10 +111,10 @@ export function BookingsTable({ rows }: { rows: Booking[] }) {
                       userId={row.bookedById}
                     />
                     <div className="min-w-0">
-                      <strong className="block truncate text-xs font-semibold text-[#3a3f57]">
+                      <strong className="block truncate text-xs font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                         {row.bookedByName}
                       </strong>
-                      <span className="block truncate text-[0.7rem] text-[#8a90a3]">
+                      <span className="block truncate text-[0.7rem] text-[#8a90a3] dark:text-[#7d8299]">
                         {formatRelativeTime(row.createdAt)}
                       </span>
                     </div>

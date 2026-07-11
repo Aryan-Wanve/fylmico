@@ -108,7 +108,9 @@ export function CreateMenu() {
       <DropdownMenuContent align="end">
         {createOptions.map((option) => (
           <DropdownMenuItem key={option.label} onClick={option.onSelect}>
-            <span className="font-semibold text-[#12142b]">{option.label}</span>
+            <span className="font-semibold text-[#12142b] dark:text-[#f1f2f8]">
+              {option.label}
+            </span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

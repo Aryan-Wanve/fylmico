@@ -32,7 +32,7 @@ function pillClassName(active: boolean): string {
   return `rounded-lg px-2.5 py-1 text-xs font-semibold ${
     active
       ? "bg-[#654cff] text-white"
-      : "bg-black/[0.04] text-[#4b5268] hover:bg-black/[0.07]"
+      : "bg-black/[0.04] dark:bg-white/[0.06] text-[#4b5268] dark:text-[#c7cad9] hover:bg-black/[0.07] dark:hover:bg-white/[0.09]"
   }`;
 }
 
@@ -113,7 +113,7 @@ export function NewEventPopover({
         }
       />
       <PopoverContent align="center" className="w-80" side="top">
-        <strong className="px-1 text-sm font-bold text-[#11142c]">
+        <strong className="px-1 text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
           New Event
         </strong>
 

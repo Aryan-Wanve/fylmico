@@ -15,13 +15,15 @@ export function CrewByRolePanel({ members }: { members: CrewMember[] }) {
 
           return (
             <div
-              className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-black/[0.02]"
+              className="flex items-center justify-between rounded-lg px-2 py-2 hover:bg-black/[0.02] dark:hover:bg-white/[0.04]"
               key={role}
             >
-              <span className="text-sm font-semibold text-[#3a3f57]">
+              <span className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                 {role}s
               </span>
-              <span className="text-sm font-bold text-[#11142c]">{count}</span>
+              <span className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
+                {count}
+              </span>
             </div>
           );
         })}

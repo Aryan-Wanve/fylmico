@@ -43,17 +43,17 @@ export function UpcomingBirthdaysPanel({ members }: { members: CrewMember[] }) {
             );
             return (
               <div
-                className="flex items-center gap-3 border-b border-black/5 px-6 py-3.5 last:border-b-0"
+                className="flex items-center gap-3 border-b border-black/5 px-6 py-3.5 last:border-b-0 dark:border-white/[0.06]"
                 key={member.id}
               >
                 <Avatar>
                   <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <strong className="block truncate text-sm font-semibold text-[#11142c]">
+                  <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                     {member.name}
                   </strong>
-                  <span className="text-xs text-[#8a90a3]">
+                  <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
                     {member.jobTitle}
                   </span>
                 </div>
@@ -69,7 +69,7 @@ export function UpcomingBirthdaysPanel({ members }: { members: CrewMember[] }) {
             );
           })
         ) : (
-          <p className="px-6 py-6 text-center text-sm text-[#8a90a3]">
+          <p className="px-6 py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
             No birthdays coming up.
           </p>
         )}

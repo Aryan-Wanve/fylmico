@@ -21,8 +21,8 @@ export function AppSidebar({
     <aside
       className={
         compact
-          ? "flex h-full w-20 shrink-0 flex-col items-center gap-6 overflow-hidden border-r border-black/5 bg-white/70 py-6 backdrop-blur-xl"
-          : "flex h-full w-[17rem] shrink-0 flex-col gap-6 overflow-hidden border-r border-black/5 bg-white/70 px-5 py-6 backdrop-blur-xl"
+          ? "flex h-full w-20 shrink-0 flex-col items-center gap-6 overflow-hidden border-r border-black/5 bg-white/70 py-6 backdrop-blur-xl dark:border-white/[0.06]"
+          : "flex h-full w-[17rem] shrink-0 flex-col gap-6 overflow-hidden border-r border-black/5 bg-white/70 px-5 py-6 backdrop-blur-xl dark:border-white/[0.06]"
       }
     >
       <Link
@@ -40,7 +40,9 @@ export function AppSidebar({
           width={28}
         />
         {!compact ? (
-          <span className="text-lg font-black text-[#12142b]">fylmico</span>
+          <span className="text-lg font-black text-[#12142b] dark:text-[#f1f2f8]">
+            fylmico
+          </span>
         ) : null}
       </Link>
 
@@ -67,9 +69,9 @@ export function AppSidebar({
             compact ? "h-11 w-11 justify-center" : "h-11 px-3",
             isActive
               ? "bg-[#654cff]/10 text-[#654cff]"
-              : "text-[#4b5268] hover:bg-black/[0.03] hover:text-[#12142b]",
+              : "text-[#4b5268] dark:text-[#c7cad9] hover:bg-black/[0.03] dark:hover:bg-white/[0.05] hover:text-[#12142b] dark:hover:text-[#f1f2f8]",
             item.href === null
-              ? "cursor-default opacity-60 hover:bg-transparent hover:text-[#4b5268]"
+              ? "cursor-default opacity-60 hover:bg-transparent hover:text-[#4b5268] dark:hover:text-[#c7cad9]"
               : ""
           ].join(" ");
 

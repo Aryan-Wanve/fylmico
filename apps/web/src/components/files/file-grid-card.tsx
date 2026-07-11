@@ -22,7 +22,7 @@ export function FileGridCard({
   const Icon = meta.icon;
 
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border border-black/[0.06] bg-white p-4 text-center shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] hover:-translate-y-0.5 hover:shadow-[0_1.2rem_3rem_rgba(53,45,124,0.1)]">
+    <div className="flex flex-col items-center gap-2 rounded-xl border border-black/[0.06] bg-white p-4 text-center shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] hover:-translate-y-0.5 hover:shadow-[0_1.2rem_3rem_rgba(53,45,124,0.1)] dark:border-white/[0.08] dark:bg-[#171a28]">
       <div className="flex w-full justify-end">
         <FileCardMenu onDelete={onDelete} onDownload={onDownload} />
       </div>
@@ -38,10 +38,10 @@ export function FileGridCard({
           <Icon className="h-7 w-7" />
         </span>
       </button>
-      <strong className="line-clamp-2 w-full truncate text-sm font-semibold text-[#11142c]">
+      <strong className="line-clamp-2 w-full truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
         {file.name}
       </strong>
-      <span className="text-xs text-[#8a90a3]">
+      <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
         {file.type === "folder" ? "Folder" : formatFileSize(file.size)}
       </span>
     </div>

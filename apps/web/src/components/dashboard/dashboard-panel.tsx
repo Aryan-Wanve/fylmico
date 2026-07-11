@@ -11,10 +11,12 @@ export function DashboardPanel({
 }) {
   return (
     <section
-      className={`min-w-0 rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] ${className ?? ""}`}
+      className={`min-w-0 rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28] ${className ?? ""}`}
     >
-      <header className="flex h-16 items-center justify-between border-b border-black/5 px-6">
-        <h2 className="text-base font-bold text-[#11142c]">{title}</h2>
+      <header className="flex h-16 items-center justify-between border-b border-black/5 px-6 dark:border-white/[0.06]">
+        <h2 className="text-base font-bold text-[#11142c] dark:text-[#f1f2f8]">
+          {title}
+        </h2>
         {action ? (
           <button
             className="text-sm font-bold text-[#654cff]"

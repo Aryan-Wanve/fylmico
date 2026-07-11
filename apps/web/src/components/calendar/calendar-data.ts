@@ -41,7 +41,10 @@ export const CATEGORY_STYLES: Record<
     chip: "bg-[#3b82f6]/10 text-[#1d4ed8]"
   },
   delivery: { dot: "bg-[#ef4444]", chip: "bg-[#ef4444]/10 text-[#b91c1c]" },
-  other: { dot: "bg-[#8a90a3]", chip: "bg-[#8a90a3]/10 text-[#5f667d]" }
+  other: {
+    dot: "bg-[#8a90a3]",
+    chip: "bg-[#8a90a3]/10 text-[#5f667d] dark:text-[#a8acbf]"
+  }
 };
 
 export const MY_SCHEDULE_ID = "my-schedule";

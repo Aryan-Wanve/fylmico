@@ -43,17 +43,19 @@ export function HouseChoiceCard({
 
   if (mode === "create") {
     return (
-      <section className="w-full max-w-[30rem] rounded-3xl border border-black/[0.06] bg-white p-10 shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)]">
+      <section className="w-full max-w-[30rem] rounded-3xl border border-black/[0.06] bg-white p-10 shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)] dark:border-white/[0.08] dark:bg-[#171a28]">
         <button
-          className="mb-5 flex items-center gap-1.5 text-sm font-bold text-[#5f667d]"
+          className="mb-5 flex items-center gap-1.5 text-sm font-bold text-[#5f667d] dark:text-[#a8acbf]"
           disabled={isSubmitting}
           onClick={() => setMode("choice")}
           type="button"
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
-        <h2 className="text-2xl font-black text-[#11142c]">Create a house</h2>
-        <p className="mt-2 text-[0.95rem] leading-relaxed text-[#5f667d]">
+        <h2 className="text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
+          Create a house
+        </h2>
+        <p className="mt-2 text-[0.95rem] leading-relaxed text-[#5f667d] dark:text-[#a8acbf]">
           Give your production house a name and a unique handle.
         </p>
         <form
@@ -102,17 +104,19 @@ export function HouseChoiceCard({
 
   if (mode === "join") {
     return (
-      <section className="w-full max-w-[30rem] rounded-3xl border border-black/[0.06] bg-white p-10 shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)]">
+      <section className="w-full max-w-[30rem] rounded-3xl border border-black/[0.06] bg-white p-10 shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)] dark:border-white/[0.08] dark:bg-[#171a28]">
         <button
-          className="mb-5 flex items-center gap-1.5 text-sm font-bold text-[#5f667d]"
+          className="mb-5 flex items-center gap-1.5 text-sm font-bold text-[#5f667d] dark:text-[#a8acbf]"
           disabled={isSubmitting}
           onClick={() => setMode("choice")}
           type="button"
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
-        <h2 className="text-2xl font-black text-[#11142c]">Join a house</h2>
-        <p className="mt-2 text-[0.95rem] leading-relaxed text-[#5f667d]">
+        <h2 className="text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
+          Join a house
+        </h2>
+        <p className="mt-2 text-[0.95rem] leading-relaxed text-[#5f667d] dark:text-[#a8acbf]">
           Enter the invite code your house owner shared with you.
         </p>
         <form className="mt-6 grid gap-4 text-left" onSubmit={handleJoinSubmit}>
@@ -138,14 +142,14 @@ export function HouseChoiceCard({
   }
 
   return (
-    <section className="w-full max-w-[30rem] rounded-3xl border border-black/[0.06] bg-white p-10 text-center shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)]">
+    <section className="w-full max-w-[30rem] rounded-3xl border border-black/[0.06] bg-white p-10 text-center shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)] dark:border-white/[0.08] dark:bg-[#171a28]">
       <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border border-dashed border-[#654cff]/35 text-[#654cff]">
         <UserRoundPlus className="h-8 w-8" />
       </div>
-      <h2 className="mt-6 text-2xl font-black text-[#11142c]">
+      <h2 className="mt-6 text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
         Create or join a house
       </h2>
-      <p className="mx-auto mt-2 max-w-xs text-[0.95rem] leading-relaxed text-[#5f667d]">
+      <p className="mx-auto mt-2 max-w-xs text-[0.95rem] leading-relaxed text-[#5f667d] dark:text-[#a8acbf]">
         Join an existing house if you have an invite or create your own to get
         started.
       </p>

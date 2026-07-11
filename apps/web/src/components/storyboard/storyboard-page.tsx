@@ -234,16 +234,16 @@ export function StoryboardPage() {
       />
 
       {loading ? (
-        <p className="py-16 text-center text-sm text-[#8a90a3]">
+        <p className="py-16 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
           Loading storyboards...
         </p>
       ) : activeTab === "boards" ? (
         visibleBoards.length === 0 ? (
-          <div className="grid place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 py-16 text-center">
-            <strong className="text-sm font-bold text-[#11142c]">
+          <div className="grid place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 py-16 text-center dark:border-white/10">
+            <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
               No boards yet
             </strong>
-            <p className="max-w-xs text-sm text-[#8a90a3]">
+            <p className="max-w-xs text-sm text-[#8a90a3] dark:text-[#7d8299]">
               Create a board to start planning your shots.
             </p>
           </div>
@@ -279,11 +279,11 @@ export function StoryboardPage() {
                 />
 
                 {activeBoard.shots.length === 0 ? (
-                  <div className="grid place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 py-16 text-center">
-                    <strong className="text-sm font-bold text-[#11142c]">
+                  <div className="grid place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 py-16 text-center dark:border-white/10">
+                    <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                       This board has no shots yet
                     </strong>
-                    <p className="max-w-xs text-sm text-[#8a90a3]">
+                    <p className="max-w-xs text-sm text-[#8a90a3] dark:text-[#7d8299]">
                       Add shots to start planning this sequence.
                     </p>
                     <button
@@ -314,7 +314,7 @@ export function StoryboardPage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+                      <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
                         {activeBoard.shots.map((shot, index) => (
                           <ShotListRow
                             dense={density === "compact"}
@@ -328,7 +328,7 @@ export function StoryboardPage() {
                       </div>
                     )}
                     <button
-                      className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-black/15 py-2.5 text-sm font-bold text-[#4b5268] hover:bg-black/[0.03]"
+                      className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-black/15 py-2.5 text-sm font-bold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/15 dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
                       onClick={handleAddShot}
                       type="button"
                     >

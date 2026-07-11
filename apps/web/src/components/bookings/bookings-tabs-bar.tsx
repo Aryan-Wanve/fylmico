@@ -27,13 +27,13 @@ export function BookingsTabsBar({
           <TabsTrigger value="all">All Bookings</TabsTrigger>
           <TabsTrigger value="mine">
             My Bookings
-            <span className="rounded-full bg-black/[0.06] px-1.5 py-0.5 text-[0.68rem] font-bold text-[#5f667d]">
+            <span className="rounded-full bg-black/[0.06] px-1.5 py-0.5 text-[0.68rem] font-bold text-[#5f667d] dark:bg-white/[0.08] dark:text-[#a8acbf]">
               {tabCounts.myBookings}
             </span>
           </TabsTrigger>
           <TabsTrigger value="pending">
             Pending Approval
-            <span className="rounded-full bg-black/[0.06] px-1.5 py-0.5 text-[0.68rem] font-bold text-[#5f667d]">
+            <span className="rounded-full bg-black/[0.06] px-1.5 py-0.5 text-[0.68rem] font-bold text-[#5f667d] dark:bg-white/[0.08] dark:text-[#a8acbf]">
               {tabCounts.pendingApproval}
             </span>
           </TabsTrigger>

@@ -24,8 +24,10 @@ export function BoardToolbar({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 className="text-lg font-black text-[#11142c]">{board.name}</h2>
-        <p className="text-sm text-[#8a90a3]">
+        <h2 className="text-lg font-black text-[#11142c] dark:text-[#f1f2f8]">
+          {board.name}
+        </h2>
+        <p className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
           {board.shots.length} frames &bull; Updated{" "}
           {formatRelativeTime(board.updatedAt)}
         </p>
@@ -33,7 +35,7 @@ export function BoardToolbar({
 
       <div className="flex shrink-0 items-center gap-3">
         <button
-          className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03]"
+          className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
           onClick={onPresent}
           type="button"
         >
@@ -41,13 +43,13 @@ export function BoardToolbar({
           Presentation
         </button>
 
-        <div className="flex items-center gap-1 rounded-lg bg-black/[0.04] p-1">
+        <div className="flex items-center gap-1 rounded-lg bg-black/[0.04] p-1 dark:bg-white/[0.06]">
           <button
             aria-pressed={viewMode === "grid"}
             className={`grid h-7 w-8 place-items-center rounded-md ${
               viewMode === "grid"
-                ? "bg-white text-[#11142c] shadow-sm"
-                : "text-[#8a90a3] hover:text-[#4b5268]"
+                ? "bg-white text-[#11142c] shadow-sm dark:bg-[#171a28] dark:text-[#f1f2f8]"
+                : "text-[#8a90a3] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:text-[#c7cad9]"
             }`}
             onClick={() => onViewModeChange("grid")}
             type="button"
@@ -58,8 +60,8 @@ export function BoardToolbar({
             aria-pressed={viewMode === "list"}
             className={`grid h-7 w-8 place-items-center rounded-md ${
               viewMode === "list"
-                ? "bg-white text-[#11142c] shadow-sm"
-                : "text-[#8a90a3] hover:text-[#4b5268]"
+                ? "bg-white text-[#11142c] shadow-sm dark:bg-[#171a28] dark:text-[#f1f2f8]"
+                : "text-[#8a90a3] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:text-[#c7cad9]"
             }`}
             onClick={() => onViewModeChange("list")}
             type="button"
@@ -72,7 +74,7 @@ export function BoardToolbar({
           <div className="flex items-center gap-2">
             <button
               aria-label="Zoom out"
-              className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] disabled:opacity-40"
+              className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] disabled:opacity-40 dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
               disabled={zoom <= 0}
               onClick={() => onZoomChange(Math.max(0, zoom - 25))}
               type="button"
@@ -91,7 +93,7 @@ export function BoardToolbar({
             />
             <button
               aria-label="Zoom in"
-              className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] disabled:opacity-40"
+              className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] disabled:opacity-40 dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
               disabled={zoom >= 100}
               onClick={() => onZoomChange(Math.min(100, zoom + 25))}
               type="button"

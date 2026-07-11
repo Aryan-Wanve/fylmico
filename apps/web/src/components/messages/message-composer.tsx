@@ -37,9 +37,9 @@ export function MessageComposer({
   }
 
   return (
-    <div className="rounded-2xl border border-black/[0.06] p-3">
+    <div className="rounded-2xl border border-black/[0.06] p-3 dark:border-white/[0.08]">
       <textarea
-        className="min-h-[2.75rem] w-full resize-none bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4]"
+        className="min-h-[2.75rem] w-full resize-none bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
         onChange={(event) => setValue(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey) {
@@ -52,7 +52,7 @@ export function MessageComposer({
         value={value}
       />
       <div className="mt-2 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-1 text-[#8a90a3]">
+        <div className="flex items-center gap-1 text-[#8a90a3] dark:text-[#7d8299]">
           <input
             className="hidden"
             onChange={(event) => {
@@ -67,7 +67,7 @@ export function MessageComposer({
           />
           <button
             aria-label="Attach file"
-            className="grid h-8 w-8 place-items-center rounded-lg hover:bg-black/[0.04] disabled:opacity-40"
+            className="grid h-8 w-8 place-items-center rounded-lg hover:bg-black/[0.04] disabled:opacity-40 dark:hover:bg-white/[0.06]"
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
             type="button"

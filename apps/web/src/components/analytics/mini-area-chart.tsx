@@ -63,7 +63,7 @@ export function MiniAreaChart({
         ))}
         {xLabels.map((label, index) => (
           <text
-            className="fill-[#8a90a3] text-[9px] font-semibold"
+            className="fill-[#8a90a3] text-[9px] font-semibold dark:fill-[#7d8299]"
             key={label}
             textAnchor="middle"
             x={(index / (xLabels.length - 1)) * WIDTH}

@@ -173,7 +173,7 @@ export function ProfileSection() {
           {isEditing ? (
             <div className="grid min-w-[16rem] flex-1 gap-4 sm:grid-cols-2">
               <label className="grid gap-1.5">
-                <Label className="text-xs font-bold text-[#8a90a3] uppercase">
+                <Label className="text-xs font-bold text-[#8a90a3] uppercase dark:text-[#7d8299]">
                   Full Name
                 </Label>
                 <Input
@@ -210,7 +210,7 @@ export function ProfileSection() {
       >
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="grid gap-1.5">
-            <Label className="text-sm font-semibold text-[#3a3f57]">
+            <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
               Current Password
             </Label>
             <Input
@@ -221,7 +221,7 @@ export function ProfileSection() {
             />
           </label>
           <label className="grid gap-1.5">
-            <Label className="text-sm font-semibold text-[#3a3f57]">
+            <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
               New Password
             </Label>
             <Input
@@ -232,7 +232,7 @@ export function ProfileSection() {
             />
           </label>
           <label className="grid gap-1.5">
-            <Label className="text-sm font-semibold text-[#3a3f57]">
+            <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
               Confirm New Password
             </Label>
             <Input
@@ -277,16 +277,16 @@ export function ProfileSection() {
 
               return (
                 <div
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/[0.06] px-3.5 py-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/[0.06] px-3.5 py-3 dark:border-white/[0.08]"
                   key={session.id}
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-black/[0.04] text-[#4b5268]">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-black/[0.04] text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]">
                       <DeviceIcon className="h-4.5 w-4.5" />
                     </span>
                     <div className="min-w-0">
                       <span className="flex items-center gap-2">
-                        <strong className="truncate text-sm font-semibold text-[#11142c]">
+                        <strong className="truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                           {session.userAgent ?? "Unknown device"}
                         </strong>
                         {session.current ? (
@@ -295,14 +295,14 @@ export function ProfileSection() {
                           </Badge>
                         ) : null}
                       </span>
-                      <span className="text-xs text-[#8a90a3]">
+                      <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
                         IP {session.ipAddress ?? "unknown"}
                       </span>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
                     <span
-                      className={`text-xs font-semibold ${session.current ? "text-emerald-600" : "text-[#8a90a3]"}`}
+                      className={`text-xs font-semibold ${session.current ? "text-emerald-600" : "text-[#8a90a3] dark:text-[#7d8299]"}`}
                     >
                       {session.current
                         ? "Active now"
@@ -322,7 +322,7 @@ export function ProfileSection() {
                         render={
                           <button
                             aria-label="Session actions"
-                            className="grid h-7 w-7 place-items-center rounded-full text-[#8a90a3] hover:bg-black/[0.04]"
+                            className="grid h-7 w-7 place-items-center rounded-full text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
                             type="button"
                           >
                             <MoreVertical className="h-4 w-4" />
@@ -344,7 +344,7 @@ export function ProfileSection() {
               );
             })
           ) : (
-            <p className="py-4 text-center text-sm text-[#8a90a3]">
+            <p className="py-4 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
               No active sessions.
             </p>
           )}
@@ -363,8 +363,12 @@ function ProfileField({
 }) {
   return (
     <div className="flex items-center gap-3 text-sm">
-      <span className="w-24 shrink-0 text-[#8a90a3]">{label}</span>
-      <span className="min-w-0 font-semibold text-[#11142c]">{value}</span>
+      <span className="w-24 shrink-0 text-[#8a90a3] dark:text-[#7d8299]">
+        {label}
+      </span>
+      <span className="min-w-0 font-semibold text-[#11142c] dark:text-[#f1f2f8]">
+        {value}
+      </span>
     </div>
   );
 }

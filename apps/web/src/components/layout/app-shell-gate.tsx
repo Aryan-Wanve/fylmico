@@ -23,7 +23,7 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
   }, [activeHouse, pathname, router]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f7f7fb]">
+    <div className="flex h-screen overflow-hidden bg-[#f7f7fb] dark:bg-[#0e0f18]">
       <AppSidebar compact={isCompact} user={workspace.user} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <AppTopbar compact={isCompact} />

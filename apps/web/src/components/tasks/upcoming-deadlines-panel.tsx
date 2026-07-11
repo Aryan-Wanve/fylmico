@@ -29,7 +29,7 @@ export function UpcomingDeadlinesPanel({ tasks }: { tasks: Task[] }) {
 
           return (
             <div
-              className="flex items-center gap-3 border-b border-black/5 px-6 py-3.5 last:border-b-0"
+              className="flex items-center gap-3 border-b border-black/5 px-6 py-3.5 last:border-b-0 dark:border-white/[0.06]"
               key={task.id}
             >
               <AvatarWithStatus
@@ -37,10 +37,12 @@ export function UpcomingDeadlinesPanel({ tasks }: { tasks: Task[] }) {
                 userId={task.assigneeId}
               />
               <div className="min-w-0 flex-1">
-                <strong className="block truncate text-sm font-semibold text-[#11142c]">
+                <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                   {task.title}
                 </strong>
-                <span className="text-xs text-[#8a90a3]">{task.project}</span>
+                <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                  {task.project}
+                </span>
               </div>
               <span
                 className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-bold ${

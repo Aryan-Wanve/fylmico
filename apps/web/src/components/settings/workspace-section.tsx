@@ -46,7 +46,7 @@ export function WorkspaceSection() {
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="grid gap-1.5">
-          <Label className="text-sm font-semibold text-[#3a3f57]">
+          <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
             Workspace Name
           </Label>
           <Input
@@ -58,7 +58,9 @@ export function WorkspaceSection() {
           />
         </label>
         <label className="grid gap-1.5">
-          <Label className="text-sm font-semibold text-[#3a3f57]">Handle</Label>
+          <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
+            Handle
+          </Label>
           <Input
             onChange={(event) => {
               setForm({ ...form, handle: event.target.value });
@@ -68,11 +70,11 @@ export function WorkspaceSection() {
           />
         </label>
         <label className="grid gap-1.5 sm:col-span-2">
-          <Label className="text-sm font-semibold text-[#3a3f57]">
+          <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
             Description
           </Label>
           <textarea
-            className="min-h-[4.5rem] rounded-lg border border-black/10 p-2.5 text-sm text-[#11142c] outline-none"
+            className="min-h-[4.5rem] rounded-lg border border-black/10 p-2.5 text-sm text-[#11142c] outline-none dark:border-white/10 dark:text-[#f1f2f8]"
             onChange={(event) => {
               setForm({ ...form, description: event.target.value });
               setSaved(false);

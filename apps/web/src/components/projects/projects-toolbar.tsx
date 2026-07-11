@@ -51,13 +51,13 @@ export function ProjectsToolbar({
       </Tabs>
 
       <div className="flex shrink-0 items-center gap-3">
-        <div className="flex items-center gap-1 rounded-lg bg-black/[0.04] p-1">
+        <div className="flex items-center gap-1 rounded-lg bg-black/[0.04] p-1 dark:bg-white/[0.06]">
           <button
             aria-pressed={viewMode === "grid"}
             className={`flex h-7 items-center gap-1.5 rounded-md px-2.5 text-sm font-semibold ${
               viewMode === "grid"
-                ? "bg-white text-[#11142c] shadow-sm"
-                : "text-[#8a90a3] hover:text-[#4b5268]"
+                ? "bg-white text-[#11142c] shadow-sm dark:bg-[#171a28] dark:text-[#f1f2f8]"
+                : "text-[#8a90a3] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:text-[#c7cad9]"
             }`}
             onClick={() => onViewModeChange("grid")}
             type="button"
@@ -69,8 +69,8 @@ export function ProjectsToolbar({
             aria-pressed={viewMode === "list"}
             className={`flex h-7 items-center gap-1.5 rounded-md px-2.5 text-sm font-semibold ${
               viewMode === "list"
-                ? "bg-white text-[#11142c] shadow-sm"
-                : "text-[#8a90a3] hover:text-[#4b5268]"
+                ? "bg-white text-[#11142c] shadow-sm dark:bg-[#171a28] dark:text-[#f1f2f8]"
+                : "text-[#8a90a3] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:text-[#c7cad9]"
             }`}
             onClick={() => onViewModeChange("list")}
             type="button"
@@ -91,7 +91,7 @@ export function ProjectsToolbar({
 
 function CountPill({ value }: { value: number }) {
   return (
-    <span className="grid h-5 min-w-5 place-items-center rounded-full bg-black/[0.06] px-1 text-xs font-bold text-[#4b5268] group-data-active:bg-[#654cff]/10 group-data-active:text-[#654cff]">
+    <span className="grid h-5 min-w-5 place-items-center rounded-full bg-black/[0.06] px-1 text-xs font-bold text-[#4b5268] group-data-active:bg-[#654cff]/10 group-data-active:text-[#654cff] dark:bg-white/[0.08] dark:text-[#c7cad9]">
       {value}
     </span>
   );

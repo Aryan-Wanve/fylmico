@@ -15,7 +15,7 @@ export function AuthSocialProviders() {
       <div className="flex flex-col gap-4">
         {authSocialProviders.map((provider) => (
           <a
-            className="flex h-[3.45rem] items-center justify-center gap-2.5 rounded-lg border border-[#11142c1a] bg-white font-extrabold text-[#15172b] shadow-[0_0.7rem_1.6rem_rgba(42,39,84,0.035)] transition hover:-translate-y-px"
+            className="flex h-[3.45rem] items-center justify-center gap-2.5 rounded-lg border border-[#11142c1a] bg-white font-extrabold text-[#15172b] shadow-[0_0.7rem_1.6rem_rgba(42,39,84,0.035)] transition hover:-translate-y-px dark:bg-[#171a28] dark:text-[#f1f2f8]"
             href={`${API_BASE_URL}/auth/${provider.id}`}
             key={provider.id}
           >

@@ -13,7 +13,7 @@ export function ProjectProgressPanel({
     <DashboardPanel title="Hours Logged by Project">
       <div className="p-6">
         {series.length === 0 ? (
-          <p className="py-10 text-center text-sm text-[#8a90a3]">
+          <p className="py-10 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
             Log time against a project to see it charted here.
           </p>
         ) : (
@@ -25,7 +25,7 @@ export function ProjectProgressPanel({
                     className="h-2 w-2 rounded-full"
                     style={{ backgroundColor: line.color }}
                   />
-                  <span className="text-xs font-semibold text-[#5f667d]">
+                  <span className="text-xs font-semibold text-[#5f667d] dark:text-[#a8acbf]">
                     {line.label}
                   </span>
                 </div>

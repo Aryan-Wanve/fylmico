@@ -37,7 +37,7 @@ export function BookingCalendarPanel({ bookings }: { bookings: Booking[] }) {
   return (
     <div className="grid gap-2">
       <div className="flex items-center justify-between px-1">
-        <strong className="text-sm font-bold text-[#11142c]">
+        <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
           Booking Calendar
         </strong>
       </div>

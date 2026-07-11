@@ -32,12 +32,14 @@ export function BoardsPanel({
 
   return (
     <div className="grid content-start gap-4">
-      <div className="rounded-2xl border border-black/[0.06] bg-white p-4 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+      <div className="rounded-2xl border border-black/[0.06] bg-white p-4 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
         <div className="flex items-center justify-between px-1 pb-2">
-          <strong className="text-sm font-bold text-[#11142c]">Boards</strong>
+          <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
+            Boards
+          </strong>
           <button
             aria-label="New board"
-            className="grid h-6 w-6 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] hover:text-[#4b5268]"
+            className="grid h-6 w-6 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:bg-white/[0.06] dark:hover:text-[#c7cad9]"
             onClick={onNewBoard}
             type="button"
           >
@@ -54,7 +56,7 @@ export function BoardsPanel({
                 className={`flex items-center gap-2 rounded-xl px-2 py-2 ${
                   selected
                     ? "bg-[#654cff]/[0.08] text-[#654cff]"
-                    : "hover:bg-black/[0.03]"
+                    : "hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
                 }`}
                 key={board.id}
               >
@@ -67,18 +69,18 @@ export function BoardsPanel({
                     className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${
                       selected
                         ? "bg-[#654cff] text-white"
-                        : "bg-black/[0.04] text-[#8a90a3]"
+                        : "bg-black/[0.04] text-[#8a90a3] dark:bg-white/[0.06] dark:text-[#7d8299]"
                     }`}
                   >
                     <LayoutGrid className="h-4 w-4" />
                   </span>
                   <span className="min-w-0">
                     <strong
-                      className={`block truncate text-sm font-bold ${selected ? "text-[#654cff]" : "text-[#11142c]"}`}
+                      className={`block truncate text-sm font-bold ${selected ? "text-[#654cff]" : "text-[#11142c] dark:text-[#f1f2f8]"}`}
                     >
                       {board.name}
                     </strong>
-                    <span className="text-xs text-[#8a90a3]">
+                    <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
                       {board.shots.length} frames
                     </span>
                   </span>
@@ -88,7 +90,7 @@ export function BoardsPanel({
                     render={
                       <button
                         aria-label="Board actions"
-                        className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[#8a90a3] hover:bg-black/[0.06]"
+                        className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[#8a90a3] hover:bg-black/[0.06] dark:text-[#7d8299] dark:hover:bg-white/[0.08]"
                         type="button"
                       >
                         <MoreVertical className="h-4 w-4" />
@@ -110,18 +112,30 @@ export function BoardsPanel({
         </div>
       </div>
 
-      <div className="grid gap-3 rounded-2xl border border-black/[0.06] bg-white p-4 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+      <div className="grid gap-3 rounded-2xl border border-black/[0.06] bg-white p-4 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-[#8a90a3]">Total Frames</span>
-          <strong className="text-[#11142c]">{totalFrames}</strong>
+          <span className="text-[#8a90a3] dark:text-[#7d8299]">
+            Total Frames
+          </span>
+          <strong className="text-[#11142c] dark:text-[#f1f2f8]">
+            {totalFrames}
+          </strong>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-[#8a90a3]">Total Boards</span>
-          <strong className="text-[#11142c]">{boards.length}</strong>
+          <span className="text-[#8a90a3] dark:text-[#7d8299]">
+            Total Boards
+          </span>
+          <strong className="text-[#11142c] dark:text-[#f1f2f8]">
+            {boards.length}
+          </strong>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-[#8a90a3]">Last Updated</span>
-          <strong className="text-[#11142c]">{lastUpdated}</strong>
+          <span className="text-[#8a90a3] dark:text-[#7d8299]">
+            Last Updated
+          </span>
+          <strong className="text-[#11142c] dark:text-[#f1f2f8]">
+            {lastUpdated}
+          </strong>
         </div>
       </div>
     </div>

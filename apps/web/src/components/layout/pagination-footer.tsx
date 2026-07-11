@@ -21,10 +21,10 @@ export function PaginationFooter({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 px-1">
-      <div className="flex items-center gap-2 text-sm text-[#5f667d]">
+      <div className="flex items-center gap-2 text-sm text-[#5f667d] dark:text-[#a8acbf]">
         Show
         <select
-          className="h-8 rounded-lg border border-black/10 bg-white px-2 text-sm font-semibold text-[#4b5268] outline-none"
+          className="h-8 rounded-lg border border-black/10 bg-white px-2 text-sm font-semibold text-[#4b5268] outline-none dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9]"
           onChange={(event) => onPerPageChange(Number(event.target.value))}
           value={perPage}
         >
@@ -40,7 +40,7 @@ export function PaginationFooter({
       <div className="flex items-center gap-1">
         <button
           aria-label="Previous page"
-          className="grid h-8 w-8 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.04] disabled:pointer-events-none disabled:opacity-40"
+          className="grid h-8 w-8 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.04] disabled:pointer-events-none disabled:opacity-40 dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
           type="button"
@@ -50,7 +50,7 @@ export function PaginationFooter({
         {pageNumbers.map((entry, index) =>
           entry === "ellipsis" ? (
             <span
-              className="px-1 text-sm text-[#8a90a3]"
+              className="px-1 text-sm text-[#8a90a3] dark:text-[#7d8299]"
               key={`ellipsis-${index}`}
             >
               …
@@ -60,7 +60,7 @@ export function PaginationFooter({
               className={`grid h-8 w-8 place-items-center rounded-lg text-sm font-semibold ${
                 entry === page
                   ? "bg-[#654cff] text-white"
-                  : "text-[#4b5268] hover:bg-black/[0.04]"
+                  : "text-[#4b5268] hover:bg-black/[0.04] dark:text-[#c7cad9] dark:hover:bg-white/[0.06]"
               }`}
               key={entry}
               onClick={() => onPageChange(entry)}
@@ -72,7 +72,7 @@ export function PaginationFooter({
         )}
         <button
           aria-label="Next page"
-          className="grid h-8 w-8 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.04] disabled:pointer-events-none disabled:opacity-40"
+          className="grid h-8 w-8 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.04] disabled:pointer-events-none disabled:opacity-40 dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
           type="button"

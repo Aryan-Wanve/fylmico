@@ -34,7 +34,7 @@ export function DepartmentOverviewPanel({
 
           return (
             <div
-              className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-black/[0.02]"
+              className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-black/[0.02] dark:hover:bg-white/[0.04]"
               key={department}
             >
               <span
@@ -42,17 +42,19 @@ export function DepartmentOverviewPanel({
               >
                 <Icon className="h-4 w-4" />
               </span>
-              <span className="flex-1 truncate text-sm font-semibold text-[#3a3f57]">
+              <span className="flex-1 truncate text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                 {department} Department
               </span>
-              <span className="text-sm font-bold text-[#11142c]">{count}</span>
+              <span className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
+                {count}
+              </span>
             </div>
           );
         })}
 
         {rows.length > COLLAPSED_COUNT ? (
           <button
-            className="mt-1 flex items-center justify-center gap-1 rounded-lg py-1.5 text-sm font-bold text-[#654cff] hover:bg-black/[0.02]"
+            className="mt-1 flex items-center justify-center gap-1 rounded-lg py-1.5 text-sm font-bold text-[#654cff] hover:bg-black/[0.02] dark:hover:bg-white/[0.04]"
             onClick={() => setExpanded((value) => !value)}
             type="button"
           >

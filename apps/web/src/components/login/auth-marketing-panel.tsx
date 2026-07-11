@@ -24,7 +24,9 @@ export function AuthMarketingPanel() {
           src="/images/login/brand-mark.png"
           width={38}
         />
-        <span className="text-2xl font-black text-[#12142b]">fylmico</span>
+        <span className="text-2xl font-black text-[#12142b] dark:text-[#f1f2f8]">
+          fylmico
+        </span>
       </header>
 
       <section
@@ -32,7 +34,7 @@ export function AuthMarketingPanel() {
         className="relative z-10 mt-11 max-w-[34rem]"
       >
         <h1
-          className="max-w-[27rem] text-[3.1rem] leading-[1.05] font-black tracking-tight text-[#11142c] xl:text-[3.6rem]"
+          className="max-w-[27rem] text-[3.1rem] leading-[1.05] font-black tracking-tight text-[#11142c] xl:text-[3.6rem] dark:text-[#f1f2f8]"
           id="login-heading"
         >
           All your production.
@@ -53,7 +55,7 @@ export function AuthMarketingPanel() {
             <div className="grid h-[3.2rem] w-[3.2rem] place-items-center rounded-[0.78rem] border border-[#6d52ff14] bg-white/75 shadow-[0_1.1rem_2.5rem_rgba(87,70,180,0.12)] backdrop-blur-md">
               <Image alt="" height={26} src={feature.icon} width={26} />
             </div>
-            <h2 className="mt-3 text-sm font-extrabold text-[#15172b]">
+            <h2 className="mt-3 text-sm font-extrabold text-[#15172b] dark:text-[#f1f2f8]">
               {feature.title}
             </h2>
             <p className="mt-1 text-[0.79rem] leading-snug font-semibold text-[#4d5060]">

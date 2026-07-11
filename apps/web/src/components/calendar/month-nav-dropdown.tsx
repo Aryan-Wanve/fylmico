@@ -37,11 +37,11 @@ export function MonthNavDropdown({
       <PopoverTrigger
         render={
           <button
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-lg font-bold text-[#11142c] hover:bg-black/[0.03]"
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-lg font-bold text-[#11142c] hover:bg-black/[0.03] dark:text-[#f1f2f8] dark:hover:bg-white/[0.05]"
             type="button"
           >
             {formatMonthYear(visibleMonth)}
-            <ChevronDown className="h-4 w-4 text-[#8a90a3]" />
+            <ChevronDown className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
           </button>
         }
       />
@@ -49,7 +49,7 @@ export function MonthNavDropdown({
         <div className="flex items-center justify-between px-1">
           <button
             aria-label="Previous year"
-            className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04]"
+            className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
             onClick={() =>
               onSelectMonth(new Date(year - 1, visibleMonth.getMonth(), 1))
             }
@@ -57,10 +57,12 @@ export function MonthNavDropdown({
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <strong className="text-sm font-bold text-[#11142c]">{year}</strong>
+          <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
+            {year}
+          </strong>
           <button
             aria-label="Next year"
-            className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04]"
+            className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
             onClick={() =>
               onSelectMonth(new Date(year + 1, visibleMonth.getMonth(), 1))
             }
@@ -82,7 +84,7 @@ export function MonthNavDropdown({
                 className={`rounded-lg py-2 text-sm font-semibold ${
                   isActive
                     ? "bg-[#654cff] text-white"
-                    : "text-[#4b5268] hover:bg-black/[0.04]"
+                    : "text-[#4b5268] hover:bg-black/[0.04] dark:text-[#c7cad9] dark:hover:bg-white/[0.06]"
                 }`}
                 key={label}
                 onClick={() => onSelectMonth(new Date(year, index, 1))}

@@ -12,10 +12,10 @@ export function UpgradeCard() {
       <div className="grid h-9 w-9 place-items-center rounded-lg bg-[#654cff]/15 text-[#654cff]">
         <Crown className="h-[1.1rem] w-[1.1rem]" />
       </div>
-      <strong className="text-sm font-bold text-[#12142b]">
+      <strong className="text-sm font-bold text-[#12142b] dark:text-[#f1f2f8]">
         Upgrade to Pro
       </strong>
-      <p className="text-xs leading-snug text-[#5f667d]">
+      <p className="text-xs leading-snug text-[#5f667d] dark:text-[#a8acbf]">
         Unlock advanced features and more storage.
       </p>
       <Button

@@ -44,7 +44,7 @@ export function CrewsToolbar({
           {TABS.map((tab) => (
             <TabsTrigger className="group" key={tab.value} value={tab.value}>
               {tab.label}
-              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-black/[0.06] px-1 text-xs font-bold text-[#4b5268] group-data-active:bg-[#654cff]/10 group-data-active:text-[#654cff]">
+              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-black/[0.06] px-1 text-xs font-bold text-[#4b5268] group-data-active:bg-[#654cff]/10 group-data-active:text-[#654cff] dark:bg-white/[0.08] dark:text-[#c7cad9]">
                 {counts[tab.value]}
               </span>
             </TabsTrigger>
@@ -53,10 +53,10 @@ export function CrewsToolbar({
       </Tabs>
 
       <div className="flex shrink-0 items-center gap-3">
-        <div className="flex h-10 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5">
-          <Search className="h-4 w-4 text-[#8a90a3]" />
+        <div className="flex h-10 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 dark:border-white/10 dark:bg-[#171a28]">
+          <Search className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
           <input
-            className="h-full w-48 bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4]"
+            className="h-full w-48 bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Search crew members..."
             type="search"

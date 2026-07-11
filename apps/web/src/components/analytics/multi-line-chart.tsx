@@ -51,7 +51,7 @@ export function MultiLineChart({
             y2={yAt(value)}
           />
           <text
-            className="fill-[#8a90a3] text-[10px] font-semibold"
+            className="fill-[#8a90a3] text-[10px] font-semibold dark:fill-[#7d8299]"
             textAnchor="end"
             x={PADDING_LEFT - 8}
             y={yAt(value) + 3}
@@ -64,7 +64,7 @@ export function MultiLineChart({
 
       {xLabels.map((label, index) => (
         <text
-          className="fill-[#8a90a3] text-[10px] font-semibold"
+          className="fill-[#8a90a3] text-[10px] font-semibold dark:fill-[#7d8299]"
           key={label}
           textAnchor="middle"
           x={xAt(index, xLabels.length)}

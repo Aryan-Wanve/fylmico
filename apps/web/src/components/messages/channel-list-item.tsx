@@ -13,7 +13,9 @@ export function ChannelListItem({
   return (
     <button
       className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left ${
-        active ? "bg-[#654cff]/[0.08]" : "hover:bg-black/[0.03]"
+        active
+          ? "bg-[#654cff]/[0.08]"
+          : "hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
       }`}
       onClick={onSelect}
       type="button"
@@ -22,16 +24,16 @@ export function ChannelListItem({
       <span className="min-w-0 flex-1">
         <span className="flex items-center justify-between gap-2">
           <strong
-            className={`truncate text-sm font-bold ${active ? "text-[#654cff]" : "text-[#11142c]"}`}
+            className={`truncate text-sm font-bold ${active ? "text-[#654cff]" : "text-[#11142c] dark:text-[#f1f2f8]"}`}
           >
             {channel.name}
           </strong>
-          <span className="shrink-0 text-xs text-[#8a90a3]">
+          <span className="shrink-0 text-xs text-[#8a90a3] dark:text-[#7d8299]">
             {channel.lastMessageTime}
           </span>
         </span>
         <span className="flex items-center justify-between gap-2">
-          <span className="truncate text-xs text-[#8a90a3]">
+          <span className="truncate text-xs text-[#8a90a3] dark:text-[#7d8299]">
             {channel.lastMessagePreview}
           </span>
           {channel.unreadCount > 0 ? (

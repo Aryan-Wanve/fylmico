@@ -24,18 +24,20 @@ export function CalendarHeader({
   return (
     <div className="grid gap-5">
       <div>
-        <h1 className="text-3xl font-black text-[#11142c]">Calendar</h1>
-        <p className="mt-1 text-[#5f667d]">
+        <h1 className="text-3xl font-black text-[#11142c] dark:text-[#f1f2f8]">
+          Calendar
+        </h1>
+        <p className="mt-1 text-[#5f667d] dark:text-[#a8acbf]">
           See everything, plan ahead, and never miss a beat.
         </p>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="flex items-center overflow-hidden rounded-lg border border-black/10 bg-white">
+          <div className="flex items-center overflow-hidden rounded-lg border border-black/10 bg-white dark:border-white/10 dark:bg-[#171a28]">
             <button
               aria-label="Previous month"
-              className="grid h-9 w-9 place-items-center text-[#4b5268] hover:bg-black/[0.03]"
+              className="grid h-9 w-9 place-items-center text-[#4b5268] hover:bg-black/[0.03] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
               onClick={onPrevMonth}
               type="button"
             >
@@ -43,7 +45,7 @@ export function CalendarHeader({
             </button>
             <button
               aria-label="Next month"
-              className="grid h-9 w-9 place-items-center border-l border-black/10 text-[#4b5268] hover:bg-black/[0.03]"
+              className="grid h-9 w-9 place-items-center border-l border-black/10 text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
               onClick={onNextMonth}
               type="button"
             >
@@ -52,7 +54,7 @@ export function CalendarHeader({
           </div>
 
           <button
-            className="h-9 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03]"
+            className="h-9 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
             onClick={onToday}
             type="button"
           >

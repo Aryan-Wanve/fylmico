@@ -1,6 +1,6 @@
 export function TaskListColumnHeader() {
   return (
-    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-2.5 text-xs font-bold tracking-wide text-[#8a90a3] uppercase">
+    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-2.5 text-xs font-bold tracking-wide text-[#8a90a3] uppercase dark:border-white/[0.06] dark:text-[#7d8299]">
       <span className="w-4 shrink-0" />
       <span className="min-w-0 flex-1">Task</span>
       <span className="hidden w-32 shrink-0 sm:block">Assignee</span>

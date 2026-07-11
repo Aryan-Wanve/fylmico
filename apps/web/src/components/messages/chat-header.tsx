@@ -18,15 +18,15 @@ export function ChatHeader({
   onRename: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-black/5 px-4 py-3">
+    <div className="flex items-center justify-between gap-3 border-b border-black/5 px-4 py-3 dark:border-white/[0.06]">
       <div className="flex min-w-0 items-center gap-3">
         <ChannelAvatar channel={channel} size="lg" />
         <div className="min-w-0">
-          <strong className="block truncate text-base font-bold text-[#11142c]">
+          <strong className="block truncate text-base font-bold text-[#11142c] dark:text-[#f1f2f8]">
             {channel.name}
           </strong>
           {channel.kind === "group" ? (
-            <span className="text-xs text-[#8a90a3]">
+            <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
               {channel.memberIds.length} members
             </span>
           ) : null}
@@ -38,7 +38,7 @@ export function ChatHeader({
             render={
               <button
                 aria-label="More options"
-                className="grid h-9 w-9 place-items-center rounded-full text-[#4b5268] hover:bg-black/[0.04]"
+                className="grid h-9 w-9 place-items-center rounded-full text-[#4b5268] hover:bg-black/[0.04] dark:text-[#c7cad9] dark:hover:bg-white/[0.06]"
                 type="button"
               >
                 <MoreVertical className="h-4 w-4" />

@@ -27,7 +27,7 @@ export function TaskRowItem({
   const priority = PRIORITY_META[task.priority];
 
   return (
-    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015]">
+    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03]">
       <Checkbox
         aria-label={`Mark ${task.title} as ${isDone ? "not done" : "done"}`}
         checked={isDone}
@@ -38,13 +38,15 @@ export function TaskRowItem({
       <div className="min-w-0 flex-1">
         <strong
           className={`block truncate text-sm font-semibold ${
-            isDone ? "text-[#8a90a3] line-through" : "text-[#11142c]"
+            isDone
+              ? "text-[#8a90a3] line-through dark:text-[#7d8299]"
+              : "text-[#11142c] dark:text-[#f1f2f8]"
           }`}
         >
           {task.title}
         </strong>
         {task.commentCount ? (
-          <div className="mt-0.5 flex items-center gap-3 text-xs text-[#8a90a3]">
+          <div className="mt-0.5 flex items-center gap-3 text-xs text-[#8a90a3] dark:text-[#7d8299]">
             <span className="flex items-center gap-1">
               <MessageSquare className="h-3 w-3" />
               {task.commentCount}
@@ -59,7 +61,7 @@ export function TaskRowItem({
           size="sm"
           userId={task.assigneeId}
         />
-        <span className="truncate text-sm text-[#4b5268]">
+        <span className="truncate text-sm text-[#4b5268] dark:text-[#c7cad9]">
           {task.assigneeName.split(" ")[0]}
         </span>
       </div>
@@ -72,7 +74,9 @@ export function TaskRowItem({
 
       <span
         className={`hidden w-20 shrink-0 text-sm font-semibold sm:block ${
-          due.overdue && !isDone ? "text-red-600" : "text-[#4b5268]"
+          due.overdue && !isDone
+            ? "text-red-600"
+            : "text-[#4b5268] dark:text-[#c7cad9]"
         }`}
       >
         {due.label}

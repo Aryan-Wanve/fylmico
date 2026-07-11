@@ -49,8 +49,10 @@ export function SettingsPage() {
   return (
     <div className="grid gap-6 p-8">
       <div>
-        <h1 className="text-3xl font-black text-[#11142c]">Settings</h1>
-        <p className="mt-1 text-[#5f667d]">
+        <h1 className="text-3xl font-black text-[#11142c] dark:text-[#f1f2f8]">
+          Settings
+        </h1>
+        <p className="mt-1 text-[#5f667d] dark:text-[#a8acbf]">
           Manage your account, preferences and workspace settings.
         </p>
       </div>
@@ -66,16 +68,25 @@ export function SettingsPage() {
         <SettingsSidebar onDeleteAccount={handleDeleteAccount} />
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/5 pt-4 text-xs text-[#8a90a3]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/5 pt-4 text-xs text-[#8a90a3] dark:border-white/[0.06] dark:text-[#7d8299]">
         <span>&copy; 2026 Fylmico. All rights reserved.</span>
         <div className="flex items-center gap-4">
-          <button className="font-semibold hover:text-[#4b5268]" type="button">
+          <button
+            className="font-semibold hover:text-[#4b5268] dark:hover:text-[#c7cad9]"
+            type="button"
+          >
             Privacy Policy
           </button>
-          <button className="font-semibold hover:text-[#4b5268]" type="button">
+          <button
+            className="font-semibold hover:text-[#4b5268] dark:hover:text-[#c7cad9]"
+            type="button"
+          >
             Terms of Service
           </button>
-          <button className="font-semibold hover:text-[#4b5268]" type="button">
+          <button
+            className="font-semibold hover:text-[#4b5268] dark:hover:text-[#c7cad9]"
+            type="button"
+          >
             Support
           </button>
         </div>

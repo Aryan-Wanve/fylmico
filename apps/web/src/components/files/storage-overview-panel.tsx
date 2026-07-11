@@ -67,10 +67,10 @@ export function StorageOverviewPanel({
           </svg>
           <div className="absolute inset-0 grid place-items-center">
             <div className="text-center">
-              <strong className="block text-lg font-black text-[#11142c]">
+              <strong className="block text-lg font-black text-[#11142c] dark:text-[#f1f2f8]">
                 {formatFileSize(usedBytes) || "0 B"}
               </strong>
-              <span className="text-[0.65rem] font-semibold text-[#8a90a3]">
+              <span className="text-[0.65rem] font-semibold text-[#8a90a3] dark:text-[#7d8299]">
                 used
               </span>
             </div>
@@ -84,7 +84,7 @@ export function StorageOverviewPanel({
                 className="flex items-center justify-between gap-2 text-sm"
                 key={entry.category}
               >
-                <span className="flex items-center gap-2 font-semibold text-[#4b5268]">
+                <span className="flex items-center gap-2 font-semibold text-[#4b5268] dark:text-[#c7cad9]">
                   <span
                     className="h-2.5 w-2.5 rounded-full"
                     style={{
@@ -93,13 +93,15 @@ export function StorageOverviewPanel({
                   />
                   {CATEGORY_LABELS[entry.category] ?? entry.category}
                 </span>
-                <span className="font-bold text-[#11142c]">
+                <span className="font-bold text-[#11142c] dark:text-[#f1f2f8]">
                   {formatFileSize(entry.bytes)}
                 </span>
               </div>
             ))
           ) : (
-            <p className="text-sm text-[#8a90a3]">No files uploaded yet.</p>
+            <p className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
+              No files uploaded yet.
+            </p>
           )}
         </div>
       </div>

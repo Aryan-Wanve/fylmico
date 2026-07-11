@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/lib/theme-context";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -14,9 +15,17 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  colorScheme: "dark",
-  themeColor: "#0b0d10"
+  colorScheme: "light dark",
+  themeColor: "#f7f7fb"
 };
+
+const THEME_INIT_SCRIPT = `
+try {
+  var stored = window.localStorage.getItem("fylmico-theme");
+  var isDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.classList.toggle("dark", isDark);
+} catch (error) {}
+`;
 
 export default function RootLayout({
   children
@@ -25,7 +34,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body>{children}</body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

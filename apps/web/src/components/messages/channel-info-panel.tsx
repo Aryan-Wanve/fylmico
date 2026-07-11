@@ -31,9 +31,9 @@ export function ChannelInfoPanel({
   const overflow = members.length - visibleMembers.length;
 
   return (
-    <div className="grid content-start gap-5 rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+    <div className="grid content-start gap-5 rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
       <div className="flex items-center justify-between">
-        <strong className="text-sm font-bold text-[#11142c]">
+        <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
           {channel.name}
         </strong>
         <button
@@ -47,13 +47,13 @@ export function ChannelInfoPanel({
 
       <div className="grid justify-items-center gap-3 text-center">
         <ChannelAvatar channel={channel} size="lg" />
-        <p className="text-sm leading-relaxed text-[#5f667d]">
+        <p className="text-sm leading-relaxed text-[#5f667d] dark:text-[#a8acbf]">
           {channel.description}
         </p>
       </div>
 
       <div>
-        <strong className="text-sm font-bold text-[#11142c]">
+        <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
           Members ({members.length})
         </strong>
         <AvatarGroup className="mt-2">
@@ -68,13 +68,13 @@ export function ChannelInfoPanel({
         </AvatarGroup>
       </div>
 
-      <div className="grid gap-1 border-t border-black/5 pt-4">
+      <div className="grid gap-1 border-t border-black/5 pt-4 dark:border-white/[0.06]">
         <div className="flex items-center justify-between py-1.5">
-          <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57]">
-            <Bell className="h-4 w-4 text-[#8a90a3]" />
+          <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
+            <Bell className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
             Notifications
           </span>
-          <span className="text-xs font-semibold text-[#8a90a3]">
+          <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
             All Messages
           </span>
         </div>
@@ -83,11 +83,11 @@ export function ChannelInfoPanel({
           onClick={() => onSelectTab("files")}
           type="button"
         >
-          <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57]">
-            <FileText className="h-4 w-4 text-[#8a90a3]" />
+          <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
+            <FileText className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
             Files
           </span>
-          <span className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3]">
+          <span className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
             {channel.files.length}
             <ChevronRight className="h-3.5 w-3.5" />
           </span>
@@ -97,11 +97,11 @@ export function ChannelInfoPanel({
           onClick={() => onSelectTab("tasks")}
           type="button"
         >
-          <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57]">
-            <ListChecks className="h-4 w-4 text-[#8a90a3]" />
+          <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
+            <ListChecks className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
             Tasks
           </span>
-          <span className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3]">
+          <span className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
             {channel.tasks.length}
             <ChevronRight className="h-3.5 w-3.5" />
           </span>
@@ -111,11 +111,11 @@ export function ChannelInfoPanel({
           onClick={() => onSelectTab("events")}
           type="button"
         >
-          <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57]">
-            <CalendarDays className="h-4 w-4 text-[#8a90a3]" />
+          <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
+            <CalendarDays className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
             Events
           </span>
-          <span className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3]">
+          <span className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
             {channel.events.length}
             <ChevronRight className="h-3.5 w-3.5" />
           </span>

@@ -84,7 +84,7 @@ export function NotificationBell() {
         render={
           <button
             aria-label="Notifications"
-            className="relative grid h-10 w-10 place-items-center rounded-xl text-[#4b5268] hover:bg-black/[0.03]"
+            className="relative grid h-10 w-10 place-items-center rounded-xl text-[#4b5268] hover:bg-black/[0.03] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
             type="button"
           >
             <Bell className="h-[1.15rem] w-[1.15rem]" />
@@ -96,7 +96,7 @@ export function NotificationBell() {
       />
       <PopoverContent align="end" className="w-80">
         <div className="flex items-center justify-between">
-          <strong className="text-sm font-bold text-[#12142b]">
+          <strong className="text-sm font-bold text-[#12142b] dark:text-[#f1f2f8]">
             Notifications
           </strong>
           {unreadCount > 0 ? (
@@ -113,7 +113,7 @@ export function NotificationBell() {
           {notifications.length > 0 ? (
             notifications.slice(0, 6).map((notification) => (
               <button
-                className={`flex items-start gap-2.5 rounded-lg p-2 text-left hover:bg-black/[0.03] ${
+                className={`flex items-start gap-2.5 rounded-lg p-2 text-left hover:bg-black/[0.03] dark:hover:bg-white/[0.05] ${
                   notification.readAt ? "" : "bg-[#654cff]/[0.04]"
                 }`}
                 key={notification.id}
@@ -124,20 +124,20 @@ export function NotificationBell() {
                   {notification.title.slice(0, 1).toUpperCase()}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm text-[#3a3f57]">
+                  <p className="text-sm text-[#3a3f57] dark:text-[#b4b8cc]">
                     <strong className="font-semibold">
                       {notification.title}
                     </strong>{" "}
                     {notification.body}
                   </p>
-                  <span className="text-xs text-[#8a90a3]">
+                  <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
                     {formatRelativeTime(notification.createdAt)}
                   </span>
                 </div>
               </button>
             ))
           ) : (
-            <p className="py-4 text-center text-sm text-[#8a90a3]">
+            <p className="py-4 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
               You&apos;re all caught up.
             </p>
           )}

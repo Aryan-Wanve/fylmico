@@ -19,13 +19,13 @@ export function FilesBreadcrumb({
           key={segment.id ?? "root"}
         >
           {index > 0 ? (
-            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#c3c7d4]" />
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#c3c7d4] dark:text-[#5c6178]" />
           ) : null}
           <button
             className={`truncate ${
               index === path.length - 1
-                ? "font-bold text-[#11142c]"
-                : "font-semibold text-[#8a90a3] hover:text-[#4b5268]"
+                ? "font-bold text-[#11142c] dark:text-[#f1f2f8]"
+                : "font-semibold text-[#8a90a3] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:text-[#c7cad9]"
             }`}
             onClick={() => onNavigate(segment.id)}
             type="button"
@@ -46,13 +46,13 @@ export function FilesViewControls({
   onViewModeChange: (mode: FilesViewMode) => void;
 }) {
   return (
-    <div className="flex shrink-0 items-center gap-1 rounded-lg bg-black/[0.04] p-1">
+    <div className="flex shrink-0 items-center gap-1 rounded-lg bg-black/[0.04] p-1 dark:bg-white/[0.06]">
       <button
         aria-pressed={viewMode === "grid"}
         className={`grid h-7 w-8 place-items-center rounded-md ${
           viewMode === "grid"
-            ? "bg-white text-[#11142c] shadow-sm"
-            : "text-[#8a90a3] hover:text-[#4b5268]"
+            ? "bg-white text-[#11142c] shadow-sm dark:bg-[#171a28] dark:text-[#f1f2f8]"
+            : "text-[#8a90a3] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:text-[#c7cad9]"
         }`}
         onClick={() => onViewModeChange("grid")}
         type="button"
@@ -63,8 +63,8 @@ export function FilesViewControls({
         aria-pressed={viewMode === "list"}
         className={`grid h-7 w-8 place-items-center rounded-md ${
           viewMode === "list"
-            ? "bg-white text-[#11142c] shadow-sm"
-            : "text-[#8a90a3] hover:text-[#4b5268]"
+            ? "bg-white text-[#11142c] shadow-sm dark:bg-[#171a28] dark:text-[#f1f2f8]"
+            : "text-[#8a90a3] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:text-[#c7cad9]"
         }`}
         onClick={() => onViewModeChange("list")}
         type="button"

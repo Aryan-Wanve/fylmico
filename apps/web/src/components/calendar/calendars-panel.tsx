@@ -16,7 +16,7 @@ export function CalendarsPanel({
       <div className="grid gap-0.5 p-2">
         {calendarSources.map((source) => (
           <div
-            className="flex items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-black/[0.02]"
+            className="flex items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-black/[0.02] dark:hover:bg-white/[0.04]"
             key={source.id}
           >
             <Checkbox
@@ -25,7 +25,7 @@ export function CalendarsPanel({
               onCheckedChange={() => onToggleCalendar(source.id)}
             />
             <span className={`h-2.5 w-2.5 rounded-full ${source.color}`} />
-            <span className="flex-1 truncate text-sm font-semibold text-[#3a3f57]">
+            <span className="flex-1 truncate text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
               {source.name}
             </span>
           </div>

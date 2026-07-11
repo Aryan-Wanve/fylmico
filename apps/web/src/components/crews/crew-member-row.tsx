@@ -22,26 +22,26 @@ export function CrewMemberRow({
   const statusMeta = STATUS_META[member.status];
 
   return (
-    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015]">
+    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03]">
       <div className="flex w-56 min-w-0 shrink-0 items-center gap-3 sm:w-64">
         <Avatar>
           <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <strong className="block truncate text-sm font-bold text-[#11142c]">
+          <strong className="block truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
             {member.name}
           </strong>
-          <span className="block truncate text-xs text-[#8a90a3]">
+          <span className="block truncate text-xs text-[#8a90a3] dark:text-[#7d8299]">
             {member.email}
           </span>
         </div>
       </div>
 
-      <span className="hidden w-40 shrink-0 truncate text-sm text-[#4b5268] md:block">
+      <span className="hidden w-40 shrink-0 truncate text-sm text-[#4b5268] md:block dark:text-[#c7cad9]">
         {member.jobTitle}
       </span>
 
-      <span className="hidden w-40 shrink-0 items-center gap-1.5 truncate text-sm text-[#4b5268] lg:flex">
+      <span className="hidden w-40 shrink-0 items-center gap-1.5 truncate text-sm text-[#4b5268] lg:flex dark:text-[#c7cad9]">
         <span
           className={`grid h-6 w-6 shrink-0 place-items-center rounded-md ${departmentMeta.bg} ${departmentMeta.color}`}
         >
@@ -59,21 +59,21 @@ export function CrewMemberRow({
       <div className="hidden min-w-0 flex-1 xl:block">
         {member.currentProject ? (
           <>
-            <strong className="block truncate text-sm font-semibold text-[#11142c]">
+            <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
               {member.currentProject}
             </strong>
-            <span className="flex items-center gap-1.5 text-xs text-[#8a90a3]">
+            <span className="flex items-center gap-1.5 text-xs text-[#8a90a3] dark:text-[#7d8299]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#654cff]" />
               {member.projectStage}
             </span>
           </>
         ) : (
-          <span className="text-sm text-[#c3c7d4]">—</span>
+          <span className="text-sm text-[#c3c7d4] dark:text-[#5c6178]">—</span>
         )}
       </div>
 
-      <span className="hidden w-36 shrink-0 items-center gap-1.5 text-xs font-medium text-[#4b5268] xl:flex">
-        <Calendar className="h-3.5 w-3.5 text-[#8a90a3]" />
+      <span className="hidden w-36 shrink-0 items-center gap-1.5 text-xs font-medium text-[#4b5268] xl:flex dark:text-[#c7cad9]">
+        <Calendar className="h-3.5 w-3.5 text-[#8a90a3] dark:text-[#7d8299]" />
         {member.availability}
       </span>
 

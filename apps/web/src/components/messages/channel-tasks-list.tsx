@@ -10,7 +10,7 @@ export function ChannelTasksList({
 }) {
   if (tasks.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-[#8a90a3]">
+      <p className="py-10 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
         No tasks linked to this channel yet.
       </p>
     );
@@ -20,7 +20,7 @@ export function ChannelTasksList({
     <div className="grid gap-2">
       {tasks.map((task) => (
         <div
-          className="flex items-center gap-3 rounded-xl border border-black/[0.06] bg-white px-3.5 py-2.5"
+          className="flex items-center gap-3 rounded-xl border border-black/[0.06] bg-white px-3.5 py-2.5 dark:border-white/[0.08] dark:bg-[#171a28]"
           key={task.id}
         >
           <Checkbox
@@ -29,11 +29,11 @@ export function ChannelTasksList({
             onCheckedChange={() => onToggle(task.id)}
           />
           <span
-            className={`flex-1 text-sm font-semibold ${task.done ? "text-[#8a90a3] line-through" : "text-[#11142c]"}`}
+            className={`flex-1 text-sm font-semibold ${task.done ? "text-[#8a90a3] line-through dark:text-[#7d8299]" : "text-[#11142c] dark:text-[#f1f2f8]"}`}
           >
             {task.title}
           </span>
-          <span className="shrink-0 text-xs font-medium text-[#8a90a3]">
+          <span className="shrink-0 text-xs font-medium text-[#8a90a3] dark:text-[#7d8299]">
             {task.assigneeId}
           </span>
         </div>

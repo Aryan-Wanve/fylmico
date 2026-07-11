@@ -196,7 +196,7 @@ export function ProjectsPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
+        <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
           {filteredProjects.map((project) => (
             <ProjectListRow
               key={project.id}

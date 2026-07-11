@@ -32,7 +32,7 @@ function pillClassName(active: boolean): string {
   return `rounded-lg px-2.5 py-1 text-xs font-semibold ${
     active
       ? "bg-[#654cff] text-white"
-      : "bg-black/[0.04] text-[#4b5268] hover:bg-black/[0.07]"
+      : "bg-black/[0.04] dark:bg-white/[0.06] text-[#4b5268] dark:text-[#c7cad9] hover:bg-black/[0.07] dark:hover:bg-white/[0.09]"
   }`;
 }
 
@@ -98,7 +98,7 @@ export function LogTimePopover({
       <PopoverTrigger
         render={
           <button
-            className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03]"
+            className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
             type="button"
           >
             <Clock className="h-4 w-4" />
@@ -107,7 +107,7 @@ export function LogTimePopover({
         }
       />
       <PopoverContent align="end" className="w-80" side="bottom">
-        <strong className="px-1 text-sm font-bold text-[#11142c]">
+        <strong className="px-1 text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
           Log Time
         </strong>
 

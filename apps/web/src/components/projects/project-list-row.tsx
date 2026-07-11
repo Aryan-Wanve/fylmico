@@ -23,7 +23,7 @@ export function ProjectListRow({
   const overdue = isProjectOverdue(project);
 
   return (
-    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015]">
+    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03]">
       <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg">
         <div
           className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${project.coverGradient ?? "from-slate-400 via-slate-600 to-slate-800"}`}
@@ -33,10 +33,10 @@ export function ProjectListRow({
       </div>
 
       <div className="min-w-0 flex-1">
-        <strong className="block truncate text-sm font-bold text-[#11142c]">
+        <strong className="block truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
           {project.title}
         </strong>
-        <span className="text-xs text-[#8a90a3]">
+        <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
           {project.type} &bull; {project.genre}
         </span>
       </div>
@@ -48,13 +48,13 @@ export function ProjectListRow({
       </span>
 
       <div className="hidden w-32 shrink-0 items-center gap-2 md:flex">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06]">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
           <div
             className="h-full rounded-full bg-[#654cff]"
             style={{ width: `${project.progress}%` }}
           />
         </div>
-        <span className="text-xs font-semibold text-[#5f667d]">
+        <span className="text-xs font-semibold text-[#5f667d] dark:text-[#a8acbf]">
           {project.progress}%
         </span>
       </div>
@@ -64,7 +64,7 @@ export function ProjectListRow({
       </div>
 
       <span
-        className={`hidden w-24 shrink-0 text-xs font-semibold sm:block ${overdue ? "text-red-600" : "text-[#8a90a3]"}`}
+        className={`hidden w-24 shrink-0 text-xs font-semibold sm:block ${overdue ? "text-red-600" : "text-[#8a90a3] dark:text-[#7d8299]"}`}
       >
         {project.dueDate ?? "TBD"}
       </span>
