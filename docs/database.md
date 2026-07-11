@@ -253,14 +253,16 @@ Migration history: `20260708161817_init_identity` (initial columns);
 
 ### Table: `auth_accounts`
 
-Purpose: represents a login method for a user (email+password today; OAuth
-providers later reuse this table).
+Purpose: represents a login method for a user — email+password and Google
+OAuth today (per ADR 0035), both reusing this same table without a schema
+change.
 
 Ownership: belongs to one `user`.
 
-Columns: `id`, `user_id`, `provider` (e.g. `"email"`), `provider_account_id`
-(normalized email for the `email` provider), `password_hash` (nullable — only
-set for the `email` provider), `created_at`, `updated_at`.
+Columns: `id`, `user_id`, `provider` (`"email"` or `"google"`),
+`provider_account_id` (normalized email for the `email` provider, Google's
+`sub` claim for the `google` provider), `password_hash` (nullable — only set
+for the `email` provider), `created_at`, `updated_at`.
 
 Relationships: belongs to `users` (cascade delete).
 
@@ -268,7 +270,10 @@ Indexes: unique compound index on `(provider, provider_account_id)`; index on
 `user_id`.
 
 Constraints: `(provider, provider_account_id)` unique — enforces one email
-account per address.
+account per address, and one Google account per Google `sub`. A user signing
+in with Google using an email that already has an `"email"`-provider account
+gets a second `auth_accounts` row linked to the same `user_id`, not a
+duplicate user (see ADR 0035).
 
 Permissions: managed only through auth endpoints (signup, login, reset-password);
 never exposed directly.

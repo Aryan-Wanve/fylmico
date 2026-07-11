@@ -153,6 +153,23 @@ Authentication: required. Response:
 `{ "data": { "id", "email", "name", "avatarLabel", "emailVerifiedAt", "createdAt" } }`.
 Errors: `401 unauthenticated`.
 
+### `GET /api/v1/auth/google`
+
+Implemented per ADR 0035. Authentication: public. Not a JSON endpoint — a
+302 redirect to Google's OAuth consent screen, with a short-lived
+`httpOnly` `state` cookie set for CSRF verification on callback. Errors:
+`503 google_oauth_not_configured` if `GOOGLE_CLIENT_ID` is unset.
+
+### `GET /api/v1/auth/google/callback`
+
+Authentication: public (Google redirects here with `code`/`state` query
+params after consent). Not a JSON endpoint — verifies `state` against the
+cookie set by `/auth/google`, exchanges `code` for a Google profile,
+creates or links a `User`/`AuthAccount` by email, then 302-redirects to
+`${CORS_ORIGIN}/auth/callback?accessToken=...&refreshToken=...`. Any
+failure (missing config, denied consent, state mismatch, exchange error)
+redirects to `${CORS_ORIGIN}/login?error=google_oauth_failed` instead.
+
 ## Planned Endpoint Areas
 
 Organizations:

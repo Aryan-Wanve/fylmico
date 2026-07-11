@@ -84,6 +84,7 @@ Current ADRs:
 - [0032-continuous-deployment.md](docs/adr/0032-continuous-deployment.md)
 - [0033-supabase-render-backend.md](docs/adr/0033-supabase-render-backend.md)
 - [0034-hostinger-native-web-app.md](docs/adr/0034-hostinger-native-web-app.md)
+- [0035-google-oauth-login.md](docs/adr/0035-google-oauth-login.md)
 
 ## Current Sprint Gate
 
@@ -209,6 +210,18 @@ Render's own GitHub integration on every push, running
 hosting Postgres (ADR 0033) - confirmed live end-to-end. Set
 `NEXT_PUBLIC_API_URL` directly in Hostinger's own Environment Variables
 UI to point the frontend at the live Render API.
+
+**Google sign-in is wired end-to-end but needs real credentials** (ADR
+0035): the login page's Apple/Microsoft buttons (never functional) were
+removed, leaving one real "Continue with Google" button that drives a
+server-side OAuth 2.0 flow (`GET /api/v1/auth/google` /
+`GET /api/v1/auth/google/callback`, CSRF-protected via a short-lived
+`state` cookie, account creation/linking by email). Live-verified short of
+an actual Google login — the redirect, cookie, and CSRF rejection all work
+against the running local API — but it stays inert
+(`google_oauth_not_configured`) until `GOOGLE_CLIENT_ID`/
+`GOOGLE_CLIENT_SECRET`/`GOOGLE_CALLBACK_URL` are set, which requires
+creating a real OAuth client in Google Cloud Console.
 
 To run both sides locally: `docker compose up -d postgres`, then start the
 `api` and `web` dev servers (`.claude/launch.json` has both configured).

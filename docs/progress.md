@@ -2789,3 +2789,76 @@ Next task:
 - Object storage remains a named prerequisite for project cover photos,
   message attachments, and the entire `/files` page. Otherwise: pick up
   Files/Storyboard/Bookings, or address real RBAC.
+
+## 2026-07-11 Google OAuth Login
+
+Current milestone: Phase 8 - backend bootstrap / auth
+
+Completion percentage: N/A
+
+Features completed:
+
+- User asked to drop the decorative Apple/Microsoft login buttons (never
+  wired to anything) and make the Google button a real, working sign-in.
+- Backend: new `apps/api/src/auth/google-oauth.util.ts` (plain `fetch`
+  against Google's OAuth endpoints - no `passport` dependency), new
+  `AuthService.getGoogleAuthUrl(state)`/`handleGoogleCallback(code)`
+  methods, and `GET /api/v1/auth/google` /
+  `GET /api/v1/auth/google/callback` controller routes using `@Res()` for
+  raw redirects. The callback creates a new `User`/`AuthAccount` or links
+  to an existing `User` found by email (avoiding duplicate accounts for
+  someone who previously signed up with a password), then reuses the
+  existing `issueSessionTokens` helper unchanged.
+- Added CSRF protection for the OAuth handshake: `GET /auth/google`
+  generates a `state` token, passes it to Google, and also sets it as a
+  5-minute `httpOnly`/`sameSite=lax` cookie; the callback rejects any
+  request where the query `state` doesn't match the cookie. Added
+  `cookie-parser` (+ `@types/cookie-parser`) and wired
+  `app.use(cookieParser())` in `main.ts` - the only new dependency this
+  pass needed.
+- Frontend: removed Apple/Microsoft from `authSocialProviders`
+  (`apps/web/src/components/login/auth-data.ts`), changed
+  `AuthSocialProviders` to render Google as a single full-width `<a>`
+  linking to `${NEXT_PUBLIC_API_URL}/auth/google` (a real navigation, not
+  a fetch), and added `apps/web/src/app/auth/callback/page.tsx`, which
+  reads `accessToken`/`refreshToken`/`error` from the redirect's query
+  string, calls the existing `setSession()`, and navigates to `/` (or back
+  to `/login?error=...` on failure). No changes were needed to
+  `(app)/layout.tsx` - it already detects any valid session on mount.
+- Added `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_CALLBACK_URL` to
+  both `.env.example` files.
+- See ADR 0035.
+
+Validation:
+
+- `npm run build:api`, `typecheck` (both workspaces), `lint` (both
+  workspaces), and `format:check` all pass clean.
+- Live-verified against the running local API and web dev servers:
+  `GET /auth/google` (with temporary fake credentials) correctly builds
+  the Google consent URL and sets the `state` cookie; the callback
+  correctly rejects a mismatched/missing `state` before ever attempting
+  the code exchange; clicking "Continue with Google" in the browser
+  navigates to the real endpoint end-to-end; `/auth/callback?error=...`
+  correctly bounces back to `/login`. Could not complete a real Google
+  login - no Google Cloud Console OAuth client exists yet, so the
+  live-with-real-account path is unverified pending that one-time setup.
+
+Technical debt:
+
+- The feature is fully wired but inert (`google_oauth_not_configured`)
+  until real `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` values exist, which
+  requires the user to create an OAuth client in Google Cloud Console
+  (consent screen + authorized redirect URIs for local dev and the live
+  Render API) and set the resulting values locally and in Render.
+- `access_type=online` means no Google refresh token is requested; if a
+  future feature needs to call Google's API on the user's behalf later
+  (not just at sign-in), this would need revisiting.
+
+Next task:
+
+- Create the Google Cloud Console OAuth client and set
+  `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_CALLBACK_URL` locally
+  and on Render, then do a real end-to-end login to confirm the full
+  flow works with an actual Google account.
+- Otherwise, the same backlog as before: object storage, real RBAC,
+  Files/Storyboard/Bookings.

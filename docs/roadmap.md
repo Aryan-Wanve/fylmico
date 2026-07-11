@@ -373,18 +373,30 @@ Progress:
   automatically. Both need a one-time manual setup (SSH key, GitHub
   secrets, DNS, certbot) documented step-by-step in ADR 0032 before
   they'll actually do anything. See ADR 0032.
-- Next: complete the ADR 0032 one-time VPS setup so the deploy workflows
-  can actually run (SSH key, GitHub secrets, DNS, certbot), then
-  live-verify the Messages page in-browser (still owed from ADR 0029 -
-  tooling was unavailable then but has since come back for Calendar's
-  and Analytics' verification passes). Object storage is now a named
-  prerequisite for project cover photos, message attachments, and the
-  entire `/files` page - worth solving once. Real RBAC (who can
-  remove/edit what) is a concretely scoped gap across every module now,
-  worth solving broadly rather than per-endpoint. Otherwise, pick up
-  Files/Storyboard/Bookings (all still local mock data, each needing its
-  own backend domain), or the activity feed / creative-production
-  modules.
+- **Google OAuth login wired up**: dropped the decorative (non-functional)
+  Apple/Microsoft buttons per explicit request, keeping only Google, and
+  implemented a real server-side OAuth 2.0 flow for it - `GET /api/v1/auth/
+google` and `GET /api/v1/auth/google/callback`, a new
+  `google-oauth.util.ts` (plain `fetch` against Google's endpoints, no
+  `passport` dependency), account creation/linking by email in
+  `AuthService.handleGoogleCallback`, a CSRF-safe `state` cookie
+  (`cookie-parser` added), and a new `/auth/callback` frontend page that
+  reads the tokens from the redirect and calls the existing `setSession()`.
+  Live-verified end-to-end short of a real Google account (redirect URL,
+  cookie, and CSRF state-mismatch rejection all confirmed against the
+  running local API; the actual Google consent screen requires Cloud
+  Console credentials the user still needs to create). See ADR 0035.
+- Next: create the Google Cloud Console OAuth client (ID + secret,
+  consent screen, authorized redirect URIs for local dev and the live
+  Render API) and add `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/
+  `GOOGLE_CALLBACK_URL` to both local `.env` and Render's environment to
+  actually light up Google sign-in end-to-end. Object storage is still a
+  named prerequisite for project cover photos, message attachments, and
+  the entire `/files` page. Real RBAC (who can remove/edit what) is a
+  concretely scoped gap across every module now, worth solving broadly
+  rather than per-endpoint. Otherwise, pick up Files/Storyboard/Bookings
+  (all still local mock data, each needing its own backend domain), or the
+  activity feed / creative-production modules.
 
 ## Completed Milestones
 
