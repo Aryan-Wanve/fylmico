@@ -189,6 +189,20 @@ Expected constraints:
 - Valid enum values for statuses.
 - Non-null status fields for workflow entities.
 
+## Row Level Security (Supabase)
+
+Every table has Postgres Row Level Security enabled with **no
+policies** (default-deny), added in migration
+`20260711090257_enable_row_level_security`. This has no effect on the
+API's own queries - Prisma connects as the table-owning role, which
+Postgres exempts from RLS regardless of whether it's enabled. It exists
+solely to close Supabase's PostgREST auto-REST exposure: any
+`public`-schema table without RLS is reachable through Supabase's own
+generated REST API using the project's anon key, entirely bypassing this
+app's auth and permission checks. This app never uses that API, so
+locking every table down with zero policies costs nothing functionally
+while closing that path if the anon key is ever exposed.
+
 ## Migration History
 
 - `20260708161817_init_identity` — identity tables (ADR 0019).
