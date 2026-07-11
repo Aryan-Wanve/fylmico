@@ -26,7 +26,7 @@ export function DepartmentOverviewPanel({
   const visibleRows = expanded ? rows : rows.slice(0, COLLAPSED_COUNT);
 
   return (
-    <DashboardPanel action={{ label: "View all" }} title="Department Overview">
+    <DashboardPanel title="Department Overview">
       <div className="grid gap-1 p-3">
         {visibleRows.map(({ department, count }) => {
           const meta = DEPARTMENT_META[department];

@@ -10,10 +10,7 @@ export function ProjectProgressPanel({
   xLabels: string[];
 }) {
   return (
-    <DashboardPanel
-      action={{ label: "All Projects" }}
-      title="Hours Logged by Project"
-    >
+    <DashboardPanel title="Hours Logged by Project">
       <div className="p-6">
         {series.length === 0 ? (
           <p className="py-10 text-center text-sm text-[#8a90a3]">

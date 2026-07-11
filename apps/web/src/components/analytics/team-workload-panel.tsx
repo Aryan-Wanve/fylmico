@@ -8,7 +8,7 @@ export function TeamWorkloadPanel({
   workload: AnalyticsWorkloadEntry[];
 }) {
   return (
-    <DashboardPanel action={{ label: "View all" }} title="Team Workload">
+    <DashboardPanel title="Team Workload">
       {workload.length === 0 ? (
         <p className="p-6 text-center text-sm text-[#8a90a3]">
           No time logged this week yet.

@@ -6,7 +6,7 @@ import {
 
 export function CrewByRolePanel({ members }: { members: CrewMember[] }) {
   return (
-    <DashboardPanel action={{ label: "View all" }} title="Crew by Role">
+    <DashboardPanel title="Crew by Role">
       <div className="grid gap-1 p-3">
         {ROLE_CATEGORY_ORDER.map((role) => {
           const count = members.filter(

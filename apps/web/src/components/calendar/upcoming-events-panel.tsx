@@ -25,10 +25,7 @@ export function UpcomingEventsPanel({ events }: { events: CalendarEvent[] }) {
     .sort((a, b) => a.date.localeCompare(b.date));
 
   return (
-    <DashboardPanel
-      action={{ label: "View all" }}
-      title="Upcoming (Next 7 Days)"
-    >
+    <DashboardPanel title="Upcoming (Next 7 Days)">
       {upcoming.length === 0 ? (
         <p className="px-6 py-8 text-center text-sm text-[#8a90a3]">
           No events in the next 7 days.

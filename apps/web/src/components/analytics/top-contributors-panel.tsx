@@ -9,7 +9,7 @@ export function TopContributorsPanel({
   contributors: AnalyticsContributor[];
 }) {
   return (
-    <DashboardPanel action={{ label: "View all" }} title="Top Contributors">
+    <DashboardPanel title="Top Contributors">
       {contributors.length === 0 ? (
         <p className="p-6 text-center text-sm text-[#8a90a3]">
           No time logged yet.

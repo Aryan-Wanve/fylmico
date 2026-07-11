@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Copy, FolderOpen, MoreVertical } from "lucide-react";
+import { Archive, Copy, MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,10 +29,6 @@ export function ProjectCardMenu({
         }
       />
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem>
-          <FolderOpen className="h-4 w-4" />
-          Open
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={onDuplicate}>
           <Copy className="h-4 w-4" />
           Duplicate

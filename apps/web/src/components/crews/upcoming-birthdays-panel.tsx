@@ -32,7 +32,7 @@ export function UpcomingBirthdaysPanel({ members }: { members: CrewMember[] }) {
     .slice(0, 4);
 
   return (
-    <DashboardPanel action={{ label: "View all" }} title="Upcoming Birthdays">
+    <DashboardPanel title="Upcoming Birthdays">
       <div className="grid">
         {upcoming.length > 0 ? (
           upcoming.map(({ member }) => {

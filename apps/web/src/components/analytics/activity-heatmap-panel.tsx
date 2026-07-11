@@ -8,10 +8,7 @@ export function ActivityHeatmapPanel({
   heatmap: ActivityHeatmapData;
 }) {
   return (
-    <DashboardPanel
-      action={{ label: "View full report" }}
-      title="Activity Heatmap"
-    >
+    <DashboardPanel title="Activity Heatmap">
       <ActivityHeatmap heatmap={heatmap} />
     </DashboardPanel>
   );

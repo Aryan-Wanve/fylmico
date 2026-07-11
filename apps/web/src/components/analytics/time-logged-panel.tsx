@@ -15,7 +15,7 @@ export function TimeLoggedPanel({
   const hasSignal = points.some((value) => value > 0);
 
   return (
-    <DashboardPanel action={{ label: "View all" }} title="Time Logged">
+    <DashboardPanel title="Time Logged">
       <div className="p-6 pt-4">
         <strong className="block text-2xl font-black text-[#11142c]">
           {formatHours(total)}
