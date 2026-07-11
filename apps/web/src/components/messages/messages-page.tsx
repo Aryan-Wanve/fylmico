@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { useWorkspace } from "@/lib/workspace-context";
 import {
   createConversation,
-  sendChatMessage
+  sendChatMessage,
+  updateConversation
 } from "@/services/base-workspace.service";
 import {
   ChannelsSidebar,
@@ -84,6 +85,26 @@ export function MessagesPage() {
     }
   }
 
+  async function handleRenameChannel() {
+    if (!activeChannel) {
+      return;
+    }
+
+    const name = window.prompt("Rename channel", activeChannel.name);
+    if (!name || !name.trim() || name.trim() === activeChannel.name) {
+      return;
+    }
+
+    try {
+      await updateConversation(activeChannel.id, { name: name.trim() });
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not rename the channel."
+      );
+    }
+  }
+
   async function handleNewChat() {
     const name = window.prompt("Start a new channel — enter a name");
 
@@ -127,7 +148,10 @@ export function MessagesPage() {
 
         {activeChannel ? (
           <div className="flex min-h-0 flex-col gap-3 rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
-            <ChatHeader channel={activeChannel} />
+            <ChatHeader
+              channel={activeChannel}
+              onRename={handleRenameChannel}
+            />
             <div className="px-4">
               <ChatTabs
                 activeTab={activeTab}
@@ -176,7 +200,12 @@ export function MessagesPage() {
         )}
 
         {activeChannel ? (
-          <ChannelInfoPanel channel={activeChannel} members={members} />
+          <ChannelInfoPanel
+            channel={activeChannel}
+            members={members}
+            onRename={handleRenameChannel}
+            onSelectTab={setActiveTab}
+          />
         ) : (
           <div />
         )}

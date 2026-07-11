@@ -36,6 +36,7 @@ import type {
   SignupRequest,
   TimeEntry,
   UpdateCrewProfileRequest,
+  UpdateConversationRequest,
   UpdateHouseRequest,
   UpdateMeRequest,
   UpdateProjectRequest,
@@ -427,6 +428,16 @@ export async function createConversation(
 
   return apiRequest<ChatRoom>(`/houses/${activeHouseId}/conversations`, {
     method: "POST",
+    body: request
+  });
+}
+
+export async function updateConversation(
+  roomId: string,
+  request: UpdateConversationRequest
+): Promise<ChatRoom> {
+  return apiRequest<ChatRoom>(`/chat/rooms/${roomId}`, {
+    method: "PATCH",
     body: request
   });
 }

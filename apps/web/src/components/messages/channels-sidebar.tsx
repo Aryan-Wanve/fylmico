@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Search, SlidersHorizontal } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChannelListItem } from "@/components/messages/channel-list-item";
 import type { Channel } from "@/components/messages/message-data";
@@ -44,13 +44,6 @@ export function ChannelsSidebar({
               value={searchTerm}
             />
           </div>
-          <button
-            aria-label="Filter chats"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-black/10 text-[#4b5268] hover:bg-black/[0.03]"
-            type="button"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-          </button>
         </div>
 
         <Tabs

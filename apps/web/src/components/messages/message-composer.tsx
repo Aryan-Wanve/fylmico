@@ -1,16 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import {
-  AtSign,
-  Bold,
-  Italic,
-  Link2,
-  List,
-  Paperclip,
-  Send,
-  Smile
-} from "lucide-react";
+import { useRef, useState } from "react";
+import { Paperclip, Send } from "lucide-react";
+import { uploadFileEntry } from "@/services/base-workspace.service";
 
 export function MessageComposer({
   onSend
@@ -18,6 +10,8 @@ export function MessageComposer({
   onSend: (body: string) => void;
 }) {
   const [value, setValue] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleSend() {
     const trimmed = value.trim();
@@ -26,6 +20,20 @@ export function MessageComposer({
     }
     onSend(trimmed);
     setValue("");
+  }
+
+  async function handleFileSelected(file: File) {
+    setUploading(true);
+    try {
+      const entry = await uploadFileEntry(file, null);
+      onSend(`📎 ${entry.name}`);
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not attach the file."
+      );
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -45,54 +53,26 @@ export function MessageComposer({
       />
       <div className="mt-2 flex items-center justify-between gap-3">
         <div className="flex items-center gap-1 text-[#8a90a3]">
+          <input
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) {
+                void handleFileSelected(file);
+              }
+              event.target.value = "";
+            }}
+            ref={fileInputRef}
+            type="file"
+          />
           <button
             aria-label="Attach file"
-            className="grid h-8 w-8 place-items-center rounded-lg hover:bg-black/[0.04]"
+            className="grid h-8 w-8 place-items-center rounded-lg hover:bg-black/[0.04] disabled:opacity-40"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
             type="button"
           >
             <Paperclip className="h-4 w-4" />
-          </button>
-          <button
-            aria-label="Add emoji"
-            className="grid h-8 w-8 place-items-center rounded-lg hover:bg-black/[0.04]"
-            type="button"
-          >
-            <Smile className="h-4 w-4" />
-          </button>
-          <button
-            aria-label="Mention someone"
-            className="grid h-8 w-8 place-items-center rounded-lg hover:bg-black/[0.04]"
-            type="button"
-          >
-            <AtSign className="h-4 w-4" />
-          </button>
-          <button
-            aria-label="Bold"
-            className="grid h-8 w-8 place-items-center rounded-lg hover:bg-black/[0.04]"
-            type="button"
-          >
-            <Bold className="h-4 w-4" />
-          </button>
-          <button
-            aria-label="Italic"
-            className="grid h-8 w-8 place-items-center rounded-lg hover:bg-black/[0.04]"
-            type="button"
-          >
-            <Italic className="h-4 w-4" />
-          </button>
-          <button
-            aria-label="Bulleted list"
-            className="grid h-8 w-8 place-items-center rounded-lg hover:bg-black/[0.04]"
-            type="button"
-          >
-            <List className="h-4 w-4" />
-          </button>
-          <button
-            aria-label="Insert link"
-            className="grid h-8 w-8 place-items-center rounded-lg hover:bg-black/[0.04]"
-            type="button"
-          >
-            <Link2 className="h-4 w-4" />
           </button>
         </div>
         <button

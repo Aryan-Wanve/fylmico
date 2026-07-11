@@ -331,6 +331,11 @@ export type CreateConversationRequest = {
   topic?: string;
 };
 
+export type UpdateConversationRequest = Partial<{
+  name: string;
+  topic: string;
+}>;
+
 export type CreateProjectRequest = {
   name: string;
   description?: string;
