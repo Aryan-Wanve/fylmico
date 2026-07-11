@@ -7,7 +7,8 @@ import { useWorkspace } from "@/lib/workspace-context";
 import {
   createConversation,
   listCrew,
-  removeCrewMember
+  removeCrewMember,
+  updateCrewProfile
 } from "@/services/base-workspace.service";
 import { CrewsHeader } from "@/components/crews/crews-header";
 import { CrewStatCard } from "@/components/crews/crew-stat-card";
@@ -22,6 +23,7 @@ import { PaginationFooter } from "@/components/layout/pagination-footer";
 import {
   DEPARTMENT_META,
   DEPARTMENT_ORDER,
+  ROLE_CATEGORY_ORDER,
   type CrewMember,
   type Department
 } from "@/components/crews/crew-data";
@@ -134,6 +136,45 @@ export function CrewsPage() {
       }
     }
     router.push("/messages");
+  }
+
+  async function handleEditMember(member: CrewMember) {
+    const jobTitle = window.prompt("Job title", member.jobTitle);
+    if (jobTitle === null) {
+      return;
+    }
+
+    const tagInput = window.prompt(
+      `Tag (${ROLE_CATEGORY_ORDER.join(", ")}, or Other)`,
+      member.roleCategory
+    );
+    if (tagInput === null) {
+      return;
+    }
+
+    const matchedTag = [...ROLE_CATEGORY_ORDER, "Other"].find(
+      (option) => option.toLowerCase() === tagInput.trim().toLowerCase()
+    );
+    if (!matchedTag) {
+      window.alert(
+        `"${tagInput}" isn't a valid tag. Choose one of: ${ROLE_CATEGORY_ORDER.join(", ")}, Other.`
+      );
+      return;
+    }
+
+    try {
+      const updated = await updateCrewProfile(member.id, {
+        jobTitle: jobTitle.trim() || member.jobTitle,
+        roleCategory: matchedTag as CrewMember["roleCategory"]
+      });
+      setMembers((current) =>
+        current.map((entry) => (entry.id === member.id ? updated : entry))
+      );
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not update this member."
+      );
+    }
   }
 
   async function handleRemove(memberId: string) {
@@ -257,6 +298,7 @@ export function CrewsPage() {
                       <CrewMemberRow
                         key={member.id}
                         member={member}
+                        onEdit={() => handleEditMember(member)}
                         onMessage={() => handleMessage(member)}
                         onRemove={() => handleRemove(member.id)}
                       />
@@ -274,6 +316,7 @@ export function CrewsPage() {
                     <CrewMemberRow
                       key={member.id}
                       member={member}
+                      onEdit={() => handleEditMember(member)}
                       onMessage={() => handleMessage(member)}
                       onRemove={() => handleRemove(member.id)}
                     />

@@ -2,6 +2,7 @@ import { Calendar } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DEPARTMENT_META,
+  ROLE_CATEGORY_META,
   STATUS_META,
   getInitials,
   type CrewMember
@@ -11,15 +12,18 @@ import { CrewCardMenu } from "@/components/crews/crew-card-menu";
 export function CrewMemberRow({
   member,
   onRemove,
-  onMessage
+  onMessage,
+  onEdit
 }: {
   member: CrewMember;
   onRemove: () => void;
   onMessage: () => void;
+  onEdit: () => void;
 }) {
   const departmentMeta = DEPARTMENT_META[member.department];
   const DepartmentIcon = departmentMeta.icon;
   const statusMeta = STATUS_META[member.status];
+  const roleMeta = ROLE_CATEGORY_META[member.roleCategory];
 
   return (
     <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03]">
@@ -37,8 +41,15 @@ export function CrewMemberRow({
         </div>
       </div>
 
-      <span className="hidden w-40 shrink-0 truncate text-sm text-[#4b5268] md:block dark:text-[#c7cad9]">
-        {member.jobTitle}
+      <span className="hidden w-40 shrink-0 items-center gap-2 md:flex">
+        <span className="truncate text-sm text-[#4b5268] dark:text-[#c7cad9]">
+          {member.jobTitle}
+        </span>
+        <span
+          className={`shrink-0 rounded-md px-1.5 py-0.5 text-[0.65rem] font-bold ${roleMeta.badge}`}
+        >
+          {member.roleCategory}
+        </span>
       </span>
 
       <span className="hidden w-40 shrink-0 items-center gap-1.5 truncate text-sm text-[#4b5268] lg:flex dark:text-[#c7cad9]">
@@ -77,7 +88,7 @@ export function CrewMemberRow({
         {member.availability}
       </span>
 
-      <CrewCardMenu onMessage={onMessage} onRemove={onRemove} />
+      <CrewCardMenu onEdit={onEdit} onMessage={onMessage} onRemove={onRemove} />
     </div>
   );
 }

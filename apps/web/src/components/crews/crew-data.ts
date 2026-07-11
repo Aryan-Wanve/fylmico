@@ -92,6 +92,15 @@ export const ROLE_CATEGORY_ORDER: RoleCategory[] = [
   "Production Assistant"
 ];
 
+export const ROLE_CATEGORY_META: Record<RoleCategory, { badge: string }> = {
+  Director: { badge: "bg-violet-50 text-violet-600" },
+  Producer: { badge: "bg-emerald-50 text-emerald-600" },
+  Cinematographer: { badge: "bg-blue-50 text-blue-600" },
+  Editor: { badge: "bg-amber-50 text-amber-600" },
+  "Production Assistant": { badge: "bg-cyan-50 text-cyan-600" },
+  Other: { badge: "bg-slate-100 text-slate-500" }
+};
+
 export function getInitials(name: string): string {
   const initials = name
     .trim()

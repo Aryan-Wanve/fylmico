@@ -80,7 +80,7 @@ function buildGroups(list: Task[], groupBy: GroupByOption): Group[] {
 }
 
 export function TasksPage() {
-  const { workspace, refreshWorkspace } = useWorkspace();
+  const { workspace, activeHouse, refreshWorkspace } = useWorkspace();
   const currentUserId = workspace.user.id;
   const tasks = workspace.tasks;
 
@@ -163,6 +163,40 @@ export function TasksPage() {
     } catch (error) {
       window.alert(
         error instanceof Error ? error.message : "Could not update the task."
+      );
+    }
+  }
+
+  async function handleReassign(taskId: string) {
+    const task = tasks.find((item) => item.id === taskId);
+    const members = activeHouse?.members ?? [];
+    if (!task || members.length === 0) {
+      return;
+    }
+
+    const memberNames = members.map((member) => member.name).join(", ");
+    const input = window.prompt(
+      `Reassign to (${memberNames})`,
+      task.assigneeName
+    );
+    if (input === null) {
+      return;
+    }
+
+    const matched = members.find(
+      (member) => member.name.toLowerCase() === input.trim().toLowerCase()
+    );
+    if (!matched) {
+      window.alert(`"${input}" isn't a member of this house.`);
+      return;
+    }
+
+    try {
+      await updateTaskApi(taskId, { assigneeId: matched.id });
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not reassign the task."
       );
     }
   }
@@ -275,6 +309,7 @@ export function TasksPage() {
                             key={task.id}
                             onDelete={() => handleDelete(task.id)}
                             onDuplicate={() => handleDuplicate(task.id)}
+                            onReassign={() => handleReassign(task.id)}
                             onToggleComplete={() => toggleComplete(task.id)}
                             task={task}
                           />

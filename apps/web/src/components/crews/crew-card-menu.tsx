@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare, MoreVertical, UserX } from "lucide-react";
+import { MessageSquare, MoreVertical, Pencil, UserX } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,10 +10,12 @@ import {
 
 export function CrewCardMenu({
   onRemove,
-  onMessage
+  onMessage,
+  onEdit
 }: {
   onRemove: () => void;
   onMessage: () => void;
+  onEdit: () => void;
 }) {
   return (
     <DropdownMenu>
@@ -29,6 +31,10 @@ export function CrewCardMenu({
         }
       />
       <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuItem onClick={onEdit}>
+          <Pencil className="h-4 w-4" />
+          Edit profile
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={onMessage}>
           <MessageSquare className="h-4 w-4" />
           Message

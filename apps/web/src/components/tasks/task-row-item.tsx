@@ -14,12 +14,14 @@ export function TaskRowItem({
   task,
   onToggleComplete,
   onDuplicate,
-  onDelete
+  onDelete,
+  onReassign
 }: {
   task: Task;
   onToggleComplete: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onReassign: () => void;
 }) {
   const isDone = task.status === "done";
   const due = formatDueDate(task.dueDate);
@@ -88,7 +90,11 @@ export function TaskRowItem({
         {priority.label}
       </span>
 
-      <TaskCardMenu onDelete={onDelete} onDuplicate={onDuplicate} />
+      <TaskCardMenu
+        onDelete={onDelete}
+        onDuplicate={onDuplicate}
+        onReassign={onReassign}
+      />
     </div>
   );
 }

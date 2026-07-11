@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, MoreVertical, Trash2 } from "lucide-react";
+import { Copy, MoreVertical, Trash2, UserCog } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,10 +10,12 @@ import {
 
 export function TaskCardMenu({
   onDuplicate,
-  onDelete
+  onDelete,
+  onReassign
 }: {
   onDuplicate: () => void;
   onDelete: () => void;
+  onReassign: () => void;
 }) {
   return (
     <DropdownMenu>
@@ -29,6 +31,10 @@ export function TaskCardMenu({
         }
       />
       <DropdownMenuContent align="end" className="w-36">
+        <DropdownMenuItem onClick={onReassign}>
+          <UserCog className="h-4 w-4" />
+          Reassign
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={onDuplicate}>
           <Copy className="h-4 w-4" />
           Duplicate
