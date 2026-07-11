@@ -1,11 +1,19 @@
 import { HttpStatus, Injectable } from "@nestjs/common";
-import { Prisma, PrismaService } from "@fylmico/database";
+import { ConfigService } from "@nestjs/config";
+import { Prisma, PrismaService, type HouseInvitation } from "@fylmico/database";
 import { AppException } from "../common/exceptions/app.exception";
+import {
+  addDuration,
+  generateOpaqueToken,
+  hashOpaqueToken
+} from "../auth/token.util";
 import { NotificationsService } from "../notifications/notifications.service";
 import { CreateHouseDto } from "./dto/create-house.dto";
+import { InviteMemberDto } from "./dto/invite-member.dto";
 import { JoinHouseDto } from "./dto/join-house.dto";
 
 const MEMBER_ROLE_NAME = "Member";
+const INVITATION_TTL = "7d";
 
 const DEFAULT_ROLES = [
   {
@@ -54,7 +62,8 @@ type OrganizationWithRelations = Prisma.OrganizationGetPayload<{
 export class OrganizationsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notificationsService: NotificationsService
+    private readonly notificationsService: NotificationsService,
+    private readonly configService: ConfigService
   ) {}
 
   async createHouse(userId: string, dto: CreateHouseDto) {
@@ -111,11 +120,203 @@ export class OrganizationsService {
       );
     }
 
+    await this.addMembership(organization.id, organization.name, userId);
+    return this.getHouseDto(organization.id, userId);
+  }
+
+  async inviteMember(
+    organizationId: string,
+    inviterUserId: string,
+    dto: InviteMemberDto
+  ) {
+    await this.requireMembership(organizationId, inviterUserId);
+    const email = dto.email.trim().toLowerCase();
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email }
+    });
+    if (existingUser) {
+      const existingMembership =
+        await this.prisma.organizationMembership.findUnique({
+          where: {
+            organizationId_userId: { organizationId, userId: existingUser.id }
+          }
+        });
+      if (existingMembership) {
+        throw new AppException(
+          HttpStatus.CONFLICT,
+          "already_member",
+          "This person is already a member of this house."
+        );
+      }
+    }
+
+    await this.prisma.houseInvitation.updateMany({
+      where: { organizationId, email, status: "pending" },
+      data: { status: "revoked" }
+    });
+
+    const token = generateOpaqueToken();
+    const invitation = await this.prisma.houseInvitation.create({
+      data: {
+        organizationId,
+        email,
+        tokenHash: hashOpaqueToken(token),
+        invitedById: inviterUserId,
+        expiresAt: addDuration(new Date(), INVITATION_TTL)
+      }
+    });
+
+    const inviteUrl = `${this.frontendUrl}/houses/invite/${token}`;
+    return toInvitationDto(invitation, inviteUrl);
+  }
+
+  async listInvitations(organizationId: string, userId: string) {
+    await this.requireMembership(organizationId, userId);
+
+    const invitations = await this.prisma.houseInvitation.findMany({
+      where: { organizationId, status: "pending" },
+      orderBy: { createdAt: "desc" }
+    });
+
+    return invitations.map((invitation) => toInvitationDto(invitation));
+  }
+
+  async revokeInvitation(
+    organizationId: string,
+    userId: string,
+    invitationId: string
+  ): Promise<void> {
+    await this.requireMembership(organizationId, userId);
+
+    const invitation = await this.prisma.houseInvitation.findUnique({
+      where: { id: invitationId }
+    });
+    if (!invitation || invitation.organizationId !== organizationId) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "invitation_not_found",
+        "This invitation does not exist."
+      );
+    }
+    if (invitation.status !== "pending") {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_request",
+        "This invitation is no longer pending."
+      );
+    }
+
+    await this.prisma.houseInvitation.update({
+      where: { id: invitationId },
+      data: { status: "revoked" }
+    });
+  }
+
+  async getInvitationPreview(token: string) {
+    const invitation = await this.findValidInvitation(token);
+
+    const [organization, invitedBy] = await Promise.all([
+      this.prisma.organization.findUniqueOrThrow({
+        where: { id: invitation.organizationId }
+      }),
+      this.prisma.user.findUniqueOrThrow({
+        where: { id: invitation.invitedById }
+      })
+    ]);
+
+    return {
+      houseName: organization.name,
+      houseDescription: organization.description,
+      email: invitation.email,
+      invitedByName: invitedBy.name,
+      expiresAt: invitation.expiresAt
+    };
+  }
+
+  async acceptInvitation(userId: string, token: string) {
+    const invitation = await this.findValidInvitation(token);
+
+    const organization = await this.prisma.organization.findUniqueOrThrow({
+      where: { id: invitation.organizationId }
+    });
+
+    await this.addMembership(organization.id, organization.name, userId);
+
+    await this.prisma.houseInvitation.update({
+      where: { id: invitation.id },
+      data: { status: "accepted", acceptedById: userId, acceptedAt: new Date() }
+    });
+
+    return this.getHouseDto(organization.id, userId);
+  }
+
+  async leaveHouse(userId: string, organizationId: string): Promise<void> {
+    await this.requireMembership(organizationId, userId);
+
+    const memberCount = await this.prisma.organizationMembership.count({
+      where: { organizationId }
+    });
+    if (memberCount <= 1) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_request",
+        "You are the only member of this house. Add another member before leaving."
+      );
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.organizationMembership.delete({
+        where: { organizationId_userId: { organizationId, userId } }
+      }),
+      this.prisma.crewProfile.deleteMany({
+        where: { organizationId, userId }
+      })
+    ]);
+
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId }
+    });
+    if (user.activeOrganizationId === organizationId) {
+      const nextMembership = await this.prisma.organizationMembership.findFirst(
+        { where: { userId } }
+      );
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { activeOrganizationId: nextMembership?.organizationId ?? null }
+      });
+    }
+  }
+
+  private async findValidInvitation(token: string) {
+    const invitation = await this.prisma.houseInvitation.findUnique({
+      where: { tokenHash: hashOpaqueToken(token) }
+    });
+    if (!invitation) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "invitation_not_found",
+        "This invitation does not exist."
+      );
+    }
+    if (invitation.status !== "pending" || invitation.expiresAt < new Date()) {
+      throw new AppException(
+        HttpStatus.GONE,
+        "invitation_expired",
+        "This invitation is no longer valid."
+      );
+    }
+    return invitation;
+  }
+
+  private async addMembership(
+    organizationId: string,
+    organizationName: string,
+    userId: string
+  ): Promise<void> {
     const existingMembership =
       await this.prisma.organizationMembership.findUnique({
-        where: {
-          organizationId_userId: { organizationId: organization.id, userId }
-        }
+        where: { organizationId_userId: { organizationId, userId } }
       });
     if (existingMembership) {
       throw new AppException(
@@ -125,20 +326,26 @@ export class OrganizationsService {
       );
     }
 
-    const memberRole = await this.getOrCreateMemberRole(organization.id);
+    const memberRole = await this.getOrCreateMemberRole(organizationId);
 
     await this.prisma.organizationMembership.create({
-      data: { organizationId: organization.id, userId, roleId: memberRole.id }
+      data: { organizationId, userId, roleId: memberRole.id }
     });
-    await this.seedCrewProfile(organization.id, userId, memberRole.name);
-    await this.setActiveOrganization(userId, organization.id);
+    await this.seedCrewProfile(organizationId, userId, memberRole.name);
+    await this.setActiveOrganization(userId, organizationId);
     await this.notifyOwnersOfNewMember(
-      organization.id,
-      organization.name,
+      organizationId,
+      organizationName,
       userId
     );
+  }
 
-    return this.getHouseDto(organization.id, userId);
+  private get frontendUrl(): string {
+    const corsOrigin = this.configService.get<string>(
+      "CORS_ORIGIN",
+      "http://localhost:3000"
+    );
+    return corsOrigin.split(",")[0].trim();
   }
 
   private async notifyOwnersOfNewMember(
@@ -325,5 +532,16 @@ function toHouseDto(
       description: role.description,
       memberCount: memberCountByRoleId.get(role.id) ?? 0
     }))
+  };
+}
+
+function toInvitationDto(invitation: HouseInvitation, inviteUrl?: string) {
+  return {
+    id: invitation.id,
+    email: invitation.email,
+    status: invitation.status,
+    createdAt: invitation.createdAt,
+    expiresAt: invitation.expiresAt,
+    ...(inviteUrl ? { inviteUrl } : {})
   };
 }

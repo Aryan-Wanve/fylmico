@@ -3,6 +3,7 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   UseGuards
 } from "@nestjs/common";
@@ -37,5 +38,15 @@ export class OrganizationsController {
   ) {
     const data = await this.organizationsService.joinHouse(user.id, dto);
     return { data };
+  }
+
+  @Post("houses/:houseId/leave")
+  @HttpCode(HttpStatus.OK)
+  async leaveHouse(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("houseId") houseId: string
+  ) {
+    await this.organizationsService.leaveHouse(user.id, houseId);
+    return { data: { success: true } };
   }
 }
