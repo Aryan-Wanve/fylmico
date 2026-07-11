@@ -302,6 +302,77 @@ rather than "Client" or a joiner-specified role).
 Errors: `400 invalid_request`, `401 unauthenticated`, `404 invite_not_found`,
 `409 already_member`.
 
+### `POST /api/v1/houses/:houseId/leave`
+
+Implemented per ADR 0036. Authentication: required (caller must be a member
+of `houseId`). Removes the caller's membership and crew profile. If
+`houseId` was the caller's active house, their active house switches to
+another house they belong to, or `null` if none remain (the frontend then
+shows the "create or join a house" onboarding). Response:
+`{ "data": { "success": true } }`.
+Errors: `400 invalid_request` (caller is the house's only member — add
+another member first), `401 unauthenticated`, `403 forbidden` (not a
+member).
+
+### `POST /api/v1/houses/:houseId/invitations`
+
+Implemented per ADR 0036. Authentication: required (caller must be a member
+of `houseId`). Body: `{ "email": string }`. Creates a targeted, revocable
+invitation (7-day expiry) distinct from the house's permanent `inviteCode`.
+Any existing pending invitation for the same email in this house is
+silently revoked and replaced. Response:
+
+```json
+{
+  "data": {
+    "id": "invitation_123",
+    "email": "someone@example.com",
+    "status": "pending",
+    "createdAt": "2026-07-11T10:00:00.000Z",
+    "expiresAt": "2026-07-18T10:00:00.000Z",
+    "inviteUrl": "http://localhost:3000/houses/invite/<token>"
+  }
+}
+```
+
+`inviteUrl` is only ever returned on this creation response — the plain
+token is never stored, only its hash, so it can't be recovered later.
+Errors: `400 invalid_request`, `401 unauthenticated`, `403 forbidden`,
+`409 already_member` (the invited email already belongs to a member of
+this house).
+
+### `GET /api/v1/houses/:houseId/invitations`
+
+Authentication: required (caller must be a member). Lists this house's
+`pending` invitations (no `inviteUrl` — see above), newest first. Response:
+`{ "data": HouseInvitation[] }` (each item omits `inviteUrl`).
+Errors: `401 unauthenticated`, `403 forbidden`.
+
+### `DELETE /api/v1/houses/:houseId/invitations/:invitationId`
+
+Authentication: required (caller must be a member). Marks a pending
+invitation `revoked`; the link stops working immediately. Response:
+`{ "data": { "success": true } }`.
+Errors: `400 invalid_request` (invitation isn't pending), `401
+unauthenticated`, `403 forbidden`, `404 invitation_not_found`.
+
+### `GET /api/v1/invitations/:token`
+
+Authentication: public — this is the page a freshly-invited person lands
+on before they've necessarily logged in. Response:
+`{ "data": { "houseName", "houseDescription", "email", "invitedByName", "expiresAt" } }`.
+Errors: `404 invitation_not_found`, `410 invitation_expired` (also returned
+for a revoked or already-accepted invitation).
+
+### `POST /api/v1/invitations/:token/accept`
+
+Authentication: required. Joins the caller to the invitation's house
+(same account-linking/role/notification behavior as `POST /houses/join`)
+and marks the invitation `accepted`. Response: same `House` shape as
+`POST /houses/join`.
+Errors: `401 unauthenticated`, `404 invitation_not_found`,
+`409 already_member`, `410 invitation_expired`.
+
 ### `GET /api/v1/workspace`
 
 Authentication: required. Response:

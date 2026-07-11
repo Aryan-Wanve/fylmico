@@ -436,9 +436,14 @@ Indexes: unique compound index on `(organization_id, user_id)`; indexes on
 Constraints: `(organization_id, user_id)` unique — one membership per user
 per house, matching ADR 0011's model.
 
-Permissions: created by house creation (creator, `"Owner"` role) or
-`POST /api/v1/houses/join` (joiner, `"Member"` role). No endpoint to change
-a member's role or remove a member exists yet.
+Permissions: created by house creation (creator, `"Owner"` role),
+`POST /api/v1/houses/join` (joiner, `"Member"` role), or
+`POST /api/v1/invitations/:token/accept` (invitee, `"Member"` role, per ADR
+0036). Removed by `DELETE /api/v1/houses/:houseId/crew/:userId` (another
+member removing someone, ADR 0028) or `POST /api/v1/houses/:houseId/leave`
+(a member removing themself, ADR 0036) — both refuse to remove the
+house's last remaining membership. No endpoint to change a member's role
+exists yet.
 
 Reasoning: `HouseMember.status` (online/away/offline) in the API response is
 computed at read time (`"online"` for the requesting user, `"offline"` for
@@ -446,6 +451,46 @@ everyone else), not stored here — real presence belongs to the realtime
 system (ADR 0005), not this table.
 
 Migration history: `20260708164132_organizations_houses`.
+
+### Table: `house_invitations`
+
+Purpose: a targeted, revocable invitation for one specific email address to
+join one specific house — distinct from `organizations.invite_code`, which
+is a single permanent code anyone can use.
+
+Ownership: belongs to one `organization`; references the inviting `user`
+and, once accepted, the accepting `user`.
+
+Columns: `id`, `organization_id`, `email`, `token_hash` (unique — same
+opaque-token-hashed-server-side pattern as `email_verification_tokens`/
+`password_reset_tokens`), `invited_by_id`, `status` (`"pending"` |
+`"accepted"` | `"revoked"`, default `"pending"`), `expires_at` (7 days from
+creation), `accepted_by_id` (nullable), `accepted_at` (nullable),
+`created_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`users` via `invited_by_id` (restrict — an inviter's own account can't be
+deleted while their invitation history still points at it); belongs to
+`users` via `accepted_by_id` (set null — losing the accepting user's
+account shouldn't block deleting old invitation rows).
+
+Indexes: unique index on `token_hash`; indexes on `organization_id` and
+`email`.
+
+Permissions: created by `POST /api/v1/houses/:houseId/invitations` (any
+member of the house); listed by `GET /api/v1/houses/:houseId/invitations`
+(pending only); revoked by
+`DELETE /api/v1/houses/:houseId/invitations/:invitationId`; accepted by
+`POST /api/v1/invitations/:token/accept`, which also creates the resulting
+`organization_memberships` row.
+
+Reasoning: unlike `email_verification_tokens`/`password_reset_tokens`, the
+plain token is returned once in the creation response (as a full
+`inviteUrl`), not only logged server-side — see ADR 0036 for why an invite
+link's exposure profile is treated more like the already-plaintext
+`invite_code` than like a password-reset credential.
+
+Migration history: `20260711100000_house_invitations`.
 
 ### Table: `tasks`
 

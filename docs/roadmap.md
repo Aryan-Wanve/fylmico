@@ -386,17 +386,35 @@ google` and `GET /api/v1/auth/google/callback`, a new
   cookie, and CSRF state-mismatch rejection all confirmed against the
   running local API; the actual Google consent screen requires Cloud
   Console credentials the user still needs to create). See ADR 0035.
-- Next: create the Google Cloud Console OAuth client (ID + secret,
-  consent screen, authorized redirect URIs for local dev and the live
-  Render API) and add `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/
-  `GOOGLE_CALLBACK_URL` to both local `.env` and Render's environment to
-  actually light up Google sign-in end-to-end. Object storage is still a
-  named prerequisite for project cover photos, message attachments, and
-  the entire `/files` page. Real RBAC (who can remove/edit what) is a
-  concretely scoped gap across every module now, worth solving broadly
-  rather than per-endpoint. Otherwise, pick up Files/Storyboard/Bookings
-  (all still local mock data, each needing its own backend domain), or the
-  activity feed / creative-production modules.
+- **Google Cloud Console OAuth client created and verified live**: the
+  user created a real client ID/secret, and a full end-to-end Google
+  login was completed in-browser (real account, real consent screen,
+  landed logged-in on the dashboard).
+- **House invitations + leave-house built**: targeted, revocable
+  email invitations (`HouseInvitation` model, 7-day expiry, invite link
+  returned directly in the API response and copied to the clipboard by
+  the frontend rather than only logged) alongside the existing house-wide
+  invite code, plus a self-service `POST /houses/:houseId/leave` (blocked
+  if the caller is the house's only member, same floor `removeMember`
+  already enforced). Settings -> Members now has a real invite form,
+  pending-invitations list with revoke, and a "Danger Zone" leave-house
+  card; a new public `/houses/invite/[token]` page previews the
+  invitation and accepts it once logged in. Live-verified end-to-end
+  against the real API and Postgres: invite created and copied, accept
+  correctly rejected as `already_member` for the inviter's own account,
+  a second real user joined via the existing invite code and successfully
+  left (membership/crew-profile rows and `active_organization_id` all
+  confirmed cleaned up in the database), and leaving as the sole member
+  was correctly blocked. See ADR 0036.
+- Next: object storage is still a named prerequisite for project cover
+  photos, message attachments, and the entire `/files` page. Real RBAC
+  (who can remove/edit what) is a concretely scoped gap across every
+  module now, worth solving broadly rather than per-endpoint. A house
+  ownership-transfer/role-editing flow would resolve the "solo owner
+  leaving a multi-member house" gap noted in ADR 0036. Otherwise, pick up
+  Files/Storyboard/Bookings (all still local mock data, each needing its
+  own backend domain), or the activity feed / creative-production
+  modules.
 
 ## Completed Milestones
 

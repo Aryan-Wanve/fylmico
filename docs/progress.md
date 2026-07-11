@@ -2862,3 +2862,110 @@ Next task:
   flow works with an actual Google account.
 - Otherwise, the same backlog as before: object storage, real RBAC,
   Files/Storyboard/Bookings.
+
+## 2026-07-11 Google OAuth Live Verification
+
+Current milestone: Phase 8 - backend bootstrap / auth
+
+Completion percentage: N/A
+
+Features completed:
+
+- User created a real Google Cloud Console OAuth client (Web application
+  type, redirect URIs registered for both `http://localhost:4000/api/v1/
+auth/google/callback` and the live Render API's equivalent) and added
+  the resulting `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` to local
+  `apps/api/.env` (gitignored, confirmed via `git check-ignore`).
+- Completed a full real Google login in-browser: clicked "Continue with
+  Google" on `/login`, signed in with a real Google account through
+  Google's actual consent screen, and landed authenticated on the
+  dashboard as that user - confirming the ADR 0035 flow end-to-end with
+  live credentials, not just the earlier structural verification.
+
+Validation:
+
+- Live-browser-verified only; no code changed in this pass.
+
+Next task:
+
+- Add the same `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/
+  `GOOGLE_CALLBACK_URL` to Render's environment variables so Google login
+  also works on the live deployment, not just locally.
+
+## 2026-07-11 House Invitations and Leave-House
+
+Current milestone: Phase 8 - backend bootstrap / organizations
+
+Completion percentage: N/A
+
+Features completed:
+
+- User asked to build out "joining and invitation to a house" plus an
+  option to leave a house. Joining by invite code already worked (ADR
+  0020); "invite" was previously decorative (Settings' button was a
+  `window.prompt` that called no API), and there was no way to leave a
+  house at all - only `removeMember` (another member removing someone
+  else, ADR 0028).
+- Backend: new `HouseInvitation` Prisma model + migration
+  (`20260711100000_house_invitations`, written by hand and applied via
+  `prisma migrate deploy` rather than `migrate dev`, because the shadow
+  database `migrate dev` normally uses failed against the existing
+  `20260711090257_enable_row_level_security` migration - RLS with no
+  policies on `_prisma_migrations` itself broke the shadow db's own
+  bookkeeping. `migrate deploy` against the real dev database sidesteps
+  the shadow db entirely and matches how migrations already apply in
+  production per ADR 0032/0033, so this wasn't a workaround so much as
+  using the already-established production path locally too).
+- `OrganizationsService` gained `inviteMember`/`listInvitations`/
+  `revokeInvitation`/`getInvitationPreview`/`acceptInvitation`/
+  `leaveHouse`, plus a private `addMembership` extracted from `joinHouse`'s
+  body and now shared by both `joinHouse` and `acceptInvitation`. New
+  `POST/GET/DELETE /houses/:houseId/invitations` routes (guarded, member-
+  only) and a separate public `GET /invitations/:token` /
+  `POST /invitations/:token/accept` controller (preview needs no auth so
+  an invited person can see who's inviting them before logging in).
+  `leaveHouse` reuses the same "can't remove the house's last member"
+  floor `removeMember` already enforced, and clears/reassigns
+  `activeOrganizationId` on success.
+- Frontend: Settings -> Members now has a real invite-by-email form
+  (copies the returned link to the clipboard, since there's still no
+  email provider - same "return it directly, don't just log it"
+  reasoning ADR 0036 documents), a pending-invitations list with revoke,
+  and a new "Danger Zone" leave-house card. New public page
+  `apps/web/src/app/houses/invite/[token]/page.tsx` previews the invite
+  and shows "Accept & Join" if logged in, or login/signup links if not.
+- See ADR 0036.
+
+Validation:
+
+- `npm run build:api`, `typecheck`/`lint` (both workspaces), and
+  `format:check` all pass clean.
+- Live-verified against the running local API, web dev server, and real
+  Postgres: sent a real invite from Settings, confirmed the link was
+  returned and the "copied to clipboard" toast + pending-invitations row
+  appeared; opened the real invite-accept page and confirmed it correctly
+  rendered the house preview and then correctly rejected acceptance as
+  `already_member` (the inviter accepting their own house's invite);
+  revoked the invitation and confirmed the pending list cleared; clicked
+  "Leave House" as the sole member and got the expected
+  `400 invalid_request` "only member" error rendered in the UI; created a
+  second real user via signup, joined Aryan's house with its real invite
+  code (confirming no regression in `joinHouse` after the `addMembership`
+  refactor), then had that user leave successfully and confirmed directly
+  in Postgres that their `organization_memberships` row, `crew_profiles`
+  row, and `users.active_organization_id` were all correctly removed/
+  cleared.
+
+Technical debt:
+
+- No ownership-transfer or role-editing UI, so a solo "Owner" in a
+  multi-member house can't currently promote someone else before leaving
+  - flagged explicitly in ADR 0036 rather than silently left unhandled.
+- Invitations still aren't emailed (no provider chosen) - the invite link
+  only reaches its recipient if the inviter manually copies and sends it.
+
+Next task:
+
+- Object storage, real RBAC, Files/Storyboard/Bookings remain the
+  standing backlog. A future role-editing/ownership-transfer pass should
+  resolve the solo-owner-leaving gap noted above.

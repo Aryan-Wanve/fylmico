@@ -85,6 +85,7 @@ Current ADRs:
 - [0033-supabase-render-backend.md](docs/adr/0033-supabase-render-backend.md)
 - [0034-hostinger-native-web-app.md](docs/adr/0034-hostinger-native-web-app.md)
 - [0035-google-oauth-login.md](docs/adr/0035-google-oauth-login.md)
+- [0036-house-invitations-and-leave.md](docs/adr/0036-house-invitations-and-leave.md)
 
 ## Current Sprint Gate
 
@@ -211,17 +212,33 @@ hosting Postgres (ADR 0033) - confirmed live end-to-end. Set
 `NEXT_PUBLIC_API_URL` directly in Hostinger's own Environment Variables
 UI to point the frontend at the live Render API.
 
-**Google sign-in is wired end-to-end but needs real credentials** (ADR
-0035): the login page's Apple/Microsoft buttons (never functional) were
-removed, leaving one real "Continue with Google" button that drives a
-server-side OAuth 2.0 flow (`GET /api/v1/auth/google` /
+**Google sign-in is fully working, confirmed live with a real account**
+(ADR 0035): the login page's Apple/Microsoft buttons (never functional)
+were removed, leaving one real "Continue with Google" button that drives
+a server-side OAuth 2.0 flow (`GET /api/v1/auth/google` /
 `GET /api/v1/auth/google/callback`, CSRF-protected via a short-lived
-`state` cookie, account creation/linking by email). Live-verified short of
-an actual Google login — the redirect, cookie, and CSRF rejection all work
-against the running local API — but it stays inert
-(`google_oauth_not_configured`) until `GOOGLE_CLIENT_ID`/
-`GOOGLE_CLIENT_SECRET`/`GOOGLE_CALLBACK_URL` are set, which requires
-creating a real OAuth client in Google Cloud Console.
+`state` cookie, account creation/linking by email). The user created a
+real OAuth client in Google Cloud Console and completed a real login
+in-browser end to end. Render's environment still needs the same
+`GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_CALLBACK_URL` added for
+the live deployment (currently local-only).
+
+**House invitations and leave-house are real** (ADR 0036): alongside the
+existing house-wide invite code (ADR 0020), a member can now invite a
+specific email — a new `HouseInvitation` model backs
+`POST`/`GET`/`DELETE /api/v1/houses/:houseId/invitations` and a public
+`GET`/`POST /api/v1/invitations/:token[/accept]` pair. The invite link is
+returned directly in the API response (and copied to the clipboard by
+Settings' new invite form) rather than only logged, since there's still
+no email provider. A member can also now leave a house themself via
+`POST /api/v1/houses/:houseId/leave`, blocked only if they're the house's
+last remaining member — the same floor `removeMember` (ADR 0028) already
+enforced. Live-verified against the real API and Postgres: invite
+created and copied, self-accept correctly rejected as `already_member`,
+revoke cleared the pending list, a second real user joined via invite
+code and successfully left with membership/crew-profile rows and
+`active_organization_id` all confirmed cleaned up in the database, and
+leaving as the sole member was correctly blocked.
 
 To run both sides locally: `docker compose up -d postgres`, then start the
 `api` and `web` dev servers (`.claude/launch.json` has both configured).
