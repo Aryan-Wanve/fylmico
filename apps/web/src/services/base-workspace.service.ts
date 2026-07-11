@@ -140,6 +140,12 @@ export async function verifyEmail(token: string): Promise<void> {
   });
 }
 
+export async function resendVerificationEmail(): Promise<void> {
+  await apiRequest<{ success: boolean }>("/auth/resend-verification", {
+    method: "POST"
+  });
+}
+
 export async function getWorkspace(): Promise<WorkspaceSnapshot> {
   const snapshot = await apiRequest<WorkspaceSnapshot>("/workspace");
   activeHouseId = snapshot.activeHouseId || null;

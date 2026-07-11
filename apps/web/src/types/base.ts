@@ -59,6 +59,7 @@ export type UserProfile = {
   name: string;
   email: string;
   avatarLabel: string;
+  emailVerifiedAt: string | null;
 };
 
 export type HouseRole = {

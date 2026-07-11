@@ -2,6 +2,11 @@ import type { User } from "@fylmico/database";
 import { toAvatarLabel } from "../avatar-label.util";
 import { getEnv, getOptionalEnv } from "../env";
 import { AppException, HttpStatus } from "../http";
+import { sendMail } from "../mail/mailer";
+import {
+  buildPasswordResetEmail,
+  buildVerificationEmail
+} from "../mail/templates";
 import { prisma } from "../prisma";
 import {
   buildGoogleAuthUrl,
@@ -175,6 +180,22 @@ class AuthService {
     ]);
   }
 
+  async resendVerificationEmail(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId }
+    });
+
+    if (user.emailVerifiedAt) {
+      throw new AppException(
+        HttpStatus.CONFLICT,
+        "email_already_verified",
+        "This email address is already verified."
+      );
+    }
+
+    await this.issueEmailVerificationToken(user.id, user.email);
+  }
+
   async requestPasswordReset(email: string): Promise<void> {
     const normalizedEmail = normalizeEmail(email);
     const user = await this.prisma.user.findUnique({
@@ -195,7 +216,7 @@ class AuthService {
       }
     });
 
-    console.log(`Password reset token for ${normalizedEmail}: ${token}`);
+    await sendMail(buildPasswordResetEmail(normalizedEmail, token));
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
@@ -438,7 +459,7 @@ class AuthService {
         expiresAt: addDuration(new Date(), EMAIL_VERIFICATION_TTL)
       }
     });
-    console.log(`Email verification token for ${email}: ${token}`);
+    await sendMail(buildVerificationEmail(email, token));
   }
 
   private async issueSessionTokens(

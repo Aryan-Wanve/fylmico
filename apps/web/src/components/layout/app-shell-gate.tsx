@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useWorkspace } from "@/lib/workspace-context";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppTopbar } from "@/components/layout/app-topbar";
+import { VerifyEmailBanner } from "@/components/layout/verify-email-banner";
 
 const ONBOARDING_PATH = "/houses/new";
 
@@ -27,6 +28,9 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
       <AppSidebar compact={isCompact} user={workspace.user} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <AppTopbar compact={isCompact} />
+        {!isCompact && !workspace.user.emailVerifiedAt ? (
+          <VerifyEmailBanner />
+        ) : null}
         <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
       </div>
     </div>
