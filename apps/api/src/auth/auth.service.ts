@@ -4,6 +4,12 @@ import { JwtService } from "@nestjs/jwt";
 import { PrismaService, type User } from "@fylmico/database";
 import { toAvatarLabel } from "../common/avatar-label.util";
 import { AppException } from "../common/exceptions/app.exception";
+import {
+  buildGoogleAuthUrl,
+  exchangeGoogleCode,
+  fetchGoogleUserInfo,
+  GOOGLE_PROVIDER
+} from "./google-oauth.util";
 import { hashPassword, verifyPassword } from "./password.util";
 import {
   addDuration,
@@ -231,6 +237,105 @@ export class AuthService {
     ]);
   }
 
+  getGoogleAuthUrl(state: string): string {
+    const clientId = this.configService.get<string>("GOOGLE_CLIENT_ID");
+    if (!clientId) {
+      throw new AppException(
+        HttpStatus.SERVICE_UNAVAILABLE,
+        "google_oauth_not_configured",
+        "Google sign-in is not configured on this server."
+      );
+    }
+
+    return buildGoogleAuthUrl({
+      clientId,
+      redirectUri: this.googleCallbackUrl,
+      state
+    });
+  }
+
+  async handleGoogleCallback(code: string) {
+    const clientId = this.configService.get<string>("GOOGLE_CLIENT_ID");
+    const clientSecret = this.configService.get<string>("GOOGLE_CLIENT_SECRET");
+    if (!clientId || !clientSecret) {
+      throw new AppException(
+        HttpStatus.SERVICE_UNAVAILABLE,
+        "google_oauth_not_configured",
+        "Google sign-in is not configured on this server."
+      );
+    }
+
+    const tokenResponse = await exchangeGoogleCode({
+      code,
+      clientId,
+      clientSecret,
+      redirectUri: this.googleCallbackUrl
+    });
+    const profile = await fetchGoogleUserInfo(tokenResponse.access_token);
+
+    if (!profile.email) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "google_account_missing_email",
+        "This Google account has no accessible email address."
+      );
+    }
+
+    const normalizedEmail = normalizeEmail(profile.email);
+
+    let authAccount = await this.prisma.authAccount.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider: GOOGLE_PROVIDER,
+          providerAccountId: profile.sub
+        }
+      },
+      include: { user: true }
+    });
+
+    if (!authAccount) {
+      // A user may already exist via email/password signup with the same
+      // address - link the Google account to that user rather than
+      // creating a duplicate.
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: normalizedEmail }
+      });
+
+      const user =
+        existingUser ??
+        (await this.prisma.user.create({
+          data: {
+            email: normalizedEmail,
+            name: profile.name?.trim() || normalizedEmail,
+            emailVerifiedAt: profile.email_verified ? new Date() : null
+          }
+        }));
+
+      if (
+        existingUser &&
+        profile.email_verified &&
+        !existingUser.emailVerifiedAt
+      ) {
+        await this.prisma.user.update({
+          where: { id: existingUser.id },
+          data: { emailVerifiedAt: new Date() }
+        });
+      }
+
+      authAccount = await this.prisma.authAccount.create({
+        data: {
+          userId: user.id,
+          provider: GOOGLE_PROVIDER,
+          providerAccountId: profile.sub
+        },
+        include: { user: true }
+      });
+    }
+
+    const tokens = await this.issueSessionTokens(authAccount.user);
+    return { user: toPublicUser(authAccount.user), ...tokens };
+  }
+
   async me(userId: string) {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId }
@@ -279,6 +384,13 @@ export class AuthService {
 
   private get refreshTtl(): string {
     return this.configService.get<string>("JWT_REFRESH_TTL", "30d");
+  }
+
+  private get googleCallbackUrl(): string {
+    return this.configService.get<string>(
+      "GOOGLE_CALLBACK_URL",
+      "http://localhost:4000/api/v1/auth/google/callback"
+    );
   }
 }
 

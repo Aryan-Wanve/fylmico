@@ -5,8 +5,13 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
+  Req,
+  Res,
   UseGuards
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import type { Request, Response } from "express";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import {
   JwtAuthGuard,
@@ -19,10 +24,16 @@ import { RequestPasswordResetDto } from "./dto/request-password-reset.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { SignupDto } from "./dto/signup.dto";
 import { VerifyEmailDto } from "./dto/verify-email.dto";
+import { generateOpaqueToken } from "./token.util";
+
+const GOOGLE_OAUTH_STATE_COOKIE = "google_oauth_state";
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService
+  ) {}
 
   @Post("signup")
   async signup(@Body() dto: SignupDto) {
@@ -90,5 +101,55 @@ export class AuthController {
   async me(@CurrentUser() user: AuthenticatedUser) {
     const data = await this.authService.me(user.id);
     return { data };
+  }
+
+  @Get("google")
+  googleAuth(@Res() res: Response) {
+    const state = generateOpaqueToken();
+    const url = this.authService.getGoogleAuthUrl(state);
+
+    res.cookie(GOOGLE_OAUTH_STATE_COOKIE, state, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 5 * 60 * 1000
+    });
+    res.redirect(url);
+  }
+
+  @Get("google/callback")
+  async googleCallback(
+    @Query("code") code: string | undefined,
+    @Query("error") error: string | undefined,
+    @Query("state") state: string | undefined,
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    const frontendUrl = this.frontendUrl;
+    const expectedState = req.cookies?.[GOOGLE_OAUTH_STATE_COOKIE] as
+      string | undefined;
+    res.clearCookie(GOOGLE_OAUTH_STATE_COOKIE);
+
+    if (error || !code || !state || !expectedState || state !== expectedState) {
+      res.redirect(`${frontendUrl}/login?error=google_oauth_failed`);
+      return;
+    }
+
+    try {
+      const { accessToken, refreshToken } =
+        await this.authService.handleGoogleCallback(code);
+      const params = new URLSearchParams({ accessToken, refreshToken });
+      res.redirect(`${frontendUrl}/auth/callback?${params.toString()}`);
+    } catch {
+      res.redirect(`${frontendUrl}/login?error=google_oauth_failed`);
+    }
+  }
+
+  private get frontendUrl(): string {
+    const corsOrigin = this.configService.get<string>(
+      "CORS_ORIGIN",
+      "http://localhost:3000"
+    );
+    return corsOrigin.split(",")[0].trim();
   }
 }
