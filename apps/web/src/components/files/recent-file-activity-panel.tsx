@@ -1,43 +1,46 @@
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  MEMBER_AVATARS,
-  MEMBER_NAMES,
-  recentFileActivity
-} from "@/components/files/file-data";
+import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
+import { formatRelativeTime } from "@/lib/relative-time";
+import type { FilesSummary } from "@/types/base";
 
-export function RecentFileActivityPanel() {
+export function RecentFileActivityPanel({
+  summary
+}: {
+  summary: FilesSummary | null;
+}) {
+  const recent = summary?.recent ?? [];
+
   return (
-    <DashboardPanel action={{ label: "View all" }} title="Recent Activity">
+    <DashboardPanel title="Recent Activity">
       <div className="grid">
-        {recentFileActivity.map((activity) => {
-          const memberName =
-            MEMBER_NAMES[activity.memberId] ?? activity.memberId;
-          const memberAvatar = MEMBER_AVATARS[activity.memberId];
-
-          return (
+        {recent.length > 0 ? (
+          recent.map((entry) => (
             <div
               className="flex items-center gap-3 border-b border-black/5 px-6 py-3.5 last:border-b-0"
-              key={activity.id}
+              key={entry.id}
             >
-              <Avatar>
-                {memberAvatar ? (
-                  <AvatarImage alt="" src={memberAvatar} />
-                ) : null}
-                <AvatarFallback>
-                  {memberName.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <AvatarWithStatus
+                label={entry.uploadedByName.slice(0, 2).toUpperCase()}
+                userId={entry.id}
+              />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-[#272c45]">
-                  <strong className="font-semibold">{memberName}</strong>{" "}
-                  {activity.text}
+                  <strong className="font-semibold">
+                    {entry.uploadedByName}
+                  </strong>{" "}
+                  uploaded {entry.name}
                 </p>
-                <span className="text-xs text-[#8a90a3]">{activity.time}</span>
+                <span className="text-xs text-[#8a90a3]">
+                  {formatRelativeTime(entry.createdAt)}
+                </span>
               </div>
             </div>
-          );
-        })}
+          ))
+        ) : (
+          <p className="px-6 py-6 text-center text-sm text-[#8a90a3]">
+            No activity yet.
+          </p>
+        )}
       </div>
     </DashboardPanel>
   );

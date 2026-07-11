@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Download, MoreVertical, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,7 +8,13 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
-export function FileCardMenu({ onDelete }: { onDelete: () => void }) {
+export function FileCardMenu({
+  onDelete,
+  onDownload
+}: {
+  onDelete: () => void;
+  onDownload?: () => void;
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -23,14 +29,12 @@ export function FileCardMenu({ onDelete }: { onDelete: () => void }) {
         }
       />
       <DropdownMenuContent align="end" className="w-36">
-        <DropdownMenuItem>
-          <Download className="h-4 w-4" />
-          Download
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Pencil className="h-4 w-4" />
-          Rename
-        </DropdownMenuItem>
+        {onDownload ? (
+          <DropdownMenuItem onClick={onDownload}>
+            <Download className="h-4 w-4" />
+            Download
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem onClick={onDelete} variant="destructive">
           <Trash2 className="h-4 w-4" />
           Delete

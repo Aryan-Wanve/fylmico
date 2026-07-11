@@ -1,27 +1,36 @@
 import {
   FILE_KIND_META,
-  MEMBER_AVATARS,
-  MEMBER_NAMES,
-  type FileEntry
+  formatFileSize,
+  inferFileKind
 } from "@/components/files/file-data";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import { FileCardMenu } from "@/components/files/file-card-menu";
+import { formatRelativeTime } from "@/lib/relative-time";
+import type { FileEntryItem } from "@/types/base";
 
 export function FileListRow({
   file,
-  onDelete
+  onOpen,
+  onDelete,
+  onDownload
 }: {
-  file: FileEntry;
+  file: FileEntryItem;
+  onOpen?: () => void;
   onDelete: () => void;
+  onDownload?: () => void;
 }) {
-  const meta = FILE_KIND_META[file.kind];
+  const kind = inferFileKind(file.type, file.mimeType);
+  const meta = FILE_KIND_META[kind];
   const Icon = meta.icon;
-  const memberName = MEMBER_NAMES[file.modifiedBy] ?? file.modifiedBy;
-  const memberAvatar = MEMBER_AVATARS[file.modifiedBy];
 
   return (
     <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015]">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
+      <button
+        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        disabled={!onOpen}
+        onClick={onOpen}
+        type="button"
+      >
         <span
           className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${meta.bg} ${meta.color}`}
         >
@@ -30,10 +39,10 @@ export function FileListRow({
         <strong className="truncate text-sm font-semibold text-[#11142c]">
           {file.name}
         </strong>
-      </div>
+      </button>
 
       <span className="hidden w-24 shrink-0 text-sm text-[#4b5268] sm:block">
-        {file.size ?? `${file.itemCount} items`}
+        {file.type === "folder" ? "—" : formatFileSize(file.size)}
       </span>
 
       <span className="hidden w-24 shrink-0 text-sm text-[#4b5268] md:block">
@@ -41,20 +50,21 @@ export function FileListRow({
       </span>
 
       <span className="hidden w-36 shrink-0 text-sm text-[#4b5268] lg:block">
-        {file.modified}
+        {formatRelativeTime(file.updatedAt)}
       </span>
 
       <div className="hidden w-32 shrink-0 items-center gap-2 xl:flex">
-        <Avatar size="sm">
-          {memberAvatar ? <AvatarImage alt="" src={memberAvatar} /> : null}
-          <AvatarFallback>
-            {memberName.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <span className="truncate text-sm text-[#4b5268]">{memberName}</span>
+        <AvatarWithStatus
+          label={file.uploadedByName.slice(0, 2).toUpperCase()}
+          size="sm"
+          userId={file.uploadedById}
+        />
+        <span className="truncate text-sm text-[#4b5268]">
+          {file.uploadedByName}
+        </span>
       </div>
 
-      <FileCardMenu onDelete={onDelete} />
+      <FileCardMenu onDelete={onDelete} onDownload={onDownload} />
     </div>
   );
 }

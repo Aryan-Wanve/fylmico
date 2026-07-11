@@ -1,15 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FilesHeader } from "@/components/files/files-header";
 import {
   FilesBreadcrumb,
-  FilesToolbar,
   FilesViewControls,
-  type FilesTab,
   type FilesViewMode
 } from "@/components/files/files-toolbar";
-import { FoldersPanel } from "@/components/files/folders-panel";
 import { StorageUsedPanel } from "@/components/files/storage-used-panel";
 import { FileListColumnHeader } from "@/components/files/file-list-column-header";
 import { FileListRow } from "@/components/files/file-list-row";
@@ -17,202 +14,230 @@ import { FileGridCard } from "@/components/files/file-grid-card";
 import { FilesEmptyState } from "@/components/files/files-empty-state";
 import { StorageOverviewPanel } from "@/components/files/storage-overview-panel";
 import { RecentFileActivityPanel } from "@/components/files/recent-file-activity-panel";
-import { QuickAccessPanel } from "@/components/files/quick-access-panel";
 import { PaginationFooter } from "@/components/layout/pagination-footer";
 import {
-  FILE_CONTENT,
-  FOLDER_PATHS,
-  sharedWithMeFiles,
-  trashFiles,
-  type FileEntry
-} from "@/components/files/file-data";
+  createFolder,
+  deleteFileEntry,
+  getFileDownloadUrl,
+  getFilesSummary,
+  listFileEntries,
+  uploadFileEntry
+} from "@/services/base-workspace.service";
+import type { FileEntryItem, FilesSummary } from "@/types/base";
+
+type Crumb = { id: string | null; name: string };
 
 export function FilesPage() {
-  const [activeTab, setActiveTab] = useState<FilesTab>("all");
+  const [path, setPath] = useState<Crumb[]>([{ id: null, name: "All Files" }]);
+  const [entries, setEntries] = useState<FileEntryItem[]>([]);
+  const [summary, setSummary] = useState<FilesSummary | null>(null);
+  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<FilesViewMode>("list");
-  const [selectedFolderId, setSelectedFolderId] = useState("day-2");
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    () => new Set(["beyond-frames", "production"])
-  );
-  const [fileOverrides, setFileOverrides] = useState<
-    Record<string, FileEntry[]>
-  >({});
-  const [removedIds, setRemovedIds] = useState<Set<string>>(() => new Set());
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
-  function toggleExpand(id: string) {
-    setExpandedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
+  const currentFolderId = path[path.length - 1].id;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    listFileEntries(currentFolderId)
+      .then((data) => {
+        if (!cancelled) {
+          setEntries(data);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          window.alert(
+            error instanceof Error ? error.message : "Could not load files."
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentFolderId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getFilesSummary()
+      .then((data) => {
+        if (!cancelled) {
+          setSummary(data);
+        }
+      })
+      .catch(() => {
+        // Storage panels fail quietly.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [entries]);
+
+  const totalPages = Math.max(1, Math.ceil(entries.length / perPage));
+  const safePage = Math.min(page, totalPages);
+  const paginated = entries.slice((safePage - 1) * perPage, safePage * perPage);
+
+  function handleNavigate(id: string | null) {
+    const index = path.findIndex((crumb) => crumb.id === id);
+    if (index >= 0) {
+      setPath(path.slice(0, index + 1));
+      setPage(1);
+    }
   }
 
-  function handleSelectFolder(id: string) {
-    setSelectedFolderId(id);
-    setActiveTab("all");
+  function handleOpenFolder(entry: FileEntryItem) {
+    if (entry.type !== "folder") {
+      return;
+    }
+    setPath((current) => [...current, { id: entry.id, name: entry.name }]);
     setPage(1);
   }
 
-  const baseFiles: FileEntry[] =
-    activeTab === "shared"
-      ? sharedWithMeFiles
-      : activeTab === "trash"
-        ? trashFiles
-        : (fileOverrides[selectedFolderId] ??
-          FILE_CONTENT[selectedFolderId] ??
-          []);
+  async function handleNewFolder() {
+    const name = window.prompt("New folder — enter a name");
+    if (!name || !name.trim()) {
+      return;
+    }
 
-  const visibleFiles = baseFiles.filter((file) => !removedIds.has(file.id));
-
-  const totalPages = Math.max(1, Math.ceil(visibleFiles.length / perPage));
-  const safePage = Math.min(page, totalPages);
-  const paginated = visibleFiles.slice(
-    (safePage - 1) * perPage,
-    safePage * perPage
-  );
-
-  function handleDelete(fileId: string) {
-    setRemovedIds((current) => new Set(current).add(fileId));
+    try {
+      const folder = await createFolder(name.trim(), currentFolderId);
+      setEntries((current) => [folder, ...current]);
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not create the folder."
+      );
+    }
   }
 
   function handleUpload() {
-    const name = window.prompt("Upload file — enter a file name");
+    const input = document.createElement("input");
+    input.type = "file";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) {
+        return;
+      }
 
-    if (!name || !name.trim()) {
+      try {
+        const uploaded = await uploadFileEntry(file, currentFolderId);
+        setEntries((current) => [uploaded, ...current]);
+      } catch (error) {
+        window.alert(
+          error instanceof Error ? error.message : "Could not upload the file."
+        );
+      }
+    };
+    input.click();
+  }
+
+  async function handleDelete(entryId: string) {
+    if (!window.confirm("Delete this item? This cannot be undone.")) {
       return;
     }
 
-    const file: FileEntry = {
-      id: `upload-${Date.now()}`,
-      name: name.trim(),
-      kind: "other",
-      size: "0 KB",
-      modified: "Just now",
-      modifiedBy: "aryan"
-    };
-
-    setFileOverrides((current) => ({
-      ...current,
-      [selectedFolderId]: [
-        file,
-        ...(current[selectedFolderId] ?? FILE_CONTENT[selectedFolderId] ?? [])
-      ]
-    }));
-  }
-
-  function handleNewFolder() {
-    const name = window.prompt("New folder — enter a name");
-
-    if (!name || !name.trim()) {
-      return;
+    try {
+      await deleteFileEntry(entryId);
+      setEntries((current) => current.filter((entry) => entry.id !== entryId));
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not delete this item."
+      );
     }
-
-    const folder: FileEntry = {
-      id: `folder-${Date.now()}`,
-      name: name.trim(),
-      kind: "folder",
-      itemCount: 0,
-      modified: "Just now",
-      modifiedBy: "aryan"
-    };
-
-    setFileOverrides((current) => ({
-      ...current,
-      [selectedFolderId]: [
-        folder,
-        ...(current[selectedFolderId] ?? FILE_CONTENT[selectedFolderId] ?? [])
-      ]
-    }));
   }
 
-  const breadcrumbPath = FOLDER_PATHS[selectedFolderId] ?? ["Beyond Frames"];
-
-  const tabCounts: Record<FilesTab, string> = {
-    all: "1.2K",
-    shared: String(sharedWithMeFiles.length > 0 ? 86 : 0),
-    trash: String(trashFiles.length)
-  };
+  async function handleDownload(entryId: string) {
+    try {
+      const url = await getFileDownloadUrl(entryId);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not generate a download link."
+      );
+    }
+  }
 
   return (
     <div className="grid gap-6 p-8">
       <FilesHeader onNewFolder={handleNewFolder} onUpload={handleUpload} />
-      <FilesToolbar
-        activeTab={activeTab}
-        counts={tabCounts}
-        onTabChange={(tab) => {
-          setActiveTab(tab);
-          setPage(1);
-        }}
-      />
 
       <div className="grid min-w-0 gap-6 xl:grid-cols-[16rem_1fr_20rem]">
         <div className="grid min-h-0 content-start gap-4">
-          <FoldersPanel
-            expandedIds={expandedIds}
-            onNewFolder={() => {
-              const name = window.prompt("New top-level folder name");
-              if (name && name.trim()) {
-                window.alert(
-                  `"${name.trim()}" would be created as a new top-level folder.`
-                );
-              }
-            }}
-            onSelect={handleSelectFolder}
-            onToggleExpand={toggleExpand}
-            selectedId={selectedFolderId}
-          />
-          <StorageUsedPanel />
+          <StorageUsedPanel usedBytes={summary?.usedBytes ?? 0} />
         </div>
 
         <div className="grid min-w-0 content-start gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            {activeTab === "all" ? (
-              <FilesBreadcrumb path={breadcrumbPath} />
-            ) : (
-              <strong className="text-sm font-bold text-[#11142c]">
-                {activeTab === "shared" ? "Shared with me" : "Trash"}
-              </strong>
-            )}
+            <FilesBreadcrumb onNavigate={handleNavigate} path={path} />
             <FilesViewControls
               onViewModeChange={setViewMode}
               viewMode={viewMode}
             />
           </div>
 
-          {paginated.length === 0 ? (
+          {loading ? (
+            <p className="py-16 text-center text-sm text-[#8a90a3]">
+              Loading files...
+            </p>
+          ) : paginated.length === 0 ? (
             <FilesEmptyState />
           ) : viewMode === "list" ? (
             <div className="min-w-0 overflow-x-auto rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
               <div className="min-w-[36rem]">
                 <FileListColumnHeader />
-                {paginated.map((file) => (
+                {paginated.map((entry) => (
                   <FileListRow
-                    file={file}
-                    key={file.id}
-                    onDelete={() => handleDelete(file.id)}
+                    file={entry}
+                    key={entry.id}
+                    onDelete={() => handleDelete(entry.id)}
+                    onDownload={
+                      entry.type === "file"
+                        ? () => handleDownload(entry.id)
+                        : undefined
+                    }
+                    onOpen={
+                      entry.type === "folder"
+                        ? () => handleOpenFolder(entry)
+                        : undefined
+                    }
                   />
                 ))}
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {paginated.map((file) => (
+              {paginated.map((entry) => (
                 <FileGridCard
-                  file={file}
-                  key={file.id}
-                  onDelete={() => handleDelete(file.id)}
+                  file={entry}
+                  key={entry.id}
+                  onDelete={() => handleDelete(entry.id)}
+                  onDownload={
+                    entry.type === "file"
+                      ? () => handleDownload(entry.id)
+                      : undefined
+                  }
+                  onOpen={
+                    entry.type === "folder"
+                      ? () => handleOpenFolder(entry)
+                      : undefined
+                  }
                 />
               ))}
             </div>
           )}
 
-          {visibleFiles.length > 0 ? (
+          {entries.length > 0 ? (
             <PaginationFooter
               onPageChange={setPage}
               onPerPageChange={(value) => {
@@ -227,9 +252,8 @@ export function FilesPage() {
         </div>
 
         <aside className="grid min-w-0 content-start gap-6">
-          <StorageOverviewPanel />
-          <RecentFileActivityPanel />
-          <QuickAccessPanel />
+          <StorageOverviewPanel summary={summary} />
+          <RecentFileActivityPanel summary={summary} />
         </aside>
       </div>
     </div>
