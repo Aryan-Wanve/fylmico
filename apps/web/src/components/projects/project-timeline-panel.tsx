@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
-import { timelineShoots } from "@/components/projects/timeline-schedule-data";
+import {
+  listCalendarEvents,
+  listProjects
+} from "@/services/base-workspace.service";
 import { isSameDay, toISODate } from "@/lib/calendar-utils";
+import type { CalendarEvent } from "@/types/base";
 
 const WEEKDAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
@@ -22,6 +26,42 @@ export function ProjectTimelinePanel() {
   const today = new Date();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today));
   const [selectedDate, setSelectedDate] = useState(today);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [projectTitles, setProjectTitles] = useState<Record<string, string>>(
+    {}
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    listCalendarEvents()
+      .then((data) => {
+        if (!cancelled) {
+          setEvents(data);
+        }
+      })
+      .catch(() => {
+        // Panel fails quietly - the Calendar page surfaces the error.
+      });
+
+    listProjects()
+      .then((data) => {
+        if (!cancelled) {
+          setProjectTitles(
+            Object.fromEntries(
+              data.map((project) => [project.id, project.title])
+            )
+          );
+        }
+      })
+      .catch(() => {
+        // Project names are a nice-to-have here; ignore fetch failures.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart);
@@ -34,9 +74,9 @@ export function ProjectTimelinePanel() {
     year: "numeric"
   });
 
-  const dayShoots = timelineShoots.filter(
-    (shoot) => shoot.date === toISODate(selectedDate)
-  );
+  const dayEvents = events
+    .filter((event) => event.date === toISODate(selectedDate))
+    .sort((a, b) => a.time.localeCompare(b.time));
 
   return (
     <DashboardPanel
@@ -117,28 +157,25 @@ export function ProjectTimelinePanel() {
       </div>
 
       <div className="border-t border-black/5">
-        {dayShoots.length > 0 ? (
-          dayShoots.map((shoot) => (
-            <div className="flex items-center gap-4 px-6 py-3.5" key={shoot.id}>
+        {dayEvents.length > 0 ? (
+          dayEvents.map((event) => (
+            <div className="flex items-center gap-4 px-6 py-3.5" key={event.id}>
               <time className="w-20 shrink-0 text-sm font-semibold text-[#4b5268]">
-                {shoot.time}
+                {event.time}
               </time>
               <div className="min-w-0 flex-1">
                 <strong className="block truncate text-sm font-semibold text-[#11142c]">
-                  {shoot.title}
+                  {event.title}
                 </strong>
                 <span className="text-xs text-[#8a90a3]">
-                  {shoot.place} &bull; {shoot.project}
+                  {event.location ?? "TBD"}
+                  {event.projectId && projectTitles[event.projectId]
+                    ? ` • ${projectTitles[event.projectId]}`
+                    : ""}
                 </span>
               </div>
-              <span
-                className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-bold ${
-                  shoot.status === "In Progress"
-                    ? "bg-[#16c784]/10 text-[#0baa6d]"
-                    : "bg-[#654cff]/10 text-[#654cff]"
-                }`}
-              >
-                {shoot.status}
+              <span className="shrink-0 rounded-md bg-[#654cff]/10 px-2 py-0.5 text-xs font-bold text-[#654cff]">
+                {event.category}
               </span>
             </div>
           ))

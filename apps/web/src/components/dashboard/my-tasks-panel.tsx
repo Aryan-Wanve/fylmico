@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { TaskRow } from "@/components/dashboard/task-row";
 import { useWorkspace } from "@/lib/workspace-context";
@@ -12,9 +13,13 @@ export function MyTasksPanel({
   onToggleTask: (taskId: string) => void;
 }) {
   const { workspace } = useWorkspace();
+  const router = useRouter();
 
   return (
-    <DashboardPanel action={{ label: "View all" }} title="My Tasks">
+    <DashboardPanel
+      action={{ label: "View all", onClick: () => router.push("/tasks") }}
+      title="My Tasks"
+    >
       <div className="grid">
         {workspace.tasks.slice(0, 4).map((task) => (
           <TaskRow

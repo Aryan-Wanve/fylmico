@@ -1,9 +1,28 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { CheckCircle2, Clapperboard, FolderKanban, Users } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import { useWorkspace } from "@/lib/workspace-context";
+import { getDashboardSummary } from "@/services/base-workspace.service";
+import { toISODate } from "@/lib/calendar-utils";
+import type { DashboardSummary } from "@/types/base";
+
+function formatShootDay(dateKey: string): string {
+  const today = toISODate(new Date());
+  const tomorrow = toISODate(new Date(Date.now() + 86400000));
+
+  if (dateKey === today) {
+    return "Today";
+  }
+  if (dateKey === tomorrow) {
+    return "Tomorrow";
+  }
+  return new Date(dateKey).toLocaleDateString("en-US", {
+    weekday: "long"
+  });
+}
 
 export function StatCardsRow({
   completedTaskIds
@@ -11,6 +30,25 @@ export function StatCardsRow({
   completedTaskIds: Set<string>;
 }) {
   const { workspace, activeHouse } = useWorkspace();
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getDashboardSummary()
+      .then((data) => {
+        if (!cancelled) {
+          setSummary(data);
+        }
+      })
+      .catch(() => {
+        // Stat cards fail quietly.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const dueToday = workspace.tasks.filter(
     (task) => task.status !== "done" && !completedTaskIds.has(task.id)
@@ -19,24 +57,38 @@ export function StatCardsRow({
   const members = activeHouse?.members ?? [];
   const onlineMembers = members.filter((member) => member.status !== "offline");
 
+  const projectsDelta = summary
+    ? summary.activeProjectsSparkline[
+        summary.activeProjectsSparkline.length - 1
+      ] - summary.activeProjectsSparkline[0]
+    : 0;
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard
         icon={FolderKanban}
-        note="+2 this month"
-        noteTone="positive"
-        sparklinePoints={[4, 5, 5, 7, 6, 8, 9]}
+        note={
+          projectsDelta > 0
+            ? `+${projectsDelta} this week`
+            : "No change this week"
+        }
+        noteTone={projectsDelta > 0 ? "positive" : "default"}
+        sparklinePoints={summary?.activeProjectsSparkline}
         title="Active Projects"
         tone="violet"
-        value="6"
+        value={String(summary?.activeProjects ?? 0)}
       />
       <StatCard
         icon={Clapperboard}
-        note="Next: Tomorrow, 9:00 AM"
-        sparklinePoints={[6, 5, 6, 5, 7, 6, 7]}
+        note={
+          summary?.nextShoot
+            ? `Next: ${formatShootDay(summary.nextShoot.date)}, ${summary.nextShoot.time}`
+            : "Nothing scheduled"
+        }
+        sparklinePoints={summary?.upcomingShootsSparkline}
         title="Upcoming Shoots"
         tone="blue"
-        value="3"
+        value={String(summary?.upcomingShootsCount ?? 0)}
       />
       <StatCard
         icon={CheckCircle2}
@@ -46,7 +98,6 @@ export function StatCardsRow({
             : "All caught up"
         }
         noteTone="positive"
-        sparklinePoints={[3, 5, 4, 6, 5, 7, dueToday || 1]}
         title="Tasks Due Today"
         tone="green"
         value={String(dueToday)}
@@ -69,7 +120,6 @@ export function StatCardsRow({
         }
         icon={Users}
         note="Online now"
-        sparklinePoints={[5, 6, 6, 7, 8, 7, 9]}
         title="Team Online"
         tone="orange"
         value={`${onlineMembers.length} / ${members.length}`}
