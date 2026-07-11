@@ -99,6 +99,15 @@ button {
   cursor: pointer;
 }
 
+button,
+a {
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease,
+    opacity 150ms ease;
+}
+
 button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
