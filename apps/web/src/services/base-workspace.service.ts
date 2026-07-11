@@ -1,31 +1,47 @@
 import { apiRequest } from "@/lib/api/client";
 import { clearSession, setSession } from "@/lib/session";
 import type {
+  AccountSession,
   Analytics,
+  Board,
+  Booking,
   CalendarEvent,
+  ChangePasswordRequest,
   ChatRoom,
+  CreateBoardRequest,
+  CreateBookingRequest,
   CreateCalendarEventRequest,
   CreateConversationRequest,
   CreateHouseRequest,
   CreateProjectRequest,
+  CreateShotRequest,
   CreateTaskRequest,
   CreateTimeEntryRequest,
   CrewMember,
+  DashboardSummary,
+  FileEntryItem,
+  FilesSummary,
   House,
   HouseInvitation,
   InvitationPreview,
   JoinHouseRequest,
   LoginRequest,
+  NotificationItem,
   ProductionTask,
   Project,
   RequestPasswordResetRequest,
   ResetPasswordRequest,
   SendChatMessageRequest,
+  Shot,
   SignupRequest,
   TimeEntry,
   UpdateCrewProfileRequest,
+  UpdateHouseRequest,
+  UpdateMeRequest,
   UpdateProjectRequest,
+  UpdateShotRequest,
   UpdateTaskRequest,
+  UserProfile,
   WorkspaceSnapshot
 } from "../types/base";
 
@@ -411,6 +427,246 @@ export async function createConversation(
 
   return apiRequest<ChatRoom>(`/houses/${activeHouseId}/conversations`, {
     method: "POST",
+    body: request
+  });
+}
+
+export async function updateHouse(request: UpdateHouseRequest): Promise<House> {
+  if (!activeHouseId) {
+    throw new Error(
+      "Join or create a house before editing workspace settings."
+    );
+  }
+
+  return apiRequest<House>(`/houses/${activeHouseId}`, {
+    method: "PATCH",
+    body: request
+  });
+}
+
+export async function updateMe(request: UpdateMeRequest): Promise<UserProfile> {
+  if (!request.name.trim()) {
+    throw new Error("Enter your name.");
+  }
+
+  return apiRequest<UserProfile>("/auth/me", {
+    method: "PATCH",
+    body: request
+  });
+}
+
+export async function changePassword(
+  request: ChangePasswordRequest
+): Promise<void> {
+  if (!request.currentPassword || !request.newPassword) {
+    throw new Error("Fill in all password fields.");
+  }
+
+  await apiRequest<{ success: boolean }>("/auth/change-password", {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function listSessions(): Promise<AccountSession[]> {
+  return apiRequest<AccountSession[]>("/auth/sessions");
+}
+
+export async function revokeSession(sessionId: string): Promise<void> {
+  await apiRequest<{ success: boolean }>(`/auth/sessions/${sessionId}`, {
+    method: "DELETE"
+  });
+}
+
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing the dashboard.");
+  }
+
+  return apiRequest<DashboardSummary>(
+    `/houses/${activeHouseId}/dashboard-summary`
+  );
+}
+
+export async function listNotifications(): Promise<NotificationItem[]> {
+  return apiRequest<NotificationItem[]>("/notifications", {
+    query: { limit: 20 }
+  });
+}
+
+export async function markNotificationRead(
+  notificationId: string
+): Promise<NotificationItem> {
+  return apiRequest<NotificationItem>(`/notifications/${notificationId}/read`, {
+    method: "POST"
+  });
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await apiRequest<{ success: boolean }>("/notifications/read-all", {
+    method: "POST"
+  });
+}
+
+export async function listFileEntries(
+  parentId: string | null
+): Promise<FileEntryItem[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing files.");
+  }
+
+  return apiRequest<FileEntryItem[]>(`/houses/${activeHouseId}/files`, {
+    query: parentId ? { parentId } : undefined
+  });
+}
+
+export async function createFolder(
+  name: string,
+  parentId: string | null
+): Promise<FileEntryItem> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before creating folders.");
+  }
+
+  return apiRequest<FileEntryItem>(`/houses/${activeHouseId}/files`, {
+    method: "POST",
+    body: { name, parentId: parentId ?? undefined }
+  });
+}
+
+export async function uploadFileEntry(
+  file: File,
+  parentId: string | null
+): Promise<FileEntryItem> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before uploading files.");
+  }
+
+  const formData = new FormData();
+  formData.set("file", file);
+  if (parentId) {
+    formData.set("parentId", parentId);
+  }
+
+  return apiRequest<FileEntryItem>(`/houses/${activeHouseId}/files/upload`, {
+    method: "POST",
+    body: formData
+  });
+}
+
+export async function deleteFileEntry(entryId: string): Promise<void> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before deleting files.");
+  }
+
+  await apiRequest<{ success: boolean }>(
+    `/houses/${activeHouseId}/files/${entryId}`,
+    { method: "DELETE" }
+  );
+}
+
+export async function getFileDownloadUrl(entryId: string): Promise<string> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before downloading files.");
+  }
+
+  const { url } = await apiRequest<{ url: string }>(
+    `/houses/${activeHouseId}/files/${entryId}/download`
+  );
+  return url;
+}
+
+export async function getFilesSummary(): Promise<FilesSummary> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing storage usage.");
+  }
+
+  return apiRequest<FilesSummary>(`/houses/${activeHouseId}/files/summary`);
+}
+
+export async function listBookings(): Promise<Booking[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing bookings.");
+  }
+
+  return apiRequest<Booking[]>(`/houses/${activeHouseId}/bookings`);
+}
+
+export async function createBooking(
+  request: CreateBookingRequest
+): Promise<Booking> {
+  if (!request.resourceName.trim()) {
+    throw new Error("Give the resource a name.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before creating bookings.");
+  }
+
+  return apiRequest<Booking>(`/houses/${activeHouseId}/bookings`, {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function listBoards(): Promise<Board[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing storyboards.");
+  }
+
+  return apiRequest<Board[]>(`/houses/${activeHouseId}/boards`);
+}
+
+export async function createBoard(request: CreateBoardRequest): Promise<Board> {
+  if (!request.name.trim()) {
+    throw new Error("Give the board a name.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before creating boards.");
+  }
+
+  return apiRequest<Board>(`/houses/${activeHouseId}/boards`, {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function deleteBoard(boardId: string): Promise<void> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before deleting boards.");
+  }
+
+  await apiRequest<{ success: boolean }>(
+    `/houses/${activeHouseId}/boards/${boardId}`,
+    { method: "DELETE" }
+  );
+}
+
+export async function createShot(
+  boardId: string,
+  request: CreateShotRequest
+): Promise<Shot> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before adding shots.");
+  }
+
+  return apiRequest<Shot>(`/houses/${activeHouseId}/boards/${boardId}/shots`, {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function updateShot(
+  shotId: string,
+  request: UpdateShotRequest
+): Promise<Shot> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before editing shots.");
+  }
+
+  return apiRequest<Shot>(`/houses/${activeHouseId}/shots/${shotId}`, {
+    method: "PATCH",
     body: request
   });
 }

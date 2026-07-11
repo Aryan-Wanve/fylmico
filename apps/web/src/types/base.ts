@@ -363,6 +363,156 @@ export type CreateTimeEntryRequest = {
   note?: string;
 };
 
+export type ResourceCategory = "studio" | "equipment" | "venue";
+
+export type BookingStatus = "confirmed" | "pending" | "cancelled";
+
+export type Booking = {
+  id: string;
+  resourceId: string;
+  resourceName: string;
+  resourceCategory: ResourceCategory;
+  resourceSubtitle: string | null;
+  resourceTag: string | null;
+  projectId: string | null;
+  projectName: string | null;
+  projectPhase: string | null;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  status: BookingStatus;
+  bookedById: string;
+  bookedByName: string;
+  notes: string | null;
+  createdAt: string;
+};
+
+export type CreateBookingRequest = {
+  resourceName: string;
+  resourceCategory?: ResourceCategory;
+  projectId?: string;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  status?: BookingStatus;
+  notes?: string;
+};
+
+export type Shot = {
+  id: string;
+  boardId: string;
+  order: number;
+  description: string;
+  cameraAngle: string | null;
+  notes: string | null;
+  imageUrl: string | null;
+};
+
+export type Board = {
+  id: string;
+  projectId: string | null;
+  name: string;
+  description: string | null;
+  updatedAt: string;
+  shots: Shot[];
+};
+
+export type CreateShotRequest = {
+  description: string;
+  cameraAngle?: string;
+  notes?: string;
+  order?: number;
+};
+
+export type CreateBoardRequest = {
+  name: string;
+  description?: string;
+  projectId?: string;
+  shots?: CreateShotRequest[];
+};
+
+export type UpdateShotRequest = Partial<{
+  description: string;
+  cameraAngle: string;
+  notes: string;
+}>;
+
+export type FileEntryType = "folder" | "file";
+
+export type FileEntryItem = {
+  id: string;
+  parentId: string | null;
+  name: string;
+  type: FileEntryType;
+  size: number | null;
+  mimeType: string | null;
+  uploadedById: string;
+  uploadedByName: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type FilesSummary = {
+  usedBytes: number;
+  byCategory: Array<{ category: string; bytes: number }>;
+  recent: Array<{
+    id: string;
+    name: string;
+    uploadedByName: string;
+    createdAt: string;
+  }>;
+};
+
+export type NotificationItem = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  readAt: string | null;
+  createdAt: string;
+};
+
+export type UpdateHouseRequest = Partial<{
+  name: string;
+  handle: string;
+  description: string;
+}>;
+
+export type UpdateMeRequest = {
+  name: string;
+};
+
+export type ChangePasswordRequest = {
+  currentPassword: string;
+  newPassword: string;
+};
+
+export type AccountSession = {
+  id: string;
+  userAgent: string | null;
+  ipAddress: string | null;
+  current: boolean;
+  createdAt: string;
+};
+
+export type ActivityEntry = {
+  id: string;
+  actorName: string;
+  text: string;
+  occurredAt: string;
+};
+
+export type DashboardSummary = {
+  activeProjects: number;
+  activeProjectsSparkline: number[];
+  upcomingShootsCount: number;
+  upcomingShootsSparkline: number[];
+  nextShoot: { date: string; time: string; title: string } | null;
+  recentActivity: ActivityEntry[];
+};
+
 export type UpdateCrewProfileRequest = Partial<{
   jobTitle: string;
   department: CrewDepartment;

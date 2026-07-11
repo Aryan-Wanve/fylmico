@@ -29,7 +29,7 @@ export class ApiError extends Error {
 
 type RequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "DELETE";
-  body?: unknown;
+  body?: unknown | FormData;
   query?: Record<string, string | number | undefined>;
   auth?: boolean;
 };
@@ -58,8 +58,9 @@ async function rawFetch<T>(
   status: number;
   payload: (ApiErrorBody & { data?: T }) | null;
 }> {
+  const isFormData = body instanceof FormData;
   const headers: Record<string, string> = {};
-  if (body !== undefined) {
+  if (body !== undefined && !isFormData) {
     headers["Content-Type"] = "application/json";
   }
   if (auth) {
@@ -72,7 +73,8 @@ async function rawFetch<T>(
   const response = await fetch(buildUrl(path, query), {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined
+    body:
+      body === undefined ? undefined : isFormData ? body : JSON.stringify(body)
   });
 
   const payload = (await response.json().catch(() => null)) as
