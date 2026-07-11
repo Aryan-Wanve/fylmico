@@ -5,11 +5,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SettingsCard } from "@/components/settings/settings-card";
-import { workspaceInfo } from "@/components/settings/settings-data";
+import { useWorkspace } from "@/lib/workspace-context";
+import { updateHouse } from "@/services/base-workspace.service";
 
 export function WorkspaceSection() {
-  const [form, setForm] = useState(workspaceInfo);
+  const { activeHouse, refreshWorkspace } = useWorkspace();
+  const [form, setForm] = useState({
+    name: activeHouse?.name ?? "",
+    handle: activeHouse?.handle ?? "",
+    description: activeHouse?.description ?? ""
+  });
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    setError("");
+    setSaved(false);
+    setSaving(true);
+
+    try {
+      await updateHouse(form);
+      await refreshWorkspace();
+      setSaved(true);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not save workspace settings."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <SettingsCard
@@ -52,45 +80,21 @@ export function WorkspaceSection() {
             value={form.description}
           />
         </label>
-        <label className="grid gap-1.5">
-          <Label className="text-sm font-semibold text-[#3a3f57]">
-            Timezone
-          </Label>
-          <Input
-            onChange={(event) => {
-              setForm({ ...form, timezone: event.target.value });
-              setSaved(false);
-            }}
-            value={form.timezone}
-          />
-        </label>
-        <label className="grid gap-1.5">
-          <Label className="text-sm font-semibold text-[#3a3f57]">
-            Date Format
-          </Label>
-          <select
-            className="h-9 rounded-lg border border-black/10 px-2.5 text-sm text-[#11142c] outline-none"
-            onChange={(event) => {
-              setForm({ ...form, dateFormat: event.target.value });
-              setSaved(false);
-            }}
-            value={form.dateFormat}
-          >
-            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-          </select>
-        </label>
       </div>
 
+      {error ? (
+        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600">
+          {error}
+        </p>
+      ) : null}
       {saved ? (
         <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm font-semibold text-emerald-700">
           Workspace settings saved.
         </p>
       ) : null}
 
-      <Button className="mt-4" onClick={() => setSaved(true)}>
-        Save Changes
+      <Button className="mt-4" disabled={saving} onClick={handleSave}>
+        {saving ? "Saving..." : "Save Changes"}
       </Button>
     </SettingsCard>
   );
