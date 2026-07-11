@@ -1,23 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { MiniCalendar } from "@/components/calendar/mini-calendar";
 import { addMonths } from "@/lib/calendar-utils";
+import type { Booking } from "@/types/base";
 
-const BOOKING_DATES = new Set([
-  "2026-07-05",
-  "2026-07-07",
-  "2026-07-08",
-  "2026-07-10",
-  "2026-07-12",
-  "2026-07-14",
-  "2026-07-16",
-  "2026-07-18"
-]);
+function eachDateBetween(startDate: string, endDate: string): string[] {
+  const dates: string[] = [];
+  const cursor = new Date(startDate);
+  const end = new Date(endDate);
 
-export function BookingCalendarPanel() {
-  const [visibleMonth, setVisibleMonth] = useState(() => new Date(2026, 6, 1));
-  const [selectedDate, setSelectedDate] = useState(() => new Date(2026, 6, 10));
+  while (cursor <= end) {
+    dates.push(
+      `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`
+    );
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return dates;
+}
+
+export function BookingCalendarPanel({ bookings }: { bookings: Booking[] }) {
+  const [visibleMonth, setVisibleMonth] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+
+  const bookingDateSet = useMemo(() => {
+    const dates = new Set<string>();
+    for (const booking of bookings) {
+      for (const date of eachDateBetween(booking.startDate, booking.endDate)) {
+        dates.add(date);
+      }
+    }
+    return dates;
+  }, [bookings]);
 
   return (
     <div className="grid gap-2">
@@ -25,12 +40,9 @@ export function BookingCalendarPanel() {
         <strong className="text-sm font-bold text-[#11142c]">
           Booking Calendar
         </strong>
-        <button className="text-xs font-bold text-[#654cff]" type="button">
-          View calendar
-        </button>
       </div>
       <MiniCalendar
-        eventDateSet={BOOKING_DATES}
+        eventDateSet={bookingDateSet}
         onNextMonth={() => setVisibleMonth((month) => addMonths(month, 1))}
         onPrevMonth={() => setVisibleMonth((month) => addMonths(month, -1))}
         onSelectDate={setSelectedDate}

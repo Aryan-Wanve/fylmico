@@ -1,17 +1,12 @@
-import {
-  Building2,
-  Calendar,
-  Camera,
-  DoorOpen,
-  MoreVertical
-} from "lucide-react";
+import { Building2, Calendar, Camera, DoorOpen } from "lucide-react";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import {
   CATEGORY_STYLES,
-  STATUS_STYLES,
-  type BookingRow,
-  type ResourceCategory
+  formatDateRange,
+  STATUS_STYLES
 } from "@/components/bookings/bookings-data";
+import { formatRelativeTime } from "@/lib/relative-time";
+import type { Booking, ResourceCategory } from "@/types/base";
 
 const CATEGORY_ICONS: Record<ResourceCategory, typeof Building2> = {
   studio: Building2,
@@ -19,7 +14,7 @@ const CATEGORY_ICONS: Record<ResourceCategory, typeof Building2> = {
   venue: DoorOpen
 };
 
-export function BookingsTable({ rows }: { rows: BookingRow[] }) {
+export function BookingsTable({ rows }: { rows: Booking[] }) {
   if (rows.length === 0) {
     return (
       <p className="px-6 py-12 text-center text-sm text-[#8a90a3]">
@@ -39,7 +34,6 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
             <th className="px-6 py-3 font-bold">Dates</th>
             <th className="px-6 py-3 font-bold">Status</th>
             <th className="px-6 py-3 font-bold">Booked By</th>
-            <th className="px-4 py-3" />
           </tr>
         </thead>
         <tbody>
@@ -65,7 +59,7 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                         {row.resourceName}
                       </strong>
                       <span className="block truncate text-xs text-[#8a90a3]">
-                        {row.resourceSubtitle}
+                        {row.resourceSubtitle ?? ""}
                       </span>
                     </div>
                   </div>
@@ -77,27 +71,29 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                     >
                       {categoryStyle.label}
                     </span>
-                    <span>• {row.resourceTag}</span>
+                    {row.resourceTag ? <span>• {row.resourceTag}</span> : null}
                   </div>
                 </td>
                 <td className="px-6 py-3.5">
                   <strong className="block truncate text-sm font-semibold text-[#11142c]">
-                    {row.projectName}
+                    {row.projectName ?? "—"}
                   </strong>
-                  <div className="flex items-center gap-1.5 text-xs text-[#8a90a3]">
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${categoryStyle.dot}`}
-                    />
-                    {row.projectPhase}
-                  </div>
+                  {row.projectPhase ? (
+                    <div className="flex items-center gap-1.5 text-xs text-[#8a90a3]">
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${categoryStyle.dot}`}
+                      />
+                      {row.projectPhase}
+                    </div>
+                  ) : null}
                 </td>
                 <td className="px-6 py-3.5">
                   <div className="flex items-center gap-1.5 text-sm font-semibold text-[#3a3f57]">
                     <Calendar className="h-3.5 w-3.5 text-[#8a90a3]" />
-                    {row.dateRange}
+                    {formatDateRange(row.startDate, row.endDate)}
                   </div>
                   <span className="text-xs text-[#8a90a3]">
-                    {row.timeRange}
+                    {row.startTime} – {row.endTime}
                   </span>
                 </td>
                 <td className="px-6 py-3.5">
@@ -112,26 +108,17 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                     <AvatarWithStatus
                       label={row.bookedByName.charAt(0)}
                       size="sm"
-                      userId={row.bookedByUserId}
+                      userId={row.bookedById}
                     />
                     <div className="min-w-0">
                       <strong className="block truncate text-xs font-semibold text-[#3a3f57]">
                         {row.bookedByName}
                       </strong>
                       <span className="block truncate text-[0.7rem] text-[#8a90a3]">
-                        {row.bookedAgo}
+                        {formatRelativeTime(row.createdAt)}
                       </span>
                     </div>
                   </div>
-                </td>
-                <td className="px-4 py-3.5 text-right">
-                  <button
-                    aria-label={`More actions for ${row.resourceName} booking`}
-                    className="grid h-8 w-8 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.04]"
-                    type="button"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
                 </td>
               </tr>
             );

@@ -1,18 +1,21 @@
 "use client";
 
-import { Plus, SlidersHorizontal } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { tabCounts } from "@/components/bookings/bookings-data";
 
 export type BookingsTab =
   "all" | "mine" | "pending" | "confirmed" | "cancelled";
 
 export function BookingsTabsBar({
   activeTab,
-  onTabChange
+  onTabChange,
+  onNewBooking,
+  tabCounts
 }: {
   activeTab: BookingsTab;
   onTabChange: (tab: BookingsTab) => void;
+  onNewBooking: () => void;
+  tabCounts: { myBookings: number; pendingApproval: number };
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -42,17 +45,11 @@ export function BookingsTabsBar({
       <div className="flex items-center gap-2">
         <button
           className="flex h-10 items-center gap-1.5 rounded-xl bg-gradient-to-br from-[#654cff] to-[#5b3ff0] px-4 text-sm font-bold text-white hover:opacity-95"
+          onClick={onNewBooking}
           type="button"
         >
           <Plus className="h-4 w-4" />
           New Booking
-        </button>
-        <button
-          className="flex h-10 items-center gap-2 rounded-xl border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03]"
-          type="button"
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-          Filters
         </button>
       </div>
     </div>
