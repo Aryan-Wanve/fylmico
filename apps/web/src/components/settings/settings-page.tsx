@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { SettingsSidebar } from "@/components/settings/settings-sidebar";
 import { ProfileSection } from "@/components/settings/profile-section";
@@ -26,9 +27,16 @@ const SECTION_CONTENT: Record<SettingsSectionId, React.ComponentType> = {
   advanced: AdvancedSection
 };
 
+function isSettingsSectionId(value: string | null): value is SettingsSectionId {
+  return Boolean(value) && value! in SECTION_CONTENT;
+}
+
 export function SettingsPage() {
-  const [activeSection, setActiveSection] =
-    useState<SettingsSectionId>("profile");
+  const searchParams = useSearchParams();
+  const requestedSection = searchParams.get("section");
+  const [activeSection, setActiveSection] = useState<SettingsSectionId>(
+    isSettingsSectionId(requestedSection) ? requestedSection : "profile"
+  );
 
   const ActiveSection = SECTION_CONTENT[activeSection];
 

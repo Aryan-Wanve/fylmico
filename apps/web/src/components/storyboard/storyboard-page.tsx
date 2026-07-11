@@ -298,9 +298,9 @@ export function StoryboardPage() {
                   <>
                     {viewMode === "grid" ? (
                       <div
-                        className="grid gap-4"
+                        className={`grid ${density === "compact" ? "gap-2" : "gap-4"}`}
                         style={{
-                          gridTemplateColumns: `repeat(auto-fill, minmax(${140 + zoom * 1.2}px, 1fr))`
+                          gridTemplateColumns: `repeat(auto-fill, minmax(${(density === "compact" ? 110 : 140) + zoom * 1.2}px, 1fr))`
                         }}
                       >
                         {activeBoard.shots.map((shot, index) => (
@@ -317,6 +317,7 @@ export function StoryboardPage() {
                       <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
                         {activeBoard.shots.map((shot, index) => (
                           <ShotListRow
+                            dense={density === "compact"}
                             index={index}
                             key={shot.id}
                             onSelect={() => setSelectedShotId(shot.id)}

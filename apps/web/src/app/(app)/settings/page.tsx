@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { SettingsPage } from "@/components/settings/settings-page";
 
 export default function Settings() {
-  return <SettingsPage />;
+  return (
+    <Suspense fallback={null}>
+      <SettingsPage />
+    </Suspense>
+  );
 }

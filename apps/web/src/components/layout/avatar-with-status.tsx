@@ -1,13 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const AVATAR_IMAGES: Record<string, string> = {
-  "user-aryan": "/images/dashboard/avatar-aryan.jpg",
-  "user-priya": "/images/dashboard/avatar-priya.jpg",
-  "user-rahul": "/images/dashboard/avatar-rahul.jpg",
-  "user-ananya": "/images/dashboard/avatar-ananya.jpg",
-  "user-karan": "/images/dashboard/avatar-karan.jpg"
-};
-
 type PresenceStatus = "online" | "away" | "offline";
 
 const STATUS_COLOR: Record<PresenceStatus, string> = {
@@ -17,22 +9,21 @@ const STATUS_COLOR: Record<PresenceStatus, string> = {
 };
 
 export function AvatarWithStatus({
-  userId,
   label,
+  imageUrl,
   size = "default",
   status
 }: {
   userId: string;
   label: string;
+  imageUrl?: string | null;
   size?: "sm" | "default" | "lg";
   status?: PresenceStatus;
 }) {
-  const image = AVATAR_IMAGES[userId];
-
   return (
     <span className="relative inline-flex">
       <Avatar size={size}>
-        {image ? <AvatarImage alt="" src={image} /> : null}
+        {imageUrl ? <AvatarImage alt="" src={imageUrl} /> : null}
         <AvatarFallback>{label}</AvatarFallback>
       </Avatar>
       {status ? (

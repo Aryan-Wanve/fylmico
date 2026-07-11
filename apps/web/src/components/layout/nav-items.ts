@@ -50,8 +50,7 @@ export const navItems: NavItem[] = [
     id: "messages",
     label: "Messages",
     href: "/messages",
-    icon: MessageSquare,
-    badge: "4"
+    icon: MessageSquare
   },
   {
     id: "bookings",
