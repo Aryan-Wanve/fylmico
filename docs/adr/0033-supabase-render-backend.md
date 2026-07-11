@@ -22,13 +22,17 @@ self-managed VPS:
   Supabase's connection string - no other Supabase feature (their own
   auth, storage, auto-REST layer) is used; this app keeps its own auth
   (ADR 0003/0019) and has no object storage yet (ADR 0013, still
-  deferred). Use the **direct connection** string (port `5432`), not the
-  pooled/PgBooster one (port `6543`) - Render's API runs as one
-  long-lived process, not a burst of serverless invocations, so there's
-  no need for connection pooling, and Prisma's default query engine
-  doesn't play well with PgBouncer's transaction-mode pooling without
-  extra configuration (`?pgbouncer=true`, disabling prepared statements).
-  Keeping the direct connection avoids that class of problem entirely.
+  deferred). **Use the Session Pooler connection string**
+  (`aws-0-<region>.pooler.supabase.com:5432`, username
+  `postgres.<project-ref>`), not the direct connection
+  (`db.<project-ref>.supabase.co:5432`) originally planned here. In
+  practice the direct hostname is IPv6-only on new Supabase projects and
+  Render has no outbound IPv6 route, so it fails with `P1001: Can't
+reach database server` - discovered live during the first real deploy.
+  Session-mode pooling (as opposed to transaction-mode, port `6543`)
+  still behaves like a normal persistent connection from Prisma's
+  perspective - no `?pgbouncer=true`/prepared-statement workaround
+  needed - while routing over IPv4.
 - **Render** hosts the NestJS API as a Docker web service, built directly
   from the existing `apps/api/Dockerfile` - no new Dockerfile needed.
   Render's own GitHub integration (connect once via its dashboard) is the
@@ -60,9 +64,11 @@ self-managed VPS:
 ### One-time setup (manual - account-level steps this tooling can't do)
 
 1. **Create a Supabase project** (free tier). From its dashboard, copy
-   the **direct** Postgres connection string (Settings -> Database ->
-   Connection string -> URI, "Direct connection", not "Transaction
-   pooler").
+   the **Session pooler** Postgres connection string (Settings ->
+   Database -> Connection string -> URI, "Session pooler" mode - not
+   "Direct connection", which is IPv6-only and unreachable from Render,
+   and not "Transaction pooler", which needs extra Prisma configuration
+   to work around prepared-statement incompatibilities).
 2. **Create a Render account**, connect the GitHub repo, choose "New +
    Blueprint," point it at this repo - Render reads `render.yaml` and
    proposes the `fylmico-api` service.
