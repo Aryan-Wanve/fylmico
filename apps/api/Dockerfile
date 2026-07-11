@@ -33,4 +33,4 @@ USER nestjs
 
 EXPOSE 4000
 
-CMD ["node", "apps/api/dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy --schema packages/database/prisma/schema.prisma && node apps/api/dist/main.js"]

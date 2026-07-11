@@ -2,20 +2,23 @@
 
 ## Status
 
-Accepted per ADR 0032. The frontend deploys to Hostinger's static Git
-hosting (auto-rebuilt on every push, see `docs/hostinger-deployment.md`);
-the API + Postgres deploy to a Hostinger VPS via Docker Compose, kept in
-sync by `.github/workflows/deploy-vps.yml` over SSH.
+Accepted per ADR 0032 (frontend) and ADR 0033 (backend, superseding
+ADR 0032's VPS plan - no VPS turned out to be available). The frontend
+deploys to Hostinger's static Git hosting (auto-rebuilt on every push,
+see `docs/hostinger-deployment.md`); the API deploys to Render (built
+from `apps/api/Dockerfile` via `render.yaml`, auto-deployed on every push
+through Render's own GitHub integration); Postgres is hosted on Supabase.
 
 ## Infrastructure Baseline
 
-- Hostinger VPS
-- Docker
-- Nginx
-- PostgreSQL
+- Hostinger static hosting (frontend)
+- Render (API)
+- Supabase (Postgres)
 - GitHub
 
-See ADR 0006.
+Originally planned as a self-managed Hostinger VPS + Docker + Nginx +
+PostgreSQL (ADR 0006, ADR 0032) - revised to managed services per
+ADR 0033 once no VPS turned out to be available.
 
 For current Hostinger static Git and Node.js deployment settings, see
 `docs/hostinger-deployment.md`.
@@ -61,40 +64,39 @@ Requirements:
 
 Purpose: Live customer-facing environment.
 
-Status: Implemented per ADR 0032, split across two Hostinger resources:
+Status: Implemented per ADR 0032 (frontend) + ADR 0033 (backend):
 
-- **Frontend**: static Git deployment (a Hostinger website/hosting plan
-  resource, not the VPS). Rebuilt and republished automatically on every
-  push to `main` - see `docs/hostinger-deployment.md`.
-- **API + Postgres**: a Hostinger VPS running `docker-compose.prod.yml`
-  (the `api` and `postgres` services only - the frontend is not
-  containerized on the VPS). Deployed automatically on every push to
-  `main` via `.github/workflows/deploy-vps.yml`, which SSHs in and runs
-  `deploy/deploy.sh` (git pull, `docker compose up -d --build`,
-  `prisma migrate deploy`).
+- **Frontend**: Hostinger static Git deployment. Rebuilt and republished
+  automatically on every push to `main` - see
+  `docs/hostinger-deployment.md`.
+- **API**: Render web service built from `apps/api/Dockerfile`
+  (`render.yaml` is the Blueprint). Render's own GitHub integration
+  redeploys automatically on every push - no custom workflow needed.
+  Database migrations (`prisma migrate deploy`) run automatically as
+  part of the container's startup command.
+- **Postgres**: Supabase, using its direct (non-pooled) connection
+  string as `DATABASE_URL`.
 
 Requirements still outstanding:
 
-- SSL for the API subdomain (`certbot --nginx`, see
-  `deploy/nginx-api.conf.example`) - a one-time manual step on the VPS.
-- Backups (Postgres data lives in a named Docker volume on the VPS with
-  no automated backup yet).
-- Logging/monitoring beyond `docker compose logs`.
-- A documented rollback procedure beyond `git reset --hard` to a prior
-  commit and re-running the deploy script.
+- SSL/custom domain for the API - Render provides HTTPS on its default
+  `*.onrender.com` domain automatically; a custom domain is optional and
+  not set up yet.
+- Backups beyond whatever Supabase's free tier includes by default.
+- Logging/monitoring beyond Render's and Supabase's own dashboards.
+- A documented rollback procedure beyond Render's "redeploy a previous
+  build" UI.
 
-See `docs/adr/0032-continuous-deployment.md` for the full one-time VPS
-setup runbook (SSH key, GitHub secrets, DNS, Docker install).
+See `docs/adr/0033-supabase-render-backend.md` for the full one-time
+setup runbook (Supabase project, Render Blueprint, env vars).
 
 ## Runtime Topology
 
 ```text
 Internet
-  -> Hostinger static hosting (frontend, api.example.com CORS_ORIGIN target)
-  -> Hostinger VPS
-    -> system Nginx (SSL termination, reverse proxy)
-      -> api container (127.0.0.1:4000, not publicly exposed directly)
-        -> postgres container (docker-network-only, no exposed port)
+  -> Hostinger static hosting (frontend)
+  -> Render (api container, built from apps/api/Dockerfile)
+    -> Supabase (Postgres, direct connection)
 ```
 
 Future additions:

@@ -28,9 +28,9 @@ Hostinger build locally again.
 
 The build step reads `NEXT_PUBLIC_API_URL` from the repository variable of
 the same name (Settings -> Secrets and variables -> Actions -> Variables).
-Set this once a real backend is deployed (see `docs/deployment.md` and
-ADR 0032) - until then, the static site's API calls will fail even though
-the pages render, because there is no backend to call.
+Set this to the Render API URL once it's deployed (see `docs/deployment.md`
+and ADR 0033) - until then, the static site's API calls will fail even
+though the pages render, because there is no backend to call.
 
 ## Deployment Modes
 

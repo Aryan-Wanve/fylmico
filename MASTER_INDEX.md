@@ -82,6 +82,7 @@ Current ADRs:
 - [0030-calendar-page-extension.md](docs/adr/0030-calendar-page-extension.md)
 - [0031-time-tracking-and-analytics.md](docs/adr/0031-time-tracking-and-analytics.md)
 - [0032-continuous-deployment.md](docs/adr/0032-continuous-deployment.md)
+- [0033-supabase-render-backend.md](docs/adr/0033-supabase-render-backend.md)
 
 ## Current Sprint Gate
 
@@ -175,17 +176,21 @@ channel task/event backend exists) rather than deleted or faked.
   exists anywhere yet — notifications and chat are both REST/poll-based
   for now.
 
-**Continuous deployment is now real** (ADR 0032). The live Hostinger site
-had silently drifted ~2 weeks behind GitHub because its static export was
-only ever rebuilt and committed by hand
+**Continuous deployment is now real** (ADR 0032, ADR 0033). The live
+Hostinger site had silently drifted ~2 weeks behind GitHub because its
+static export was only ever rebuilt and committed by hand
 (`docs/hostinger-deployment.md`). `.github/workflows/deploy-hostinger.yml`
 now rebuilds and republishes that export automatically on every push to
-`main`. Separately, no backend had ever been deployed anywhere -
-`.github/workflows/deploy-vps.yml` now deploys the API + Postgres to a
-Hostinger VPS via `docker-compose.prod.yml` on every push, applying
-migrations automatically. Both require a one-time manual setup (SSH key,
-GitHub secrets, DNS, certbot) documented step-by-step in ADR 0032 - until
-that's done, the workflows exist but can't do anything yet.
+`main`. Separately, no backend had ever been deployed anywhere - the
+original plan (ADR 0032) was a Hostinger VPS, but no VPS turned out to
+be available, so the backend now deploys instead to **Render** (the API,
+built from `apps/api/Dockerfile` via `render.yaml`, redeployed
+automatically by Render's own GitHub integration on every push, running
+`prisma migrate deploy` on every container start) with **Supabase**
+hosting Postgres (ADR 0033). Both pipelines need a one-time manual setup
+(a Supabase project, a Render Blueprint connection, three dashboard env
+vars) documented step-by-step in ADR 0033 - until that's done, the API
+has nowhere to run yet.
 
 To run both sides locally: `docker compose up -d postgres`, then start the
 `api` and `web` dev servers (`.claude/launch.json` has both configured).

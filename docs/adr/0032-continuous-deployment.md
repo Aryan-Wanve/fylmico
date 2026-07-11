@@ -2,7 +2,13 @@
 
 Date: 2026-07-11
 
-Status: Accepted
+Status: Partially superseded by ADR 0033 - the frontend half (Hostinger
+static rebuild, `.github/workflows/deploy-hostinger.yml`) is still
+accepted and unchanged. The backend half (VPS + Docker Compose + SSH
+deploy) turned out to not be viable - there was no VPS available after
+all - and is replaced by ADR 0033 (Supabase Postgres + Render). This
+document is kept for its problem-statement context and the still-valid
+frontend decision; do not follow its VPS setup steps.
 
 ## Problem
 

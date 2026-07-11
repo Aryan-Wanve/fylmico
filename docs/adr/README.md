@@ -50,6 +50,7 @@ Use sequential numbers and a short slug:
 - `0030-calendar-page-extension.md`
 - `0031-time-tracking-and-analytics.md`
 - `0032-continuous-deployment.md`
+- `0033-supabase-render-backend.md`
 
 ## Required Sections
 
