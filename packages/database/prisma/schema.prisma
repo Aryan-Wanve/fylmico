@@ -30,6 +30,8 @@ model User {
   timeEntries             TimeEntry[]
   sentInvitations         HouseInvitation[] @relation("InvitationsSent")
   acceptedInvitations     HouseInvitation[] @relation("InvitationsAccepted")
+  bookings                Booking[]
+  uploadedFiles           FileEntry[]
 
   @@map("users")
 }
@@ -54,6 +56,10 @@ model Organization {
   calendarEvents CalendarEvent[]
   timeEntries    TimeEntry[]
   invitations    HouseInvitation[]
+  resources      Resource[]
+  bookings       Booking[]
+  boards         Board[]
+  fileEntries    FileEntry[]
 
   @@map("organizations")
 }
@@ -244,6 +250,8 @@ model Project {
   clients        ProjectClient[]
   calendarEvents CalendarEvent[]
   timeEntries    TimeEntry[]
+  bookings       Booking[]
+  boards         Board[]
 
   @@index([organizationId])
   @@map("projects")
@@ -378,4 +386,103 @@ model TimeEntry {
   @@index([projectId])
   @@index([userId])
   @@map("time_entries")
+}
+
+model Resource {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  name           String
+  category       String   @default("equipment")
+  subtitle       String?
+  tag            String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bookings     Booking[]
+
+  @@index([organizationId])
+  @@map("resources")
+}
+
+model Booking {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  resourceId     String   @map("resource_id")
+  projectId      String?  @map("project_id")
+  startDate      String   @map("start_date")
+  endDate        String   @map("end_date")
+  startTime      String   @map("start_time")
+  endTime        String   @map("end_time")
+  status         String   @default("confirmed")
+  bookedById     String   @map("booked_by_id")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  resource     Resource     @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  bookedBy     User         @relation(fields: [bookedById], references: [id])
+
+  @@index([organizationId])
+  @@index([resourceId])
+  @@index([projectId])
+  @@map("bookings")
+}
+
+model Board {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  projectId      String?  @map("project_id")
+  name           String
+  description    String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  shots        Shot[]
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("boards")
+}
+
+model Shot {
+  id          String   @id @default(cuid())
+  boardId     String   @map("board_id")
+  order       Int      @default(0)
+  description String
+  cameraAngle String?  @map("camera_angle")
+  notes       String?
+  imageUrl    String?  @map("image_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId])
+  @@map("shots")
+}
+
+model FileEntry {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  parentId       String?  @map("parent_id")
+  name           String
+  type           String
+  storagePath    String?  @map("storage_path")
+  size           Int?
+  mimeType       String?  @map("mime_type")
+  uploadedById   String   @map("uploaded_by_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent       FileEntry?   @relation("FileEntryChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children     FileEntry[]  @relation("FileEntryChildren")
+  uploadedBy   User         @relation(fields: [uploadedById], references: [id])
+
+  @@index([organizationId])
+  @@index([parentId])
+  @@map("file_entries")
 }
