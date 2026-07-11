@@ -1,6 +1,11 @@
 "use client";
 
-import { ChevronRight, LayoutGrid, List, SlidersHorizontal } from "lucide-react";
+import {
+  ChevronRight,
+  LayoutGrid,
+  List,
+  SlidersHorizontal
+} from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export type FilesTab = "all" | "shared" | "trash";
@@ -23,7 +28,7 @@ export function FilesToolbar({
 }) {
   return (
     <Tabs
-      className="min-w-0 max-w-full overflow-x-auto"
+      className="max-w-full min-w-0 overflow-x-auto"
       onValueChange={(value) => onTabChange(value as FilesTab)}
       value={activeTab}
     >

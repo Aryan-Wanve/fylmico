@@ -20,8 +20,7 @@ export function DepartmentOverviewPanel({
 
   const rows = DEPARTMENT_ORDER.map((department) => ({
     department,
-    count: members.filter((member) => member.department === department)
-      .length
+    count: members.filter((member) => member.department === department).length
   })).filter((row) => row.count > 0);
 
   const visibleRows = expanded ? rows : rows.slice(0, COLLAPSED_COUNT);
@@ -46,9 +45,7 @@ export function DepartmentOverviewPanel({
               <span className="flex-1 truncate text-sm font-semibold text-[#3a3f57]">
                 {department} Department
               </span>
-              <span className="text-sm font-bold text-[#11142c]">
-                {count}
-              </span>
+              <span className="text-sm font-bold text-[#11142c]">{count}</span>
             </div>
           );
         })}

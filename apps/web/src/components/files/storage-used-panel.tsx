@@ -9,9 +9,7 @@ export function StorageUsedPanel() {
     <div className="shrink-0 rounded-2xl border border-black/[0.06] bg-white p-4 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)]">
       <div className="flex items-center justify-between text-sm">
         <span className="font-semibold text-[#4b5268]">Storage Used</span>
-        <span className="font-bold text-[#11142c]">
-          {usedGb} GB / 1 TB
-        </span>
+        <span className="font-bold text-[#11142c]">{usedGb} GB / 1 TB</span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/[0.06]">
         <div

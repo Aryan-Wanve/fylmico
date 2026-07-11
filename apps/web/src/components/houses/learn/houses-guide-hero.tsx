@@ -13,8 +13,8 @@ export function HousesGuideHero() {
         </h1>
         <p className="mt-4 max-w-md text-[1.05rem] leading-relaxed text-[#5f667d]">
           A House is where your crew plans, shoots, edits, and delivers —
-          together, in one place. Here&apos;s everything it does and how
-          teams like yours use it.
+          together, in one place. Here&apos;s everything it does and how teams
+          like yours use it.
         </p>
       </div>
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-[0_1.5rem_3.5rem_rgba(53,45,124,0.16)]">

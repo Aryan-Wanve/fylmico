@@ -9,8 +9,8 @@ export function HousesGuideCta() {
           Ready to bring your crew together?
         </h2>
         <p className="mx-auto max-w-md text-white/85">
-          Create your first house in under a minute, or join one with an
-          invite code from your team.
+          Create your first house in under a minute, or join one with an invite
+          code from your team.
         </p>
         <div className="mx-auto flex flex-wrap items-center justify-center gap-3">
           <Link

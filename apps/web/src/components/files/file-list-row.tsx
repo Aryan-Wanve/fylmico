@@ -47,7 +47,9 @@ export function FileListRow({
       <div className="hidden w-32 shrink-0 items-center gap-2 xl:flex">
         <Avatar size="sm">
           {memberAvatar ? <AvatarImage alt="" src={memberAvatar} /> : null}
-          <AvatarFallback>{memberName.slice(0, 2).toUpperCase()}</AvatarFallback>
+          <AvatarFallback>
+            {memberName.slice(0, 2).toUpperCase()}
+          </AvatarFallback>
         </Avatar>
         <span className="truncate text-sm text-[#4b5268]">{memberName}</span>
       </div>

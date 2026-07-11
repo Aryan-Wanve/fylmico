@@ -1,7 +1,10 @@
 import { CreditCard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SettingsCard } from "@/components/settings/settings-card";
-import { billingHistory, workspacePlan } from "@/components/settings/settings-data";
+import {
+  billingHistory,
+  workspacePlan
+} from "@/components/settings/settings-data";
 
 export function BillingSection() {
   return (
@@ -15,7 +18,9 @@ export function BillingSection() {
             <strong className="text-sm font-bold text-[#11142c]">
               {workspacePlan.name}
             </strong>
-            <p className="text-xs text-[#8a90a3]">$29.00 / month &bull; renews Aug 1, 2026</p>
+            <p className="text-xs text-[#8a90a3]">
+              $29.00 / month &bull; renews Aug 1, 2026
+            </p>
           </div>
           <button
             className="rounded-lg border border-black/10 px-3.5 py-1.5 text-xs font-bold text-[#4b5268] hover:bg-black/[0.03]"
@@ -46,7 +51,10 @@ export function BillingSection() {
         </div>
       </SettingsCard>
 
-      <SettingsCard subtitle="Your last three invoices." title="Billing History">
+      <SettingsCard
+        subtitle="Your last three invoices."
+        title="Billing History"
+      >
         <div className="grid gap-2">
           {billingHistory.map((invoice) => (
             <div

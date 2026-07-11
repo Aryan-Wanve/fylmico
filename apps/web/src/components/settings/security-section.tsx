@@ -7,8 +7,16 @@ import { SettingsCard } from "@/components/settings/settings-card";
 
 const SECURITY_LOG = [
   { id: "log-1", text: "Password changed", time: "3 weeks ago" },
-  { id: "log-2", text: "New sign-in from Chrome on Windows", time: "Today, 8:02 AM" },
-  { id: "log-3", text: "Two-factor authentication enabled", time: "1 month ago" }
+  {
+    id: "log-2",
+    text: "New sign-in from Chrome on Windows",
+    time: "Today, 8:02 AM"
+  },
+  {
+    id: "log-3",
+    text: "Two-factor authentication enabled",
+    time: "1 month ago"
+  }
 ];
 
 export function SecuritySection() {

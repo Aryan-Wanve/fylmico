@@ -1,5 +1,8 @@
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
-import { ROLE_CATEGORY_ORDER, type CrewMember } from "@/components/crews/crew-data";
+import {
+  ROLE_CATEGORY_ORDER,
+  type CrewMember
+} from "@/components/crews/crew-data";
 
 export function CrewByRolePanel({ members }: { members: CrewMember[] }) {
   return (
@@ -18,9 +21,7 @@ export function CrewByRolePanel({ members }: { members: CrewMember[] }) {
               <span className="text-sm font-semibold text-[#3a3f57]">
                 {role}s
               </span>
-              <span className="text-sm font-bold text-[#11142c]">
-                {count}
-              </span>
+              <span className="text-sm font-bold text-[#11142c]">{count}</span>
             </div>
           );
         })}

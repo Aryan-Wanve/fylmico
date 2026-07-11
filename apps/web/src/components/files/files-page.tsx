@@ -34,9 +34,9 @@ export function FilesPage() {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     () => new Set(["beyond-frames", "production"])
   );
-  const [fileOverrides, setFileOverrides] = useState<Record<string, FileEntry[]>>(
-    {}
-  );
+  const [fileOverrides, setFileOverrides] = useState<
+    Record<string, FileEntry[]>
+  >({});
   const [removedIds, setRemovedIds] = useState<Set<string>>(() => new Set());
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -64,7 +64,9 @@ export function FilesPage() {
       ? sharedWithMeFiles
       : activeTab === "trash"
         ? trashFiles
-        : (fileOverrides[selectedFolderId] ?? FILE_CONTENT[selectedFolderId] ?? []);
+        : (fileOverrides[selectedFolderId] ??
+          FILE_CONTENT[selectedFolderId] ??
+          []);
 
   const visibleFiles = baseFiles.filter((file) => !removedIds.has(file.id));
 
@@ -97,7 +99,10 @@ export function FilesPage() {
 
     setFileOverrides((current) => ({
       ...current,
-      [selectedFolderId]: [file, ...(current[selectedFolderId] ?? FILE_CONTENT[selectedFolderId] ?? [])]
+      [selectedFolderId]: [
+        file,
+        ...(current[selectedFolderId] ?? FILE_CONTENT[selectedFolderId] ?? [])
+      ]
     }));
   }
 
@@ -119,7 +124,10 @@ export function FilesPage() {
 
     setFileOverrides((current) => ({
       ...current,
-      [selectedFolderId]: [folder, ...(current[selectedFolderId] ?? FILE_CONTENT[selectedFolderId] ?? [])]
+      [selectedFolderId]: [
+        folder,
+        ...(current[selectedFolderId] ?? FILE_CONTENT[selectedFolderId] ?? [])
+      ]
     }));
   }
 
@@ -144,7 +152,7 @@ export function FilesPage() {
       />
 
       <div className="grid min-w-0 gap-6 xl:grid-cols-[16rem_1fr_20rem]">
-        <div className="grid min-h-0 gap-4 content-start">
+        <div className="grid min-h-0 content-start gap-4">
           <FoldersPanel
             expandedIds={expandedIds}
             onNewFolder={() => {
@@ -162,7 +170,7 @@ export function FilesPage() {
           <StorageUsedPanel />
         </div>
 
-        <div className="grid min-w-0 gap-4 content-start">
+        <div className="grid min-w-0 content-start gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             {activeTab === "all" ? (
               <FilesBreadcrumb path={breadcrumbPath} />

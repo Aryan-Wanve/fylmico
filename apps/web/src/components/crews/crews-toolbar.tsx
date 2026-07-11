@@ -2,17 +2,11 @@
 
 import { Search } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  CrewsDepartmentMenu
-} from "@/components/crews/crews-department-menu";
+import { CrewsDepartmentMenu } from "@/components/crews/crews-department-menu";
 import type { Department } from "@/components/crews/crew-data";
 
 export type CrewsTab =
-  | "all"
-  | "available"
-  | "on-set"
-  | "unavailable"
-  | "groups";
+  "all" | "available" | "on-set" | "unavailable" | "groups";
 
 const TABS: Array<{ value: CrewsTab; label: string }> = [
   { value: "all", label: "All Members" },
@@ -42,7 +36,7 @@ export function CrewsToolbar({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <Tabs
-        className="min-w-0 max-w-full overflow-x-auto"
+        className="max-w-full min-w-0 overflow-x-auto"
         onValueChange={(value) => onTabChange(value as CrewsTab)}
         value={activeTab}
       >

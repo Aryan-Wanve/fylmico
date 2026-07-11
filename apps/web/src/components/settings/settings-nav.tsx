@@ -1,4 +1,7 @@
-import { SETTINGS_SECTIONS, type SettingsSectionId } from "@/components/settings/settings-data";
+import {
+  SETTINGS_SECTIONS,
+  type SettingsSectionId
+} from "@/components/settings/settings-data";
 
 export function SettingsNav({
   activeSection,

@@ -11,7 +11,8 @@ export function RecentFileActivityPanel() {
     <DashboardPanel action={{ label: "View all" }} title="Recent Activity">
       <div className="grid">
         {recentFileActivity.map((activity) => {
-          const memberName = MEMBER_NAMES[activity.memberId] ?? activity.memberId;
+          const memberName =
+            MEMBER_NAMES[activity.memberId] ?? activity.memberId;
           const memberAvatar = MEMBER_AVATARS[activity.memberId];
 
           return (

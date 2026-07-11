@@ -41,7 +41,11 @@ function AccordionTrigger({
   );
 }
 
-function AccordionPanel({ className, children, ...props }: AccordionPrimitive.Panel.Props) {
+function AccordionPanel({
+  className,
+  children,
+  ...props
+}: AccordionPrimitive.Panel.Props) {
   return (
     <AccordionPrimitive.Panel
       data-slot="accordion-panel"

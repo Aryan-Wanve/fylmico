@@ -40,19 +40,54 @@ export const FILE_KIND_META: Record<
   FileKind,
   { icon: LucideIcon; color: string; bg: string; label: string }
 > = {
-  folder: { icon: Folder, color: "text-amber-500", bg: "bg-amber-50", label: "Folder" },
-  video: { icon: Video, color: "text-blue-600", bg: "bg-blue-50", label: "MOV" },
-  audio: { icon: Music, color: "text-violet-600", bg: "bg-violet-50", label: "WAV" },
-  image: { icon: Image, color: "text-pink-600", bg: "bg-pink-50", label: "JPG" },
-  pdf: { icon: FileText, color: "text-blue-600", bg: "bg-blue-50", label: "PDF" },
+  folder: {
+    icon: Folder,
+    color: "text-amber-500",
+    bg: "bg-amber-50",
+    label: "Folder"
+  },
+  video: {
+    icon: Video,
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    label: "MOV"
+  },
+  audio: {
+    icon: Music,
+    color: "text-violet-600",
+    bg: "bg-violet-50",
+    label: "WAV"
+  },
+  image: {
+    icon: Image,
+    color: "text-pink-600",
+    bg: "bg-pink-50",
+    label: "JPG"
+  },
+  pdf: {
+    icon: FileText,
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    label: "PDF"
+  },
   spreadsheet: {
     icon: FileSpreadsheet,
     color: "text-emerald-600",
     bg: "bg-emerald-50",
     label: "XLSX"
   },
-  archive: { icon: Archive, color: "text-orange-600", bg: "bg-orange-50", label: "ZIP" },
-  other: { icon: File, color: "text-slate-500", bg: "bg-slate-100", label: "File" }
+  archive: {
+    icon: Archive,
+    color: "text-orange-600",
+    bg: "bg-orange-50",
+    label: "ZIP"
+  },
+  other: {
+    icon: File,
+    color: "text-slate-500",
+    bg: "bg-slate-100",
+    label: "File"
+  }
 };
 
 export const MEMBER_NAMES: Record<string, string> = {

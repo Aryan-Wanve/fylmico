@@ -30,9 +30,7 @@ export function WorkspaceSection() {
           />
         </label>
         <label className="grid gap-1.5">
-          <Label className="text-sm font-semibold text-[#3a3f57]">
-            Handle
-          </Label>
+          <Label className="text-sm font-semibold text-[#3a3f57]">Handle</Label>
           <Input
             onChange={(event) => {
               setForm({ ...form, handle: event.target.value });

@@ -28,7 +28,10 @@ export function AppearanceSection() {
 
   return (
     <div className="grid gap-6">
-      <SettingsCard subtitle="Choose how Fylmico looks on your device." title="Theme">
+      <SettingsCard
+        subtitle="Choose how Fylmico looks on your device."
+        title="Theme"
+      >
         <div className="grid grid-cols-3 gap-3">
           {THEMES.map((option) => {
             const Icon = option.icon;

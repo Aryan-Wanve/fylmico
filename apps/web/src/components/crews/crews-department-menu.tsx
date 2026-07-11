@@ -8,7 +8,10 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { DEPARTMENT_ORDER, type Department } from "@/components/crews/crew-data";
+import {
+  DEPARTMENT_ORDER,
+  type Department
+} from "@/components/crews/crew-data";
 
 export function CrewsDepartmentMenu({
   value,
