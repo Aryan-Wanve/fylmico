@@ -1,7 +1,26 @@
 import { Download, FileText } from "lucide-react";
-import type { ChannelFile } from "@/components/messages/message-data";
+import type { FileEntryItem } from "@/types/base";
 
-export function ChannelFilesList({ files }: { files: ChannelFile[] }) {
+function formatSize(bytes: number | null): string {
+  if (bytes === null) {
+    return "";
+  }
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export function ChannelFilesList({
+  files,
+  onDownload
+}: {
+  files: FileEntryItem[];
+  onDownload: (entryId: string) => void;
+}) {
   if (files.length === 0) {
     return (
       <p className="py-10 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
@@ -25,12 +44,13 @@ export function ChannelFilesList({ files }: { files: ChannelFile[] }) {
               {file.name}
             </strong>
             <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
-              {file.size} &bull; {file.authorId} &bull; {file.time}
+              {formatSize(file.size)} &bull; {file.uploadedByName}
             </span>
           </span>
           <button
             aria-label={`Download ${file.name}`}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            onClick={() => onDownload(file.id)}
             type="button"
           >
             <Download className="h-4 w-4" />

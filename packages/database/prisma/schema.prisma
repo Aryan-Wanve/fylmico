@@ -185,6 +185,7 @@ model PasswordResetToken {
 model Task {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
+  conversationId String?  @map("conversation_id")
   title          String
   project        String
   assigneeId     String   @map("assignee_id")
@@ -195,11 +196,13 @@ model Task {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  assignee     User         @relation(fields: [assigneeId], references: [id])
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignee     User          @relation(fields: [assigneeId], references: [id])
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
   @@index([assigneeId])
+  @@index([conversationId])
   @@map("tasks")
 }
 
@@ -210,8 +213,11 @@ model Conversation {
   topic          String
   createdAt      DateTime @default(now()) @map("created_at")
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  messages     Message[]
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  messages       Message[]
+  tasks          Task[]
+  calendarEvents CalendarEvent[]
+  fileEntries    FileEntry[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -354,6 +360,7 @@ model CalendarEvent {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
   projectId      String?  @map("project_id")
+  conversationId String?  @map("conversation_id")
   createdById    String   @map("created_by_id")
   title          String
   date           String
@@ -363,12 +370,14 @@ model CalendarEvent {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  createdBy    User         @relation(fields: [createdById], references: [id])
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  createdBy    User          @relation(fields: [createdById], references: [id])
 
   @@index([organizationId])
   @@index([projectId])
+  @@index([conversationId])
   @@map("calendar_events")
 }
 
@@ -510,6 +519,7 @@ model FileEntry {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
   parentId       String?  @map("parent_id")
+  conversationId String?  @map("conversation_id")
   name           String
   type           String
   storagePath    String?  @map("storage_path")
@@ -519,12 +529,14 @@ model FileEntry {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  parent       FileEntry?   @relation("FileEntryChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  children     FileEntry[]  @relation("FileEntryChildren")
-  uploadedBy   User         @relation(fields: [uploadedById], references: [id])
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent       FileEntry?    @relation("FileEntryChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children     FileEntry[]   @relation("FileEntryChildren")
+  uploadedBy   User          @relation(fields: [uploadedById], references: [id])
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
   @@index([parentId])
+  @@index([conversationId])
   @@map("file_entries")
 }

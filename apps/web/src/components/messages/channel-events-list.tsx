@@ -1,7 +1,7 @@
 import { CalendarDays } from "lucide-react";
-import type { ChannelEvent } from "@/components/messages/message-data";
+import type { CalendarEvent } from "@/types/base";
 
-export function ChannelEventsList({ events }: { events: ChannelEvent[] }) {
+export function ChannelEventsList({ events }: { events: CalendarEvent[] }) {
   if (events.length === 0) {
     return (
       <p className="py-10 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">

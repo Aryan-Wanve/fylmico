@@ -87,10 +87,7 @@ export function ChannelInfoPanel({
             <FileText className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
             Files
           </span>
-          <span className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
-            {channel.files.length}
-            <ChevronRight className="h-3.5 w-3.5" />
-          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-[#8a90a3] dark:text-[#7d8299]" />
         </button>
         <button
           className="flex items-center justify-between py-1.5"
@@ -101,10 +98,7 @@ export function ChannelInfoPanel({
             <ListChecks className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
             Tasks
           </span>
-          <span className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
-            {channel.tasks.length}
-            <ChevronRight className="h-3.5 w-3.5" />
-          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-[#8a90a3] dark:text-[#7d8299]" />
         </button>
         <button
           className="flex items-center justify-between py-1.5"
@@ -115,10 +109,7 @@ export function ChannelInfoPanel({
             <CalendarDays className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
             Events
           </span>
-          <span className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
-            {channel.events.length}
-            <ChevronRight className="h-3.5 w-3.5" />
-          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-[#8a90a3] dark:text-[#7d8299]" />
         </button>
       </div>
     </div>

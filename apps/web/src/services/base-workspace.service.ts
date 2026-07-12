@@ -461,6 +461,46 @@ export async function updateConversation(
   });
 }
 
+export async function listRoomFiles(roomId: string): Promise<FileEntryItem[]> {
+  return apiRequest<FileEntryItem[]>(`/chat/rooms/${roomId}/files`);
+}
+
+export async function listRoomTasks(roomId: string): Promise<ProductionTask[]> {
+  return apiRequest<ProductionTask[]>(`/chat/rooms/${roomId}/tasks`);
+}
+
+export async function createRoomTask(
+  roomId: string,
+  title: string
+): Promise<ProductionTask[]> {
+  if (!title.trim()) {
+    throw new Error("Enter a task title.");
+  }
+
+  return apiRequest<ProductionTask[]>(`/chat/rooms/${roomId}/tasks`, {
+    method: "POST",
+    body: { title }
+  });
+}
+
+export async function listRoomEvents(roomId: string): Promise<CalendarEvent[]> {
+  return apiRequest<CalendarEvent[]>(`/chat/rooms/${roomId}/events`);
+}
+
+export async function createRoomEvent(
+  roomId: string,
+  request: { title: string; date: string; time: string }
+): Promise<CalendarEvent[]> {
+  if (!request.title.trim() || !request.date.trim() || !request.time.trim()) {
+    throw new Error("Enter a title, date, and time for the event.");
+  }
+
+  return apiRequest<CalendarEvent[]>(`/chat/rooms/${roomId}/events`, {
+    method: "POST",
+    body: request
+  });
+}
+
 export async function updateHouse(request: UpdateHouseRequest): Promise<House> {
   if (!activeHouseId) {
     throw new Error(
@@ -576,7 +616,8 @@ export async function createFolder(
 
 export async function uploadFileEntry(
   file: File,
-  parentId: string | null
+  parentId: string | null,
+  conversationId?: string | null
 ): Promise<FileEntryItem> {
   if (!activeHouseId) {
     throw new Error("Join or create a house before uploading files.");
@@ -586,6 +627,9 @@ export async function uploadFileEntry(
   formData.set("file", file);
   if (parentId) {
     formData.set("parentId", parentId);
+  }
+  if (conversationId) {
+    formData.set("conversationId", conversationId);
   }
 
   return apiRequest<FileEntryItem>(`/houses/${activeHouseId}/files/upload`, {

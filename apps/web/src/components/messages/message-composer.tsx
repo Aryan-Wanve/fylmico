@@ -5,9 +5,11 @@ import { Paperclip, Send } from "lucide-react";
 import { uploadFileEntry } from "@/services/base-workspace.service";
 
 export function MessageComposer({
-  onSend
+  onSend,
+  roomId
 }: {
   onSend: (body: string) => void;
+  roomId: string;
 }) {
   const [value, setValue] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -25,7 +27,7 @@ export function MessageComposer({
   async function handleFileSelected(file: File) {
     setUploading(true);
     try {
-      const entry = await uploadFileEntry(file, null);
+      const entry = await uploadFileEntry(file, null, roomId);
       onSend(`📎 ${entry.name}`);
     } catch (error) {
       window.alert(

@@ -10,28 +10,6 @@ import type { ChatMessage, ChatRoom } from "@/types/base";
 
 export type ChatMessageItem = ChatMessage & { time: string };
 
-export type ChannelFile = {
-  id: string;
-  name: string;
-  size: string;
-  authorId: string;
-  time: string;
-};
-
-export type ChannelTask = {
-  id: string;
-  title: string;
-  assigneeId: string;
-  done: boolean;
-};
-
-export type ChannelEvent = {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-};
-
 export type Channel = {
   id: string;
   name: string;
@@ -45,9 +23,6 @@ export type Channel = {
   colorClass: string;
   icon?: LucideIcon;
   messages: ChatMessageItem[];
-  files: ChannelFile[];
-  tasks: ChannelTask[];
-  events: ChannelEvent[];
 };
 
 const COLOR_CLASSES = [
@@ -129,10 +104,7 @@ export function toChannel(room: ChatRoom, memberIds: string[]): Channel {
     lastMessageTime: lastMessage ? lastMessage.time : "",
     colorClass: colorForChannel(room.id),
     icon: iconForChannel(room.id),
-    messages,
-    files: [],
-    tasks: [],
-    events: []
+    messages
   };
 }
 

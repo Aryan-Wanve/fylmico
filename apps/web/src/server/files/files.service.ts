@@ -53,7 +53,8 @@ class FilesService {
     userId: string,
     houseId: string,
     parentId: string | null,
-    file: { name: string; buffer: ArrayBuffer; mimeType: string; size: number }
+    file: { name: string; buffer: ArrayBuffer; mimeType: string; size: number },
+    conversationId?: string | null
   ) {
     await organizationsService.requireMembership(houseId, userId);
 
@@ -68,6 +69,7 @@ class FilesService {
       data: {
         organizationId: houseId,
         parentId,
+        conversationId: conversationId ?? null,
         name: file.name,
         type: "file",
         storagePath,
