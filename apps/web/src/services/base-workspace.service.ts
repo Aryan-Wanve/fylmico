@@ -16,6 +16,7 @@ import type {
   CreateHouseRequest,
   CreateLocationRequest,
   CreateProjectRequest,
+  CreateScriptRequest,
   CreateShotRequest,
   CreateTaskRequest,
   CreateTimeEntryRequest,
@@ -35,17 +36,21 @@ import type {
   Project,
   RequestPasswordResetRequest,
   ResetPasswordRequest,
+  Script,
+  ScriptSummary,
   SendChatMessageRequest,
   Shot,
   SignupRequest,
   StoryCharacter,
   StoryLocationItem,
   TimeEntry,
+  UpdateBoardRequest,
   UpdateCrewProfileRequest,
   UpdateConversationRequest,
   UpdateHouseRequest,
   UpdateMeRequest,
   UpdateProjectRequest,
+  UpdateScriptRequest,
   UpdateShotRequest,
   UpdateTaskRequest,
   UserProfile,
@@ -726,6 +731,20 @@ export async function createBoard(request: CreateBoardRequest): Promise<Board> {
   });
 }
 
+export async function updateBoard(
+  boardId: string,
+  request: UpdateBoardRequest
+): Promise<Board> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before editing boards.");
+  }
+
+  return apiRequest<Board>(`/houses/${activeHouseId}/boards/${boardId}`, {
+    method: "PATCH",
+    body: request
+  });
+}
+
 export async function deleteBoard(boardId: string): Promise<void> {
   if (!activeHouseId) {
     throw new Error("Join or create a house before deleting boards.");
@@ -833,6 +852,64 @@ export async function deleteLocation(locationId: string): Promise<void> {
 
   await apiRequest<{ success: boolean }>(
     `/houses/${activeHouseId}/locations/${locationId}`,
+    { method: "DELETE" }
+  );
+}
+
+export async function listScripts(): Promise<ScriptSummary[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing scripts.");
+  }
+
+  return apiRequest<ScriptSummary[]>(`/houses/${activeHouseId}/scripts`);
+}
+
+export async function getScript(scriptId: string): Promise<Script> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing scripts.");
+  }
+
+  return apiRequest<Script>(`/houses/${activeHouseId}/scripts/${scriptId}`);
+}
+
+export async function createScript(
+  request: CreateScriptRequest
+): Promise<Script> {
+  if (!request.title.trim()) {
+    throw new Error("Give the script a title.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before creating scripts.");
+  }
+
+  return apiRequest<Script>(`/houses/${activeHouseId}/scripts`, {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function updateScript(
+  scriptId: string,
+  request: UpdateScriptRequest
+): Promise<Script> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before editing scripts.");
+  }
+
+  return apiRequest<Script>(`/houses/${activeHouseId}/scripts/${scriptId}`, {
+    method: "PATCH",
+    body: request
+  });
+}
+
+export async function deleteScript(scriptId: string): Promise<void> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before deleting scripts.");
+  }
+
+  await apiRequest<{ success: boolean }>(
+    `/houses/${activeHouseId}/scripts/${scriptId}`,
     { method: "DELETE" }
   );
 }

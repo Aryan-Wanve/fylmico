@@ -434,6 +434,7 @@ export type Shot = {
 export type Board = {
   id: string;
   projectId: string | null;
+  scriptId: string | null;
   name: string;
   description: string | null;
   updatedAt: string;
@@ -451,13 +452,46 @@ export type CreateBoardRequest = {
   name: string;
   description?: string;
   projectId?: string;
+  scriptId?: string;
   shots?: CreateShotRequest[];
 };
+
+export type UpdateBoardRequest = Partial<{
+  name: string;
+  description: string;
+  scriptId: string;
+}>;
 
 export type UpdateShotRequest = Partial<{
   description: string;
   cameraAngle: string;
   notes: string;
+  imageUrl: string;
+}>;
+
+export type Script = {
+  id: string;
+  projectId: string | null;
+  title: string;
+  content: string;
+  createdById: string;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ScriptSummary = Omit<Script, "content"> & { wordCount: number };
+
+export type CreateScriptRequest = {
+  title: string;
+  projectId?: string;
+  content?: string;
+};
+
+export type UpdateScriptRequest = Partial<{
+  title: string;
+  projectId: string;
+  content: string;
 }>;
 
 export type StoryCharacter = {

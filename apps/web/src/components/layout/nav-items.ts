@@ -3,6 +3,7 @@ import {
   Calendar,
   CalendarClock,
   Clapperboard,
+  FileText,
   Folder,
   FolderKanban,
   Home,
@@ -24,6 +25,7 @@ export type NavItem = {
     | "/crews"
     | "/files"
     | "/storyboard"
+    | "/scripts"
     | "/messages"
     | "/settings"
     | "/analytics"
@@ -45,6 +47,12 @@ export const navItems: NavItem[] = [
     label: "Storyboard",
     href: "/storyboard",
     icon: Clapperboard
+  },
+  {
+    id: "scripts",
+    label: "Scripts",
+    href: "/scripts",
+    icon: FileText
   },
   {
     id: "messages",

@@ -22,6 +22,10 @@ export class CreateBoardDto {
   projectId?: string;
 
   @IsOptional()
+  @IsString()
+  scriptId?: string;
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateShotDto)

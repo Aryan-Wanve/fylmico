@@ -36,6 +36,7 @@ model User {
   bookings                Booking[]
   uploadedFiles           FileEntry[]
   driveConnection         DriveConnection?
+  scripts                 Script[]
 
   @@map("users")
 }
@@ -66,6 +67,7 @@ model Organization {
   fileEntries    FileEntry[]
   characters     Character[]
   storyLocations StoryLocation[]
+  scripts        Script[]
 
   @@map("organizations")
 }
@@ -266,6 +268,7 @@ model Project {
   boards         Board[]
   characters     Character[]
   storyLocations StoryLocation[]
+  scripts        Script[]
 
   @@index([organizationId])
   @@map("projects")
@@ -450,6 +453,7 @@ model Board {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
   projectId      String?  @map("project_id")
+  scriptId       String?  @map("script_id")
   name           String
   description    String?
   createdAt      DateTime @default(now()) @map("created_at")
@@ -457,10 +461,12 @@ model Board {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  script       Script?      @relation(fields: [scriptId], references: [id], onDelete: SetNull)
   shots        Shot[]
 
   @@index([organizationId])
   @@index([projectId])
+  @@index([scriptId])
   @@map("boards")
 }
 
@@ -515,6 +521,26 @@ model StoryLocation {
   @@index([organizationId])
   @@index([projectId])
   @@map("story_locations")
+}
+
+model Script {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  projectId      String?  @map("project_id")
+  title          String
+  content        String   @default("")
+  createdById    String   @map("created_by_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy    User         @relation(fields: [createdById], references: [id])
+  boards       Board[]
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("scripts")
 }
 
 model FileEntry {

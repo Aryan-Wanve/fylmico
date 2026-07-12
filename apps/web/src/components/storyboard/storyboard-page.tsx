@@ -23,6 +23,7 @@ import {
   boardTemplates,
   type BoardTemplate
 } from "@/components/storyboard/storyboard-data";
+import { LinkedScriptPanel } from "@/components/storyboard/linked-script-panel";
 import {
   createBoard,
   createCharacter,
@@ -31,15 +32,20 @@ import {
   deleteBoard,
   deleteCharacter,
   deleteLocation,
+  getScript,
   listBoards,
   listCharacters,
   listLocations,
   listProjects,
+  listScripts,
+  updateBoard,
   updateShot
 } from "@/services/base-workspace.service";
 import type {
   Board,
   Project,
+  Script,
+  ScriptSummary,
   StoryCharacter,
   StoryLocationItem
 } from "@/types/base";
@@ -60,6 +66,8 @@ export function StoryboardPage() {
   const [density, setDensity] = useState<"compact" | "comfortable">(
     "comfortable"
   );
+  const [scripts, setScripts] = useState<ScriptSummary[]>([]);
+  const [linkedScript, setLinkedScript] = useState<Script | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,18 +76,22 @@ export function StoryboardPage() {
       listBoards(),
       listProjects(),
       listCharacters(),
-      listLocations()
+      listLocations(),
+      listScripts()
     ])
-      .then(([boardData, projectData, characterData, locationData]) => {
-        if (!cancelled) {
-          setBoards(boardData);
-          setProjects(projectData);
-          setStoryCharacters(characterData);
-          setLocations(locationData);
-          setActiveBoardId(boardData[0]?.id ?? null);
-          setSelectedShotId(boardData[0]?.shots[0]?.id ?? null);
+      .then(
+        ([boardData, projectData, characterData, locationData, scriptData]) => {
+          if (!cancelled) {
+            setBoards(boardData);
+            setProjects(projectData);
+            setStoryCharacters(characterData);
+            setLocations(locationData);
+            setScripts(scriptData);
+            setActiveBoardId(boardData[0]?.id ?? null);
+            setSelectedShotId(boardData[0]?.shots[0]?.id ?? null);
+          }
         }
-      })
+      )
       .catch((error) => {
         if (!cancelled) {
           window.alert(
@@ -108,6 +120,44 @@ export function StoryboardPage() {
     (shot) => shot.id === selectedShotId
   );
 
+  useEffect(() => {
+    let cancelled = false;
+    const scriptId = activeBoard?.scriptId;
+
+    (scriptId ? getScript(scriptId) : Promise.resolve(null))
+      .then((script) => {
+        if (!cancelled) {
+          setLinkedScript(script);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLinkedScript(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeBoard?.scriptId]);
+
+  async function handleLinkScript(scriptId: string) {
+    if (!activeBoard) {
+      return;
+    }
+
+    try {
+      const updated = await updateBoard(activeBoard.id, { scriptId });
+      setBoards((current) =>
+        current.map((board) => (board.id === updated.id ? updated : board))
+      );
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not link the script."
+      );
+    }
+  }
+
   function handleSelectBoard(id: string) {
     setActiveBoardId(id);
     const board = boards.find((entry) => entry.id === id);
@@ -124,6 +174,7 @@ export function StoryboardPage() {
     description?: string;
     cameraAngle?: string;
     notes?: string;
+    imageUrl?: string;
   }) {
     if (!activeBoard || !selectedShotId) {
       return;
@@ -381,6 +432,7 @@ export function StoryboardPage() {
               <div className="grid min-w-0 content-start gap-4">
                 <BoardToolbar
                   board={activeBoard}
+                  onLinkScript={handleLinkScript}
                   onPresent={() =>
                     window.alert(
                       "Presentation mode isn't available in this preview."
@@ -388,9 +440,14 @@ export function StoryboardPage() {
                   }
                   onViewModeChange={setViewMode}
                   onZoomChange={setZoom}
+                  scripts={scripts}
                   viewMode={viewMode}
                   zoom={zoom}
                 />
+
+                {linkedScript ? (
+                  <LinkedScriptPanel script={linkedScript} />
+                ) : null}
 
                 {activeBoard.shots.length === 0 ? (
                   <div className="grid place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 py-16 text-center dark:border-white/10">

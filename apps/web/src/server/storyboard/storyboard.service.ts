@@ -5,6 +5,7 @@ import type { CreateBoardDto } from "./dto/create-board.dto";
 import type { CreateCharacterDto } from "./dto/create-character.dto";
 import type { CreateLocationDto } from "./dto/create-location.dto";
 import type { CreateShotDto } from "./dto/create-shot.dto";
+import type { UpdateBoardDto } from "./dto/update-board.dto";
 import type { UpdateShotDto } from "./dto/update-shot.dto";
 
 const boardInclude = {
@@ -42,10 +43,15 @@ class StoryboardService {
       }
     }
 
+    if (dto.scriptId) {
+      await this.requireScript(houseId, dto.scriptId);
+    }
+
     const board = await this.prisma.board.create({
       data: {
         organizationId: houseId,
         projectId: dto.projectId ?? null,
+        scriptId: dto.scriptId || null,
         name: dto.name.trim(),
         description: dto.description?.trim() || null,
         shots: dto.shots
@@ -74,6 +80,36 @@ class StoryboardService {
     await this.requireBoard(houseId, boardId);
 
     await this.prisma.board.delete({ where: { id: boardId } });
+  }
+
+  async updateBoard(
+    userId: string,
+    houseId: string,
+    boardId: string,
+    dto: UpdateBoardDto
+  ) {
+    await organizationsService.requireMembership(houseId, userId);
+    await this.requireBoard(houseId, boardId);
+
+    if (dto.scriptId) {
+      await this.requireScript(houseId, dto.scriptId);
+    }
+
+    const board = await this.prisma.board.update({
+      where: { id: boardId },
+      data: {
+        ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
+        ...(dto.description !== undefined
+          ? { description: dto.description.trim() || null }
+          : {}),
+        ...(dto.scriptId !== undefined
+          ? { scriptId: dto.scriptId || null }
+          : {})
+      },
+      include: boardInclude
+    });
+
+    return toBoardDto(board);
   }
 
   async createShot(
@@ -137,7 +173,10 @@ class StoryboardService {
         ...(dto.cameraAngle !== undefined
           ? { cameraAngle: dto.cameraAngle.trim() || null }
           : {}),
-        ...(dto.notes !== undefined ? { notes: dto.notes.trim() || null } : {})
+        ...(dto.notes !== undefined ? { notes: dto.notes.trim() || null } : {}),
+        ...(dto.imageUrl !== undefined
+          ? { imageUrl: dto.imageUrl || null }
+          : {})
       }
     });
 
@@ -260,6 +299,20 @@ class StoryboardService {
     }
     return board;
   }
+
+  private async requireScript(houseId: string, scriptId: string) {
+    const script = await this.prisma.script.findUnique({
+      where: { id: scriptId }
+    });
+    if (!script || script.organizationId !== houseId) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "script_not_found",
+        "This script does not exist in this house."
+      );
+    }
+    return script;
+  }
 }
 
 export const storyboardService = new StoryboardService();
@@ -288,6 +341,7 @@ function toBoardDto(board: {
   id: string;
   organizationId: string;
   projectId: string | null;
+  scriptId: string | null;
   name: string;
   description: string | null;
   updatedAt: Date;
@@ -296,6 +350,7 @@ function toBoardDto(board: {
   return {
     id: board.id,
     projectId: board.projectId,
+    scriptId: board.scriptId,
     name: board.name,
     description: board.description,
     updatedAt: board.updatedAt,

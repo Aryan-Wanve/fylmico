@@ -13,4 +13,9 @@ export class UpdateShotDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  // A data: URL PNG from the shot's drawing canvas, or "" to clear it.
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 }

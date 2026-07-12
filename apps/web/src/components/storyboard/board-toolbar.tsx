@@ -2,7 +2,7 @@
 
 import { LayoutGrid, List, Minus, Plus, Play } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
-import type { Board } from "@/types/base";
+import type { Board, ScriptSummary } from "@/types/base";
 
 export type BoardViewMode = "grid" | "list";
 
@@ -12,7 +12,9 @@ export function BoardToolbar({
   onViewModeChange,
   zoom,
   onZoomChange,
-  onPresent
+  onPresent,
+  scripts,
+  onLinkScript
 }: {
   board: Board;
   viewMode: BoardViewMode;
@@ -20,6 +22,8 @@ export function BoardToolbar({
   zoom: number;
   onZoomChange: (zoom: number) => void;
   onPresent: () => void;
+  scripts: ScriptSummary[];
+  onLinkScript: (scriptId: string) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -34,6 +38,19 @@ export function BoardToolbar({
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
+        <select
+          className="h-9 rounded-lg border border-black/10 bg-white px-2.5 text-sm text-[#4b5268] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9]"
+          onChange={(event) => onLinkScript(event.target.value)}
+          value={board.scriptId ?? ""}
+        >
+          <option value="">No linked script</option>
+          {scripts.map((script) => (
+            <option key={script.id} value={script.id}>
+              {script.title}
+            </option>
+          ))}
+        </select>
+
         <button
           className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
           onClick={onPresent}
