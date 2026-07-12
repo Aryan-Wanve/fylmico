@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id                   String    @id @default(cuid())
-  email                String    @unique
-  name                 String
-  username             String?   @unique
-  avatarUrl            String?   @map("avatar_url")
-  emailVerifiedAt      DateTime? @map("email_verified_at")
-  activeOrganizationId String?   @map("active_organization_id")
-  createdAt            DateTime  @default(now()) @map("created_at")
-  updatedAt            DateTime  @updatedAt @map("updated_at")
+  id                      String    @id @default(cuid())
+  email                   String    @unique
+  name                    String
+  username                String?   @unique
+  avatarUrl               String?   @map("avatar_url")
+  notificationPreferences Json?     @map("notification_preferences")
+  emailVerifiedAt         DateTime? @map("email_verified_at")
+  activeOrganizationId    String?   @map("active_organization_id")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
 
   authAccounts            AuthAccount[]
   sessions                Session[]

@@ -30,6 +30,7 @@ import type {
   JoinHouseRequest,
   LoginRequest,
   NotificationItem,
+  NotificationPreferenceSetting,
   ProductionTask,
   Project,
   RequestPasswordResetRequest,
@@ -532,6 +533,15 @@ export async function uploadAvatar(file: File): Promise<UserProfile> {
   return apiRequest<UserProfile>("/auth/me/avatar", {
     method: "POST",
     body: formData
+  });
+}
+
+export async function updateNotificationPreferences(
+  preferences: NotificationPreferenceSetting[]
+): Promise<UserProfile> {
+  return apiRequest<UserProfile>("/auth/me/notification-preferences", {
+    method: "PATCH",
+    body: { preferences }
   });
 }
 

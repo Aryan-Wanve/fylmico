@@ -162,10 +162,29 @@ export function CrewsPage() {
       return;
     }
 
+    const departmentInput = window.prompt(
+      `Department (${DEPARTMENT_ORDER.join(", ")})`,
+      member.department
+    );
+    if (departmentInput === null) {
+      return;
+    }
+
+    const matchedDepartment = DEPARTMENT_ORDER.find(
+      (option) => option.toLowerCase() === departmentInput.trim().toLowerCase()
+    );
+    if (!matchedDepartment) {
+      window.alert(
+        `"${departmentInput}" isn't a valid department. Choose one of: ${DEPARTMENT_ORDER.join(", ")}.`
+      );
+      return;
+    }
+
     try {
       const updated = await updateCrewProfile(member.id, {
         jobTitle: jobTitle.trim() || member.jobTitle,
-        roleCategory: matchedTag as CrewMember["roleCategory"]
+        roleCategory: matchedTag as CrewMember["roleCategory"],
+        department: matchedDepartment
       });
       setMembers((current) =>
         current.map((entry) => (entry.id === member.id ? updated : entry))

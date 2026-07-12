@@ -1,21 +1,46 @@
 "use client";
 
-import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { SettingsCard } from "@/components/settings/settings-card";
-import { notificationPreferences } from "@/components/settings/settings-data";
+import { notificationPreferences as defaultPreferences } from "@/components/settings/settings-data";
+import { useWorkspace } from "@/lib/workspace-context";
+import { updateNotificationPreferences } from "@/services/base-workspace.service";
 
 export function NotificationsSection() {
-  const [preferences, setPreferences] = useState(notificationPreferences);
+  const { workspace, refreshWorkspace } = useWorkspace();
 
-  function toggle(id: string, channel: "email" | "push") {
-    setPreferences((current) =>
-      current.map((preference) =>
-        preference.id === id
-          ? { ...preference, [channel]: !preference[channel] }
-          : preference
-      )
+  const preferences = defaultPreferences.map((defaultPreference) => {
+    const saved = workspace.user.notificationPreferences?.find(
+      (item) => item.id === defaultPreference.id
     );
+    return saved
+      ? { ...defaultPreference, email: saved.email, push: saved.push }
+      : defaultPreference;
+  });
+
+  async function toggle(id: string, channel: "email" | "push") {
+    const next = preferences.map((preference) =>
+      preference.id === id
+        ? { ...preference, [channel]: !preference[channel] }
+        : preference
+    );
+
+    try {
+      await updateNotificationPreferences(
+        next.map(({ id: prefId, email, push }) => ({
+          id: prefId,
+          email,
+          push
+        }))
+      );
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not update notification preferences."
+      );
+    }
   }
 
   return (

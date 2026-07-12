@@ -54,6 +54,12 @@ export type CrewRoleCategory =
 export type CrewMemberStatus =
   "available" | "on-set" | "on-leave" | "unavailable";
 
+export type NotificationPreferenceSetting = {
+  id: string;
+  email: boolean;
+  push: boolean;
+};
+
 export type UserProfile = {
   id: string;
   name: string;
@@ -61,6 +67,7 @@ export type UserProfile = {
   username: string | null;
   avatarUrl: string | null;
   avatarLabel: string;
+  notificationPreferences: NotificationPreferenceSetting[] | null;
   emailVerifiedAt: string | null;
 };
 

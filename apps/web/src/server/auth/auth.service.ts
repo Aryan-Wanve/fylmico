@@ -412,6 +412,17 @@ class AuthService {
     return toPublicUser(user);
   }
 
+  async updateNotificationPreferences(
+    userId: string,
+    preferences: Array<{ id: string; email: boolean; push: boolean }>
+  ) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { notificationPreferences: preferences }
+    });
+    return toPublicUser(user);
+  }
+
   async changePassword(
     userId: string,
     currentSessionId: string,
@@ -554,6 +565,11 @@ function toPublicUser(user: User) {
     username: user.username,
     avatarUrl: user.avatarUrl,
     avatarLabel: toAvatarLabel(user.name),
+    notificationPreferences: user.notificationPreferences as Array<{
+      id: string;
+      email: boolean;
+      push: boolean;
+    }> | null,
     emailVerifiedAt: user.emailVerifiedAt,
     createdAt: user.createdAt
   };

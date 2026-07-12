@@ -29,6 +29,11 @@ class WorkspaceService {
         username: user.username,
         avatarUrl: user.avatarUrl,
         avatarLabel: toAvatarLabel(user.name),
+        notificationPreferences: user.notificationPreferences as Array<{
+          id: string;
+          email: boolean;
+          push: boolean;
+        }> | null,
         emailVerifiedAt: user.emailVerifiedAt
       },
       activeHouseId: activeOrganizationId ?? "",
