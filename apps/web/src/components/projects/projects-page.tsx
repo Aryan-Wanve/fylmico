@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/lib/workspace-context";
+import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
   archiveProject,
   createProject,
@@ -26,6 +27,7 @@ import {
 export function ProjectsPage() {
   const { activeHouse } = useWorkspace();
   const members = useMemo(() => activeHouse?.members ?? [], [activeHouse]);
+  const prompt = usePrompt();
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +148,7 @@ export function ProjectsPage() {
   }
 
   async function handleNewProject() {
-    const title = window.prompt("Name your new project");
+    const title = await prompt("Name your new project");
 
     if (!title || !title.trim()) {
       return;

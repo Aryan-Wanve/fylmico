@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SettingsCard } from "@/components/settings/settings-card";
+import { usePrompt } from "@/components/ui/prompt-dialog";
 import { useWorkspace } from "@/lib/workspace-context";
 import { updateHouse } from "@/services/base-workspace.service";
 
 export function WorkspaceSection() {
   const { activeHouse, refreshWorkspace } = useWorkspace();
+  const prompt = usePrompt();
   const [form, setForm] = useState({
     name: activeHouse?.name ?? "",
     handle: activeHouse?.handle ?? "",
@@ -32,7 +34,7 @@ export function WorkspaceSection() {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
     } catch {
-      window.prompt("Copy this join link:", inviteUrl);
+      await prompt("Copy this join link:", inviteUrl);
     }
   }
 

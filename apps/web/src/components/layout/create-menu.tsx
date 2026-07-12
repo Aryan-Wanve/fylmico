@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { useWorkspace } from "@/lib/workspace-context";
+import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
   createConversation,
   createProject,
@@ -19,9 +20,10 @@ import {
 export function CreateMenu() {
   const router = useRouter();
   const { workspace, refreshWorkspace } = useWorkspace();
+  const prompt = usePrompt();
 
   async function handleNewProject() {
-    const title = window.prompt("Name your new project");
+    const title = await prompt("Name your new project");
     if (!title || !title.trim()) {
       return;
     }
@@ -42,7 +44,7 @@ export function CreateMenu() {
   }
 
   async function handleNewTask() {
-    const title = window.prompt("Task title");
+    const title = await prompt("Task title");
     if (!title || !title.trim()) {
       return;
     }
@@ -69,7 +71,7 @@ export function CreateMenu() {
   }
 
   async function handleNewChatRoom() {
-    const name = window.prompt("Start a new channel — enter a name");
+    const name = await prompt("Start a new channel — enter a name");
     if (!name || !name.trim()) {
       return;
     }

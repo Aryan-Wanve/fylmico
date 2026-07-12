@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePrompt } from "@/components/ui/prompt-dialog";
 import { StoryboardHeader } from "@/components/storyboard/storyboard-header";
 import {
   StoryboardToolbar,
@@ -44,6 +45,7 @@ import type {
 } from "@/types/base";
 
 export function StoryboardPage() {
+  const prompt = usePrompt();
   const [projectId, setProjectId] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeTab, setActiveTab] = useState<StoryboardTab>("boards");
@@ -149,7 +151,7 @@ export function StoryboardPage() {
   }
 
   async function handleNewBoard() {
-    const name = window.prompt("New board name");
+    const name = await prompt("New board name");
     if (!name || !name.trim()) {
       return;
     }
@@ -170,12 +172,12 @@ export function StoryboardPage() {
   }
 
   async function handleNewCharacter() {
-    const name = window.prompt("Character name");
+    const name = await prompt("Character name");
     if (!name || !name.trim()) {
       return;
     }
 
-    const role = window.prompt("Role (e.g. Lead, Supporting, Motif)", "Lead");
+    const role = await prompt("Role (e.g. Lead, Supporting, Motif)", "Lead");
     if (!role || !role.trim()) {
       return;
     }
@@ -212,12 +214,12 @@ export function StoryboardPage() {
   }
 
   async function handleNewLocation() {
-    const name = window.prompt("Location name");
+    const name = await prompt("Location name");
     if (!name || !name.trim()) {
       return;
     }
 
-    const type = window.prompt("Type (e.g. Interior, Exterior)", "Interior");
+    const type = await prompt("Type (e.g. Interior, Exterior)", "Interior");
     if (!type || !type.trim()) {
       return;
     }

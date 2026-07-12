@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarCheck, Clock3, Users, Briefcase } from "lucide-react";
 import { useWorkspace } from "@/lib/workspace-context";
+import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
   createConversation,
   listCrew,
@@ -30,6 +31,7 @@ import {
 
 export function CrewsPage() {
   const { activeHouse, refreshWorkspace } = useWorkspace();
+  const prompt = usePrompt();
   const router = useRouter();
 
   const [members, setMembers] = useState<CrewMember[]>([]);
@@ -139,12 +141,12 @@ export function CrewsPage() {
   }
 
   async function handleEditMember(member: CrewMember) {
-    const jobTitle = window.prompt("Job title", member.jobTitle);
+    const jobTitle = await prompt("Job title", member.jobTitle);
     if (jobTitle === null) {
       return;
     }
 
-    const tagInput = window.prompt(
+    const tagInput = await prompt(
       `Tag (${ROLE_CATEGORY_ORDER.join(", ")}, or Other)`,
       member.roleCategory
     );
@@ -162,7 +164,7 @@ export function CrewsPage() {
       return;
     }
 
-    const departmentInput = window.prompt(
+    const departmentInput = await prompt(
       `Department (${DEPARTMENT_ORDER.join(", ")})`,
       member.department
     );
@@ -217,14 +219,14 @@ export function CrewsPage() {
     }
   }
 
-  function handleInvite() {
+  async function handleInvite() {
     if (!activeHouse) {
       return;
     }
 
     const inviteUrl = `${window.location.origin}/houses/join/${activeHouse.inviteCode}`;
     navigator.clipboard?.writeText(inviteUrl).catch(() => {});
-    window.prompt(
+    await prompt(
       "Share this join link with anyone you want to invite (copied to clipboard):",
       inviteUrl
     );

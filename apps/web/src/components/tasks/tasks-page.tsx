@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useWorkspace } from "@/lib/workspace-context";
+import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
   createTask as createTaskApi,
   deleteTask as deleteTaskApi,
@@ -81,6 +82,7 @@ function buildGroups(list: Task[], groupBy: GroupByOption): Group[] {
 
 export function TasksPage() {
   const { workspace, activeHouse, refreshWorkspace } = useWorkspace();
+  const prompt = usePrompt();
   const currentUserId = workspace.user.id;
   const tasks = workspace.tasks;
 
@@ -175,7 +177,7 @@ export function TasksPage() {
     }
 
     const memberNames = members.map((member) => member.name).join(", ");
-    const input = window.prompt(
+    const input = await prompt(
       `Reassign to (${memberNames})`,
       task.assigneeName
     );
@@ -236,7 +238,7 @@ export function TasksPage() {
   }
 
   async function createTask(defaults: Partial<Task>) {
-    const title = window.prompt("Task title");
+    const title = await prompt("Task title");
 
     if (!title || !title.trim()) {
       return;

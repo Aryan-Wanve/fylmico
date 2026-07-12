@@ -16,6 +16,7 @@ import { StorageOverviewPanel } from "@/components/files/storage-overview-panel"
 import { RecentFileActivityPanel } from "@/components/files/recent-file-activity-panel";
 import { DriveConnectionBanner } from "@/components/files/drive-connection-banner";
 import { PaginationFooter } from "@/components/layout/pagination-footer";
+import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
   createFolder,
   deleteFileEntry,
@@ -35,6 +36,7 @@ import type { FileEntryItem, FilesSummary } from "@/types/base";
 type Crumb = { id: string | null; name: string };
 
 export function FilesPage() {
+  const prompt = usePrompt();
   const [path, setPath] = useState<Crumb[]>([{ id: null, name: "All Files" }]);
   const [entries, setEntries] = useState<FileEntryItem[]>([]);
   const [summary, setSummary] = useState<FilesSummary | null>(null);
@@ -165,7 +167,7 @@ export function FilesPage() {
   }
 
   async function handleNewFolder() {
-    const name = window.prompt("New folder — enter a name");
+    const name = await prompt("New folder — enter a name");
     if (!name || !name.trim()) {
       return;
     }

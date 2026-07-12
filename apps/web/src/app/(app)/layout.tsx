@@ -6,6 +6,7 @@ import { getWorkspace } from "@/services/base-workspace.service";
 import { hasSession } from "@/lib/session";
 import { WorkspaceProvider } from "@/lib/workspace-context";
 import { AppShellGate } from "@/components/layout/app-shell-gate";
+import { PromptDialogProvider } from "@/components/ui/prompt-dialog";
 import type { WorkspaceSnapshot } from "@/types/base";
 
 export default function AuthenticatedLayout({
@@ -63,7 +64,9 @@ export default function AuthenticatedLayout({
 
   return (
     <WorkspaceProvider initialWorkspace={workspace}>
-      <AppShellGate>{children}</AppShellGate>
+      <PromptDialogProvider>
+        <AppShellGate>{children}</AppShellGate>
+      </PromptDialogProvider>
     </WorkspaceProvider>
   );
 }

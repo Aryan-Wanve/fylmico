@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/lib/workspace-context";
+import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
   createConversation,
   createRoomEvent,
@@ -36,6 +37,7 @@ import type {
 
 export function MessagesPage() {
   const { workspace, activeHouse, refreshWorkspace } = useWorkspace();
+  const prompt = usePrompt();
   const members = useMemo(() => activeHouse?.members ?? [], [activeHouse]);
   const memberIds = useMemo(
     () => members.map((member) => member.id),
@@ -135,7 +137,7 @@ export function MessagesPage() {
       return;
     }
 
-    const title = window.prompt("Task title");
+    const title = await prompt("Task title");
     if (!title || !title.trim()) {
       return;
     }
@@ -178,17 +180,17 @@ export function MessagesPage() {
       return;
     }
 
-    const title = window.prompt("Event title");
+    const title = await prompt("Event title");
     if (!title || !title.trim()) {
       return;
     }
 
-    const date = window.prompt("Date (YYYY-MM-DD)");
+    const date = await prompt("Date (YYYY-MM-DD)");
     if (!date || !date.trim()) {
       return;
     }
 
-    const time = window.prompt("Time (e.g. 3:00 PM)");
+    const time = await prompt("Time (e.g. 3:00 PM)");
     if (!time || !time.trim()) {
       return;
     }
@@ -232,7 +234,7 @@ export function MessagesPage() {
       return;
     }
 
-    const name = window.prompt("Rename channel", activeChannel.name);
+    const name = await prompt("Rename channel", activeChannel.name);
     if (!name || !name.trim() || name.trim() === activeChannel.name) {
       return;
     }
@@ -248,7 +250,7 @@ export function MessagesPage() {
   }
 
   async function handleNewChat() {
-    const name = window.prompt("Start a new channel — enter a name");
+    const name = await prompt("Start a new channel — enter a name");
 
     if (!name || !name.trim()) {
       return;
