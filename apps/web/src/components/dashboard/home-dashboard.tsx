@@ -10,7 +10,7 @@ import { FadeInSection } from "@/components/layout/fade-in-section";
 
 export function HomeDashboard() {
   return (
-    <div className="grid gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-8">
       <FadeInSection delay={0}>
         <GreetingHeader />
       </FadeInSection>

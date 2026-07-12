@@ -157,19 +157,19 @@ export function ScriptsPage() {
   }
 
   return (
-    <div className="grid h-full min-h-0 gap-6 p-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-[#11142c] dark:text-[#f1f2f8]">
+    <div className="grid h-full min-h-0 grid-cols-1 gap-6 p-8">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-black text-[#11142c] sm:text-3xl dark:text-[#f1f2f8]">
             Scripts
           </h1>
-          <p className="mt-1 text-[#5f667d] dark:text-[#a8acbf]">
+          <p className="mt-1 text-sm text-[#5f667d] sm:text-base dark:text-[#a8acbf]">
             Write and store your screenplays - link a board in Storyboard to
             keep shots in sync with the pages.
           </p>
         </div>
         <button
-          className="flex h-10 items-center gap-2 rounded-xl bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+          className="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
           onClick={handleNewScript}
           type="button"
         >

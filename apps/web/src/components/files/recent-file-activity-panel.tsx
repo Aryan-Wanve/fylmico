@@ -12,7 +12,7 @@ export function RecentFileActivityPanel({
 
   return (
     <DashboardPanel title="Recent Activity">
-      <div className="grid">
+      <div className="grid grid-cols-1">
         {recent.length > 0 ? (
           recent.map((entry) => (
             <div

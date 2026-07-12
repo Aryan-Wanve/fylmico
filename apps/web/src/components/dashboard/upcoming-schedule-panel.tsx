@@ -61,7 +61,7 @@ export function UpcomingSchedulePanel() {
       }}
       title="Upcoming Schedule"
     >
-      <div className="grid">
+      <div className="grid grid-cols-1">
         {events.length > 0 ? (
           events.map((event, index) => (
             <button

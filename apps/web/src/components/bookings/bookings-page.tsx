@@ -81,11 +81,11 @@ export function BookingsPage() {
   }
 
   return (
-    <div className="grid gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-8">
       <BookingsHeader />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_22rem]">
-        <div className="grid min-w-0 gap-6">
+        <div className="grid min-w-0 grid-cols-1 gap-6">
           <BookingsTabsBar
             activeTab={activeTab}
             onNewBooking={() => setNewBookingOpen(true)}
@@ -114,7 +114,7 @@ export function BookingsPage() {
           </div>
         </div>
 
-        <aside className="grid min-w-0 content-start gap-6">
+        <aside className="grid min-w-0 grid-cols-1 content-start gap-6">
           <BookingsByTypePanel bookings={bookings} />
           <UpcomingBookingsPanel bookings={bookings} />
           <BookingCalendarPanel bookings={bookings} />

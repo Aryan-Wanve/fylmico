@@ -163,8 +163,8 @@ export function CalendarPage() {
       onValueChange={(value) => setViewMode(value as ViewMode)}
       value={viewMode}
     >
-      <div className="grid gap-6 p-8 xl:grid-cols-[1fr_22rem]">
-        <div className="grid min-w-0 gap-4">
+      <div className="grid grid-cols-1 gap-6 p-8 xl:grid-cols-[1fr_22rem]">
+        <div className="grid min-w-0 grid-cols-1 gap-4">
           <CalendarHeader
             activeCategories={activeCategories}
             onNextMonth={handleNextMonth}
@@ -180,7 +180,7 @@ export function CalendarPage() {
           />
 
           <TabsContent className="min-w-0" value="month">
-            <div className="grid min-w-0 gap-3">
+            <div className="grid min-w-0 grid-cols-1 gap-3">
               <CalendarMonthGrid
                 events={filteredEvents}
                 onSelectDate={handleSelectDate}
@@ -198,7 +198,7 @@ export function CalendarPage() {
           </TabsContent>
         </div>
 
-        <aside className="grid min-w-0 content-start gap-6">
+        <aside className="grid min-w-0 grid-cols-1 content-start gap-6">
           <MiniCalendar
             eventDateSet={new Set(filteredEvents.map((event) => event.date))}
             onNextMonth={handleNextMonth}

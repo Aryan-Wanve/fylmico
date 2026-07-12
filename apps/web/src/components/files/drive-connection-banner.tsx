@@ -14,7 +14,7 @@ export function DriveConnectionBanner({
 }) {
   if (status.connected) {
     return (
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white/60 px-5 py-4 text-sm dark:border-white/10 dark:bg-white/[0.02]">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white/60 px-5 py-4 text-sm dark:border-white/10 dark:bg-white/[0.02]">
         <div className="flex items-center gap-3">
           <div className="grid h-9 w-9 place-items-center rounded-full bg-[#22c55e]/10 text-[#16a34a]">
             <HardDrive className="h-4 w-4" />
@@ -41,7 +41,7 @@ export function DriveConnectionBanner({
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#654cff]/20 bg-[#654cff]/5 px-5 py-4 text-sm">
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#654cff]/20 bg-[#654cff]/5 px-5 py-4 text-sm">
       <div className="flex items-center gap-3">
         <div className="grid h-9 w-9 place-items-center rounded-full bg-[#654cff]/10 text-[#654cff]">
           <HardDrive className="h-4 w-4" />

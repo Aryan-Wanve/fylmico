@@ -47,7 +47,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="grid gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-8">
       <div>
         <h1 className="text-3xl font-black text-[#11142c] dark:text-[#f1f2f8]">
           Settings
@@ -57,7 +57,7 @@ export function SettingsPage() {
         </p>
       </div>
 
-      <div className="grid min-w-0 gap-6 xl:grid-cols-[16rem_1fr_20rem]">
+      <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[16rem_1fr_20rem]">
         <SettingsNav
           activeSection={activeSection}
           onSelectSection={setActiveSection}
@@ -68,7 +68,7 @@ export function SettingsPage() {
         <SettingsSidebar onDeleteAccount={handleDeleteAccount} />
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/5 pt-4 text-xs text-[#8a90a3] dark:border-white/[0.06] dark:text-[#7d8299]">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-t border-black/5 pt-4 text-xs text-[#8a90a3] dark:border-white/[0.06] dark:text-[#7d8299]">
         <span>&copy; 2026 Fylmico. All rights reserved.</span>
         <div className="flex items-center gap-4">
           <button

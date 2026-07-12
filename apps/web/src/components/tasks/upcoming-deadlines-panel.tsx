@@ -23,7 +23,7 @@ export function UpcomingDeadlinesPanel({ tasks }: { tasks: Task[] }) {
       action={{ label: "View all", onClick: () => router.push("/calendar") }}
       title="Upcoming Deadlines"
     >
-      <div className="grid">
+      <div className="grid grid-cols-1">
         {upcoming.map(({ task }) => {
           const due = formatDueDate(task.dueDate);
 

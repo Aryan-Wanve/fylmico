@@ -18,8 +18,9 @@ export function BookingsTabsBar({
   tabCounts: { myBookings: number; pendingApproval: number };
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
       <Tabs
+        className="max-w-full min-w-0 overflow-x-auto"
         onValueChange={(value) => onTabChange(value as BookingsTab)}
         value={activeTab}
       >

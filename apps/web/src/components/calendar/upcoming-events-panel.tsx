@@ -31,7 +31,7 @@ export function UpcomingEventsPanel({ events }: { events: CalendarEvent[] }) {
           No events in the next 7 days.
         </p>
       ) : (
-        <div className="grid">
+        <div className="grid grid-cols-1">
           {upcoming.map((event) => (
             <div
               className="flex items-start gap-3 border-b border-black/5 px-6 py-3.5 last:border-b-0 dark:border-white/[0.06]"

@@ -30,7 +30,7 @@ export function VerifyEmailBanner() {
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-500/20 bg-amber-500/10 px-8 py-2.5 text-sm">
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-amber-500/20 bg-amber-500/10 px-8 py-2.5 text-sm">
       <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
         <MailWarning className="h-4 w-4 shrink-0" />
         <span className="font-semibold">

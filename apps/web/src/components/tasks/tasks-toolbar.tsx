@@ -38,7 +38,7 @@ export function TasksToolbar({
   onNewTask: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
       <Tabs
         className="max-w-full min-w-0 overflow-x-auto"
         onValueChange={(value) => onTabChange(value as TasksTab)}
@@ -56,7 +56,7 @@ export function TasksToolbar({
         </TabsList>
       </Tabs>
 
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <TasksFiltersPopover
           activePriorities={activePriorities}
           onTogglePriority={onTogglePriority}

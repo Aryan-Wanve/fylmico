@@ -243,7 +243,7 @@ export function CrewsPage() {
   ).length;
 
   return (
-    <div className="grid gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-8">
       <CrewsHeader onInvite={handleInvite} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -277,8 +277,8 @@ export function CrewsPage() {
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
-        <div className="grid min-w-0 content-start gap-4">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_20rem]">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-4">
           <CrewsToolbar
             activeTab={activeTab}
             counts={counts}
@@ -358,7 +358,7 @@ export function CrewsPage() {
           )}
         </div>
 
-        <aside className="grid min-w-0 content-start gap-6">
+        <aside className="grid min-w-0 grid-cols-1 content-start gap-6">
           <DepartmentOverviewPanel members={members} />
           <CrewByRolePanel members={members} />
           <UpcomingBirthdaysPanel members={members} />

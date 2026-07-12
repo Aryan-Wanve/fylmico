@@ -265,8 +265,8 @@ export function TasksPage() {
   }
 
   return (
-    <div className="grid gap-6 p-8 xl:grid-cols-[1fr_20rem]">
-      <div className="grid min-w-0 gap-4">
+    <div className="grid grid-cols-1 gap-6 p-8 xl:grid-cols-[1fr_20rem]">
+      <div className="grid min-w-0 grid-cols-1 gap-4">
         <TasksHeader />
         <TasksToolbar
           activePriorities={activePriorities}
@@ -325,7 +325,7 @@ export function TasksPage() {
         )}
       </div>
 
-      <aside className="grid min-w-0 content-start gap-6">
+      <aside className="grid min-w-0 grid-cols-1 content-start gap-6">
         <TaskOverviewPanel tasks={tasks} />
         <TaskPriorityPanel tasks={tasks} />
         <UpcomingDeadlinesPanel tasks={tasks} />

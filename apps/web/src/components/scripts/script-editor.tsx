@@ -69,7 +69,7 @@ export function ScriptEditor({
 
   return (
     <div className="grid min-h-0 grid-rows-[auto_auto_1fr] gap-4 rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
         <input
           className="min-w-0 flex-1 bg-transparent text-xl font-black text-[#11142c] outline-none dark:text-[#f1f2f8]"
           onBlur={() => flushSave({ title })}

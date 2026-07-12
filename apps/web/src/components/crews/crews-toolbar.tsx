@@ -34,7 +34,7 @@ export function CrewsToolbar({
   onDepartmentChange: (value: Department | "all") => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
       <Tabs
         className="max-w-full min-w-0 overflow-x-auto"
         onValueChange={(value) => onTabChange(value as CrewsTab)}
@@ -52,7 +52,7 @@ export function CrewsToolbar({
         </TabsList>
       </Tabs>
 
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="flex h-10 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 dark:border-white/10 dark:bg-[#171a28]">
           <Search className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
           <input

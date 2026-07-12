@@ -30,7 +30,7 @@ export function RecentActivityPanel() {
 
   return (
     <DashboardPanel action={{ label: "View all" }} title="Recent Activity">
-      <div className="grid">
+      <div className="grid grid-cols-1">
         {activity.length > 0 ? (
           activity.map((entry) => (
             <div

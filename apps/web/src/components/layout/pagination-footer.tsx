@@ -20,7 +20,7 @@ export function PaginationFooter({
   const pageNumbers = buildPageNumbers(page, totalPages);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 px-1">
       <div className="flex items-center gap-2 text-sm text-[#5f667d] dark:text-[#a8acbf]">
         Show
         <select

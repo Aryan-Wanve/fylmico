@@ -268,7 +268,7 @@ export function MessagesPage() {
   }
 
   return (
-    <div className="grid gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-8">
       <div>
         <h1 className="text-3xl font-black text-[#11142c] dark:text-[#f1f2f8]">
           Messages
@@ -278,7 +278,7 @@ export function MessagesPage() {
         </p>
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[20rem_1fr_20rem]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 xl:grid-cols-[20rem_1fr_20rem]">
         <ChannelsSidebar
           activeChannelId={activeChannelId}
           filter={filter}

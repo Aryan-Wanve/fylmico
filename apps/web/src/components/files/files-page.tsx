@@ -237,7 +237,7 @@ export function FilesPage() {
   }
 
   return (
-    <div className="grid gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-8">
       <FilesHeader onNewFolder={handleNewFolder} onUpload={handleUpload} />
 
       <DriveConnectionBanner
@@ -246,13 +246,13 @@ export function FilesPage() {
         status={driveStatus}
       />
 
-      <div className="grid min-w-0 gap-6 xl:grid-cols-[16rem_1fr_20rem]">
+      <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[16rem_1fr_20rem]">
         <div className="grid min-h-0 content-start gap-4">
           <StorageUsedPanel usedBytes={summary?.usedBytes ?? 0} />
         </div>
 
-        <div className="grid min-w-0 content-start gap-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="grid min-w-0 grid-cols-1 content-start gap-4">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
             <FilesBreadcrumb onNavigate={handleNavigate} path={path} />
             <FilesViewControls
               onViewModeChange={setViewMode}
@@ -325,7 +325,7 @@ export function FilesPage() {
           ) : null}
         </div>
 
-        <aside className="grid min-w-0 content-start gap-6">
+        <aside className="grid min-w-0 grid-cols-1 content-start gap-6">
           <StorageOverviewPanel summary={summary} />
           <RecentFileActivityPanel summary={summary} />
         </aside>

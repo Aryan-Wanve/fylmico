@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useWorkspace } from "@/lib/workspace-context";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -15,6 +15,7 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { workspace, activeHouse } = useWorkspace();
   const isCompact = pathname === ONBOARDING_PATH;
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     if (!activeHouse && pathname !== ONBOARDING_PATH) {
@@ -24,11 +25,25 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
     }
   }, [activeHouse, pathname, router]);
 
+  // Close the mobile nav drawer whenever the route changes (a nav click).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing open state to the current route, not deriving render output
+    setMobileNavOpen(false);
+  }, [pathname]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#f7f7fb] dark:bg-[#0e0f18]">
-      <AppSidebar compact={isCompact} user={workspace.user} />
+      <AppSidebar
+        compact={isCompact}
+        mobileOpen={mobileNavOpen}
+        onCloseMobile={() => setMobileNavOpen(false)}
+        user={workspace.user}
+      />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <AppTopbar compact={isCompact} />
+        <AppTopbar
+          compact={isCompact}
+          onOpenMobileNav={() => setMobileNavOpen(true)}
+        />
         {!isCompact && !workspace.user.emailVerifiedAt ? (
           <VerifyEmailBanner />
         ) : null}

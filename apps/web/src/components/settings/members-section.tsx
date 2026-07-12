@@ -161,7 +161,7 @@ export function MembersSection() {
         <div className="grid gap-2">
           {members.map((member) => (
             <div
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/[0.06] px-3.5 py-3 dark:border-white/[0.08]"
+              className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl border border-black/[0.06] px-3.5 py-3 dark:border-white/[0.08]"
               key={member.id}
             >
               <div className="flex min-w-0 items-center gap-3">
@@ -196,7 +196,7 @@ export function MembersSection() {
         subtitle="What each role can see and do in this house."
         title="Roles"
       >
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {roles.map((role) => (
             <div
               className="rounded-xl border border-black/[0.06] px-3.5 py-3 dark:border-white/[0.08]"
@@ -226,7 +226,7 @@ export function MembersSection() {
           You can rejoin later with an invite.
         </p>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50/40 px-4 py-3.5">
+        <div className="mt-4 flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50/40 px-4 py-3.5">
           <div>
             <strong className="block text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
               Leave {activeHouse?.name ?? "this house"}

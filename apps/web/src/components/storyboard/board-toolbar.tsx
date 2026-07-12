@@ -26,7 +26,7 @@ export function BoardToolbar({
   onLinkScript: (scriptId: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
       <div>
         <h2 className="text-lg font-black text-[#11142c] dark:text-[#f1f2f8]">
           {board.name}

@@ -33,7 +33,7 @@ export function UpcomingBirthdaysPanel({ members }: { members: CrewMember[] }) {
 
   return (
     <DashboardPanel title="Upcoming Birthdays">
-      <div className="grid">
+      <div className="grid grid-cols-1">
         {upcoming.length > 0 ? (
           upcoming.map(({ member }) => {
             const [month, day] = member.birthday.split("-").map(Number);

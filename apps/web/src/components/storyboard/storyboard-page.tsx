@@ -385,7 +385,7 @@ export function StoryboardPage() {
   const showDetailPanel = activeTab === "boards" && Boolean(selectedShot);
 
   return (
-    <div className="grid gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-8">
       <StoryboardHeader />
       <StoryboardToolbar
         activeTab={activeTab}
@@ -429,7 +429,7 @@ export function StoryboardPage() {
             />
 
             {activeBoard ? (
-              <div className="grid min-w-0 content-start gap-4">
+              <div className="grid min-w-0 grid-cols-1 content-start gap-4">
                 <BoardToolbar
                   board={activeBoard}
                   onLinkScript={handleLinkScript}

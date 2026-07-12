@@ -263,7 +263,7 @@ export function ProfileSection() {
           </div>
 
           {isEditing ? (
-            <div className="grid min-w-[16rem] flex-1 gap-4 sm:grid-cols-2">
+            <div className="grid min-w-[16rem] flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="grid gap-1.5">
                 <Label className="text-xs font-bold text-[#8a90a3] uppercase dark:text-[#7d8299]">
                   Full Name
@@ -322,7 +322,7 @@ export function ProfileSection() {
         subtitle="Update your password to keep your account secure."
         title="Change Password"
       >
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <label className="grid gap-1.5">
             <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
               Current Password
@@ -391,7 +391,7 @@ export function ProfileSection() {
 
               return (
                 <div
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/[0.06] px-3.5 py-3 dark:border-white/[0.08]"
+                  className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl border border-black/[0.06] px-3.5 py-3 dark:border-white/[0.08]"
                   key={session.id}
                 >
                   <div className="flex min-w-0 items-center gap-3">

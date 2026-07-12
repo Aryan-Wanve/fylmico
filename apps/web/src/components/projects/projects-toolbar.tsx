@@ -30,7 +30,7 @@ export function ProjectsToolbar({
   onToggleType: (type: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
       <Tabs
         className="max-w-full min-w-0 overflow-x-auto"
         onValueChange={(value) => onTabChange(value as ProjectTab)}

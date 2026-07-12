@@ -33,7 +33,7 @@ export function MyTasksPanel() {
       action={{ label: "View all", onClick: () => router.push("/tasks") }}
       title="My Tasks"
     >
-      <div className="grid">
+      <div className="grid grid-cols-1">
         {workspace.tasks.slice(0, 4).map((task) => (
           <TaskRow
             completed={task.status === "done"}
