@@ -33,6 +33,49 @@ function formatLastActive(createdAt: string): string {
   });
 }
 
+const BROWSER_PATTERNS: [RegExp, string][] = [
+  [/Edg\//, "Edge"],
+  [/OPR\//, "Opera"],
+  [/Chrome\//, "Chrome"],
+  [/CriOS\//, "Chrome"],
+  [/FxiOS\//, "Firefox"],
+  [/Firefox\//, "Firefox"],
+  [/Version\/.+Safari/, "Safari"]
+];
+
+const OS_PATTERNS: [RegExp, string][] = [
+  [/Windows/, "Windows"],
+  [/Mac OS X/, "macOS"],
+  [/iPhone|iPad|iOS/, "iOS"],
+  [/Android/, "Android"],
+  [/Linux/, "Linux"]
+];
+
+// Raw User-Agent strings are long and unreadable ("Mozilla/5.0 (Windows NT
+// 10.0; ...) AppleWebKit/537.36 ..."). Reduce to "Browser on OS", falling
+// back to "Unknown device" for anything that doesn't look like a real
+// browser (e.g. a script or CLI request).
+function formatUserAgent(userAgent: string | null | undefined): string {
+  if (!userAgent) {
+    return "Unknown device";
+  }
+
+  const browser = BROWSER_PATTERNS.find(([pattern]) =>
+    pattern.test(userAgent)
+  )?.[1];
+  const os = OS_PATTERNS.find(([pattern]) => pattern.test(userAgent))?.[1];
+
+  if (!browser && !os) {
+    return "Unknown device";
+  }
+
+  if (browser && os) {
+    return `${browser} on ${os}`;
+  }
+
+  return browser ?? os ?? "Unknown device";
+}
+
 export function ProfileSection() {
   const { workspace, refreshWorkspace } = useWorkspace();
   const [isEditing, setIsEditing] = useState(false);
@@ -358,7 +401,7 @@ export function ProfileSection() {
                     <div className="min-w-0">
                       <span className="flex items-center gap-2">
                         <strong className="truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
-                          {session.userAgent ?? "Unknown device"}
+                          {formatUserAgent(session.userAgent)}
                         </strong>
                         {session.current ? (
                           <Badge className="bg-emerald-100 text-emerald-700">
