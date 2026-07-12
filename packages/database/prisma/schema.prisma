@@ -35,6 +35,7 @@ model User {
   acceptedInvitations     HouseInvitation[] @relation("InvitationsAccepted")
   bookings                Booking[]
   uploadedFiles           FileEntry[]
+  driveConnection         DriveConnection?
 
   @@map("users")
 }
@@ -540,4 +541,21 @@ model FileEntry {
   @@index([parentId])
   @@index([conversationId])
   @@map("file_entries")
+}
+
+// One personal Google Drive connection per user - files this user uploads
+// live in the "Fylmico" folder inside *their own* Drive, not in storage
+// Fylmico pays for. See ADR 0038.
+model DriveConnection {
+  id            String   @id @default(cuid())
+  userId        String   @unique @map("user_id")
+  refreshToken  String   @map("refresh_token")
+  driveFolderId String   @map("drive_folder_id")
+  googleEmail   String?  @map("google_email")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("drive_connections")
 }

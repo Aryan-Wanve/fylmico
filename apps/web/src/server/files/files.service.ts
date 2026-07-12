@@ -1,12 +1,9 @@
-import { randomUUID } from "node:crypto";
+import { signDownloadToken } from "../drive/drive-token.util";
+import { driveService } from "../drive/drive.service";
 import { AppException, HttpStatus } from "../http";
+import { getAppUrl } from "../mail/mailer";
 import { organizationsService } from "../organizations/organizations.service";
 import { prisma } from "../prisma";
-import {
-  deleteObjects,
-  getSignedDownloadUrl,
-  uploadObject
-} from "../storage/supabase-storage";
 import type { CreateFolderDto } from "./dto/create-folder.dto";
 
 class FilesService {
@@ -62,8 +59,14 @@ class FilesService {
       await this.requireEntry(houseId, parentId);
     }
 
-    const storagePath = `${houseId}/${randomUUID()}-${file.name}`;
-    await uploadObject(storagePath, file.buffer, file.mimeType);
+    // The file's bytes live in the uploader's own Google Drive (their
+    // "Fylmico" folder) - this row is just the shared team index/tree
+    // pointing at it. See ADR 0038.
+    const storagePath = await driveService.upload(userId, {
+      name: file.name,
+      buffer: file.buffer,
+      mimeType: file.mimeType
+    });
 
     const entry = await this.prisma.fileEntry.create({
       data: {
@@ -91,8 +94,12 @@ class FilesService {
     await organizationsService.requireMembership(houseId, userId);
     const entry = await this.requireEntry(houseId, entryId);
 
-    const storagePaths = await this.collectStoragePaths(entry.id);
-    await deleteObjects(storagePaths);
+    const driveTargets = await this.collectDriveTargets(entry.id);
+    await Promise.all(
+      driveTargets.map((target) =>
+        driveService.remove(target.uploaderId, target.fileId)
+      )
+    );
     await this.prisma.fileEntry.delete({ where: { id: entryId } });
   }
 
@@ -112,16 +119,20 @@ class FilesService {
       );
     }
 
-    return getSignedDownloadUrl(entry.storagePath);
+    return `${getAppUrl()}/api/v1/files/download/${signDownloadToken(entry.id)}`;
   }
 
-  private async collectStoragePaths(entryId: string): Promise<string[]> {
+  private async collectDriveTargets(
+    entryId: string
+  ): Promise<{ fileId: string; uploaderId: string }[]> {
     const entry = await this.prisma.fileEntry.findUniqueOrThrow({
       where: { id: entryId }
     });
 
     if (entry.type === "file") {
-      return entry.storagePath ? [entry.storagePath] : [];
+      return entry.storagePath
+        ? [{ fileId: entry.storagePath, uploaderId: entry.uploadedById }]
+        : [];
     }
 
     const children = await this.prisma.fileEntry.findMany({
@@ -129,7 +140,7 @@ class FilesService {
     });
 
     const nested = await Promise.all(
-      children.map((child) => this.collectStoragePaths(child.id))
+      children.map((child) => this.collectDriveTargets(child.id))
     );
     return nested.flat();
   }
