@@ -11,20 +11,14 @@ import { BookingsTable } from "@/components/bookings/bookings-table";
 import { BookingsByTypePanel } from "@/components/bookings/bookings-by-type-panel";
 import { UpcomingBookingsPanel } from "@/components/bookings/upcoming-bookings-panel";
 import { BookingCalendarPanel } from "@/components/bookings/booking-calendar-panel";
+import { NewBookingDialog } from "@/components/bookings/new-booking-dialog";
 import { useWorkspace } from "@/lib/workspace-context";
 import {
   createBooking,
   listBookings,
   listProjects
 } from "@/services/base-workspace.service";
-import { toISODate } from "@/lib/calendar-utils";
-import type { Booking, Project, ResourceCategory } from "@/types/base";
-
-const RESOURCE_CATEGORIES: ResourceCategory[] = [
-  "studio",
-  "equipment",
-  "venue"
-];
+import type { Booking, CreateBookingRequest, Project } from "@/types/base";
 
 export function BookingsPage() {
   const { workspace } = useWorkspace();
@@ -32,6 +26,7 @@ export function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newBookingOpen, setNewBookingOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,59 +75,9 @@ export function BookingsPage() {
     [bookings, workspace.user.id]
   );
 
-  async function handleNewBooking() {
-    const resourceName = window.prompt("Name the resource you're booking");
-    if (!resourceName || !resourceName.trim()) {
-      return;
-    }
-
-    const categoryInput = window.prompt(
-      "Resource category - studio, equipment, or venue",
-      "equipment"
-    );
-    const resourceCategory = RESOURCE_CATEGORIES.includes(
-      categoryInput as ResourceCategory
-    )
-      ? (categoryInput as ResourceCategory)
-      : "equipment";
-
-    const projectTitle = window.prompt(
-      "Project this booking is for (leave blank for none)",
-      ""
-    );
-    const matchedProject = projectTitle?.trim()
-      ? projects.find(
-          (project) =>
-            project.title.toLowerCase() === projectTitle.trim().toLowerCase()
-        )
-      : undefined;
-
-    const today = toISODate(new Date());
-    const startDate = window.prompt("Start date (YYYY-MM-DD)", today);
-    if (!startDate) {
-      return;
-    }
-    const endDate = window.prompt("End date (YYYY-MM-DD)", startDate);
-    if (!endDate) {
-      return;
-    }
-
-    try {
-      const booking = await createBooking({
-        resourceName: resourceName.trim(),
-        resourceCategory,
-        projectId: matchedProject?.id,
-        startDate: startDate.trim(),
-        endDate: endDate.trim(),
-        startTime: "09:00 AM",
-        endTime: "06:00 PM"
-      });
-      setBookings((current) => [booking, ...current]);
-    } catch (error) {
-      window.alert(
-        error instanceof Error ? error.message : "Could not create the booking."
-      );
-    }
+  async function handleCreateBooking(request: CreateBookingRequest) {
+    const booking = await createBooking(request);
+    setBookings((current) => [booking, ...current]);
   }
 
   return (
@@ -143,7 +88,7 @@ export function BookingsPage() {
         <div className="grid min-w-0 gap-6">
           <BookingsTabsBar
             activeTab={activeTab}
-            onNewBooking={handleNewBooking}
+            onNewBooking={() => setNewBookingOpen(true)}
             onTabChange={setActiveTab}
             tabCounts={tabCounts}
           />
@@ -175,6 +120,13 @@ export function BookingsPage() {
           <BookingCalendarPanel bookings={bookings} />
         </aside>
       </div>
+
+      <NewBookingDialog
+        onCreate={handleCreateBooking}
+        onOpenChange={setNewBookingOpen}
+        open={newBookingOpen}
+        projects={projects}
+      />
     </div>
   );
 }
