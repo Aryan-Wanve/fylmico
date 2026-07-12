@@ -541,10 +541,19 @@ class OrganizationsService {
       select: { organizationId: true }
     });
 
-    return Promise.all(
-      memberships.map((membership) =>
-        this.getHouseDto(membership.organizationId, userId)
-      )
+    if (memberships.length === 0) {
+      return [];
+    }
+
+    // Batched into a single query rather than one findUnique per house -
+    // this runs on every authenticated page load via GET /workspace.
+    const organizations = await this.prisma.organization.findMany({
+      where: { id: { in: memberships.map((m) => m.organizationId) } },
+      include: houseInclude
+    });
+
+    return organizations.map((organization) =>
+      toHouseDto(organization, userId)
     );
   }
 
