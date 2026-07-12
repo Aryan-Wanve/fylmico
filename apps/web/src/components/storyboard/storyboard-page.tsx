@@ -19,26 +19,37 @@ import { CharactersGrid } from "@/components/storyboard/characters-grid";
 import { LocationsGrid } from "@/components/storyboard/locations-grid";
 import { TemplatesGrid } from "@/components/storyboard/templates-grid";
 import {
-  characters,
-  storyLocations,
   boardTemplates,
   type BoardTemplate
 } from "@/components/storyboard/storyboard-data";
 import {
   createBoard,
+  createCharacter,
+  createLocation,
   createShot,
   deleteBoard,
+  deleteCharacter,
+  deleteLocation,
   listBoards,
+  listCharacters,
+  listLocations,
   listProjects,
   updateShot
 } from "@/services/base-workspace.service";
-import type { Board, Project } from "@/types/base";
+import type {
+  Board,
+  Project,
+  StoryCharacter,
+  StoryLocationItem
+} from "@/types/base";
 
 export function StoryboardPage() {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeTab, setActiveTab] = useState<StoryboardTab>("boards");
   const [boards, setBoards] = useState<Board[]>([]);
+  const [storyCharacters, setStoryCharacters] = useState<StoryCharacter[]>([]);
+  const [locations, setLocations] = useState<StoryLocationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeBoardId, setActiveBoardId] = useState<string | null>(null);
   const [selectedShotId, setSelectedShotId] = useState<string | null>(null);
@@ -51,11 +62,18 @@ export function StoryboardPage() {
   useEffect(() => {
     let cancelled = false;
 
-    Promise.all([listBoards(), listProjects()])
-      .then(([boardData, projectData]) => {
+    Promise.all([
+      listBoards(),
+      listProjects(),
+      listCharacters(),
+      listLocations()
+    ])
+      .then(([boardData, projectData, characterData, locationData]) => {
         if (!cancelled) {
           setBoards(boardData);
           setProjects(projectData);
+          setStoryCharacters(characterData);
+          setLocations(locationData);
           setActiveBoardId(boardData[0]?.id ?? null);
           setSelectedShotId(boardData[0]?.shots[0]?.id ?? null);
         }
@@ -151,6 +169,100 @@ export function StoryboardPage() {
     }
   }
 
+  async function handleNewCharacter() {
+    const name = window.prompt("Character name");
+    if (!name || !name.trim()) {
+      return;
+    }
+
+    const role = window.prompt("Role (e.g. Lead, Supporting, Motif)", "Lead");
+    if (!role || !role.trim()) {
+      return;
+    }
+
+    try {
+      const character = await createCharacter({
+        name: name.trim(),
+        role: role.trim(),
+        projectId: projectId ?? undefined
+      });
+      setStoryCharacters((current) => [...current, character]);
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not create the character."
+      );
+    }
+  }
+
+  async function handleDeleteCharacter(characterId: string) {
+    try {
+      await deleteCharacter(characterId);
+      setStoryCharacters((current) =>
+        current.filter((character) => character.id !== characterId)
+      );
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not delete the character."
+      );
+    }
+  }
+
+  async function handleNewLocation() {
+    const name = window.prompt("Location name");
+    if (!name || !name.trim()) {
+      return;
+    }
+
+    const type = window.prompt("Type (e.g. Interior, Exterior)", "Interior");
+    if (!type || !type.trim()) {
+      return;
+    }
+
+    try {
+      const location = await createLocation({
+        name: name.trim(),
+        type: type.trim(),
+        projectId: projectId ?? undefined
+      });
+      setLocations((current) => [...current, location]);
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not create the location."
+      );
+    }
+  }
+
+  async function handleDeleteLocation(locationId: string) {
+    try {
+      await deleteLocation(locationId);
+      setLocations((current) =>
+        current.filter((location) => location.id !== locationId)
+      );
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not delete the location."
+      );
+    }
+  }
+
+  async function handleCreate() {
+    if (activeTab === "characters") {
+      await handleNewCharacter();
+    } else if (activeTab === "locations") {
+      await handleNewLocation();
+    } else {
+      await handleNewBoard();
+    }
+  }
+
   async function handleDeleteBoard(id: string) {
     try {
       await deleteBoard(id);
@@ -225,8 +337,8 @@ export function StoryboardPage() {
       <StoryboardToolbar
         activeTab={activeTab}
         density={density}
+        onCreate={handleCreate}
         onDensityChange={setDensity}
-        onNewBoard={handleNewBoard}
         onProjectChange={setProjectId}
         onTabChange={setActiveTab}
         projectId={projectId}
@@ -357,9 +469,12 @@ export function StoryboardPage() {
           onSelectShot={handleSelectShotInBoard}
         />
       ) : activeTab === "characters" ? (
-        <CharactersGrid characters={characters} />
+        <CharactersGrid
+          characters={storyCharacters}
+          onDelete={handleDeleteCharacter}
+        />
       ) : activeTab === "locations" ? (
-        <LocationsGrid locations={storyLocations} />
+        <LocationsGrid locations={locations} onDelete={handleDeleteLocation} />
       ) : (
         <TemplatesGrid
           onUseTemplate={handleUseTemplate}

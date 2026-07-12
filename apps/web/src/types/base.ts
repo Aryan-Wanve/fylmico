@@ -453,6 +453,35 @@ export type UpdateShotRequest = Partial<{
   notes: string;
 }>;
 
+export type StoryCharacter = {
+  id: string;
+  projectId: string | null;
+  name: string;
+  role: string;
+  description: string | null;
+};
+
+export type CreateCharacterRequest = {
+  name: string;
+  role: string;
+  description?: string;
+  projectId?: string;
+};
+
+export type StoryLocationItem = {
+  id: string;
+  projectId: string | null;
+  name: string;
+  type: string;
+  shotCount: number;
+};
+
+export type CreateLocationRequest = {
+  name: string;
+  type: string;
+  projectId?: string;
+};
+
 export type FileEntryType = "folder" | "file";
 
 export type FileEntryItem = {

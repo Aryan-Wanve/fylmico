@@ -24,6 +24,12 @@ const TABS: Array<{ value: StoryboardTab; label: string }> = [
 
 const NO_PROJECT_VALUE = "__none__";
 
+const CREATE_LABEL: Partial<Record<StoryboardTab, string>> = {
+  boards: "New Board",
+  characters: "New Character",
+  locations: "New Location"
+};
+
 export function StoryboardToolbar({
   projects,
   projectId,
@@ -32,7 +38,7 @@ export function StoryboardToolbar({
   onTabChange,
   density,
   onDensityChange,
-  onNewBoard
+  onCreate
 }: {
   projects: Project[];
   projectId: string | null;
@@ -41,11 +47,12 @@ export function StoryboardToolbar({
   onTabChange: (tab: StoryboardTab) => void;
   density: "compact" | "comfortable";
   onDensityChange: (density: "compact" | "comfortable") => void;
-  onNewBoard: () => void;
+  onCreate: () => void;
 }) {
   const activeProjectTitle =
     projects.find((project) => project.id === projectId)?.title ??
     "All Projects";
+  const createLabel = CREATE_LABEL[activeTab];
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -127,14 +134,16 @@ export function StoryboardToolbar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <button
-          className="flex h-9 items-center gap-2 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
-          onClick={onNewBoard}
-          type="button"
-        >
-          <Plus className="h-4 w-4" />
-          New Board
-        </button>
+        {createLabel ? (
+          <button
+            className="flex h-9 items-center gap-2 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+            onClick={onCreate}
+            type="button"
+          >
+            <Plus className="h-4 w-4" />
+            {createLabel}
+          </button>
+        ) : null}
       </div>
     </div>
   );

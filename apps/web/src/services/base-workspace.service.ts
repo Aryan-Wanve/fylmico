@@ -11,8 +11,10 @@ import type {
   CreateBoardRequest,
   CreateBookingRequest,
   CreateCalendarEventRequest,
+  CreateCharacterRequest,
   CreateConversationRequest,
   CreateHouseRequest,
+  CreateLocationRequest,
   CreateProjectRequest,
   CreateShotRequest,
   CreateTaskRequest,
@@ -35,6 +37,8 @@ import type {
   SendChatMessageRequest,
   Shot,
   SignupRequest,
+  StoryCharacter,
+  StoryLocationItem,
   TimeEntry,
   UpdateCrewProfileRequest,
   UpdateConversationRequest,
@@ -705,4 +709,76 @@ export async function updateShot(
     method: "PATCH",
     body: request
   });
+}
+
+export async function listCharacters(): Promise<StoryCharacter[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing characters.");
+  }
+
+  return apiRequest<StoryCharacter[]>(`/houses/${activeHouseId}/characters`);
+}
+
+export async function createCharacter(
+  request: CreateCharacterRequest
+): Promise<StoryCharacter> {
+  if (!request.name.trim() || !request.role.trim()) {
+    throw new Error("Give the character a name and role.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before creating characters.");
+  }
+
+  return apiRequest<StoryCharacter>(`/houses/${activeHouseId}/characters`, {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function deleteCharacter(characterId: string): Promise<void> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before deleting characters.");
+  }
+
+  await apiRequest<{ success: boolean }>(
+    `/houses/${activeHouseId}/characters/${characterId}`,
+    { method: "DELETE" }
+  );
+}
+
+export async function listLocations(): Promise<StoryLocationItem[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing locations.");
+  }
+
+  return apiRequest<StoryLocationItem[]>(`/houses/${activeHouseId}/locations`);
+}
+
+export async function createLocation(
+  request: CreateLocationRequest
+): Promise<StoryLocationItem> {
+  if (!request.name.trim() || !request.type.trim()) {
+    throw new Error("Give the location a name and type.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before creating locations.");
+  }
+
+  return apiRequest<StoryLocationItem>(`/houses/${activeHouseId}/locations`, {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function deleteLocation(locationId: string): Promise<void> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before deleting locations.");
+  }
+
+  await apiRequest<{ success: boolean }>(
+    `/houses/${activeHouseId}/locations/${locationId}`,
+    { method: "DELETE" }
+  );
 }

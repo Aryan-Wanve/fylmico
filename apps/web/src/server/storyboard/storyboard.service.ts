@@ -2,6 +2,8 @@ import { AppException, HttpStatus } from "../http";
 import { organizationsService } from "../organizations/organizations.service";
 import { prisma } from "../prisma";
 import type { CreateBoardDto } from "./dto/create-board.dto";
+import type { CreateCharacterDto } from "./dto/create-character.dto";
+import type { CreateLocationDto } from "./dto/create-location.dto";
 import type { CreateShotDto } from "./dto/create-shot.dto";
 import type { UpdateShotDto } from "./dto/update-shot.dto";
 
@@ -142,6 +144,109 @@ class StoryboardService {
     return toShotDto(updated);
   }
 
+  async listCharacters(userId: string, houseId: string) {
+    await organizationsService.requireMembership(houseId, userId);
+
+    const characters = await this.prisma.character.findMany({
+      where: { organizationId: houseId },
+      orderBy: { createdAt: "asc" }
+    });
+
+    return characters.map(toCharacterDto);
+  }
+
+  async createCharacter(
+    userId: string,
+    houseId: string,
+    dto: CreateCharacterDto
+  ) {
+    await organizationsService.requireMembership(houseId, userId);
+
+    const character = await this.prisma.character.create({
+      data: {
+        organizationId: houseId,
+        projectId: dto.projectId ?? null,
+        name: dto.name.trim(),
+        role: dto.role.trim(),
+        description: dto.description?.trim() || null
+      }
+    });
+
+    return toCharacterDto(character);
+  }
+
+  async deleteCharacter(
+    userId: string,
+    houseId: string,
+    characterId: string
+  ): Promise<void> {
+    await organizationsService.requireMembership(houseId, userId);
+
+    const character = await this.prisma.character.findUnique({
+      where: { id: characterId }
+    });
+    if (!character || character.organizationId !== houseId) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "character_not_found",
+        "This character does not exist in this house."
+      );
+    }
+
+    await this.prisma.character.delete({ where: { id: characterId } });
+  }
+
+  async listLocations(userId: string, houseId: string) {
+    await organizationsService.requireMembership(houseId, userId);
+
+    const locations = await this.prisma.storyLocation.findMany({
+      where: { organizationId: houseId },
+      orderBy: { createdAt: "asc" }
+    });
+
+    return locations.map(toLocationDto);
+  }
+
+  async createLocation(
+    userId: string,
+    houseId: string,
+    dto: CreateLocationDto
+  ) {
+    await organizationsService.requireMembership(houseId, userId);
+
+    const location = await this.prisma.storyLocation.create({
+      data: {
+        organizationId: houseId,
+        projectId: dto.projectId ?? null,
+        name: dto.name.trim(),
+        type: dto.type.trim()
+      }
+    });
+
+    return toLocationDto(location);
+  }
+
+  async deleteLocation(
+    userId: string,
+    houseId: string,
+    locationId: string
+  ): Promise<void> {
+    await organizationsService.requireMembership(houseId, userId);
+
+    const location = await this.prisma.storyLocation.findUnique({
+      where: { id: locationId }
+    });
+    if (!location || location.organizationId !== houseId) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "location_not_found",
+        "This location does not exist in this house."
+      );
+    }
+
+    await this.prisma.storyLocation.delete({ where: { id: locationId } });
+  }
+
   private async requireBoard(houseId: string, boardId: string) {
     const board = await this.prisma.board.findUnique({
       where: { id: boardId }
@@ -195,5 +300,37 @@ function toBoardDto(board: {
     description: board.description,
     updatedAt: board.updatedAt,
     shots: board.shots.map(toShotDto)
+  };
+}
+
+function toCharacterDto(character: {
+  id: string;
+  projectId: string | null;
+  name: string;
+  role: string;
+  description: string | null;
+}) {
+  return {
+    id: character.id,
+    projectId: character.projectId,
+    name: character.name,
+    role: character.role,
+    description: character.description
+  };
+}
+
+function toLocationDto(location: {
+  id: string;
+  projectId: string | null;
+  name: string;
+  type: string;
+  shotCount: number;
+}) {
+  return {
+    id: location.id,
+    projectId: location.projectId,
+    name: location.name,
+    type: location.type,
+    shotCount: location.shotCount
   };
 }

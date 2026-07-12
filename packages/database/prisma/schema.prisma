@@ -62,6 +62,8 @@ model Organization {
   bookings       Booking[]
   boards         Board[]
   fileEntries    FileEntry[]
+  characters     Character[]
+  storyLocations StoryLocation[]
 
   @@map("organizations")
 }
@@ -254,6 +256,8 @@ model Project {
   timeEntries    TimeEntry[]
   bookings       Booking[]
   boards         Board[]
+  characters     Character[]
+  storyLocations StoryLocation[]
 
   @@index([organizationId])
   @@map("projects")
@@ -464,6 +468,42 @@ model Shot {
 
   @@index([boardId])
   @@map("shots")
+}
+
+model Character {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  projectId      String?  @map("project_id")
+  name           String
+  role           String
+  description    String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("characters")
+}
+
+model StoryLocation {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  projectId      String?  @map("project_id")
+  name           String
+  type           String
+  shotCount      Int      @default(0) @map("shot_count")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("story_locations")
 }
 
 model FileEntry {
