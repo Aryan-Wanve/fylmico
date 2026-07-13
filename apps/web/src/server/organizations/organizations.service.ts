@@ -306,6 +306,44 @@ class OrganizationsService {
       }
     });
 
+    // notifyOwnersOfNewMember (inside addMembership) already covers Owners,
+    // but the person who sent this specific invite might not be one - they
+    // still want to know their invite landed.
+    if (invitation.invitedById !== userId) {
+      const [invitee, ownerRole] = await Promise.all([
+        this.prisma.user.findUniqueOrThrow({ where: { id: userId } }),
+        this.prisma.role.findUnique({
+          where: {
+            organizationId_name: {
+              organizationId: organization.id,
+              name: "Owner"
+            }
+          }
+        })
+      ]);
+      const inviterIsOwner = ownerRole
+        ? await this.prisma.organizationMembership
+            .findUnique({
+              where: {
+                organizationId_userId: {
+                  organizationId: organization.id,
+                  userId: invitation.invitedById
+                }
+              }
+            })
+            .then((membership) => membership?.roleId === ownerRole.id)
+        : false;
+
+      if (!inviterIsOwner) {
+        await notificationsService.create(
+          invitation.invitedById,
+          "invitation_accepted",
+          `${invitee.name} accepted your invite`,
+          `${invitee.name} joined ${organization.name} using the invite you sent to ${invitation.email}.`
+        );
+      }
+    }
+
     return this.getHouseDto(organization.id, userId);
   }
 
@@ -409,6 +447,30 @@ class OrganizationsService {
     organizationName: string,
     joiningUserId: string
   ): Promise<void> {
+    const joiningUser = await this.prisma.user.findUniqueOrThrow({
+      where: { id: joiningUserId }
+    });
+
+    await this.notifyOwners(
+      organizationId,
+      "house_joined",
+      `${joiningUser.name} joined ${organizationName}`,
+      `${joiningUser.name} joined ${organizationName} as a Member.`,
+      joiningUserId
+    );
+  }
+
+  // Notifies every member holding the "Owner" role in a house - used for
+  // events that don't have one obvious individual recipient (new members,
+  // new bookings). `excludeUserId` skips notifying whoever triggered the
+  // event even if they're an Owner themselves.
+  async notifyOwners(
+    organizationId: string,
+    type: string,
+    title: string,
+    body: string,
+    excludeUserId?: string
+  ): Promise<void> {
     const ownerRole = await this.prisma.role.findUnique({
       where: { organizationId_name: { organizationId, name: "Owner" } }
     });
@@ -416,23 +478,17 @@ class OrganizationsService {
       return;
     }
 
-    const [joiningUser, owners] = await Promise.all([
-      this.prisma.user.findUniqueOrThrow({ where: { id: joiningUserId } }),
-      this.prisma.organizationMembership.findMany({
-        where: { organizationId, roleId: ownerRole.id },
-        select: { userId: true }
-      })
-    ]);
+    const owners = await this.prisma.organizationMembership.findMany({
+      where: { organizationId, roleId: ownerRole.id },
+      select: { userId: true }
+    });
 
     await Promise.all(
-      owners.map((owner) =>
-        notificationsService.create(
-          owner.userId,
-          "house_joined",
-          `${joiningUser.name} joined ${organizationName}`,
-          `${joiningUser.name} joined ${organizationName} as a Member.`
+      owners
+        .filter((owner) => owner.userId !== excludeUserId)
+        .map((owner) =>
+          notificationsService.create(owner.userId, type, title, body)
         )
-      )
     );
   }
 

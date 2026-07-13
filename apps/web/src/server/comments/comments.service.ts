@@ -1,5 +1,6 @@
 import type { Comment } from "@fylmico/database";
 import { AppException, HttpStatus } from "../http";
+import { notificationsService } from "../notifications/notifications.service";
 import { organizationsService } from "../organizations/organizations.service";
 import {
   buildPage,
@@ -10,6 +11,13 @@ import {
 import { prisma } from "../prisma";
 
 type CommentDto = ReturnType<typeof toCommentDto>;
+
+function excerpt(body: string, maxLength = 120): string {
+  const trimmed = body.trim();
+  return trimmed.length > maxLength
+    ? `${trimmed.slice(0, maxLength - 1)}…`
+    : trimmed;
+}
 
 class CommentsService {
   private readonly prisma = prisma;
@@ -27,7 +35,25 @@ class CommentsService {
         "This task does not exist."
       );
     }
-    return this.create(userId, task.organizationId, "task", taskId, body);
+
+    const comment = await this.create(
+      userId,
+      task.organizationId,
+      "task",
+      taskId,
+      body
+    );
+
+    if (task.assigneeId && task.assigneeId !== userId) {
+      await notificationsService.create(
+        task.assigneeId,
+        "task_comment",
+        `New comment on "${task.title}"`,
+        `${comment.authorName} commented: ${excerpt(body)}`
+      );
+    }
+
+    return comment;
   }
 
   async listForTask(
@@ -61,13 +87,27 @@ class CommentsService {
         "This project does not exist."
       );
     }
-    return this.create(
+    const comment = await this.create(
       userId,
       project.organizationId,
       "project",
       projectId,
       body
     );
+
+    const recipientIds = project.teamIds.filter((id) => id !== userId);
+    await Promise.all(
+      recipientIds.map((recipientId) =>
+        notificationsService.create(
+          recipientId,
+          "project_comment",
+          `New comment on "${project.name}"`,
+          `${comment.authorName} commented: ${excerpt(body)}`
+        )
+      )
+    );
+
+    return comment;
   }
 
   async listForProject(

@@ -3,6 +3,12 @@ import { organizationsService } from "../organizations/organizations.service";
 import { prisma } from "../prisma";
 import type { CreateBookingDto } from "./dto/create-booking.dto";
 
+function formatBookingWindow(dto: CreateBookingDto): string {
+  return dto.startDate === dto.endDate
+    ? `${dto.startDate}, ${dto.startTime}–${dto.endTime}`
+    : `${dto.startDate} – ${dto.endDate}`;
+}
+
 const bookingInclude = {
   resource: true,
   project: true,
@@ -68,7 +74,16 @@ class BookingsService {
       include: bookingInclude
     });
 
-    return toBookingDto(booking);
+    const bookingDto = toBookingDto(booking);
+    await organizationsService.notifyOwners(
+      houseId,
+      "booking_created",
+      `New booking: ${resource.name}`,
+      `${bookingDto.bookedByName} booked ${resource.name} for ${formatBookingWindow(dto)}.`,
+      userId
+    );
+
+    return bookingDto;
   }
 
   private async findOrCreateResource(
