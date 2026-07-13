@@ -7,6 +7,7 @@ import { useWorkspace } from "@/lib/workspace-context";
 import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
   createConversation,
+  inviteMember,
   listCrew,
   removeCrewMember,
   updateCrewProfile
@@ -30,7 +31,7 @@ import {
 } from "@/components/crews/crew-data";
 
 export function CrewsPage() {
-  const { activeHouse, refreshWorkspace } = useWorkspace();
+  const { refreshWorkspace } = useWorkspace();
   const prompt = usePrompt();
   const router = useRouter();
 
@@ -220,16 +221,25 @@ export function CrewsPage() {
   }
 
   async function handleInvite() {
-    if (!activeHouse) {
+    const email = await prompt("Invite by email — enter their email address");
+    if (!email || !email.trim()) {
       return;
     }
 
-    const inviteUrl = `${window.location.origin}/houses/join/${activeHouse.inviteCode}`;
-    navigator.clipboard?.writeText(inviteUrl).catch(() => {});
-    await prompt(
-      "Share this join link with anyone you want to invite (copied to clipboard):",
-      inviteUrl
-    );
+    try {
+      const invitation = await inviteMember(email.trim());
+      if (invitation.inviteUrl) {
+        navigator.clipboard?.writeText(invitation.inviteUrl).catch(() => {});
+        await prompt(
+          "Invite link copied to clipboard - share it with them:",
+          invitation.inviteUrl
+        );
+      }
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not send this invite."
+      );
+    }
   }
 
   const availableToday = members.filter(

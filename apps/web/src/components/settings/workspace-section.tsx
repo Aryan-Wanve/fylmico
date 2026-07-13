@@ -1,18 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SettingsCard } from "@/components/settings/settings-card";
-import { usePrompt } from "@/components/ui/prompt-dialog";
 import { useWorkspace } from "@/lib/workspace-context";
 import { updateHouse } from "@/services/base-workspace.service";
 
 export function WorkspaceSection() {
   const { activeHouse, refreshWorkspace } = useWorkspace();
-  const prompt = usePrompt();
   const [form, setForm] = useState({
     name: activeHouse?.name ?? "",
     handle: activeHouse?.handle ?? "",
@@ -21,22 +18,6 @@ export function WorkspaceSection() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
-
-  const inviteUrl =
-    activeHouse && typeof window !== "undefined"
-      ? `${window.location.origin}/houses/join/${activeHouse.inviteCode}`
-      : "";
-
-  async function handleCopyInviteLink() {
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch {
-      await prompt("Copy this join link:", inviteUrl);
-    }
-  }
 
   async function handleSave() {
     setError("");
@@ -60,32 +41,6 @@ export function WorkspaceSection() {
 
   return (
     <div className="grid gap-6">
-      <SettingsCard
-        subtitle="Share this link so anyone can join your house."
-        title="Invite People"
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <Input className="min-w-0 flex-1" readOnly value={inviteUrl} />
-          <Button
-            className="shrink-0"
-            onClick={handleCopyInviteLink}
-            variant="outline"
-          >
-            {linkCopied ? (
-              <>
-                <Check className="h-4 w-4" />
-                Copied
-              </>
-            ) : (
-              <>
-                <Copy className="h-4 w-4" />
-                Copy link
-              </>
-            )}
-          </Button>
-        </div>
-      </SettingsCard>
-
       <SettingsCard
         subtitle="Update the details every member of this house sees."
         title="Workspace"
