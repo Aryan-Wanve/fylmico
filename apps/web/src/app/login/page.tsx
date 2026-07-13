@@ -1,12 +1,14 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LoginPage, type LoginAsyncState } from "@/components/login/login-page";
 import { login } from "@/services/base-workspace.service";
+import { getSafeRedirect } from "@/lib/redirect";
 
-export default function LoginRoute() {
+function LoginRouteContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [authState, setAuthState] = useState<LoginAsyncState>("idle");
   const [error, setError] = useState("");
 
@@ -23,7 +25,7 @@ export default function LoginRoute() {
         password: String(form.get("password") ?? "")
       });
       setAuthState("success");
-      router.push("/");
+      router.push(getSafeRedirect(searchParams.get("redirectTo")));
     } catch (loginError) {
       setAuthState("error");
       setError(
@@ -36,5 +38,13 @@ export default function LoginRoute() {
 
   return (
     <LoginPage authState={authState} error={error} onLogin={handleLogin} />
+  );
+}
+
+export default function LoginRoute() {
+  return (
+    <Suspense fallback={null}>
+      <LoginRouteContent />
+    </Suspense>
   );
 }

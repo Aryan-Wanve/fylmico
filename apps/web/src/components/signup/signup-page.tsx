@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,11 @@ import { AuthLayout } from "@/components/login/auth-layout";
 import { AuthSocialProviders } from "@/components/login/auth-social-providers";
 import { AuthSecurityNote } from "@/components/login/auth-security-note";
 import { signup } from "@/services/base-workspace.service";
+import { getSafeRedirect } from "@/lib/redirect";
 
 export function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
@@ -45,7 +47,7 @@ export function SignupPage() {
 
     try {
       await signup({ name, email, password });
-      router.push("/");
+      router.push(getSafeRedirect(searchParams.get("redirectTo")));
     } catch (signupError) {
       setNotice(
         signupError instanceof Error

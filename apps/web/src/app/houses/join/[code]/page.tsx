@@ -127,13 +127,13 @@ export default function JoinHousePage({
                 </p>
                 <Link
                   className="flex h-12 w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] font-bold text-white hover:opacity-95"
-                  href="/login"
+                  href={`/login?redirectTo=${encodeURIComponent(`/houses/join/${code}`)}`}
                 >
                   Log in
                 </Link>
                 <Link
                   className="flex h-12 w-full items-center justify-center rounded-lg border border-black/10 font-bold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
-                  href="/signup"
+                  href={`/signup?redirectTo=${encodeURIComponent(`/houses/join/${code}`)}`}
                 >
                   Sign up
                 </Link>
