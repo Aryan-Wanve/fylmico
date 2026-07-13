@@ -22,8 +22,7 @@ container it manages entirely:
 ```bash
 npm install
 npm run build   # -> next build (standalone output) + postbuild asset sync
-npm start       # -> node server.js -> prisma migrate deploy, then
-                #    apps/web/.next/standalone/apps/web/server.js
+npm start       # -> node server.js -> apps/web/.next/standalone/apps/web/server.js
 ```
 
 This needs **no GitHub Actions workflow at all** - Hostinger's own
