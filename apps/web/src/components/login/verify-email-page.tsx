@@ -70,7 +70,7 @@ export function VerifyEmailPage() {
             </p>
             <Link
               className="mt-6 inline-flex h-12 items-center justify-center rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] px-6 text-sm font-bold text-white hover:opacity-95"
-              href="/"
+              href="/home"
             >
               Continue to Fylmico
             </Link>

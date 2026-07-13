@@ -18,7 +18,7 @@ export type NavItem = {
   id: string;
   label: string;
   href:
-    | "/"
+    | "/home"
     | "/calendar"
     | "/projects"
     | "/tasks"
@@ -36,7 +36,7 @@ export type NavItem = {
 };
 
 export const navItems: NavItem[] = [
-  { id: "home", label: "Home", href: "/", icon: Home },
+  { id: "home", label: "Home", href: "/home", icon: Home },
   { id: "projects", label: "Projects", href: "/projects", icon: FolderKanban },
   { id: "calendar", label: "Calendar", href: "/calendar", icon: Calendar },
   { id: "tasks", label: "Tasks", href: "/tasks", icon: ListChecks },

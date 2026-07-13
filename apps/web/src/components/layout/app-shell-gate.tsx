@@ -21,7 +21,7 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
     if (!activeHouse && pathname !== ONBOARDING_PATH) {
       router.replace("/houses/new");
     } else if (activeHouse && pathname === ONBOARDING_PATH) {
-      router.replace("/");
+      router.replace("/home");
     }
   }, [activeHouse, pathname, router]);
 

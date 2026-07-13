@@ -56,7 +56,7 @@ export default function InviteAcceptPage({
 
     try {
       await acceptInvitation(token);
-      router.push("/");
+      router.push("/home");
     } catch (acceptError) {
       setError(
         acceptError instanceof Error

@@ -19,7 +19,7 @@ function AuthCallbackContent() {
     }
 
     setSession(accessToken, refreshToken);
-    router.replace("/");
+    router.replace("/home");
   }, [router, searchParams]);
 
   return (

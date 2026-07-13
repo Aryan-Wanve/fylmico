@@ -56,7 +56,7 @@ export default function JoinHousePage({
 
     try {
       await joinHouse({ inviteCode: code });
-      router.push("/");
+      router.push("/home");
     } catch (joinError) {
       setError(
         joinError instanceof Error
