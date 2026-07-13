@@ -28,22 +28,84 @@ class FilesService {
   async createFolder(userId: string, houseId: string, dto: CreateFolderDto) {
     await organizationsService.requireMembership(houseId, userId);
 
-    if (dto.parentId) {
-      await this.requireEntry(houseId, dto.parentId);
-    }
+    const parentEntry = dto.parentId
+      ? await this.requireEntry(houseId, dto.parentId)
+      : null;
+    const parentDriveFolderId = await this.resolveDriveFolderId(
+      userId,
+      parentEntry
+    );
+    const name = dto.name.trim();
+
+    // Mirror this folder into the creator's own Drive right away (rather
+    // than waiting for a lazy resolveDriveFolderId call on first upload)
+    // so an empty folder shows up in Drive immediately, matching what a
+    // user sees in the app. Created before the FileEntry row so a failed
+    // Drive call never leaves a dangling app-only folder behind.
+    const driveFolderId = await driveService.createFolder(
+      userId,
+      name,
+      parentDriveFolderId
+    );
 
     const folder = await this.prisma.fileEntry.create({
       data: {
         organizationId: houseId,
         parentId: dto.parentId ?? null,
-        name: dto.name.trim(),
+        name,
         type: "folder",
         uploadedById: userId
       },
       include: { uploadedBy: true }
     });
+    await this.prisma.driveFolderLink.create({
+      data: { fileEntryId: folder.id, userId, driveFolderId }
+    });
 
     return toFileEntryDto(folder);
+  }
+
+  // A shared app-level folder doesn't have one Drive folder id - each
+  // uploader's files live in their own Drive (ADR 0038), so the same
+  // folder needs its own mirrored folder inside every uploader's Drive.
+  // Resolves (creating and caching in DriveFolderLink if necessary) the
+  // Drive folder id that `entry` maps to for this specific user; `null`
+  // means the user's Drive root ("Fylmico") folder.
+  private async resolveDriveFolderId(
+    userId: string,
+    entry: { id: string; parentId: string | null; name: string } | null
+  ): Promise<string> {
+    if (!entry) {
+      return driveService.getRootFolderId(userId);
+    }
+
+    const existingLink = await this.prisma.driveFolderLink.findUnique({
+      where: { fileEntryId_userId: { fileEntryId: entry.id, userId } }
+    });
+    if (existingLink) {
+      return existingLink.driveFolderId;
+    }
+
+    const parentEntry = entry.parentId
+      ? await this.prisma.fileEntry.findUnique({
+          where: { id: entry.parentId }
+        })
+      : null;
+    const parentDriveFolderId = await this.resolveDriveFolderId(
+      userId,
+      parentEntry
+    );
+
+    const driveFolderId = await driveService.createFolder(
+      userId,
+      entry.name,
+      parentDriveFolderId
+    );
+    await this.prisma.driveFolderLink.create({
+      data: { fileEntryId: entry.id, userId, driveFolderId }
+    });
+
+    return driveFolderId;
   }
 
   async uploadFile(
@@ -55,18 +117,26 @@ class FilesService {
   ) {
     await organizationsService.requireMembership(houseId, userId);
 
-    if (parentId) {
-      await this.requireEntry(houseId, parentId);
-    }
+    const parentEntry = parentId
+      ? await this.requireEntry(houseId, parentId)
+      : null;
+    const parentDriveFolderId = await this.resolveDriveFolderId(
+      userId,
+      parentEntry
+    );
 
-    // The file's bytes live in the uploader's own Google Drive (their
-    // "Fylmico" folder) - this row is just the shared team index/tree
-    // pointing at it. See ADR 0038.
-    const storagePath = await driveService.upload(userId, {
-      name: file.name,
-      buffer: file.buffer,
-      mimeType: file.mimeType
-    });
+    // The file's bytes live in the uploader's own Google Drive (mirrored
+    // into the same folder structure they see in the app) - this row is
+    // just the shared team index/tree pointing at it. See ADR 0038.
+    const storagePath = await driveService.upload(
+      userId,
+      {
+        name: file.name,
+        buffer: file.buffer,
+        mimeType: file.mimeType
+      },
+      parentDriveFolderId
+    );
 
     const entry = await this.prisma.fileEntry.create({
       data: {

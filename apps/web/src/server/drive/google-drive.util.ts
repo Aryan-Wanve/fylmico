@@ -123,6 +123,37 @@ export async function createFylmicoFolder(
   return json.id;
 }
 
+export async function createDriveFolder(params: {
+  accessToken: string;
+  name: string;
+  parentFolderId: string;
+}): Promise<string> {
+  const response = await fetch(
+    "https://www.googleapis.com/drive/v3/files?fields=id",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${params.accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: params.name,
+        mimeType: "application/vnd.google-apps.folder",
+        parents: [params.parentFolderId]
+      })
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Could not create the "${params.name}" folder in Google Drive (status ${response.status})`
+    );
+  }
+
+  const json = (await response.json()) as { id: string };
+  return json.id;
+}
+
 export async function uploadDriveFile(params: {
   accessToken: string;
   folderId: string;

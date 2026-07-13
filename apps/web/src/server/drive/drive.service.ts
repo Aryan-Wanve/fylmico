@@ -5,6 +5,7 @@ import { prisma } from "../prisma";
 import { signDriveState, verifyDriveState } from "./drive-token.util";
 import {
   buildDriveAuthUrl,
+  createDriveFolder,
   createFylmicoFolder,
   deleteDriveFile,
   downloadDriveFile,
@@ -129,16 +130,35 @@ class DriveService {
 
   async upload(
     userId: string,
-    file: { name: string; buffer: ArrayBuffer; mimeType: string }
+    file: { name: string; buffer: ArrayBuffer; mimeType: string },
+    parentFolderId?: string
   ): Promise<string> {
     const { accessToken, folderId } = await this.getValidAccessToken(userId);
     return uploadDriveFile({
       accessToken,
-      folderId,
+      folderId: parentFolderId ?? folderId,
       name: file.name,
       mimeType: file.mimeType,
       buffer: file.buffer
     });
+  }
+
+  async createFolder(
+    userId: string,
+    name: string,
+    parentFolderId?: string
+  ): Promise<string> {
+    const { accessToken, folderId } = await this.getValidAccessToken(userId);
+    return createDriveFolder({
+      accessToken,
+      name,
+      parentFolderId: parentFolderId ?? folderId
+    });
+  }
+
+  async getRootFolderId(userId: string): Promise<string> {
+    const { folderId } = await this.getValidAccessToken(userId);
+    return folderId;
   }
 
   async download(uploaderId: string, fileId: string): Promise<Response> {

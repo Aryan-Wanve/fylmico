@@ -36,6 +36,7 @@ model User {
   bookings                Booking[]
   uploadedFiles           FileEntry[]
   driveConnection         DriveConnection?
+  driveFolderLinks        DriveFolderLink[]
   scripts                 Script[]
 
   @@map("users")
@@ -562,11 +563,31 @@ model FileEntry {
   children     FileEntry[]   @relation("FileEntryChildren")
   uploadedBy   User          @relation(fields: [uploadedById], references: [id])
   conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  driveFolderLinks DriveFolderLink[]
 
   @@index([organizationId])
   @@index([parentId])
   @@index([conversationId])
   @@map("file_entries")
+}
+
+// A shared app-level folder (FileEntry with type "folder") doesn't have a
+// single Drive folder id - each uploader's files live in their own Drive
+// (see ADR 0038), so the same shared folder needs its own mirrored folder
+// created lazily inside every uploader's Drive the first time they place
+// something in it. This table caches that per-(folder, user) mapping.
+model DriveFolderLink {
+  id            String   @id @default(cuid())
+  fileEntryId   String   @map("file_entry_id")
+  userId        String   @map("user_id")
+  driveFolderId String   @map("drive_folder_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  fileEntry FileEntry @relation(fields: [fileEntryId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([fileEntryId, userId])
+  @@map("drive_folder_links")
 }
 
 // One personal Google Drive connection per user - files this user uploads
