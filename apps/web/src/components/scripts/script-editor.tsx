@@ -3,6 +3,11 @@
 import { useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { Project, Script } from "@/types/base";
+import {
+  formatScriptLine,
+  ScriptFormatToolbar,
+  type ScriptElement
+} from "@/components/scripts/script-format-toolbar";
 
 const AUTOSAVE_DELAY_MS = 800;
 
@@ -26,6 +31,7 @@ export function ScriptEditor({
   const [projectId, setProjectId] = useState(script.projectId ?? "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   async function flushSave(updates: {
     title?: string;
@@ -67,8 +73,35 @@ export function ScriptEditor({
     }, AUTOSAVE_DELAY_MS);
   }
 
+  function handleApplyFormat(element: ScriptElement) {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    const cursor = textarea.selectionStart;
+    const lineStart = content.lastIndexOf("\n", cursor - 1) + 1;
+    const nextNewline = content.indexOf("\n", cursor);
+    const lineEnd = nextNewline === -1 ? content.length : nextNewline;
+    const formatted = formatScriptLine(
+      content.slice(lineStart, lineEnd),
+      element
+    );
+    const nextContent =
+      content.slice(0, lineStart) + formatted + content.slice(lineEnd);
+
+    setContent(nextContent);
+    scheduleSave({ content: nextContent });
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const newCursor = lineStart + formatted.length;
+      textarea.setSelectionRange(newCursor, newCursor);
+    });
+  }
+
   return (
-    <div className="grid min-h-0 grid-rows-[auto_auto_1fr] gap-4 rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+    <div className="grid min-h-0 grid-rows-[auto_auto_auto_1fr] gap-4 rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
         <input
           className="min-w-0 flex-1 bg-transparent text-xl font-black text-[#11142c] outline-none dark:text-[#f1f2f8]"
@@ -119,6 +152,8 @@ export function ScriptEditor({
         </select>
       </label>
 
+      <ScriptFormatToolbar onApply={handleApplyFormat} />
+
       <textarea
         className="min-h-0 w-full resize-none rounded-xl border border-black/10 bg-transparent p-4 font-mono text-sm leading-relaxed text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:text-[#f1f2f8]"
         onBlur={() => flushSave({ content })}
@@ -127,6 +162,7 @@ export function ScriptEditor({
           scheduleSave({ content: event.target.value });
         }}
         placeholder="INT. LOCATION - DAY&#10;&#10;Start writing your script..."
+        ref={textareaRef}
         spellCheck={false}
         value={content}
       />
