@@ -9,11 +9,16 @@ import {
   updateTask as updateTaskApi
 } from "@/services/base-workspace.service";
 import { TasksHeader } from "@/components/tasks/tasks-header";
-import { TasksToolbar, type TasksTab } from "@/components/tasks/tasks-toolbar";
+import {
+  TasksToolbar,
+  type TasksTab,
+  type TasksViewMode
+} from "@/components/tasks/tasks-toolbar";
 import type { GroupByOption } from "@/components/tasks/tasks-group-by-menu";
 import { TaskListColumnHeader } from "@/components/tasks/task-list-column-header";
 import { TaskGroupHeader } from "@/components/tasks/task-group-header";
 import { TaskRowItem } from "@/components/tasks/task-row-item";
+import { TaskKanbanBoard } from "@/components/tasks/task-kanban-board";
 import { TasksEmptyState } from "@/components/tasks/tasks-empty-state";
 import { TaskOverviewPanel } from "@/components/tasks/task-overview-panel";
 import { TaskPriorityPanel } from "@/components/tasks/task-priority-panel";
@@ -87,6 +92,7 @@ export function TasksPage() {
   const tasks = workspace.tasks;
 
   const [activeTab, setActiveTab] = useState<TasksTab>("all");
+  const [viewMode, setViewMode] = useState<TasksViewMode>("list");
   const [groupBy, setGroupBy] = useState<GroupByOption>("status");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
     () => new Set()
@@ -161,6 +167,22 @@ export function TasksPage() {
       await updateTaskApi(taskId, {
         status: task.status === "done" ? "todo" : "done"
       });
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not update the task."
+      );
+    }
+  }
+
+  async function handleStatusChange(taskId: string, status: Task["status"]) {
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task || task.status === status) {
+      return;
+    }
+
+    try {
+      await updateTaskApi(taskId, { status });
       await refreshWorkspace();
     } catch (error) {
       window.alert(
@@ -277,10 +299,17 @@ export function TasksPage() {
           onNewTask={() => createTask({})}
           onTabChange={setActiveTab}
           onTogglePriority={toggleTogglePriority}
+          onViewModeChange={setViewMode}
+          viewMode={viewMode}
         />
 
-        {groups.length === 0 ? (
+        {filtered.length === 0 ? (
           <TasksEmptyState />
+        ) : viewMode === "board" ? (
+          <TaskKanbanBoard
+            onStatusChange={handleStatusChange}
+            tasks={filtered}
+          />
         ) : (
           <div className="min-w-0 overflow-x-auto rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             <div className="min-w-[42rem]">

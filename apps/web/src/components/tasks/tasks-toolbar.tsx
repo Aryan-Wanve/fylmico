@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { LayoutGrid, List, Plus } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TasksFiltersPopover } from "@/components/tasks/tasks-filters-popover";
 import {
@@ -10,6 +10,7 @@ import {
 import type { TaskPriority } from "@/components/tasks/task-data";
 
 export type TasksTab = "all" | "my-tasks" | "assigned-to-me" | "completed";
+export type TasksViewMode = "list" | "board";
 
 const TABS: Array<{ value: TasksTab; label: string }> = [
   { value: "all", label: "All Tasks" },
@@ -26,7 +27,9 @@ export function TasksToolbar({
   onGroupByChange,
   activePriorities,
   onTogglePriority,
-  onNewTask
+  onNewTask,
+  viewMode,
+  onViewModeChange
 }: {
   activeTab: TasksTab;
   onTabChange: (tab: TasksTab) => void;
@@ -36,6 +39,8 @@ export function TasksToolbar({
   activePriorities: Set<TaskPriority>;
   onTogglePriority: (priority: TaskPriority) => void;
   onNewTask: () => void;
+  viewMode: TasksViewMode;
+  onViewModeChange: (mode: TasksViewMode) => void;
 }) {
   return (
     <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
@@ -61,7 +66,35 @@ export function TasksToolbar({
           activePriorities={activePriorities}
           onTogglePriority={onTogglePriority}
         />
-        <TasksGroupByMenu onChange={onGroupByChange} value={groupBy} />
+        {viewMode === "list" ? (
+          <TasksGroupByMenu onChange={onGroupByChange} value={groupBy} />
+        ) : null}
+        <div className="flex items-center gap-1 rounded-lg border border-black/10 p-1 dark:border-white/10">
+          <button
+            aria-label="List view"
+            className={`grid h-7 w-7 place-items-center rounded-md ${
+              viewMode === "list"
+                ? "bg-[#654cff]/10 text-[#654cff]"
+                : "text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            }`}
+            onClick={() => onViewModeChange("list")}
+            type="button"
+          >
+            <List className="h-4 w-4" />
+          </button>
+          <button
+            aria-label="Board view"
+            className={`grid h-7 w-7 place-items-center rounded-md ${
+              viewMode === "board"
+                ? "bg-[#654cff]/10 text-[#654cff]"
+                : "text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            }`}
+            onClick={() => onViewModeChange("board")}
+            type="button"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+        </div>
         <button
           className="flex h-9 items-center gap-2 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
           onClick={onNewTask}
