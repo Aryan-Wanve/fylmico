@@ -451,8 +451,16 @@ class OrganizationsService {
     requestingUserId: string,
     targetUserId: string
   ): Promise<void> {
-    await this.requireMembership(organizationId, requestingUserId);
+    await this.requireOwnerRole(organizationId, requestingUserId);
     await this.requireMembership(organizationId, targetUserId);
+
+    if (requestingUserId === targetUserId) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_request",
+        'Use "Leave house" to remove yourself.'
+      );
+    }
 
     const memberCount = await this.prisma.organizationMembership.count({
       where: { organizationId }
@@ -519,6 +527,21 @@ class OrganizationsService {
     }
 
     throw new Error("Failed to generate a unique invite code.");
+  }
+
+  private async requireOwnerRole(organizationId: string, userId: string) {
+    const membership = await this.prisma.organizationMembership.findUnique({
+      where: { organizationId_userId: { organizationId, userId } },
+      include: { role: true }
+    });
+    if (!membership || membership.role.name !== "Owner") {
+      throw new AppException(
+        HttpStatus.FORBIDDEN,
+        "forbidden",
+        "Only house owners can remove members."
+      );
+    }
+    return membership;
   }
 
   async requireMembership(organizationId: string, userId: string) {
