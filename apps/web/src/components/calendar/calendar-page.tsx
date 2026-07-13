@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { CalendarHeader } from "@/components/calendar/calendar-header";
 import { CalendarMonthGrid } from "@/components/calendar/calendar-month-grid";
+import { CalendarWeekGrid } from "@/components/calendar/calendar-week-grid";
+import { CalendarDayGrid } from "@/components/calendar/calendar-day-grid";
 import { CalendarLegend } from "@/components/calendar/calendar-legend";
-import { CalendarEmptyView } from "@/components/calendar/calendar-empty-view";
 import { MiniCalendar } from "@/components/calendar/mini-calendar";
 import { CalendarsPanel } from "@/components/calendar/calendars-panel";
 import { UpcomingEventsPanel } from "@/components/calendar/upcoming-events-panel";
@@ -20,7 +21,7 @@ import {
   type CalendarEvent,
   type EventCategory
 } from "@/components/calendar/calendar-data";
-import { addMonths, isSameMonth } from "@/lib/calendar-utils";
+import { addDays, addMonths, isSameMonth } from "@/lib/calendar-utils";
 import {
   createCalendarEvent,
   listCalendarEvents,
@@ -151,6 +152,22 @@ export function CalendarPage() {
     setVisibleMonth((month) => addMonths(month, 1));
   }
 
+  function handlePrevWeek() {
+    handleSelectDate(addDays(selectedDate, -7));
+  }
+
+  function handleNextWeek() {
+    handleSelectDate(addDays(selectedDate, 7));
+  }
+
+  function handlePrevDay() {
+    handleSelectDate(addDays(selectedDate, -1));
+  }
+
+  function handleNextDay() {
+    handleSelectDate(addDays(selectedDate, 1));
+  }
+
   const filteredEvents = events.filter(
     (event) =>
       activeCalendarIds.has(event.calendarId) &&
@@ -191,10 +208,22 @@ export function CalendarPage() {
             </div>
           </TabsContent>
           <TabsContent className="min-w-0" value="week">
-            <CalendarEmptyView label="Week" />
+            <CalendarWeekGrid
+              anchorDate={selectedDate}
+              events={filteredEvents}
+              onNextWeek={handleNextWeek}
+              onPrevWeek={handlePrevWeek}
+              onSelectDate={handleSelectDate}
+              selectedDate={selectedDate}
+            />
           </TabsContent>
           <TabsContent className="min-w-0" value="day">
-            <CalendarEmptyView label="Day" />
+            <CalendarDayGrid
+              events={filteredEvents}
+              onNextDay={handleNextDay}
+              onPrevDay={handlePrevDay}
+              selectedDate={selectedDate}
+            />
           </TabsContent>
         </div>
 

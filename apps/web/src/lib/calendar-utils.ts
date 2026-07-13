@@ -16,6 +16,27 @@ export function addMonths(date: Date, delta: number): Date {
   return new Date(date.getFullYear(), date.getMonth() + delta, 1);
 }
 
+export function addDays(date: Date, delta: number): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + delta);
+}
+
+/** Returns the Monday-start week (7 days) containing `date`. */
+export function getWeekDays(date: Date): Date[] {
+  const mondayOffset = (date.getDay() + 6) % 7;
+  const monday = addDays(date, -mondayOffset);
+  return Array.from({ length: WEEK_LENGTH }, (_, index) =>
+    addDays(monday, index)
+  );
+}
+
+export function formatDayLabel(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric"
+  });
+}
+
 export function toISODate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
