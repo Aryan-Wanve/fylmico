@@ -80,17 +80,17 @@ Hostinger Web App hosting set up in ADR 0034:
   build/run step covers both.
 - **Postgres**: Supabase, using its session pooler connection string as
   `DATABASE_URL`.
-- Migrations (`prisma migrate deploy`) are not yet wired into an automatic
-  deploy step for this merged setup - run manually against the Supabase
-  database when the schema changes (see `docs/adr/0033-supabase-render-
-backend.md` for the original one-time Supabase setup, still applicable
-  for the database half).
+- Migrations (`prisma migrate deploy`) run automatically on every process
+  boot, from the root `server.js` entry point, before the standalone
+  Next.js server starts accepting requests - see "Migration Strategy"
+  below. This replaced the earlier manual-only process, which had a real
+  incident: a migration adding `users.username`/`users.avatar_url` sat
+  committed but never applied to Supabase, so signup, login, and Google
+  OAuth all failed in production with `PrismaClientKnownRequestError: The
+column "users.username" does not exist` until it was manually run.
 
 Requirements still outstanding:
 
-- Automatic `prisma migrate deploy` on deploy (previously ran inside the
-  Render API container's startup command; no equivalent step exists yet
-  for the merged Hostinger deploy).
 - Backups beyond whatever Supabase's free tier includes by default.
 - Logging/monitoring beyond Hostinger's and Supabase's own dashboards.
 - A documented rollback procedure beyond Hostinger's own deploy history.
@@ -135,6 +135,13 @@ point at or allow-list.
 - Production database backups must happen before migrations.
 - Rollback notes must be included for risky migrations.
 - Destructive migrations require explicit approval.
+- `prisma migrate deploy` runs automatically at process boot (root
+  `server.js`, before the Next.js standalone server is required in) -
+  it only applies pending migrations, so a boot with nothing pending is a
+  fast no-op. A failed migration exits the process (`process.exit(1)`)
+  rather than starting the app against a stale schema, so a broken
+  migration shows up as a failed/crashed deploy in Hostinger's Runtime
+  Logs instead of silently serving broken auth/data.
 
 ## Backup Strategy
 
