@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import {
   COVER_ICONS,
   STAGE_BADGE_STYLES,
@@ -19,11 +22,15 @@ export function ProjectListRow({
   onDuplicate: () => void;
   onArchive: () => void;
 }) {
+  const router = useRouter();
   const Icon = project.coverIcon ? COVER_ICONS[project.coverIcon] : null;
   const overdue = isProjectOverdue(project);
 
   return (
-    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03]">
+    <div
+      className="flex cursor-pointer items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03]"
+      onClick={() => router.push(`/projects/${project.id}`)}
+    >
       <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg">
         <div
           className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${project.coverGradient ?? "from-slate-400 via-slate-600 to-slate-800"}`}
@@ -69,7 +76,9 @@ export function ProjectListRow({
         {project.dueDate ?? "TBD"}
       </span>
 
-      <ProjectCardMenu onArchive={onArchive} onDuplicate={onDuplicate} />
+      <div onClick={(event) => event.stopPropagation()}>
+        <ProjectCardMenu onArchive={onArchive} onDuplicate={onDuplicate} />
+      </div>
     </div>
   );
 }

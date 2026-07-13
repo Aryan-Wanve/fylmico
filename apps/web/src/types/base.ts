@@ -125,6 +125,15 @@ export type Project = {
   clients: { id: string; name: string }[];
 };
 
+export type Comment = {
+  id: string;
+  body: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CrewMember = {
   id: string;
   name: string;

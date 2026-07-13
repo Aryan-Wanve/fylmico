@@ -8,6 +8,7 @@ import type {
   CalendarEvent,
   ChangePasswordRequest,
   ChatRoom,
+  Comment,
   CreateBoardRequest,
   CreateBookingRequest,
   CreateCalendarEventRequest,
@@ -331,6 +332,28 @@ export async function updateProject(
 export async function archiveProject(projectId: string): Promise<Project> {
   return apiRequest<Project>(`/projects/${projectId}/archive`, {
     method: "POST"
+  });
+}
+
+export async function getProject(projectId: string): Promise<Project> {
+  return apiRequest<Project>(`/projects/${projectId}`);
+}
+
+export async function listProjectComments(
+  projectId: string
+): Promise<Comment[]> {
+  return apiRequest<Comment[]>(`/projects/${projectId}/comments`, {
+    query: { limit: 50 }
+  });
+}
+
+export async function createProjectComment(
+  projectId: string,
+  body: string
+): Promise<Comment> {
+  return apiRequest<Comment>(`/projects/${projectId}/comments`, {
+    method: "POST",
+    body: { body }
   });
 }
 

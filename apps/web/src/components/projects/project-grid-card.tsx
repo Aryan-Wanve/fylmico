@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import {
   COVER_ICONS,
   STAGE_BADGE_STYLES,
@@ -19,11 +22,15 @@ export function ProjectGridCard({
   onDuplicate: () => void;
   onArchive: () => void;
 }) {
+  const router = useRouter();
   const Icon = project.coverIcon ? COVER_ICONS[project.coverIcon] : null;
   const overdue = isProjectOverdue(project);
 
   return (
-    <article className="flex min-w-0 flex-col rounded-2xl border border-black/[0.06] bg-white p-3 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+    <article
+      className="flex min-w-0 cursor-pointer flex-col rounded-2xl border border-black/[0.06] bg-white p-3 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]"
+      onClick={() => router.push(`/projects/${project.id}`)}
+    >
       <div className="relative h-36 w-full overflow-hidden rounded-xl">
         <div
           className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${project.coverGradient ?? "from-slate-400 via-slate-600 to-slate-800"}`}
@@ -41,7 +48,9 @@ export function ProjectGridCard({
         <strong className="truncate text-[0.95rem] font-bold text-[#11142c] dark:text-[#f1f2f8]">
           {project.title}
         </strong>
-        <ProjectCardMenu onArchive={onArchive} onDuplicate={onDuplicate} />
+        <div onClick={(event) => event.stopPropagation()}>
+          <ProjectCardMenu onArchive={onArchive} onDuplicate={onDuplicate} />
+        </div>
       </div>
       <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
         {project.type} &bull; {project.genre}

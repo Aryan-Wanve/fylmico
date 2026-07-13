@@ -1,0 +1,428 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Calendar as CalendarIcon,
+  Loader2,
+  Pencil,
+  Send
+} from "lucide-react";
+import { useWorkspace } from "@/lib/workspace-context";
+import { formatRelativeTime } from "@/lib/relative-time";
+import {
+  archiveProject,
+  createProjectComment,
+  getProject,
+  listCalendarEvents,
+  listProjectComments,
+  updateProject
+} from "@/services/base-workspace.service";
+import {
+  COVER_ICONS,
+  STAGE_BADGE_STYLES,
+  STATUS_LABELS,
+  isProjectOverdue
+} from "@/components/projects/project-data";
+import { toInitials } from "@/components/tasks/task-data";
+import { TeamAvatarStack } from "@/components/projects/team-avatar-stack";
+import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ProjectEditDialog } from "@/components/projects/project-edit-dialog";
+import type {
+  CalendarEvent,
+  Comment,
+  Project,
+  UpdateProjectRequest
+} from "@/types/base";
+
+export function ProjectDetailPage() {
+  const params = useParams<{ projectId: string }>();
+  const router = useRouter();
+  const { activeHouse, workspace } = useWorkspace();
+  const members = useMemo(() => activeHouse?.members ?? [], [activeHouse]);
+
+  const [project, setProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [editOpen, setEditOpen] = useState(false);
+
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [commentDraft, setCommentDraft] = useState("");
+  const [postingComment, setPostingComment] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getProject(params.projectId)
+      .then((data) => {
+        if (!cancelled) {
+          setProject(data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setNotFound(true);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    listCalendarEvents()
+      .then((data) => {
+        if (!cancelled) {
+          setEvents(data);
+        }
+      })
+      .catch(() => undefined);
+
+    listProjectComments(params.projectId)
+      .then((data) => {
+        if (!cancelled) {
+          setComments(data);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) {
+          setCommentsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [params.projectId]);
+
+  const tasks = useMemo(
+    () =>
+      project
+        ? workspace.tasks.filter((task) => task.project === project.title)
+        : [],
+    [workspace.tasks, project]
+  );
+
+  const projectEvents = useMemo(
+    () => events.filter((event) => event.projectId === params.projectId),
+    [events, params.projectId]
+  );
+
+  async function handleSave(request: UpdateProjectRequest) {
+    const updated = await updateProject(params.projectId, request);
+    setProject(updated);
+  }
+
+  async function handleArchive() {
+    if (
+      !window.confirm(
+        "Archive this project? It will be removed from the active list."
+      )
+    ) {
+      return;
+    }
+    try {
+      await archiveProject(params.projectId);
+      router.push("/projects");
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not archive the project."
+      );
+    }
+  }
+
+  async function handlePostComment() {
+    if (!commentDraft.trim()) {
+      return;
+    }
+    setPostingComment(true);
+    try {
+      const comment = await createProjectComment(
+        params.projectId,
+        commentDraft.trim()
+      );
+      setComments((current) => [...current, comment]);
+      setCommentDraft("");
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not post the comment."
+      );
+    } finally {
+      setPostingComment(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="grid min-h-[24rem] place-items-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin text-[#654cff]" />
+      </div>
+    );
+  }
+
+  if (notFound || !project) {
+    return (
+      <div className="grid min-h-[24rem] place-items-center gap-3 p-8 text-center">
+        <p className="text-lg font-bold text-[#11142c] dark:text-[#f1f2f8]">
+          Project not found
+        </p>
+        <Button onClick={() => router.push("/projects")} variant="outline">
+          Back to Projects
+        </Button>
+      </div>
+    );
+  }
+
+  const Icon = project.coverIcon ? COVER_ICONS[project.coverIcon] : null;
+  const overdue = isProjectOverdue(project);
+
+  return (
+    <div className="grid grid-cols-1 gap-6 p-8">
+      <button
+        className="flex w-fit items-center gap-1.5 text-sm font-semibold text-[#5f667d] hover:text-[#11142c] dark:text-[#a8acbf] dark:hover:text-[#f1f2f8]"
+        onClick={() => router.push("/projects")}
+        type="button"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Projects
+      </button>
+
+      <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+        <div
+          className={`relative flex h-40 w-full items-center justify-center bg-gradient-to-br sm:h-48 ${project.coverGradient ?? "from-slate-400 via-slate-600 to-slate-800"}`}
+        >
+          {Icon ? <Icon className="h-14 w-14 text-white/30" /> : null}
+          <span
+            className={`absolute top-4 right-4 rounded-full px-3 py-1 text-xs font-bold text-white ${STAGE_BADGE_STYLES[project.stage]}`}
+          >
+            {project.stage}
+          </span>
+        </div>
+
+        <div className="grid min-w-0 gap-4 p-6">
+          <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
+                {project.title}
+              </h1>
+              <span className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
+                {project.type ?? "No type"} &bull; {project.genre || "No genre"}{" "}
+                &bull; {STATUS_LABELS[project.status]}
+              </span>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                className="h-9 rounded-lg border-black/10 px-3.5 text-sm font-bold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
+                onClick={() => setEditOpen(true)}
+                variant="outline"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Edit
+              </Button>
+              <Button
+                className="h-9 rounded-lg border-red-200 px-3.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:hover:bg-red-500/10"
+                onClick={handleArchive}
+                variant="outline"
+              >
+                Archive
+              </Button>
+            </div>
+          </div>
+
+          {project.description ? (
+            <p className="text-sm leading-relaxed text-[#5f667d] dark:text-[#a8acbf]">
+              {project.description}
+            </p>
+          ) : null}
+
+          <div className="flex flex-wrap items-center gap-6 border-t border-black/5 pt-4 dark:border-white/[0.06]">
+            <div className="flex min-w-40 flex-1 items-center gap-2">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
+                <div
+                  className="h-full rounded-full bg-[#654cff]"
+                  style={{ width: `${project.progress}%` }}
+                />
+              </div>
+              <span className="text-xs font-semibold text-[#5f667d] dark:text-[#a8acbf]">
+                {project.progress}%
+              </span>
+            </div>
+            <span
+              className={`text-xs font-semibold ${overdue ? "text-red-600" : "text-[#8a90a3] dark:text-[#7d8299]"}`}
+            >
+              Due {project.dueDate ?? "TBD"}
+            </span>
+            <TeamAvatarStack members={members} teamIds={project.teamIds} />
+            {project.clients.length > 0 ? (
+              <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+                Clients:{" "}
+                {project.clients.map((client) => client.name).join(", ")}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <Tabs onValueChange={setActiveTab} value={activeTab}>
+        <TabsList variant="line">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="tasks">Tasks ({tasks.length})</TabsTrigger>
+          <TabsTrigger value="calendar">
+            Calendar ({projectEvents.length})
+          </TabsTrigger>
+          <TabsTrigger value="comments">
+            Comments ({comments.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent className="mt-4" value="overview">
+          <div className="rounded-2xl border border-black/[0.06] bg-white p-5 text-sm text-[#5f667d] shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28] dark:text-[#a8acbf]">
+            {project.description ||
+              "No description yet. Click Edit to add one."}
+          </div>
+        </TabsContent>
+
+        <TabsContent className="mt-4" value="tasks">
+          <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+            {tasks.length === 0 ? (
+              <p className="p-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+                No tasks are tagged to this project yet.
+              </p>
+            ) : (
+              tasks.map((task) => (
+                <div
+                  className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 dark:border-white/[0.06]"
+                  key={task.id}
+                >
+                  <AvatarWithStatus
+                    label={toInitials(task.assigneeName)}
+                    size="sm"
+                    userId={task.assigneeId}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
+                      {task.title}
+                    </strong>
+                    <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                      {task.assigneeName} &bull; Due {task.dueDate}
+                    </span>
+                  </div>
+                  <span className="shrink-0 rounded-md bg-black/[0.04] px-2.5 py-1 text-xs font-bold text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]">
+                    {task.status}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent className="mt-4" value="calendar">
+          <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+            {projectEvents.length === 0 ? (
+              <p className="p-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+                No calendar events are linked to this project yet.
+              </p>
+            ) : (
+              projectEvents.map((event) => (
+                <div
+                  className="flex items-center gap-3 border-b border-black/5 px-4 py-3 last:border-b-0 dark:border-white/[0.06]"
+                  key={event.id}
+                >
+                  <CalendarIcon className="h-4 w-4 shrink-0 text-[#654cff]" />
+                  <div className="min-w-0 flex-1">
+                    <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
+                      {event.title}
+                    </strong>
+                    <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                      {event.date} at {event.time}
+                      {event.location ? ` • ${event.location}` : ""}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent className="mt-4" value="comments">
+          <div className="grid gap-4 rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+            {commentsLoading ? (
+              <p className="text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+                Loading comments...
+              </p>
+            ) : comments.length === 0 ? (
+              <p className="text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+                No comments yet. Start the discussion below.
+              </p>
+            ) : (
+              <div className="grid gap-4">
+                {comments.map((comment) => (
+                  <div className="flex items-start gap-3" key={comment.id}>
+                    <AvatarWithStatus
+                      label={toInitials(comment.authorName)}
+                      size="sm"
+                      userId={comment.authorId}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
+                          {comment.authorName}
+                        </strong>
+                        <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                          {formatRelativeTime(comment.createdAt)}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-sm text-[#4b5268] dark:text-[#c7cad9]">
+                        {comment.body}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 border-t border-black/5 pt-4 dark:border-white/[0.06]">
+              <input
+                className="h-10 flex-1 rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
+                onChange={(event) => setCommentDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void handlePostComment();
+                  }
+                }}
+                placeholder="Write a comment..."
+                value={commentDraft}
+              />
+              <Button
+                className="h-10 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+                disabled={postingComment || !commentDraft.trim()}
+                onClick={handlePostComment}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {editOpen ? (
+        <ProjectEditDialog
+          onOpenChange={setEditOpen}
+          onSave={handleSave}
+          open={editOpen}
+          project={project}
+        />
+      ) : null}
+    </div>
+  );
+}
