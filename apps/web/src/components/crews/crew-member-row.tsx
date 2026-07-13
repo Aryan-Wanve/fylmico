@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import { Calendar } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -20,13 +23,17 @@ export function CrewMemberRow({
   onMessage: () => void;
   onEdit: () => void;
 }) {
+  const router = useRouter();
   const departmentMeta = DEPARTMENT_META[member.department];
   const DepartmentIcon = departmentMeta.icon;
   const statusMeta = STATUS_META[member.status];
   const roleMeta = ROLE_CATEGORY_META[member.roleCategory];
 
   return (
-    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03]">
+    <div
+      className="flex cursor-pointer items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03]"
+      onClick={() => router.push(`/crews/${member.id}`)}
+    >
       <div className="flex w-56 min-w-0 shrink-0 items-center gap-3 sm:w-64">
         <Avatar>
           <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
@@ -88,7 +95,13 @@ export function CrewMemberRow({
         {member.availability}
       </span>
 
-      <CrewCardMenu onEdit={onEdit} onMessage={onMessage} onRemove={onRemove} />
+      <div onClick={(event) => event.stopPropagation()}>
+        <CrewCardMenu
+          onEdit={onEdit}
+          onMessage={onMessage}
+          onRemove={onRemove}
+        />
+      </div>
     </div>
   );
 }
