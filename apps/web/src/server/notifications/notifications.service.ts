@@ -8,6 +8,16 @@ import {
 } from "../pagination";
 import { prisma } from "../prisma";
 
+// Maps a notification `type` to the Settings > Notifications preference id
+// that governs it (see settings-data.ts's notificationPreferences list).
+// Types not listed here are administrative/always-on (house joins, invite
+// acceptance, bookings) and aren't user-suppressible.
+const TYPE_TO_PREFERENCE_ID: Record<string, string> = {
+  task_assigned: "task-reminders",
+  task_comment: "comments",
+  project_comment: "comments"
+};
+
 class NotificationsService {
   private readonly prisma = prisma;
 
@@ -17,9 +27,41 @@ class NotificationsService {
     title: string,
     body: string
   ): Promise<void> {
+    const preferenceId = TYPE_TO_PREFERENCE_ID[type];
+    if (preferenceId && !(await this.isPushEnabled(userId, preferenceId))) {
+      return;
+    }
+
     await this.prisma.notification.create({
       data: { userId, type, title, body }
     });
+  }
+
+  private async isPushEnabled(
+    userId: string,
+    preferenceId: string
+  ): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { notificationPreferences: true }
+    });
+
+    const preferences = user?.notificationPreferences;
+    if (!Array.isArray(preferences)) {
+      return true;
+    }
+
+    const saved = preferences.find(
+      (entry): entry is { id: string; push?: boolean } =>
+        typeof entry === "object" &&
+        entry !== null &&
+        "id" in entry &&
+        (entry as { id: unknown }).id === preferenceId
+    );
+
+    // Unset means "use the default", which is enabled for every
+    // preference in settings-data.ts - only an explicit false suppresses.
+    return saved?.push !== false;
   }
 
   async list(
