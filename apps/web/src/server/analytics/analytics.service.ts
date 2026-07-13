@@ -40,7 +40,7 @@ function mondayIndex(date: Date): number {
 class AnalyticsService {
   private readonly prisma = prisma;
 
-  async getAnalytics(userId: string, houseId: string) {
+  async getAnalytics(userId: string, houseId: string, rangeDays = 7) {
     await organizationsService.requireMembership(houseId, userId);
 
     const [
@@ -102,8 +102,8 @@ class AnalyticsService {
       })
     );
 
-    const last7Days = buildLastNDays(7);
-    const timeLoggedByDay = last7Days.map((day) => ({
+    const rangeDaysList = buildLastNDays(rangeDays);
+    const timeLoggedByDay = rangeDaysList.map((day) => ({
       date: day.key,
       label: DAY_LABELS[mondayIndex(day.date)],
       hours: round1(
@@ -139,7 +139,7 @@ class AnalyticsService {
       id: project.id,
       label: project.title,
       color: PROJECT_LINE_COLORS[index % PROJECT_LINE_COLORS.length],
-      points: last7Days.map((day) =>
+      points: rangeDaysList.map((day) =>
         round1(
           timeEntries
             .filter(
@@ -170,7 +170,7 @@ class AnalyticsService {
         hours: round1(hours)
       }));
 
-    const last7DayKeys = new Set(last7Days.map((day) => day.key));
+    const last7DayKeys = new Set(buildLastNDays(7).map((day) => day.key));
     const jobTitleByUser = new Map(
       crewProfiles.map((profile) => [profile.userId, profile.jobTitle])
     );

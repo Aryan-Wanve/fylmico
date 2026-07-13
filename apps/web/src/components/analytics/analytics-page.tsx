@@ -26,9 +26,10 @@ import type { Analytics, Project } from "@/types/base";
 export function AnalyticsPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [rangeDays, setRangeDays] = useState(7);
 
-  function reload() {
-    Promise.all([getAnalytics(), listProjects()])
+  function reload(days: number) {
+    Promise.all([getAnalytics(days), listProjects()])
       .then(([analyticsData, projectsData]) => {
         setAnalytics(analyticsData);
         setProjects(projectsData);
@@ -41,12 +42,56 @@ export function AnalyticsPage() {
   }
 
   useEffect(() => {
-    reload();
-  }, []);
+    reload(rangeDays);
+  }, [rangeDays]);
 
   async function handleLogTime(input: LogTimeInput) {
     await createTimeEntry(input);
-    reload();
+    reload(rangeDays);
+  }
+
+  function handleExportCsv() {
+    if (!analytics) {
+      return;
+    }
+
+    const lines: string[] = [];
+    lines.push("Summary");
+    lines.push("Metric,Value");
+    lines.push(`Total Projects,${analytics.totalProjects}`);
+    lines.push(`Active Projects,${analytics.activeProjects}`);
+    lines.push(`Tasks Total,${analytics.tasksTotal}`);
+    lines.push(`Tasks Completed,${analytics.tasksCompleted}`);
+    lines.push(`Hours Logged,${analytics.hoursLoggedTotal}`);
+    lines.push(`Team Efficiency,${analytics.teamEfficiency}%`);
+    lines.push("");
+    lines.push("Time Logged By Day");
+    lines.push("Date,Label,Hours");
+    for (const day of analytics.timeLoggedByDay) {
+      lines.push(`${day.date},${day.label},${day.hours}`);
+    }
+    lines.push("");
+    lines.push("Top Contributors");
+    lines.push("Name,Hours");
+    for (const contributor of analytics.topContributors) {
+      lines.push(`${contributor.name},${contributor.hours}`);
+    }
+    lines.push("");
+    lines.push("Task Status Breakdown");
+    lines.push("Status,Count");
+    for (const status of analytics.taskStatusBreakdown) {
+      lines.push(`${status.label},${status.count}`);
+    }
+
+    const blob = new Blob([lines.join("\n")], {
+      type: "text/csv;charset=utf-8;"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `fylmico-analytics-${rangeDays}d.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   if (!analytics) {
@@ -63,6 +108,9 @@ export function AnalyticsPage() {
         logTimeSlot={
           <LogTimePopover onLogTime={handleLogTime} projects={projects} />
         }
+        onExportCsv={handleExportCsv}
+        onRangeChange={setRangeDays}
+        rangeDays={rangeDays}
       />
       <StatCardsRow analytics={analytics} />
 

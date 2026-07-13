@@ -443,12 +443,14 @@ export async function createTimeEntry(
   });
 }
 
-export async function getAnalytics(): Promise<Analytics> {
+export async function getAnalytics(days = 7): Promise<Analytics> {
   if (!activeHouseId) {
     throw new Error("Join or create a house before viewing analytics.");
   }
 
-  return apiRequest<Analytics>(`/houses/${activeHouseId}/analytics`);
+  return apiRequest<Analytics>(`/houses/${activeHouseId}/analytics`, {
+    query: { days }
+  });
 }
 
 export async function sendChatMessage(
