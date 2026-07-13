@@ -1,15 +1,19 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Paperclip, Send } from "lucide-react";
+import { Paperclip, Send, X } from "lucide-react";
 import { uploadFileEntry } from "@/services/base-workspace.service";
 
 export function MessageComposer({
   onSend,
-  roomId
+  roomId,
+  replyingToName,
+  onCancelReply
 }: {
   onSend: (body: string) => void;
   roomId: string;
+  replyingToName?: string;
+  onCancelReply?: () => void;
 }) {
   const [value, setValue] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -40,6 +44,19 @@ export function MessageComposer({
 
   return (
     <div className="rounded-2xl border border-black/[0.06] p-3 dark:border-white/[0.08]">
+      {replyingToName ? (
+        <div className="mb-2 flex items-center justify-between rounded-lg bg-black/[0.03] px-2.5 py-1.5 text-xs font-semibold text-[#5f667d] dark:bg-white/[0.05] dark:text-[#a8acbf]">
+          <span>Replying to {replyingToName}</span>
+          <button
+            aria-label="Cancel reply"
+            className="grid h-5 w-5 place-items-center rounded-full hover:bg-black/[0.06] dark:hover:bg-white/[0.08]"
+            onClick={onCancelReply}
+            type="button"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : null}
       <textarea
         className="min-h-[2.75rem] w-full resize-none bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
         onChange={(event) => setValue(event.target.value)}

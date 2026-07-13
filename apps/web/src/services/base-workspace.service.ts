@@ -462,7 +462,17 @@ export async function sendChatMessage(
 
   return apiRequest<ChatRoom>(`/chat/rooms/${request.roomId}/messages`, {
     method: "POST",
-    body: { body: request.body }
+    body: { body: request.body, parentMessageId: request.parentMessageId }
+  });
+}
+
+export async function toggleMessageReaction(
+  messageId: string,
+  emoji: string
+): Promise<ChatRoom> {
+  return apiRequest<ChatRoom>(`/messages/${messageId}/reactions`, {
+    method: "POST",
+    body: { emoji }
   });
 }
 

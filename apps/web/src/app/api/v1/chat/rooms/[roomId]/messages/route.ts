@@ -8,6 +8,11 @@ export const POST = withParamsRoute<{ roomId: string }>(
   async (request: NextRequest, { roomId }) => {
     const user = requireUser(request);
     const dto = await validateDto(SendMessageDto, await readJsonBody(request));
-    return chatService.sendMessage(user.id, roomId, dto.body);
+    return chatService.sendMessage(
+      user.id,
+      roomId,
+      dto.body,
+      dto.parentMessageId
+    );
   }
 );

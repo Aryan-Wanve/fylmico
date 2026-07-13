@@ -38,6 +38,9 @@ model User {
   driveConnection         DriveConnection?
   driveFolderLinks        DriveFolderLink[]
   scripts                 Script[]
+  messageReactions        MessageReaction[]
+  callSheets              CallSheet[]
+  announcements           Announcement[]
 
   @@map("users")
 }
@@ -69,6 +72,8 @@ model Organization {
   characters     Character[]
   storyLocations StoryLocation[]
   scripts        Script[]
+  callSheets     CallSheet[]
+  announcements  Announcement[]
 
   @@map("organizations")
 }
@@ -230,18 +235,38 @@ model Conversation {
 }
 
 model Message {
-  id             String   @id @default(cuid())
-  conversationId String   @map("conversation_id")
-  authorId       String   @map("author_id")
-  body           String
-  createdAt      DateTime @default(now()) @map("created_at")
+  id              String   @id @default(cuid())
+  conversationId  String   @map("conversation_id")
+  authorId        String   @map("author_id")
+  parentMessageId String?  @map("parent_message_id")
+  body            String
+  createdAt       DateTime @default(now()) @map("created_at")
 
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  author       User         @relation(fields: [authorId], references: [id])
+  conversation Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  author       User              @relation(fields: [authorId], references: [id])
+  parent       Message?          @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: Cascade)
+  replies      Message[]         @relation("MessageReplies")
+  reactions    MessageReaction[]
 
   @@index([conversationId])
   @@index([authorId])
+  @@index([parentMessageId])
   @@map("messages")
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  messageId String   @map("message_id")
+  userId    String   @map("user_id")
+  emoji     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@map("message_reactions")
 }
 
 model Project {
@@ -270,6 +295,7 @@ model Project {
   characters     Character[]
   storyLocations StoryLocation[]
   scripts        Script[]
+  callSheets     CallSheet[]
 
   @@index([organizationId])
   @@map("projects")
@@ -605,4 +631,45 @@ model DriveConnection {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("drive_connections")
+}
+
+model CallSheet {
+  id              String   @id @default(cuid())
+  organizationId  String   @map("organization_id")
+  projectId       String?  @map("project_id")
+  title           String
+  shootDate       String   @map("shoot_date")
+  generalCallTime String   @map("general_call_time")
+  location        String?
+  weather         String?
+  notes           String?
+  crewCallTimes   Json     @map("crew_call_times")
+  createdById     String   @map("created_by_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy    User         @relation(fields: [createdById], references: [id])
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("call_sheets")
+}
+
+model Announcement {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  authorId       String   @map("author_id")
+  title          String
+  body           String
+  pinned         Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  author       User         @relation(fields: [authorId], references: [id])
+
+  @@index([organizationId])
+  @@map("announcements")
 }

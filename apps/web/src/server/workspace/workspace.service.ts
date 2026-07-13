@@ -17,7 +17,10 @@ class WorkspaceService {
     const [tasks, chatRooms] = activeOrganizationId
       ? await Promise.all([
           tasksService.getTasksForOrganization(activeOrganizationId),
-          chatService.getConversationsForOrganization(activeOrganizationId)
+          chatService.getConversationsForOrganization(
+            activeOrganizationId,
+            userId
+          )
         ])
       : [[], []];
 

@@ -6,17 +6,27 @@ import type { CreateConversationDto } from "./dto/create-conversation.dto";
 import type { UpdateConversationDto } from "./dto/update-conversation.dto";
 
 const roomInclude = {
-  messages: { include: { author: true }, orderBy: { createdAt: "asc" } }
+  messages: {
+    include: { author: true, reactions: true },
+    orderBy: { createdAt: "asc" }
+  }
 } satisfies Prisma.ConversationInclude;
 
 type ConversationWithRelations = Prisma.ConversationGetPayload<{
   include: typeof roomInclude;
 }>;
 
+const REACTION_EMOJIS = ["👍", "❤️", "😂", "🎉", "😮", "👀"];
+
 class ChatService {
   private readonly prisma = prisma;
 
-  async sendMessage(userId: string, roomId: string, body: string) {
+  async sendMessage(
+    userId: string,
+    roomId: string,
+    body: string,
+    parentMessageId?: string
+  ) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: roomId }
     });
@@ -33,11 +43,74 @@ class ChatService {
       userId
     );
 
+    if (parentMessageId) {
+      const parent = await this.prisma.message.findUnique({
+        where: { id: parentMessageId }
+      });
+      if (!parent || parent.conversationId !== roomId) {
+        throw new AppException(
+          HttpStatus.BAD_REQUEST,
+          "invalid_request",
+          "The message you're replying to doesn't exist in this channel."
+        );
+      }
+    }
+
     await this.prisma.message.create({
-      data: { conversationId: roomId, authorId: userId, body }
+      data: {
+        conversationId: roomId,
+        authorId: userId,
+        body,
+        parentMessageId: parentMessageId ?? null
+      }
     });
 
-    return this.getRoomDto(roomId);
+    return this.getRoomDto(roomId, userId);
+  }
+
+  async toggleReaction(userId: string, messageId: string, emoji: string) {
+    if (!REACTION_EMOJIS.includes(emoji)) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_request",
+        "That's not a supported reaction."
+      );
+    }
+
+    const message = await this.prisma.message.findUnique({
+      where: { id: messageId }
+    });
+    if (!message) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "message_not_found",
+        "This message no longer exists."
+      );
+    }
+
+    const conversation = await this.prisma.conversation.findUniqueOrThrow({
+      where: { id: message.conversationId }
+    });
+    await organizationsService.requireMembership(
+      conversation.organizationId,
+      userId
+    );
+
+    const existing = await this.prisma.messageReaction.findUnique({
+      where: {
+        messageId_userId_emoji: { messageId, userId, emoji }
+      }
+    });
+
+    if (existing) {
+      await this.prisma.messageReaction.delete({ where: { id: existing.id } });
+    } else {
+      await this.prisma.messageReaction.create({
+        data: { messageId, userId, emoji }
+      });
+    }
+
+    return this.getRoomDto(message.conversationId, userId);
   }
 
   async createConversation(
@@ -66,7 +139,7 @@ class ChatService {
       }
     });
 
-    return this.getRoomDto(conversation.id);
+    return this.getRoomDto(conversation.id, userId);
   }
 
   async updateConversation(
@@ -116,17 +189,20 @@ class ChatService {
       }
     });
 
-    return this.getRoomDto(roomId);
+    return this.getRoomDto(roomId, userId);
   }
 
-  async getConversationsForOrganization(organizationId: string) {
+  async getConversationsForOrganization(
+    organizationId: string,
+    userId: string
+  ) {
     const conversations = await this.prisma.conversation.findMany({
       where: { organizationId },
       include: roomInclude,
       orderBy: { createdAt: "asc" }
     });
 
-    return conversations.map(toRoomDto);
+    return conversations.map((conversation) => toRoomDto(conversation, userId));
   }
 
   async listRoomFiles(userId: string, roomId: string) {
@@ -275,29 +351,62 @@ class ChatService {
     return conversation;
   }
 
-  private async getRoomDto(roomId: string) {
+  private async getRoomDto(roomId: string, userId: string) {
     const conversation = await this.prisma.conversation.findUniqueOrThrow({
       where: { id: roomId },
       include: roomInclude
     });
-    return toRoomDto(conversation);
+    return toRoomDto(conversation, userId);
   }
 }
 
 export const chatService = new ChatService();
 
-function toRoomDto(conversation: ConversationWithRelations) {
+function toRoomDto(conversation: ConversationWithRelations, userId: string) {
+  const replyCountByParent = new Map<string, number>();
+  for (const message of conversation.messages) {
+    if (message.parentMessageId) {
+      replyCountByParent.set(
+        message.parentMessageId,
+        (replyCountByParent.get(message.parentMessageId) ?? 0) + 1
+      );
+    }
+  }
+
   return {
     id: conversation.id,
     name: conversation.name,
     topic: conversation.topic,
     unreadCount: 0,
-    messages: conversation.messages.map((message) => ({
-      id: message.id,
-      authorId: message.authorId,
-      authorName: message.author.name,
-      sentAt: message.createdAt.toISOString(),
-      body: message.body
-    }))
+    messages: conversation.messages.map((message) => {
+      const reactionsByEmoji = new Map<
+        string,
+        { emoji: string; count: number; reactedByMe: boolean }
+      >();
+      for (const reaction of message.reactions) {
+        const existing = reactionsByEmoji.get(reaction.emoji);
+        if (existing) {
+          existing.count += 1;
+          existing.reactedByMe ||= reaction.userId === userId;
+        } else {
+          reactionsByEmoji.set(reaction.emoji, {
+            emoji: reaction.emoji,
+            count: 1,
+            reactedByMe: reaction.userId === userId
+          });
+        }
+      }
+
+      return {
+        id: message.id,
+        authorId: message.authorId,
+        authorName: message.author.name,
+        sentAt: message.createdAt.toISOString(),
+        body: message.body,
+        parentMessageId: message.parentMessageId,
+        replyCount: replyCountByParent.get(message.id) ?? 0,
+        reactions: [...reactionsByEmoji.values()]
+      };
+    })
   };
 }

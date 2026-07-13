@@ -12,6 +12,7 @@ import {
   listRoomFiles,
   listRoomTasks,
   sendChatMessage,
+  toggleMessageReaction,
   updateConversation,
   updateTask
 } from "@/services/base-workspace.service";
@@ -82,6 +83,11 @@ export function MessagesPage() {
   const [roomFiles, setRoomFiles] = useState<FileEntryItem[]>([]);
   const [roomTasks, setRoomTasks] = useState<ProductionTask[]>([]);
   const [roomEvents, setRoomEvents] = useState<CalendarEvent[]>([]);
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+
+  const replyingToMessage = activeChannel?.messages.find(
+    (message) => message.id === replyingToId
+  );
 
   useEffect(() => {
     if (!activeChannelId) {
@@ -212,6 +218,7 @@ export function MessagesPage() {
   function handleSelectChannel(id: string) {
     setActiveChannelId(id);
     setActiveTab("messages");
+    setReplyingToId(null);
   }
 
   async function handleSend(body: string) {
@@ -220,11 +227,29 @@ export function MessagesPage() {
     }
 
     try {
-      await sendChatMessage({ roomId: activeChannelId, body });
+      await sendChatMessage({
+        roomId: activeChannelId,
+        body,
+        parentMessageId: replyingToId ?? undefined
+      });
+      setReplyingToId(null);
       await refreshWorkspace();
     } catch (error) {
       window.alert(
         error instanceof Error ? error.message : "Could not send the message."
+      );
+    }
+  }
+
+  async function handleToggleReaction(messageId: string, emoji: string) {
+    try {
+      await toggleMessageReaction(messageId, emoji);
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not react to the message."
       );
     }
   }
@@ -312,13 +337,30 @@ export function MessagesPage() {
                   </div>
                   <div className="grid gap-4 pb-2">
                     {activeChannel.messages.map((message) => (
-                      <MessageBubble key={message.id} message={message} />
+                      <MessageBubble
+                        key={message.id}
+                        message={message}
+                        onReply={() => setReplyingToId(message.id)}
+                        onToggleReaction={(emoji) =>
+                          handleToggleReaction(message.id, emoji)
+                        }
+                        parentAuthorName={
+                          message.parentMessageId
+                            ? activeChannel.messages.find(
+                                (candidate) =>
+                                  candidate.id === message.parentMessageId
+                              )?.authorName
+                            : undefined
+                        }
+                      />
                     ))}
                   </div>
                 </div>
                 <div className="px-4 pb-4">
                   <MessageComposer
+                    onCancelReply={() => setReplyingToId(null)}
                     onSend={handleSend}
+                    replyingToName={replyingToMessage?.authorName}
                     roomId={activeChannel.id}
                   />
                 </div>

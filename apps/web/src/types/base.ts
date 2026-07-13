@@ -251,12 +251,21 @@ export type Analytics = {
   activityHeatmap: ActivityHeatmap;
 };
 
+export type MessageReactionSummary = {
+  emoji: string;
+  count: number;
+  reactedByMe: boolean;
+};
+
 export type ChatMessage = {
   id: string;
   authorId: string;
   authorName: string;
   sentAt: string;
   body: string;
+  parentMessageId: string | null;
+  replyCount: number;
+  reactions: MessageReactionSummary[];
 };
 
 export type ChatRoom = {
@@ -349,6 +358,7 @@ export type UpdateTaskRequest = Partial<{
 export type SendChatMessageRequest = {
   roomId: string;
   body: string;
+  parentMessageId?: string;
 };
 
 export type CreateConversationRequest = {
