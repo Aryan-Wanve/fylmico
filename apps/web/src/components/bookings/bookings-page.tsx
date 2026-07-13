@@ -16,12 +16,21 @@ import { useWorkspace } from "@/lib/workspace-context";
 import {
   createBooking,
   listBookings,
-  listProjects
+  listProjects,
+  updateBookingStatus
 } from "@/services/base-workspace.service";
-import type { Booking, CreateBookingRequest, Project } from "@/types/base";
+import type {
+  Booking,
+  BookingStatus,
+  CreateBookingRequest,
+  Project
+} from "@/types/base";
 
 export function BookingsPage() {
-  const { workspace } = useWorkspace();
+  const { activeHouse, workspace } = useWorkspace();
+  const isOwner =
+    activeHouse?.members.find((member) => member.id === workspace.user.id)
+      ?.role === "Owner";
   const [activeTab, setActiveTab] = useState<BookingsTab>("all");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -80,6 +89,19 @@ export function BookingsPage() {
     setBookings((current) => [booking, ...current]);
   }
 
+  async function handleUpdateStatus(bookingId: string, status: BookingStatus) {
+    try {
+      const updated = await updateBookingStatus(bookingId, status);
+      setBookings((current) =>
+        current.map((booking) => (booking.id === bookingId ? updated : booking))
+      );
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not update the booking."
+      );
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 gap-6 p-8">
       <BookingsHeader />
@@ -100,7 +122,11 @@ export function BookingsPage() {
                 Loading bookings...
               </p>
             ) : (
-              <BookingsTable rows={filteredRows} />
+              <BookingsTable
+                isOwner={isOwner}
+                onUpdateStatus={handleUpdateStatus}
+                rows={filteredRows}
+              />
             )}
             <div className="flex items-center justify-between border-t border-black/5 px-6 py-4 dark:border-white/[0.06]">
               <span className="text-sm font-medium text-[#8a90a3] dark:text-[#7d8299]">

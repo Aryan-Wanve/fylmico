@@ -507,7 +507,11 @@ class OrganizationsService {
     requestingUserId: string,
     targetUserId: string
   ): Promise<void> {
-    await this.requireOwnerRole(organizationId, requestingUserId);
+    await this.requireOwnerRole(
+      organizationId,
+      requestingUserId,
+      "remove members"
+    );
     await this.requireMembership(organizationId, targetUserId);
 
     if (requestingUserId === targetUserId) {
@@ -585,7 +589,11 @@ class OrganizationsService {
     throw new Error("Failed to generate a unique invite code.");
   }
 
-  private async requireOwnerRole(organizationId: string, userId: string) {
+  async requireOwnerRole(
+    organizationId: string,
+    userId: string,
+    action = "do this"
+  ) {
     const membership = await this.prisma.organizationMembership.findUnique({
       where: { organizationId_userId: { organizationId, userId } },
       include: { role: true }
@@ -594,7 +602,7 @@ class OrganizationsService {
       throw new AppException(
         HttpStatus.FORBIDDEN,
         "forbidden",
-        "Only house owners can remove members."
+        `Only house owners can ${action}.`
       );
     }
     return membership;

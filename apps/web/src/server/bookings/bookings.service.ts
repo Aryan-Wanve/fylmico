@@ -1,7 +1,11 @@
 import { AppException, HttpStatus } from "../http";
+import { notificationsService } from "../notifications/notifications.service";
 import { organizationsService } from "../organizations/organizations.service";
 import { prisma } from "../prisma";
 import type { CreateBookingDto } from "./dto/create-booking.dto";
+import type { UpdateBookingStatusDto } from "./dto/update-booking-status.dto";
+
+type BookingStatus = UpdateBookingStatusDto["status"];
 
 function formatBookingWindow(dto: CreateBookingDto): string {
   return dto.startDate === dto.endDate
@@ -67,7 +71,7 @@ class BookingsService {
         endDate: dto.endDate.trim(),
         startTime: dto.startTime.trim(),
         endTime: dto.endTime.trim(),
-        status: dto.status ?? "confirmed",
+        status: dto.status ?? "pending",
         bookedById: userId,
         notes: dto.notes?.trim() || null
       },
@@ -84,6 +88,42 @@ class BookingsService {
     );
 
     return bookingDto;
+  }
+
+  async updateStatus(userId: string, bookingId: string, status: BookingStatus) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId }
+    });
+    if (!booking) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "booking_not_found",
+        "This booking does not exist."
+      );
+    }
+
+    await organizationsService.requireOwnerRole(
+      booking.organizationId,
+      userId,
+      "approve or reject bookings"
+    );
+
+    const updated = await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { status },
+      include: bookingInclude
+    });
+
+    if (updated.bookedById !== userId && status !== "pending") {
+      await notificationsService.create(
+        updated.bookedById,
+        "booking_status_changed",
+        `Booking ${status}: ${updated.resource.name}`,
+        `Your booking for ${updated.resource.name} was ${status}.`
+      );
+    }
+
+    return toBookingDto(updated);
   }
 
   private async findOrCreateResource(

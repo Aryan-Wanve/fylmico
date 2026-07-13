@@ -1,4 +1,4 @@
-import { Building2, Calendar, Camera, DoorOpen } from "lucide-react";
+import { Building2, Calendar, Camera, Check, DoorOpen, X } from "lucide-react";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import {
   CATEGORY_STYLES,
@@ -6,7 +6,7 @@ import {
   STATUS_STYLES
 } from "@/components/bookings/bookings-data";
 import { formatRelativeTime } from "@/lib/relative-time";
-import type { Booking, ResourceCategory } from "@/types/base";
+import type { Booking, BookingStatus, ResourceCategory } from "@/types/base";
 
 const CATEGORY_ICONS: Record<ResourceCategory, typeof Building2> = {
   studio: Building2,
@@ -14,7 +14,15 @@ const CATEGORY_ICONS: Record<ResourceCategory, typeof Building2> = {
   venue: DoorOpen
 };
 
-export function BookingsTable({ rows }: { rows: Booking[] }) {
+export function BookingsTable({
+  rows,
+  isOwner = false,
+  onUpdateStatus
+}: {
+  rows: Booking[];
+  isOwner?: boolean;
+  onUpdateStatus?: (bookingId: string, status: BookingStatus) => void;
+}) {
   if (rows.length === 0) {
     return (
       <p className="px-6 py-12 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
@@ -34,6 +42,7 @@ export function BookingsTable({ rows }: { rows: Booking[] }) {
             <th className="px-6 py-3 font-bold">Dates</th>
             <th className="px-6 py-3 font-bold">Status</th>
             <th className="px-6 py-3 font-bold">Booked By</th>
+            {isOwner ? <th className="px-6 py-3 font-bold">Actions</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -120,6 +129,34 @@ export function BookingsTable({ rows }: { rows: Booking[] }) {
                     </div>
                   </div>
                 </td>
+                {isOwner ? (
+                  <td className="px-6 py-3.5">
+                    {row.status === "pending" ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20"
+                          onClick={() => onUpdateStatus?.(row.id, "confirmed")}
+                          title="Approve"
+                          type="button"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                        <button
+                          className="grid h-8 w-8 place-items-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20"
+                          onClick={() => onUpdateStatus?.(row.id, "cancelled")}
+                          title="Reject"
+                          type="button"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                        —
+                      </span>
+                    )}
+                  </td>
+                ) : null}
               </tr>
             );
           })}

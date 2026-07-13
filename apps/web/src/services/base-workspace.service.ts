@@ -7,6 +7,7 @@ import type {
   Booking,
   CalendarEvent,
   ChangePasswordRequest,
+  BookingStatus,
   ChatRoom,
   Comment,
   CreateBoardRequest,
@@ -829,6 +830,16 @@ export async function createBooking(
   return apiRequest<Booking>(`/houses/${activeHouseId}/bookings`, {
     method: "POST",
     body: request
+  });
+}
+
+export async function updateBookingStatus(
+  bookingId: string,
+  status: BookingStatus
+): Promise<Booking> {
+  return apiRequest<Booking>(`/bookings/${bookingId}`, {
+    method: "PATCH",
+    body: { status }
   });
 }
 
