@@ -47,6 +47,15 @@ const prismaCliEntry = path.join(
 // Runs on every boot (not just fresh deploys) since Hostinger can restart
 // the process without a new push; prisma migrate deploy only applies
 // pending migrations, so a no-op run is fast and safe.
+//
+// Failure here is deliberately non-fatal: some hosting sandboxes (this
+// project's shared Hostinger plan among them) restrict or throttle
+// spawning subprocesses from the running Node process, so the schema
+// engine binary Prisma spawns internally can fail with EAGAIN even
+// though the app itself is healthy. Refusing to start the whole server
+// over that would take down working routes to "fix" a migration that
+// was never going to succeed in-process anyway - log loudly and keep
+// booting; apply migrations out-of-band instead (see docs/deployment.md).
 try {
   console.log("[migrate] applying pending database migrations...");
   execFileSync(
@@ -57,10 +66,9 @@ try {
   console.log("[migrate] database schema is up to date.");
 } catch (error) {
   console.error(
-    "[migrate] database migration failed - refusing to start the server."
+    "[migrate] database migration failed - starting the server anyway; apply migrations manually (see docs/deployment.md)."
   );
   console.error(error.message);
-  process.exit(1);
 }
 
 require(standaloneServerPath);
