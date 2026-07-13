@@ -157,7 +157,7 @@ export function ScriptsPage() {
   }
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-1 gap-6 p-8">
+    <div className="grid min-h-full grid-cols-1 gap-6 p-4 sm:p-6 lg:h-full lg:min-h-0 lg:p-8">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-black text-[#11142c] sm:text-3xl dark:text-[#f1f2f8]">
@@ -178,8 +178,8 @@ export function ScriptsPage() {
         </button>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[18rem_1fr] gap-6">
-        <div className="grid min-h-0 content-start gap-2 overflow-y-auto rounded-2xl border border-black/[0.06] bg-white p-3 dark:border-white/[0.08] dark:bg-[#171a28]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <div className="grid min-h-0 content-start gap-2 overflow-y-auto rounded-2xl border border-black/[0.06] bg-white p-3 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] lg:max-h-none dark:border-white/[0.08] dark:bg-[#171a28]">
           {loading ? (
             <p className="px-3 py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
               Loading scripts...
@@ -223,7 +223,7 @@ export function ScriptsPage() {
             script={activeScript}
           />
         ) : (
-          <div className="grid place-items-center rounded-2xl border border-dashed border-black/10 bg-white/60 text-center dark:border-white/10 dark:bg-white/[0.02]">
+          <div className="grid min-h-80 place-items-center rounded-2xl border border-dashed border-black/10 bg-white/60 text-center dark:border-white/10 dark:bg-white/[0.02]">
             <div className="grid gap-2 p-10">
               <p className="text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                 Select a script or create a new one
