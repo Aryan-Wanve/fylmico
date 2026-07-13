@@ -24,6 +24,13 @@ try {
   var stored = window.localStorage.getItem("fylmico-theme");
   var isDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
   document.documentElement.classList.toggle("dark", isDark);
+  var accent = window.localStorage.getItem("fylmico-accent");
+  var accentValues = { blue: "#2563eb", emerald: "#059669", rose: "#e11d48", violet: "#654cff" };
+  document.documentElement.style.setProperty("--fylmico-accent", accentValues[accent] || accentValues.violet);
+  var density = window.localStorage.getItem("fylmico-density");
+  if (density === "compact" || density === "comfortable") {
+    document.documentElement.dataset.density = density;
+  }
 } catch (error) {}
 `;
 

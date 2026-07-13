@@ -59,7 +59,7 @@ export default function AuthenticatedLayout({
   }, [isHydrated, router]);
 
   if (!isHydrated || !hasSession() || !workspace) {
-    return null;
+    return <AppLoadingState />;
   }
 
   return (
@@ -68,5 +68,25 @@ export default function AuthenticatedLayout({
         <AppShellGate>{children}</AppShellGate>
       </PromptDialogProvider>
     </WorkspaceProvider>
+  );
+}
+
+function AppLoadingState() {
+  return (
+    <div className="grid min-h-screen place-items-center bg-[#f7f7fb] px-6 text-center dark:bg-[#0e0f18]">
+      <div className="grid w-full max-w-sm gap-5 rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_1rem_3rem_rgba(53,45,124,0.06)] dark:border-white/[0.08] dark:bg-[#171a28]">
+        <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]">
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        </div>
+        <div>
+          <p className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
+            Loading Fylmico
+          </p>
+          <p className="mt-1 text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            Getting your workspace ready.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

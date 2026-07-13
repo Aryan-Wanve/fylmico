@@ -5,13 +5,15 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --color-background: #0b0d10;
-  --color-foreground: #f5f7fa;
-  --color-panel: #11151b;
-  --color-panel-soft: #171c23;
-  --color-border: rgb(255 255 255 / 0.1);
-  --color-muted: rgb(255 255 255 / 0.52);
-  --color-accent: #8bd3ff;
+  --color-background: #f7f7fb;
+  --color-foreground: #11142c;
+  --color-panel: #ffffff;
+  --color-panel-soft: #f0f1f7;
+  --color-border: rgb(17 20 44 / 0.08);
+  --color-muted: rgb(95 102 125 / 0.88);
+  --color-accent: var(--fylmico-accent, #654cff);
+  --fylmico-accent: #654cff;
+  --fylmico-density-scale: 1;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -52,6 +54,7 @@
 
 html {
   background: var(--color-background);
+  color-scheme: light;
 }
 
 body {
@@ -71,6 +74,24 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html.dark {
+  --color-background: #0e0f18;
+  --color-foreground: #f1f2f8;
+  --color-panel: #171a28;
+  --color-panel-soft: #11131d;
+  --color-border: rgb(255 255 255 / 0.08);
+  --color-muted: rgb(168 172 191 / 0.88);
+  color-scheme: dark;
+}
+
+html[data-density="compact"] {
+  --fylmico-density-scale: 0.88;
+}
+
+html[data-density="comfortable"] {
+  --fylmico-density-scale: 1.08;
 }
 
 ::selection {
@@ -106,6 +127,20 @@ a {
     color 150ms ease,
     border-color 150ms ease,
     opacity 150ms ease;
+}
+
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition:
+    background-color 320ms ease,
+    border-color 320ms ease,
+    color 320ms ease,
+    fill 320ms ease,
+    stroke 320ms ease,
+    box-shadow 320ms ease,
+    opacity 220ms ease !important;
 }
 
 button:disabled {
@@ -157,6 +192,12 @@ button:disabled {
 }
 
 .dark {
+  --color-background: #0e0f18;
+  --color-foreground: #f1f2f8;
+  --color-panel: #171a28;
+  --color-panel-soft: #11131d;
+  --color-border: rgb(255 255 255 / 0.08);
+  --color-muted: rgb(168 172 191 / 0.88);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
