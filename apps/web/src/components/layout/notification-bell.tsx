@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Bell } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Bell,
+  Calendar,
+  CheckCheck,
+  MessageSquare,
+  UserPlus,
+  Users
+} from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -15,24 +22,88 @@ import {
 } from "@/services/base-workspace.service";
 import type { NotificationItem } from "@/types/base";
 
+const POLL_INTERVAL_MS = 25_000;
+
+const TYPE_STYLES: Record<
+  string,
+  { icon: typeof Bell; bg: string; color: string }
+> = {
+  task_assigned: {
+    icon: CheckCheck,
+    bg: "bg-[#654cff]/10",
+    color: "text-[#654cff]"
+  },
+  task_comment: {
+    icon: MessageSquare,
+    bg: "bg-[#3b82f6]/10",
+    color: "text-[#3b82f6]"
+  },
+  project_comment: {
+    icon: MessageSquare,
+    bg: "bg-[#3b82f6]/10",
+    color: "text-[#3b82f6]"
+  },
+  house_joined: {
+    icon: Users,
+    bg: "bg-[#16c784]/10",
+    color: "text-[#16c784]"
+  },
+  invitation_accepted: {
+    icon: UserPlus,
+    bg: "bg-[#16c784]/10",
+    color: "text-[#16c784]"
+  },
+  booking_created: {
+    icon: Calendar,
+    bg: "bg-[#f97316]/10",
+    color: "text-[#f97316]"
+  }
+};
+
+const DEFAULT_TYPE_STYLE = {
+  icon: Bell,
+  bg: "bg-[#8a90a3]/10",
+  color: "text-[#8a90a3]"
+};
+
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const isOpenRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
 
-    listNotifications()
-      .then((data) => {
-        if (!cancelled) {
-          setNotifications(data);
-        }
-      })
-      .catch(() => {
-        // Notification bell fails quietly.
-      });
+    function refresh() {
+      listNotifications()
+        .then((data) => {
+          if (!cancelled) {
+            setNotifications(data);
+          }
+        })
+        .catch(() => {
+          // Notification bell fails quietly.
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setLoading(false);
+          }
+        });
+    }
+
+    refresh();
+    // Polls in the background so the unread badge stays fresh without a
+    // full realtime (WebSocket) layer - a deliberately simple substitute
+    // documented as the deferred approach in ADR 0023.
+    const interval = window.setInterval(() => {
+      if (!isOpenRef.current) {
+        refresh();
+      }
+    }, POLL_INTERVAL_MS);
 
     return () => {
       cancelled = true;
+      window.clearInterval(interval);
     };
   }, []);
 
@@ -41,6 +112,7 @@ export function NotificationBell() {
   ).length;
 
   async function handleOpen(open: boolean) {
+    isOpenRef.current = open;
     if (!open) {
       return;
     }
@@ -89,7 +161,9 @@ export function NotificationBell() {
           >
             <Bell className="h-[1.15rem] w-[1.15rem]" />
             {unreadCount > 0 ? (
-              <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-[#3b82f6]" />
+              <span className="absolute top-1.5 right-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-[#ef4444] px-1 text-[0.6rem] font-bold text-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
             ) : null}
           </button>
         }
@@ -109,37 +183,57 @@ export function NotificationBell() {
             </button>
           ) : null}
         </div>
-        <div className="grid gap-1">
-          {notifications.length > 0 ? (
-            notifications.slice(0, 6).map((notification) => (
-              <button
-                className={`flex items-start gap-2.5 rounded-lg p-2 text-left hover:bg-black/[0.03] dark:hover:bg-white/[0.05] ${
-                  notification.readAt ? "" : "bg-[#654cff]/[0.04]"
-                }`}
-                key={notification.id}
-                onClick={() => handleSelect(notification)}
-                type="button"
-              >
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#654cff]/10 text-xs font-bold text-[#654cff]">
-                  {notification.title.slice(0, 1).toUpperCase()}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm text-[#3a3f57] dark:text-[#b4b8cc]">
-                    <strong className="font-semibold">
-                      {notification.title}
-                    </strong>{" "}
-                    {notification.body}
-                  </p>
-                  <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
-                    {formatRelativeTime(notification.createdAt)}
-                  </span>
-                </div>
-              </button>
-            ))
-          ) : (
-            <p className="py-4 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
-              You&apos;re all caught up.
+        <div className="grid max-h-96 gap-1 overflow-y-auto">
+          {loading ? (
+            <p className="py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+              Loading...
             </p>
+          ) : notifications.length > 0 ? (
+            notifications.slice(0, 8).map((notification) => {
+              const style =
+                TYPE_STYLES[notification.type] ?? DEFAULT_TYPE_STYLE;
+              const Icon = style.icon;
+
+              return (
+                <button
+                  className={`flex items-start gap-2.5 rounded-lg p-2 text-left hover:bg-black/[0.03] dark:hover:bg-white/[0.05] ${
+                    notification.readAt ? "" : "bg-[#654cff]/[0.04]"
+                  }`}
+                  key={notification.id}
+                  onClick={() => handleSelect(notification)}
+                  type="button"
+                >
+                  <span
+                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${style.bg} ${style.color}`}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-[#3a3f57] dark:text-[#b4b8cc]">
+                      <strong className="font-semibold text-[#12142b] dark:text-[#f1f2f8]">
+                        {notification.title}
+                      </strong>{" "}
+                      {notification.body}
+                    </p>
+                    <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                      {formatRelativeTime(notification.createdAt)}
+                    </span>
+                  </div>
+                  {!notification.readAt ? (
+                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#654cff]" />
+                  ) : null}
+                </button>
+              );
+            })
+          ) : (
+            <div className="grid place-items-center gap-2 py-8 text-center">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-black/[0.04] text-[#8a90a3] dark:bg-white/[0.06] dark:text-[#7d8299]">
+                <Bell className="h-4.5 w-4.5" />
+              </span>
+              <p className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
+                You&apos;re all caught up.
+              </p>
+            </div>
           )}
         </div>
       </PopoverContent>
