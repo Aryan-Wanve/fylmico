@@ -87,7 +87,7 @@ async function rawFetch<T>(
 // single POST /auth/refresh, not one per request.
 let refreshPromise: Promise<boolean> | null = null;
 
-async function refreshSession(): Promise<boolean> {
+export async function refreshSession(): Promise<boolean> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
     return false;

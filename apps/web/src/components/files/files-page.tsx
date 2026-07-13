@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FilesHeader } from "@/components/files/files-header";
 import {
   FilesBreadcrumb,
@@ -15,6 +15,10 @@ import { FilesEmptyState } from "@/components/files/files-empty-state";
 import { StorageOverviewPanel } from "@/components/files/storage-overview-panel";
 import { RecentFileActivityPanel } from "@/components/files/recent-file-activity-panel";
 import { DriveConnectionBanner } from "@/components/files/drive-connection-banner";
+import {
+  UploadProgressToast,
+  type UploadProgressItem
+} from "@/components/files/upload-progress-toast";
 import { PaginationFooter } from "@/components/layout/pagination-footer";
 import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
@@ -23,7 +27,8 @@ import {
   getFileDownloadUrl,
   getFilesSummary,
   listFileEntries,
-  uploadFileEntry
+  uploadFileEntryWithProgress,
+  type UploadHandle
 } from "@/services/base-workspace.service";
 import {
   disconnectDrive,
@@ -48,6 +53,9 @@ export function FilesPage() {
     connected: false,
     email: null
   });
+  const [uploads, setUploads] = useState<UploadProgressItem[]>([]);
+  const uploadHandles = useRef(new Map<string, UploadHandle>());
+  const uploadStartTimes = useRef(new Map<string, number>());
 
   const currentFolderId = path[path.length - 1].id;
 
@@ -190,22 +198,92 @@ export function FilesPage() {
 
     const input = document.createElement("input");
     input.type = "file";
-    input.onchange = async () => {
+    input.onchange = () => {
       const file = input.files?.[0];
       if (!file) {
         return;
       }
 
-      try {
-        const uploaded = await uploadFileEntry(file, currentFolderId);
-        setEntries((current) => [uploaded, ...current]);
-      } catch (error) {
-        window.alert(
-          error instanceof Error ? error.message : "Could not upload the file."
-        );
-      }
+      const uploadId = `${Date.now()}-${file.name}`;
+      uploadStartTimes.current.set(uploadId, performance.now());
+      setUploads((current) => [
+        {
+          id: uploadId,
+          fileName: file.name,
+          loaded: 0,
+          total: file.size,
+          speedBytesPerSec: 0,
+          status: "uploading"
+        },
+        ...current
+      ]);
+
+      const handle = uploadFileEntryWithProgress(
+        file,
+        currentFolderId,
+        (loaded, total) => {
+          const startedAt =
+            uploadStartTimes.current.get(uploadId) ?? performance.now();
+          const elapsedSeconds = (performance.now() - startedAt) / 1000;
+          const speedBytesPerSec =
+            elapsedSeconds > 0 ? loaded / elapsedSeconds : 0;
+          setUploads((current) =>
+            current.map((upload) =>
+              upload.id === uploadId
+                ? { ...upload, loaded, total, speedBytesPerSec }
+                : upload
+            )
+          );
+        }
+      );
+      uploadHandles.current.set(uploadId, handle);
+
+      handle.promise
+        .then((uploaded) => {
+          setEntries((current) => [uploaded, ...current]);
+          setUploads((current) =>
+            current.map((upload) =>
+              upload.id === uploadId
+                ? { ...upload, status: "done", loaded: upload.total }
+                : upload
+            )
+          );
+          setTimeout(() => {
+            setUploads((current) =>
+              current.filter((upload) => upload.id !== uploadId)
+            );
+          }, 4000);
+        })
+        .catch((error) => {
+          setUploads((current) =>
+            current.map((upload) =>
+              upload.id === uploadId
+                ? {
+                    ...upload,
+                    status: "error",
+                    errorMessage:
+                      error instanceof Error
+                        ? error.message
+                        : "Could not upload the file."
+                  }
+                : upload
+            )
+          );
+        })
+        .finally(() => {
+          uploadHandles.current.delete(uploadId);
+          uploadStartTimes.current.delete(uploadId);
+        });
     };
     input.click();
+  }
+
+  function handleDismissUpload(uploadId: string) {
+    setUploads((current) => current.filter((upload) => upload.id !== uploadId));
+  }
+
+  function handleCancelUpload(uploadId: string) {
+    uploadHandles.current.get(uploadId)?.cancel();
   }
 
   async function handleDelete(entryId: string) {
@@ -330,6 +408,12 @@ export function FilesPage() {
           <RecentFileActivityPanel summary={summary} />
         </aside>
       </div>
+
+      <UploadProgressToast
+        onCancel={handleCancelUpload}
+        onDismiss={handleDismissUpload}
+        uploads={uploads}
+      />
     </div>
   );
 }

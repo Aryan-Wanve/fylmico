@@ -1,5 +1,5 @@
-import { apiRequest } from "@/lib/api/client";
-import { clearSession, setSession } from "@/lib/session";
+import { apiRequest, refreshSession } from "@/lib/api/client";
+import { clearSession, getAccessToken, setSession } from "@/lib/session";
 import type {
   AccountSession,
   Analytics,
@@ -651,6 +651,107 @@ export async function uploadFileEntry(
     method: "POST",
     body: formData
   });
+}
+
+export interface UploadHandle {
+  promise: Promise<FileEntryItem>;
+  cancel: () => void;
+}
+
+// XMLHttpRequest (not fetch) so `xhr.upload.onprogress` can report bytes
+// sent as the request body streams out - fetch has no equivalent hook for
+// upload (as opposed to download) progress.
+export function uploadFileEntryWithProgress(
+  file: File,
+  parentId: string | null,
+  onProgress: (loaded: number, total: number) => void,
+  conversationId?: string | null
+): UploadHandle {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before uploading files.");
+  }
+  const houseId = activeHouseId;
+
+  const formData = new FormData();
+  formData.set("file", file);
+  if (parentId) {
+    formData.set("parentId", parentId);
+  }
+  if (conversationId) {
+    formData.set("conversationId", conversationId);
+  }
+
+  class UploadHttpError extends Error {
+    constructor(
+      message: string,
+      readonly status: number
+    ) {
+      super(message);
+    }
+  }
+
+  let activeRequest: XMLHttpRequest | undefined;
+
+  const send = (): Promise<FileEntryItem> =>
+    new Promise((resolve, reject) => {
+      const request = new XMLHttpRequest();
+      activeRequest = request;
+      request.open("POST", `/api/v1/houses/${houseId}/files/upload`);
+      const token = getAccessToken();
+      if (token) {
+        request.setRequestHeader("Authorization", `Bearer ${token}`);
+      }
+      request.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          onProgress(event.loaded, event.total);
+        }
+      };
+      request.onload = () => {
+        let payload: {
+          data?: FileEntryItem;
+          error?: { message: string };
+        } | null;
+        try {
+          payload = JSON.parse(request.responseText);
+        } catch {
+          payload = null;
+        }
+        if (request.status >= 200 && request.status < 300 && payload?.data) {
+          resolve(payload.data);
+        } else {
+          reject(
+            new UploadHttpError(
+              payload?.error?.message ?? "Could not upload the file.",
+              request.status
+            )
+          );
+        }
+      };
+      request.onerror = () =>
+        reject(new UploadHttpError("Could not upload the file.", 0));
+      request.onabort = () =>
+        reject(new UploadHttpError("Upload cancelled.", 0));
+      request.send(formData);
+    });
+
+  const promise = (async () => {
+    try {
+      return await send();
+    } catch (error) {
+      if (error instanceof UploadHttpError && error.status === 401) {
+        const refreshed = await refreshSession();
+        if (refreshed) {
+          return await send();
+        }
+      }
+      throw error;
+    }
+  })();
+
+  return {
+    promise,
+    cancel: () => activeRequest?.abort()
+  };
 }
 
 export async function deleteFileEntry(entryId: string): Promise<void> {
