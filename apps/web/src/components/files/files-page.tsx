@@ -11,6 +11,7 @@ import { StorageUsedPanel } from "@/components/files/storage-used-panel";
 import { FileListColumnHeader } from "@/components/files/file-list-column-header";
 import { FileListRow } from "@/components/files/file-list-row";
 import { FileGridCard } from "@/components/files/file-grid-card";
+import { FilePreviewModal } from "@/components/files/file-preview-modal";
 import { FilesEmptyState } from "@/components/files/files-empty-state";
 import { StorageOverviewPanel } from "@/components/files/storage-overview-panel";
 import { RecentFileActivityPanel } from "@/components/files/recent-file-activity-panel";
@@ -54,6 +55,7 @@ export function FilesPage() {
     email: null
   });
   const [uploads, setUploads] = useState<UploadProgressItem[]>([]);
+  const [previewFile, setPreviewFile] = useState<FileEntryItem | null>(null);
   const uploadHandles = useRef(new Map<string, UploadHandle>());
   const uploadStartTimes = useRef(new Map<string, number>());
 
@@ -166,12 +168,13 @@ export function FilesPage() {
     }
   }
 
-  function handleOpenFolder(entry: FileEntryItem) {
-    if (entry.type !== "folder") {
-      return;
+  function handleOpenEntry(entry: FileEntryItem) {
+    if (entry.type === "folder") {
+      setPath((current) => [...current, { id: entry.id, name: entry.name }]);
+      setPage(1);
+    } else {
+      setPreviewFile(entry);
     }
-    setPath((current) => [...current, { id: entry.id, name: entry.name }]);
-    setPage(1);
   }
 
   async function handleNewFolder() {
@@ -358,11 +361,7 @@ export function FilesPage() {
                         ? () => handleDownload(entry.id)
                         : undefined
                     }
-                    onOpen={
-                      entry.type === "folder"
-                        ? () => handleOpenFolder(entry)
-                        : undefined
-                    }
+                    onOpen={() => handleOpenEntry(entry)}
                   />
                 ))}
               </div>
@@ -379,11 +378,7 @@ export function FilesPage() {
                       ? () => handleDownload(entry.id)
                       : undefined
                   }
-                  onOpen={
-                    entry.type === "folder"
-                      ? () => handleOpenFolder(entry)
-                      : undefined
-                  }
+                  onOpen={() => handleOpenEntry(entry)}
                 />
               ))}
             </div>
@@ -414,6 +409,18 @@ export function FilesPage() {
         onDismiss={handleDismissUpload}
         uploads={uploads}
       />
+
+      {previewFile ? (
+        <FilePreviewModal
+          file={previewFile}
+          onDownload={handleDownload}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPreviewFile(null);
+            }
+          }}
+        />
+      ) : null}
     </div>
   );
 }
