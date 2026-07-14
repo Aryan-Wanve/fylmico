@@ -19,28 +19,30 @@ model User {
   createdAt               DateTime  @default(now()) @map("created_at")
   updatedAt               DateTime  @updatedAt @map("updated_at")
 
-  authAccounts            AuthAccount[]
-  sessions                Session[]
-  emailVerificationTokens EmailVerificationToken[]
-  passwordResetTokens     PasswordResetToken[]
-  organizationMemberships OrganizationMembership[]
-  assignedTasks           Task[]
-  messages                Message[]
-  notifications           Notification[]
-  comments                Comment[]
-  crewProfiles            CrewProfile[]
-  calendarEvents          CalendarEvent[]
-  timeEntries             TimeEntry[]
-  sentInvitations         HouseInvitation[] @relation("InvitationsSent")
-  acceptedInvitations     HouseInvitation[] @relation("InvitationsAccepted")
-  bookings                Booking[]
-  uploadedFiles           FileEntry[]
-  driveConnection         DriveConnection?
-  driveFolderLinks        DriveFolderLink[]
-  scripts                 Script[]
-  messageReactions        MessageReaction[]
-  callSheets              CallSheet[]
-  announcements           Announcement[]
+  authAccounts             AuthAccount[]
+  sessions                 Session[]
+  emailVerificationTokens  EmailVerificationToken[]
+  passwordResetTokens      PasswordResetToken[]
+  organizationMemberships  OrganizationMembership[]
+  assignedTasks            Task[]
+  messages                 Message[]
+  notifications            Notification[]
+  comments                 Comment[]
+  crewProfiles             CrewProfile[]
+  calendarEvents           CalendarEvent[]
+  timeEntries              TimeEntry[]
+  sentInvitations          HouseInvitation[]        @relation("InvitationsSent")
+  acceptedInvitations      HouseInvitation[]        @relation("InvitationsAccepted")
+  houseJoinRequestsSent    HouseJoinRequest[]       @relation("JoinRequestsSent")
+  houseJoinRequestsHandled HouseJoinRequest[]       @relation("JoinRequestsHandled")
+  bookings                 Booking[]
+  uploadedFiles            FileEntry[]
+  driveConnection          DriveConnection?
+  driveFolderLinks         DriveFolderLink[]
+  scripts                  Script[]
+  messageReactions         MessageReaction[]
+  callSheets               CallSheet[]
+  announcements            Announcement[]
 
   @@map("users")
 }
@@ -54,17 +56,18 @@ model Organization {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  roles         Role[]
-  memberships   OrganizationMembership[]
-  tasks         Task[]
-  conversations Conversation[]
-  projects      Project[]
-  clients       Client[]
+  roles          Role[]
+  memberships    OrganizationMembership[]
+  tasks          Task[]
+  conversations  Conversation[]
+  projects       Project[]
+  clients        Client[]
   comments       Comment[]
   crewProfiles   CrewProfile[]
   calendarEvents CalendarEvent[]
   timeEntries    TimeEntry[]
   invitations    HouseInvitation[]
+  joinRequests   HouseJoinRequest[]
   resources      Resource[]
   bookings       Booking[]
   boards         Board[]
@@ -130,6 +133,25 @@ model HouseInvitation {
   @@index([organizationId])
   @@index([email])
   @@map("house_invitations")
+}
+
+model HouseJoinRequest {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  userId         String    @map("user_id")
+  status         String    @default("pending")
+  respondedById  String?   @map("responded_by_id")
+  respondedAt    DateTime? @map("responded_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation("JoinRequestsSent", fields: [userId], references: [id], onDelete: Cascade)
+  respondedBy  User?        @relation("JoinRequestsHandled", fields: [respondedById], references: [id])
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("house_join_requests")
 }
 
 model AuthAccount {
@@ -225,7 +247,7 @@ model Conversation {
   topic          String
   createdAt      DateTime @default(now()) @map("created_at")
 
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   messages       Message[]
   tasks          Task[]
   calendarEvents CalendarEvent[]
@@ -288,7 +310,7 @@ model Project {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   clients        ProjectClient[]
   calendarEvents CalendarEvent[]
   timeEntries    TimeEntry[]
@@ -586,11 +608,11 @@ model FileEntry {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  parent       FileEntry?    @relation("FileEntryChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  children     FileEntry[]   @relation("FileEntryChildren")
-  uploadedBy   User          @relation(fields: [uploadedById], references: [id])
-  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent           FileEntry?        @relation("FileEntryChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children         FileEntry[]       @relation("FileEntryChildren")
+  uploadedBy       User              @relation(fields: [uploadedById], references: [id])
+  conversation     Conversation?     @relation(fields: [conversationId], references: [id], onDelete: SetNull)
   driveFolderLinks DriveFolderLink[]
 
   @@index([organizationId])
