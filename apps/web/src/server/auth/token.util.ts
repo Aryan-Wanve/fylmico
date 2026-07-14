@@ -1,7 +1,11 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 
 export function generateOpaqueToken(): string {
   return randomBytes(32).toString("hex");
+}
+
+export function generateOtp(): string {
+  return randomInt(0, 1_000_000).toString().padStart(6, "0");
 }
 
 export function hashOpaqueToken(token: string): string {

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { LoginPage, type LoginAsyncState } from "@/components/login/login-page";
 import { login } from "@/services/base-workspace.service";
 import { getSafeRedirect } from "@/lib/redirect";
+import { ApiError } from "@/lib/api/client";
 
 function LoginRouteContent() {
   const router = useRouter();
@@ -15,18 +16,23 @@ function LoginRouteContent() {
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const email = String(form.get("email") ?? "");
 
     setAuthState("loading");
     setError("");
 
     try {
-      await login({
-        email: String(form.get("email") ?? ""),
-        password: String(form.get("password") ?? "")
-      });
+      await login({ email, password: String(form.get("password") ?? "") });
       setAuthState("success");
       router.push(getSafeRedirect(searchParams.get("redirectTo")));
     } catch (loginError) {
+      if (
+        loginError instanceof ApiError &&
+        loginError.code === "email_not_verified"
+      ) {
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+        return;
+      }
       setAuthState("error");
       setError(
         loginError instanceof Error

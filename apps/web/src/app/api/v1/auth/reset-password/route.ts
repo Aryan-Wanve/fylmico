@@ -5,6 +5,6 @@ import { readJsonBody, validateDto, withRoute } from "@/server/http";
 
 export const POST = withRoute(async (request: NextRequest) => {
   const dto = await validateDto(ResetPasswordDto, await readJsonBody(request));
-  await authService.resetPassword(dto.token, dto.newPassword);
+  await authService.resetPassword(dto.email, dto.code, dto.newPassword);
   return { success: true };
 });

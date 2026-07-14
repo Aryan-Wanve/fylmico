@@ -45,7 +45,7 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
           onOpenMobileNav={() => setMobileNavOpen(true)}
         />
         {!isCompact && !workspace.user.emailVerifiedAt ? (
-          <VerifyEmailBanner />
+          <VerifyEmailBanner email={workspace.user.email} />
         ) : null}
         <div className="min-h-0 flex-1 overflow-y-auto">
           <PageTransition>{children}</PageTransition>

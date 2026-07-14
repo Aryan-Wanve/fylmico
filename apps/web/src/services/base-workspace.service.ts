@@ -92,7 +92,7 @@ export async function login(request: LoginRequest): Promise<WorkspaceSnapshot> {
 
 export async function signup(
   request: SignupRequest
-): Promise<WorkspaceSnapshot> {
+): Promise<{ email: string }> {
   if (
     !request.name.trim() ||
     !request.email.trim() ||
@@ -101,17 +101,11 @@ export async function signup(
     throw new Error("Name, email, and password are required.");
   }
 
-  const { accessToken, refreshToken } = await apiRequest<TokenPair>(
-    "/auth/signup",
-    {
-      method: "POST",
-      body: request,
-      auth: false
-    }
-  );
-  setSession(accessToken, refreshToken);
-
-  return getWorkspace();
+  return apiRequest<{ email: string }>("/auth/signup", {
+    method: "POST",
+    body: request,
+    auth: false
+  });
 }
 
 export function logout(): void {
@@ -136,8 +130,12 @@ export async function requestPasswordReset(
 export async function resetPassword(
   request: ResetPasswordRequest
 ): Promise<void> {
-  if (!request.token.trim() || !request.newPassword.trim()) {
-    throw new Error("Enter the reset code and a new password.");
+  if (
+    !request.email.trim() ||
+    !request.code.trim() ||
+    !request.newPassword.trim()
+  ) {
+    throw new Error("Enter your email, the reset code, and a new password.");
   }
 
   await apiRequest<{ success: boolean }>("/auth/reset-password", {
@@ -147,21 +145,32 @@ export async function resetPassword(
   });
 }
 
-export async function verifyEmail(token: string): Promise<void> {
-  if (!token.trim()) {
-    throw new Error("Missing verification code.");
+export async function verifyEmail(
+  email: string,
+  code: string
+): Promise<WorkspaceSnapshot> {
+  if (!email.trim() || !code.trim()) {
+    throw new Error("Enter your email and the verification code.");
   }
 
-  await apiRequest<{ success: boolean }>("/auth/verify-email", {
-    method: "POST",
-    body: { token },
-    auth: false
-  });
+  const { accessToken, refreshToken } = await apiRequest<TokenPair>(
+    "/auth/verify-email",
+    {
+      method: "POST",
+      body: { email, code },
+      auth: false
+    }
+  );
+  setSession(accessToken, refreshToken);
+
+  return getWorkspace();
 }
 
-export async function resendVerificationEmail(): Promise<void> {
+export async function resendVerificationEmail(email: string): Promise<void> {
   await apiRequest<{ success: boolean }>("/auth/resend-verification", {
-    method: "POST"
+    method: "POST",
+    body: { email },
+    auth: false
   });
 }
 

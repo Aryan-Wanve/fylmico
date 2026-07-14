@@ -1,4 +1,4 @@
-import { getAppUrl, type MailMessage } from "./mailer";
+import type { MailMessage } from "./mailer";
 
 function wrapper(title: string, bodyHtml: string): string {
   return `<!DOCTYPE html>
@@ -14,37 +14,30 @@ function wrapper(title: string, bodyHtml: string): string {
 </html>`;
 }
 
-function button(href: string, label: string): string {
-  return `<a href="${href}" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#654cff;color:#ffffff;font-weight:700;text-decoration:none;border-radius:8px;">${label}</a>`;
+function codeBlock(code: string): string {
+  return `<p style="margin-top:16px;font-size:32px;font-weight:800;letter-spacing:0.35em;color:#654cff;">${code}</p>`;
 }
 
-export function buildVerificationEmail(to: string, token: string): MailMessage {
-  const link = `${getAppUrl()}/verify-email?token=${encodeURIComponent(token)}`;
-
+export function buildVerificationEmail(to: string, code: string): MailMessage {
   return {
     to,
     subject: "Verify your Fylmico email address",
     html: wrapper(
       "Confirm your email address",
-      `<p style="font-size:14px;color:#4b5268;">Welcome to Fylmico! Click the button below to verify your email address and finish setting up your account.</p>${button(link, "Verify email")}`
+      `<p style="font-size:14px;color:#4b5268;">Welcome to Fylmico! Enter this code to verify your email address. It expires in 10 minutes.</p>${codeBlock(code)}`
     ),
-    text: `Welcome to Fylmico! Verify your email address: ${link}`
+    text: `Your Fylmico verification code is ${code}. It expires in 10 minutes.`
   };
 }
 
-export function buildPasswordResetEmail(
-  to: string,
-  token: string
-): MailMessage {
-  const link = `${getAppUrl()}/reset-password?token=${encodeURIComponent(token)}`;
-
+export function buildPasswordResetEmail(to: string, code: string): MailMessage {
   return {
     to,
     subject: "Reset your Fylmico password",
     html: wrapper(
       "Reset your password",
-      `<p style="font-size:14px;color:#4b5268;">We received a request to reset your Fylmico password. This link expires in 1 hour.</p>${button(link, "Reset password")}`
+      `<p style="font-size:14px;color:#4b5268;">We received a request to reset your Fylmico password. Enter this code to continue. It expires in 10 minutes.</p>${codeBlock(code)}`
     ),
-    text: `Reset your Fylmico password (expires in 1 hour): ${link}`
+    text: `Your Fylmico password reset code is ${code}. It expires in 10 minutes.`
   };
 }

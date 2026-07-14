@@ -1,10 +1,13 @@
 import type { NextRequest } from "next/server";
 import { authService } from "@/server/auth/auth.service";
-import { requireUser } from "@/server/auth/require-user";
-import { withRoute } from "@/server/http";
+import { ResendVerificationDto } from "@/server/auth/dto/resend-verification.dto";
+import { readJsonBody, validateDto, withRoute } from "@/server/http";
 
 export const POST = withRoute(async (request: NextRequest) => {
-  const user = requireUser(request);
-  await authService.resendVerificationEmail(user.id);
+  const dto = await validateDto(
+    ResendVerificationDto,
+    await readJsonBody(request)
+  );
+  await authService.resendVerificationEmail(dto.email);
   return { success: true };
 });

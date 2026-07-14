@@ -20,12 +20,13 @@ import { hashPassword, verifyPassword } from "./password.util";
 import {
   addDuration,
   generateOpaqueToken,
+  generateOtp,
   hashOpaqueToken
 } from "./token.util";
 
 const EMAIL_PROVIDER = "email";
-const EMAIL_VERIFICATION_TTL = "24h";
-const PASSWORD_RESET_TTL = "1h";
+const OTP_TTL = "10m";
+const MAX_OTP_ATTEMPTS = 5;
 
 export interface TokenPair {
   accessToken: string;
@@ -43,9 +44,8 @@ class AuthService {
   async signup(
     email: string,
     password: string,
-    name: string,
-    meta?: SessionMeta
-  ) {
+    name: string
+  ): Promise<{ email: string }> {
     const normalizedEmail = normalizeEmail(email);
 
     const existing = await this.prisma.authAccount.findUnique({
@@ -79,10 +79,9 @@ class AuthService {
       }
     });
 
-    await this.issueEmailVerificationToken(user.id, normalizedEmail);
-    const tokens = await this.issueSessionTokens(user, meta);
+    await this.issueEmailVerificationOtp(user.id, normalizedEmail);
 
-    return { user: toPublicUser(user), ...tokens };
+    return { email: normalizedEmail };
   }
 
   async login(email: string, password: string, meta?: SessionMeta) {
@@ -106,6 +105,14 @@ class AuthService {
         HttpStatus.UNAUTHORIZED,
         "invalid_credentials",
         "Invalid email or password."
+      );
+    }
+
+    if (!authAccount.user.emailVerifiedAt) {
+      throw new AppException(
+        HttpStatus.FORBIDDEN,
+        "email_not_verified",
+        "Please verify your email address before logging in."
       );
     }
 
@@ -156,45 +163,83 @@ class AuthService {
     });
   }
 
-  async verifyEmail(token: string): Promise<void> {
-    const record = await this.prisma.emailVerificationToken.findUnique({
-      where: { tokenHash: hashOpaqueToken(token) }
+  async verifyEmail(email: string, code: string, meta?: SessionMeta) {
+    const normalizedEmail = normalizeEmail(email);
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail }
     });
-
-    if (!record || record.consumedAt || record.expiresAt < new Date()) {
+    if (!user) {
       throw new AppException(
         HttpStatus.BAD_REQUEST,
-        "invalid_or_expired_token",
-        "This verification link is invalid or has expired."
+        "invalid_or_expired_code",
+        "This code is invalid or has expired."
+      );
+    }
+    if (user.emailVerifiedAt) {
+      throw new AppException(
+        HttpStatus.CONFLICT,
+        "email_already_verified",
+        "This email address is already verified. Please log in."
       );
     }
 
-    await this.prisma.$transaction([
+    const record = await this.prisma.emailVerificationToken.findFirst({
+      where: { userId: user.id, consumedAt: null },
+      orderBy: { createdAt: "desc" }
+    });
+
+    if (
+      !record ||
+      record.expiresAt < new Date() ||
+      record.attempts >= MAX_OTP_ATTEMPTS
+    ) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_or_expired_code",
+        "This code is invalid or has expired. Request a new one."
+      );
+    }
+
+    if (record.tokenHash !== hashOpaqueToken(code)) {
+      await this.prisma.emailVerificationToken.update({
+        where: { id: record.id },
+        data: { attempts: { increment: 1 } }
+      });
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_or_expired_code",
+        "That code is incorrect."
+      );
+    }
+
+    const [, updatedUser] = await this.prisma.$transaction([
       this.prisma.emailVerificationToken.update({
         where: { id: record.id },
         data: { consumedAt: new Date() }
       }),
       this.prisma.user.update({
-        where: { id: record.userId },
+        where: { id: user.id },
         data: { emailVerifiedAt: new Date() }
       })
     ]);
+
+    const tokens = await this.issueSessionTokens(updatedUser, meta);
+    return { user: toPublicUser(updatedUser), ...tokens };
   }
 
-  async resendVerificationEmail(userId: string): Promise<void> {
-    const user = await this.prisma.user.findUniqueOrThrow({
-      where: { id: userId }
+  async resendVerificationEmail(email: string): Promise<void> {
+    const normalizedEmail = normalizeEmail(email);
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail }
     });
 
-    if (user.emailVerifiedAt) {
-      throw new AppException(
-        HttpStatus.CONFLICT,
-        "email_already_verified",
-        "This email address is already verified."
-      );
+    // Behave identically whether or not the account exists or is already
+    // verified, to avoid leaking which emails are registered.
+    if (!user || user.emailVerifiedAt) {
+      return;
     }
 
-    await this.issueEmailVerificationToken(user.id, user.email);
+    await this.issueEmailVerificationOtp(user.id, normalizedEmail);
   }
 
   async requestPasswordReset(email: string): Promise<void> {
@@ -208,39 +253,77 @@ class AuthService {
       return;
     }
 
-    const token = generateOpaqueToken();
+    await this.prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, consumedAt: null },
+      data: { consumedAt: new Date() }
+    });
+
+    const otp = generateOtp();
     await this.prisma.passwordResetToken.create({
       data: {
         userId: user.id,
-        tokenHash: hashOpaqueToken(token),
-        expiresAt: addDuration(new Date(), PASSWORD_RESET_TTL)
+        tokenHash: hashOpaqueToken(otp),
+        expiresAt: addDuration(new Date(), OTP_TTL)
       }
     });
 
-    await sendMail(buildPasswordResetEmail(normalizedEmail, token));
+    await sendMail(buildPasswordResetEmail(normalizedEmail, otp));
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<void> {
-    const record = await this.prisma.passwordResetToken.findUnique({
-      where: { tokenHash: hashOpaqueToken(token) }
+  async resetPassword(
+    email: string,
+    code: string,
+    newPassword: string
+  ): Promise<void> {
+    const normalizedEmail = normalizeEmail(email);
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail }
     });
-
-    if (!record || record.consumedAt || record.expiresAt < new Date()) {
+    if (!user) {
       throw new AppException(
         HttpStatus.BAD_REQUEST,
-        "invalid_or_expired_token",
-        "This password reset link is invalid or has expired."
+        "invalid_or_expired_code",
+        "This code is invalid or has expired."
+      );
+    }
+
+    const record = await this.prisma.passwordResetToken.findFirst({
+      where: { userId: user.id, consumedAt: null },
+      orderBy: { createdAt: "desc" }
+    });
+
+    if (
+      !record ||
+      record.expiresAt < new Date() ||
+      record.attempts >= MAX_OTP_ATTEMPTS
+    ) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_or_expired_code",
+        "This code is invalid or has expired. Request a new one."
+      );
+    }
+
+    if (record.tokenHash !== hashOpaqueToken(code)) {
+      await this.prisma.passwordResetToken.update({
+        where: { id: record.id },
+        data: { attempts: { increment: 1 } }
+      });
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_or_expired_code",
+        "That code is incorrect."
       );
     }
 
     const authAccount = await this.prisma.authAccount.findFirst({
-      where: { userId: record.userId, provider: EMAIL_PROVIDER }
+      where: { userId: user.id, provider: EMAIL_PROVIDER }
     });
     if (!authAccount) {
       throw new AppException(
         HttpStatus.BAD_REQUEST,
-        "invalid_or_expired_token",
-        "This password reset link is invalid or has expired."
+        "invalid_or_expired_code",
+        "This code is invalid or has expired."
       );
     }
 
@@ -495,19 +578,24 @@ class AuthService {
     });
   }
 
-  private async issueEmailVerificationToken(
+  private async issueEmailVerificationOtp(
     userId: string,
     email: string
   ): Promise<void> {
-    const token = generateOpaqueToken();
+    await this.prisma.emailVerificationToken.updateMany({
+      where: { userId, consumedAt: null },
+      data: { consumedAt: new Date() }
+    });
+
+    const otp = generateOtp();
     await this.prisma.emailVerificationToken.create({
       data: {
         userId,
-        tokenHash: hashOpaqueToken(token),
-        expiresAt: addDuration(new Date(), EMAIL_VERIFICATION_TTL)
+        tokenHash: hashOpaqueToken(otp),
+        expiresAt: addDuration(new Date(), OTP_TTL)
       }
     });
-    await sendMail(buildVerificationEmail(email, token));
+    await sendMail(buildVerificationEmail(email, otp));
   }
 
   private async issueSessionTokens(

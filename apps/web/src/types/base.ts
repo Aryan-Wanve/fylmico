@@ -300,7 +300,8 @@ export type RequestPasswordResetRequest = {
 };
 
 export type ResetPasswordRequest = {
-  token: string;
+  email: string;
+  code: string;
   newPassword: string;
 };
 

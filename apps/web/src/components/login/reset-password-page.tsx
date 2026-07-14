@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
-import { ArrowRight, Eye, EyeOff, KeyRound, Lock } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, KeyRound, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,8 @@ export function ResetPasswordPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const token = String(form.get("token") ?? "").trim();
+    const email = String(form.get("email") ?? "").trim();
+    const code = String(form.get("code") ?? "").trim();
     const newPassword = String(form.get("newPassword") ?? "");
     const confirmPassword = String(form.get("confirmPassword") ?? "");
 
@@ -42,7 +43,7 @@ export function ResetPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      await resetPassword({ token, newPassword });
+      await resetPassword({ email, code, newPassword });
       setIsSubmitted(true);
       window.setTimeout(() => router.push("/login"), 1800);
     } catch (resetError) {
@@ -68,7 +69,7 @@ export function ResetPasswordPage() {
             Choose a new password
           </h2>
           <p className="mt-2 font-semibold text-[#75798a] dark:text-[#8b8fa3]">
-            Enter the reset code from your email and a new password.
+            Enter the code from your email and a new password.
           </p>
         </header>
 
@@ -81,18 +82,42 @@ export function ResetPasswordPage() {
             <div className="grid gap-2">
               <Label
                 className="text-[0.86rem] font-extrabold text-[#15172b] dark:text-[#f1f2f8]"
-                htmlFor="reset-token"
+                htmlFor="reset-email"
+              >
+                Email address
+              </Label>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e] dark:text-[#7d8299]" />
+                <Input
+                  autoComplete="email"
+                  className="h-[3.55rem] rounded-lg border-[#11142c1c] pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
+                  defaultValue={searchParams.get("email") ?? ""}
+                  id="reset-email"
+                  name="email"
+                  placeholder="Enter your email"
+                  required
+                  type="email"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label
+                className="text-[0.86rem] font-extrabold text-[#15172b] dark:text-[#f1f2f8]"
+                htmlFor="reset-code"
               >
                 Reset code
               </Label>
               <div className="relative">
                 <KeyRound className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e] dark:text-[#7d8299]" />
                 <Input
+                  autoComplete="one-time-code"
                   className="h-[3.55rem] rounded-lg border-[#11142c1c] pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
-                  defaultValue={searchParams.get("token") ?? ""}
-                  id="reset-token"
-                  name="token"
-                  placeholder="Paste the code from your email"
+                  id="reset-code"
+                  inputMode="numeric"
+                  maxLength={6}
+                  name="code"
+                  placeholder="123456"
                   required
                   type="text"
                 />

@@ -12,6 +12,7 @@ import { AuthSecurityNote } from "@/components/login/auth-security-note";
 import { requestPasswordReset } from "@/services/base-workspace.service";
 
 export function ForgotPasswordPage() {
+  const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -19,13 +20,14 @@ export function ForgotPasswordPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") ?? "").trim();
+    const submittedEmail = String(form.get("email") ?? "").trim();
 
     setError("");
     setIsSubmitting(true);
 
     try {
-      await requestPasswordReset({ email });
+      await requestPasswordReset({ email: submittedEmail });
+      setEmail(submittedEmail);
       setIsSubmitted(true);
     } catch (resetError) {
       setError(
@@ -51,25 +53,22 @@ export function ForgotPasswordPage() {
             Reset your password
           </h2>
           <p className="mt-2 font-semibold text-[#75798a] dark:text-[#8b8fa3]">
-            Enter your email and we&apos;ll send you a reset link.
+            Enter your email and we&apos;ll send you a reset code.
           </p>
         </header>
 
         {isSubmitted ? (
           <div className="mt-7 grid gap-4">
             <p className="rounded-lg border border-[#654cff33] bg-[#654cff0d] px-3.5 py-3 text-sm font-semibold text-[#4a3bd1]">
-              If an account exists for that email, a reset link is on its way.
+              If an account exists for that email, a reset code is on its way.
               Check your inbox.
             </p>
-            <p className="text-center text-[0.9rem] font-semibold text-[#6d7080] dark:text-[#8b8fa3]">
-              Already have a reset code?{" "}
-              <Link
-                className="font-extrabold text-[#654cff]"
-                href="/reset-password"
-              >
-                Enter it here
-              </Link>
-            </p>
+            <Link
+              className="flex h-12 w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] text-sm font-bold text-white hover:opacity-95"
+              href={`/reset-password?email=${encodeURIComponent(email)}`}
+            >
+              Enter the code
+            </Link>
           </div>
         ) : (
           <form className="mt-7 grid gap-5" onSubmit={handleSubmit}>
@@ -105,7 +104,7 @@ export function ForgotPasswordPage() {
               disabled={isSubmitting}
               type="submit"
             >
-              {isSubmitting ? "Sending..." : "Send Reset Link"}
+              {isSubmitting ? "Sending..." : "Send Reset Code"}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </form>

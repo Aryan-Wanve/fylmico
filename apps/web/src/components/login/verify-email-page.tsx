@@ -1,99 +1,170 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { ArrowRight, KeyRound, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { AuthLayout } from "@/components/login/auth-layout";
 import { AuthSecurityNote } from "@/components/login/auth-security-note";
-import { verifyEmail } from "@/services/base-workspace.service";
-
-type Status = "verifying" | "success" | "error";
+import {
+  resendVerificationEmail,
+  verifyEmail
+} from "@/services/base-workspace.service";
+import { getSafeRedirect } from "@/lib/redirect";
 
 export function VerifyEmailPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<Status>("verifying");
+  const [email, setEmail] = useState(searchParams.get("email") ?? "");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resent, setResent] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const token = searchParams.get("token") ?? "";
-    let isMounted = true;
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const code = String(form.get("code") ?? "").trim();
 
-    verifyEmail(token)
-      .then(() => {
-        if (isMounted) {
-          setStatus("success");
-        }
-      })
-      .catch((verifyError) => {
-        if (isMounted) {
-          setStatus("error");
-          setError(
-            verifyError instanceof Error
-              ? verifyError.message
-              : "Something went wrong."
-          );
-        }
-      });
+    setError("");
+    setIsSubmitting(true);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [searchParams]);
+    try {
+      await verifyEmail(email.trim(), code);
+      router.push(getSafeRedirect(searchParams.get("redirectTo")));
+    } catch (verifyError) {
+      setError(
+        verifyError instanceof Error
+          ? verifyError.message
+          : "Something went wrong."
+      );
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleResend() {
+    setError("");
+    setIsResending(true);
+    try {
+      await resendVerificationEmail(email.trim());
+      setResent(true);
+    } catch (resendError) {
+      setError(
+        resendError instanceof Error
+          ? resendError.message
+          : "Could not resend the code."
+      );
+    } finally {
+      setIsResending(false);
+    }
+  }
 
   return (
     <AuthLayout>
       <motion.section
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-[27rem] rounded-2xl border border-black/[0.06] bg-white p-8 text-center shadow-[0_1.8rem_5rem_rgba(55,48,120,0.12)] dark:border-white/[0.08] dark:bg-[#171a28]"
+        className="w-full max-w-[27rem] rounded-2xl border border-black/[0.06] bg-white p-8 shadow-[0_1.8rem_5rem_rgba(55,48,120,0.12)] dark:border-white/[0.08] dark:bg-[#171a28]"
         initial={{ opacity: 0, y: 8 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
       >
-        {status === "verifying" ? (
-          <>
-            <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#654cff]" />
-            <h2 className="mt-5 text-[1.5rem] font-black text-[#11142c] dark:text-[#f1f2f8]">
-              Verifying your email...
-            </h2>
-          </>
-        ) : null}
+        <header>
+          <h2 className="text-[1.85rem] font-black text-[#11142c] dark:text-[#f1f2f8]">
+            Verify your email
+          </h2>
+          <p className="mt-2 font-semibold text-[#75798a] dark:text-[#8b8fa3]">
+            Enter the 6-digit code we sent to your email address.
+          </p>
+        </header>
 
-        {status === "success" ? (
-          <>
-            <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-500" />
-            <h2 className="mt-5 text-[1.5rem] font-black text-[#11142c] dark:text-[#f1f2f8]">
-              Email verified
-            </h2>
-            <p className="mt-2 font-semibold text-[#75798a] dark:text-[#8b8fa3]">
-              Your email address has been confirmed.
-            </p>
-            <Link
-              className="mt-6 inline-flex h-12 items-center justify-center rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] px-6 text-sm font-bold text-white hover:opacity-95"
-              href="/home"
+        <form className="mt-7 grid gap-5" onSubmit={handleSubmit}>
+          <div className="grid gap-2">
+            <Label
+              className="text-[0.86rem] font-extrabold text-[#15172b] dark:text-[#f1f2f8]"
+              htmlFor="verify-email-address"
             >
-              Continue to Fylmico
-            </Link>
-          </>
-        ) : null}
+              Email address
+            </Label>
+            <div className="relative">
+              <Mail className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e] dark:text-[#7d8299]" />
+              <Input
+                autoComplete="email"
+                className="h-[3.55rem] rounded-lg border-[#11142c1c] pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
+                id="verify-email-address"
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="Enter your email"
+                required
+                type="email"
+                value={email}
+              />
+            </div>
+          </div>
 
-        {status === "error" ? (
-          <>
-            <XCircle className="mx-auto h-10 w-10 text-red-500" />
-            <h2 className="mt-5 text-[1.5rem] font-black text-[#11142c] dark:text-[#f1f2f8]">
-              Verification failed
-            </h2>
-            <p className="mt-2 font-semibold text-[#75798a] dark:text-[#8b8fa3]">
+          <div className="grid gap-2">
+            <Label
+              className="text-[0.86rem] font-extrabold text-[#15172b] dark:text-[#f1f2f8]"
+              htmlFor="verify-code"
+            >
+              Verification code
+            </Label>
+            <div className="relative">
+              <KeyRound className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e] dark:text-[#7d8299]" />
+              <Input
+                autoComplete="one-time-code"
+                className="h-[3.55rem] rounded-lg border-[#11142c1c] pl-11 text-center text-lg tracking-[0.5em] text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
+                id="verify-code"
+                inputMode="numeric"
+                maxLength={6}
+                name="code"
+                placeholder="123456"
+                required
+                type="text"
+              />
+            </div>
+          </div>
+
+          {resent ? (
+            <p className="rounded-lg border border-[#654cff33] bg-[#654cff0d] px-3.5 py-2.5 text-sm font-semibold text-[#4a3bd1]">
+              A new code is on its way. Check your inbox.
+            </p>
+          ) : null}
+
+          {error ? (
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600">
               {error}
             </p>
-            <Link
-              className="mt-6 inline-flex h-12 items-center justify-center rounded-lg border border-[#11142c1c] px-6 text-sm font-bold text-[#11142c] hover:bg-black/[0.03] dark:text-[#f1f2f8] dark:hover:bg-white/[0.05]"
-              href="/login"
-            >
-              Back to log in
-            </Link>
-          </>
-        ) : null}
+          ) : null}
+
+          <Button
+            className="h-[3.25rem] w-full rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] text-base font-bold text-white shadow-[0_1rem_2.1rem_rgba(101,76,255,0.28)] hover:opacity-95"
+            disabled={isSubmitting}
+            type="submit"
+          >
+            {isSubmitting ? "Verifying..." : "Verify email"}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </form>
+
+        <p className="mt-5 text-center text-[0.9rem] font-semibold text-[#6d7080] dark:text-[#8b8fa3]">
+          Didn&apos;t get a code?{" "}
+          <button
+            className="font-extrabold text-[#654cff] disabled:opacity-60"
+            disabled={isResending || !email.trim()}
+            onClick={handleResend}
+            type="button"
+          >
+            {isResending ? "Sending..." : "Resend code"}
+          </button>
+        </p>
+
+        <p className="mt-2 text-center text-[0.9rem] font-semibold text-[#6d7080] dark:text-[#8b8fa3]">
+          <Link className="font-extrabold text-[#654cff]" href="/login">
+            Back to log in
+          </Link>
+        </p>
       </motion.section>
 
       <AuthSecurityNote />
