@@ -18,7 +18,7 @@ export default function AuthenticatedLayout({
   const [isHydrated, setIsHydrated] = useState(false);
   const [workspace, setWorkspace] = useState<WorkspaceSnapshot | null>(null);
 
-  // Session lives in sessionStorage, unreadable during the server/static
+  // Session lives in localStorage, unreadable during the server/static
   // render. Wait for the post-hydration tick before checking it, otherwise
   // this effect fires once with a false "logged out" reading and redirects
   // to /login before React ever sees the real value.
