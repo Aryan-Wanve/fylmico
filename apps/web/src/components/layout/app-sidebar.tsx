@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { navItems } from "@/components/layout/nav-items";
-import { UpgradeCard } from "@/components/layout/upgrade-card";
 import { SidebarUserFooter } from "@/components/layout/sidebar-user-footer";
 import type { UserProfile } from "@/types/base";
 
@@ -137,7 +136,6 @@ export function AppSidebar({
 
         {!compact ? (
           <div className="grid shrink-0 gap-6">
-            <UpgradeCard />
             <SidebarUserFooter user={user} />
           </div>
         ) : null}
