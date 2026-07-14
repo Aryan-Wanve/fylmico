@@ -315,6 +315,19 @@ export type JoinHouseRequest = {
   inviteCode: string;
 };
 
+export type RequestJoinHouseRequest = {
+  handle: string;
+};
+
+export type JoinRequest = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userAvatarLabel: string;
+  createdAt: string;
+};
+
 export type HouseInvitation = {
   id: string;
   email: string;

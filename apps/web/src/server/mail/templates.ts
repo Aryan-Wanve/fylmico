@@ -1,4 +1,4 @@
-import type { MailMessage } from "./mailer";
+import { getAppUrl, type MailMessage } from "./mailer";
 
 function wrapper(title: string, bodyHtml: string): string {
   return `<!DOCTYPE html>
@@ -16,6 +16,10 @@ function wrapper(title: string, bodyHtml: string): string {
 
 function codeBlock(code: string): string {
   return `<p style="margin-top:16px;font-size:32px;font-weight:800;letter-spacing:0.35em;color:#654cff;">${code}</p>`;
+}
+
+function button(href: string, label: string): string {
+  return `<a href="${href}" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#654cff;color:#ffffff;font-weight:700;text-decoration:none;border-radius:8px;">${label}</a>`;
 }
 
 export function buildVerificationEmail(to: string, code: string): MailMessage {
@@ -39,5 +43,23 @@ export function buildPasswordResetEmail(to: string, code: string): MailMessage {
       `<p style="font-size:14px;color:#4b5268;">We received a request to reset your Fylmico password. Enter this code to continue. It expires in 10 minutes.</p>${codeBlock(code)}`
     ),
     text: `Your Fylmico password reset code is ${code}. It expires in 10 minutes.`
+  };
+}
+
+export function buildJoinRequestEmail(
+  to: string,
+  requesterName: string,
+  houseName: string
+): MailMessage {
+  const link = `${getAppUrl()}/dashboard`;
+
+  return {
+    to,
+    subject: `${requesterName} wants to join ${houseName}`,
+    html: wrapper(
+      "New join request",
+      `<p style="font-size:14px;color:#4b5268;">${requesterName} asked to join <strong>${houseName}</strong> on Fylmico. Review and approve or decline the request from your dashboard.</p>${button(link, "Review request")}`
+    ),
+    text: `${requesterName} asked to join ${houseName} on Fylmico. Review it at ${link}`
   };
 }

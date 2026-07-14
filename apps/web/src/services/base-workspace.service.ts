@@ -35,11 +35,13 @@ import type {
   InviteCodePreview,
   InvitationPreview,
   JoinHouseRequest,
+  JoinRequest,
   LoginRequest,
   NotificationItem,
   NotificationPreferenceSetting,
   ProductionTask,
   Project,
+  RequestJoinHouseRequest,
   RequestPasswordResetRequest,
   ResetPasswordRequest,
   Script,
@@ -204,6 +206,46 @@ export async function joinHouse(request: JoinHouseRequest): Promise<House> {
   });
   activeHouseId = house.id;
   return house;
+}
+
+export async function activateHouse(houseId: string): Promise<void> {
+  await apiRequest<{ success: boolean }>(`/houses/${houseId}/activate`, {
+    method: "POST"
+  });
+  activeHouseId = houseId;
+}
+
+export async function requestToJoinHouse(
+  request: RequestJoinHouseRequest
+): Promise<{ status: string }> {
+  if (!request.handle.trim()) {
+    throw new Error("Enter a house tag.");
+  }
+
+  return apiRequest<{ status: string }>("/houses/join-requests", {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function listJoinRequests(
+  houseId: string
+): Promise<JoinRequest[]> {
+  return apiRequest<JoinRequest[]>(`/houses/${houseId}/join-requests`);
+}
+
+export async function respondToJoinRequest(
+  houseId: string,
+  requestId: string,
+  status: "approved" | "rejected"
+): Promise<void> {
+  await apiRequest<{ success: boolean }>(
+    `/houses/${houseId}/join-requests/${requestId}`,
+    {
+      method: "PATCH",
+      body: { status }
+    }
+  );
 }
 
 export async function inviteMember(email: string): Promise<HouseInvitation> {

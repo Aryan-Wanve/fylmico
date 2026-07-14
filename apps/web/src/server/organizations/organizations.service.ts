@@ -1,4 +1,9 @@
-import type { HouseInvitation, Prisma } from "@fylmico/database";
+import type {
+  HouseInvitation,
+  HouseJoinRequest,
+  Prisma
+} from "@fylmico/database";
+import { toAvatarLabel } from "../avatar-label.util";
 import {
   addDuration,
   generateOpaqueToken,
@@ -6,11 +11,14 @@ import {
 } from "../auth/token.util";
 import { getEnv } from "../env";
 import { AppException, HttpStatus } from "../http";
+import { sendMail } from "../mail/mailer";
+import { buildJoinRequestEmail } from "../mail/templates";
 import { notificationsService } from "../notifications/notifications.service";
 import { prisma } from "../prisma";
 import type { CreateHouseDto } from "./dto/create-house.dto";
 import type { InviteMemberDto } from "./dto/invite-member.dto";
 import type { JoinHouseDto } from "./dto/join-house.dto";
+import type { RequestJoinHouseDto } from "./dto/request-join-house.dto";
 import type { UpdateHouseDto } from "./dto/update-house.dto";
 
 const MEMBER_ROLE_NAME = "Member";
@@ -145,6 +153,145 @@ class OrganizationsService {
 
     await this.addMembership(organization.id, organization.name, userId);
     return this.getHouseDto(organization.id, userId);
+  }
+
+  async activateHouse(userId: string, organizationId: string) {
+    await this.requireMembership(organizationId, userId);
+    await this.setActiveOrganization(userId, organizationId);
+  }
+
+  async requestToJoinHouse(userId: string, dto: RequestJoinHouseDto) {
+    const organization = await this.prisma.organization.findUnique({
+      where: { handle: dto.handle.trim().toLowerCase() }
+    });
+    if (!organization) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "house_not_found",
+        "No house exists with that tag."
+      );
+    }
+
+    const existingMembership =
+      await this.prisma.organizationMembership.findUnique({
+        where: {
+          organizationId_userId: { organizationId: organization.id, userId }
+        }
+      });
+    if (existingMembership) {
+      throw new AppException(
+        HttpStatus.CONFLICT,
+        "already_member",
+        "You are already a member of this house."
+      );
+    }
+
+    const existingRequest = await this.prisma.houseJoinRequest.findUnique({
+      where: {
+        organizationId_userId: { organizationId: organization.id, userId }
+      }
+    });
+    if (existingRequest?.status === "pending") {
+      throw new AppException(
+        HttpStatus.CONFLICT,
+        "request_pending",
+        "You already have a pending request to join this house."
+      );
+    }
+
+    if (existingRequest) {
+      await this.prisma.houseJoinRequest.update({
+        where: { id: existingRequest.id },
+        data: { status: "pending", respondedById: null, respondedAt: null }
+      });
+    } else {
+      await this.prisma.houseJoinRequest.create({
+        data: { organizationId: organization.id, userId }
+      });
+    }
+
+    const requester = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId }
+    });
+    await this.notifyOwners(
+      organization.id,
+      "house_join_request",
+      `${requester.name} wants to join ${organization.name}`,
+      `${requester.name} asked to join ${organization.name}. Review the request from your dashboard.`
+    );
+    await this.emailOwners(organization.id, (ownerEmail) =>
+      buildJoinRequestEmail(ownerEmail, requester.name, organization.name)
+    );
+
+    return { status: "pending" as const };
+  }
+
+  async listJoinRequests(organizationId: string, userId: string) {
+    await this.requireOwnerRole(organizationId, userId, "view join requests");
+
+    const requests = await this.prisma.houseJoinRequest.findMany({
+      where: { organizationId, status: "pending" },
+      include: { user: true },
+      orderBy: { createdAt: "desc" }
+    });
+
+    return requests.map(toJoinRequestDto);
+  }
+
+  async respondToJoinRequest(
+    organizationId: string,
+    userId: string,
+    requestId: string,
+    status: "approved" | "rejected"
+  ) {
+    await this.requireOwnerRole(organizationId, userId, "review join requests");
+
+    const request = await this.prisma.houseJoinRequest.findUnique({
+      where: { id: requestId }
+    });
+    if (!request || request.organizationId !== organizationId) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "join_request_not_found",
+        "This join request does not exist."
+      );
+    }
+    if (request.status !== "pending") {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_request",
+        "This request has already been reviewed."
+      );
+    }
+
+    const organization = await this.prisma.organization.findUniqueOrThrow({
+      where: { id: organizationId }
+    });
+    const approve = status === "approved";
+
+    await this.prisma.houseJoinRequest.update({
+      where: { id: requestId },
+      data: { status, respondedById: userId, respondedAt: new Date() }
+    });
+
+    if (approve) {
+      await this.addMembership(
+        organizationId,
+        organization.name,
+        request.userId
+      );
+    }
+
+    await notificationsService.create(
+      request.userId,
+      approve ? "house_join_approved" : "house_join_rejected",
+      approve
+        ? `You're in ${organization.name}!`
+        : `Your request to join ${organization.name} was declined`,
+      approve
+        ? `Your request to join ${organization.name} was approved.`
+        : `Your request to join ${organization.name} was declined by the house owner.`
+    );
   }
 
   async getInviteCodePreview(inviteCode: string) {
@@ -492,6 +639,27 @@ class OrganizationsService {
     );
   }
 
+  private async emailOwners(
+    organizationId: string,
+    buildMessage: (ownerEmail: string) => Parameters<typeof sendMail>[0]
+  ): Promise<void> {
+    const ownerRole = await this.prisma.role.findUnique({
+      where: { organizationId_name: { organizationId, name: "Owner" } }
+    });
+    if (!ownerRole) {
+      return;
+    }
+
+    const owners = await this.prisma.organizationMembership.findMany({
+      where: { organizationId, roleId: ownerRole.id },
+      include: { user: true }
+    });
+
+    await Promise.all(
+      owners.map((owner) => sendMail(buildMessage(owner.user.email)))
+    );
+  }
+
   private async seedCrewProfile(
     organizationId: string,
     userId: string,
@@ -697,5 +865,20 @@ function toInvitationDto(invitation: HouseInvitation, inviteUrl?: string) {
     createdAt: invitation.createdAt,
     expiresAt: invitation.expiresAt,
     ...(inviteUrl ? { inviteUrl } : {})
+  };
+}
+
+function toJoinRequestDto(
+  request: HouseJoinRequest & {
+    user: { id: string; name: string; email: string; avatarUrl: string | null };
+  }
+) {
+  return {
+    id: request.id,
+    userId: request.user.id,
+    userName: request.user.name,
+    userEmail: request.user.email,
+    userAvatarLabel: toAvatarLabel(request.user.name),
+    createdAt: request.createdAt
   };
 }
