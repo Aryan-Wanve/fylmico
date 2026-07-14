@@ -50,7 +50,13 @@ successfully but serve `403 Forbidden` on every route until they're set:
   `JWT_REFRESH_TTL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
   `GOOGLE_CALLBACK_URL` (the live URL's `/api/v1/auth/google/callback`,
   which must also be registered as an authorized redirect URI in the
-  Google Cloud Console OAuth client - see ADR 0035). `NEXT_PUBLIC_API_URL`
+  Google Cloud Console OAuth client - see ADR 0035), `RESEND_API_KEY` (a
+  Resend API key - without it, `sendMail` silently falls back to logging
+  emails to Runtime Logs instead of sending them, which is what happened
+  in production until this was caught: verification/OTP/reset emails
+  never reached real users), `MAIL_FROM` (a sender address on a domain
+  verified in Resend - e.g. `Fylmico <noreply@yourdomain.com>`; doesn't
+  need to be a real mailbox, just DNS-verified). `NEXT_PUBLIC_API_URL`
   no longer applies - the frontend calls its own same-origin `/api/v1`
   path now, not a separate host.
 
