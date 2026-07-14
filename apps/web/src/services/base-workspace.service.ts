@@ -3,16 +3,20 @@ import { clearSession, getAccessToken, setSession } from "@/lib/session";
 import type {
   AccountSession,
   Analytics,
+  Announcement,
   Board,
   Booking,
   CalendarEvent,
+  CallSheet,
   ChangePasswordRequest,
   BookingStatus,
   ChatRoom,
   Comment,
   CreateBoardRequest,
+  CreateAnnouncementRequest,
   CreateBookingRequest,
   CreateCalendarEventRequest,
+  CreateCallSheetRequest,
   CreateCharacterRequest,
   CreateConversationRequest,
   CreateHouseRequest,
@@ -46,7 +50,9 @@ import type {
   StoryCharacter,
   StoryLocationItem,
   TimeEntry,
+  UpdateAnnouncementRequest,
   UpdateBoardRequest,
+  UpdateCallSheetRequest,
   UpdateCrewProfileRequest,
   UpdateConversationRequest,
   UpdateHouseRequest,
@@ -1059,4 +1065,88 @@ export async function deleteScript(scriptId: string): Promise<void> {
     `/houses/${activeHouseId}/scripts/${scriptId}`,
     { method: "DELETE" }
   );
+}
+
+export async function listCallSheets(): Promise<CallSheet[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing call sheets.");
+  }
+
+  return apiRequest<CallSheet[]>(`/houses/${activeHouseId}/call-sheets`);
+}
+
+export async function createCallSheet(
+  request: CreateCallSheetRequest
+): Promise<CallSheet> {
+  if (!request.title.trim()) {
+    throw new Error("Give the call sheet a title.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before creating call sheets.");
+  }
+
+  return apiRequest<CallSheet>(`/houses/${activeHouseId}/call-sheets`, {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function updateCallSheet(
+  callSheetId: string,
+  request: UpdateCallSheetRequest
+): Promise<CallSheet> {
+  return apiRequest<CallSheet>(`/call-sheets/${callSheetId}`, {
+    method: "PATCH",
+    body: request
+  });
+}
+
+export async function deleteCallSheet(callSheetId: string): Promise<void> {
+  await apiRequest<{ success: boolean }>(`/call-sheets/${callSheetId}`, {
+    method: "DELETE"
+  });
+}
+
+export async function listAnnouncements(): Promise<Announcement[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing announcements.");
+  }
+
+  return apiRequest<Announcement[]>(`/houses/${activeHouseId}/announcements`);
+}
+
+export async function createAnnouncement(
+  request: CreateAnnouncementRequest
+): Promise<Announcement> {
+  if (!request.title.trim() || !request.body.trim()) {
+    throw new Error("Give the announcement a title and body.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before posting announcements.");
+  }
+
+  return apiRequest<Announcement>(`/houses/${activeHouseId}/announcements`, {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function updateAnnouncement(
+  announcementId: string,
+  request: UpdateAnnouncementRequest
+): Promise<Announcement> {
+  return apiRequest<Announcement>(`/announcements/${announcementId}`, {
+    method: "PATCH",
+    body: request
+  });
+}
+
+export async function deleteAnnouncement(
+  announcementId: string
+): Promise<void> {
+  await apiRequest<{ success: boolean }>(`/announcements/${announcementId}`, {
+    method: "DELETE"
+  });
 }

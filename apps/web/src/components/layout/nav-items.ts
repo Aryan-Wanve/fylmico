@@ -3,11 +3,13 @@ import {
   Calendar,
   CalendarClock,
   Clapperboard,
+  ClipboardList,
   FileText,
   Folder,
   FolderKanban,
   Home,
   ListChecks,
+  Megaphone,
   MessageSquare,
   Settings,
   Users,
@@ -30,6 +32,8 @@ export type NavItem = {
     | "/settings"
     | "/analytics"
     | "/bookings"
+    | "/call-sheets"
+    | "/announcements"
     | null;
   icon: LucideIcon;
   badge?: string;
@@ -65,6 +69,18 @@ export const navItems: NavItem[] = [
     label: "Bookings",
     href: "/bookings",
     icon: CalendarClock
+  },
+  {
+    id: "call-sheets",
+    label: "Call Sheets",
+    href: "/call-sheets",
+    icon: ClipboardList
+  },
+  {
+    id: "announcements",
+    label: "Announcements",
+    href: "/announcements",
+    icon: Megaphone
   },
   {
     id: "analytics",

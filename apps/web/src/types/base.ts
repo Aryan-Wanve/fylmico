@@ -513,6 +513,62 @@ export type UpdateScriptRequest = Partial<{
   content: string;
 }>;
 
+export type CrewCallTime = {
+  userId: string;
+  name: string;
+  jobTitle: string;
+  callTime: string;
+};
+
+export type CallSheet = {
+  id: string;
+  projectId: string | null;
+  projectTitle: string | null;
+  title: string;
+  shootDate: string;
+  generalCallTime: string;
+  location: string | null;
+  weather: string | null;
+  notes: string | null;
+  crewCallTimes: CrewCallTime[];
+  createdById: string;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateCallSheetRequest = {
+  title: string;
+  projectId?: string;
+  shootDate: string;
+  generalCallTime: string;
+  location?: string;
+  weather?: string;
+  notes?: string;
+  crewCallTimes?: CrewCallTime[];
+};
+
+export type UpdateCallSheetRequest = Partial<CreateCallSheetRequest>;
+
+export type Announcement = {
+  id: string;
+  title: string;
+  body: string;
+  pinned: boolean;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateAnnouncementRequest = {
+  title: string;
+  body: string;
+  pinned?: boolean;
+};
+
+export type UpdateAnnouncementRequest = Partial<CreateAnnouncementRequest>;
+
 export type StoryCharacter = {
   id: string;
   projectId: string | null;
