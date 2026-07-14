@@ -8,20 +8,18 @@ import { AppTopbar } from "@/components/layout/app-topbar";
 import { PageTransition } from "@/components/layout/page-transition";
 import { VerifyEmailBanner } from "@/components/layout/verify-email-banner";
 
-const ONBOARDING_PATH = "/houses/new";
+const DASHBOARD_PATH = "/dashboard";
 
 export function AppShellGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { workspace, activeHouse } = useWorkspace();
-  const isCompact = pathname === ONBOARDING_PATH;
+  const isCompact = !activeHouse;
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
-    if (!activeHouse && pathname !== ONBOARDING_PATH) {
-      router.replace("/houses/new");
-    } else if (activeHouse && pathname === ONBOARDING_PATH) {
-      router.replace("/home");
+    if (!activeHouse && pathname !== DASHBOARD_PATH) {
+      router.replace("/dashboard");
     }
   }, [activeHouse, pathname, router]);
 

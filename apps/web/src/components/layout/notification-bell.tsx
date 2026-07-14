@@ -57,6 +57,21 @@ const TYPE_STYLES: Record<
     icon: Calendar,
     bg: "bg-[#f97316]/10",
     color: "text-[#f97316]"
+  },
+  house_join_request: {
+    icon: UserPlus,
+    bg: "bg-[#654cff]/10",
+    color: "text-[#654cff]"
+  },
+  house_join_approved: {
+    icon: Users,
+    bg: "bg-[#16c784]/10",
+    color: "text-[#16c784]"
+  },
+  house_join_rejected: {
+    icon: Users,
+    bg: "bg-[#8a90a3]/10",
+    color: "text-[#8a90a3]"
   }
 };
 

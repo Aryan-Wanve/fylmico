@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ChevronDown, LogOut, Settings } from "lucide-react";
+import { ChevronDown, Home, LogOut, Settings } from "lucide-react";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import {
   DropdownMenu,
@@ -47,6 +47,10 @@ export function SidebarUserFooter({ user }: { user: UserProfile }) {
         }
       />
       <DropdownMenuContent align="start" className="w-48" side="top">
+        <DropdownMenuItem render={<a href="/dashboard" />}>
+          <Home className="h-4 w-4" />
+          Switch house
+        </DropdownMenuItem>
         <DropdownMenuItem render={<a href="/settings" />}>
           <Settings className="h-4 w-4" />
           Settings

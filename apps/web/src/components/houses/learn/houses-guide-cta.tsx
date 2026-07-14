@@ -15,14 +15,14 @@ export function HousesGuideCta() {
         <div className="mx-auto flex flex-wrap items-center justify-center gap-3">
           <Link
             className="flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-[#654cff] hover:bg-white/90 dark:bg-[#171a28]"
-            href="/houses/new"
+            href="/dashboard"
           >
             Create a House
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             className="rounded-xl border border-white/30 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/10"
-            href="/houses/new"
+            href="/dashboard"
           >
             Join with an Invite Code
           </Link>
