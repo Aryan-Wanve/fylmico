@@ -17,6 +17,7 @@ import type { CreateConversationDto } from "./dto/create-conversation.dto";
 import type { UpdateConversationDto } from "./dto/update-conversation.dto";
 
 const RECENT_MESSAGES_LIMIT = 50;
+const EDIT_WINDOW_MS = 10 * 60 * 1000;
 
 const roomInclude = {
   messages: {
@@ -163,6 +164,53 @@ class ChatService {
       userId,
       lastReadAt: read.lastReadAt.toISOString()
     });
+  }
+
+  async editMessage(userId: string, messageId: string, body: string) {
+    const message = await this.prisma.message.findUnique({
+      where: { id: messageId }
+    });
+    if (!message) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "message_not_found",
+        "This message no longer exists."
+      );
+    }
+
+    if (message.authorId !== userId) {
+      throw new AppException(
+        HttpStatus.FORBIDDEN,
+        "not_author",
+        "You can only edit your own messages."
+      );
+    }
+
+    if (Date.now() - message.createdAt.getTime() > EDIT_WINDOW_MS) {
+      throw new AppException(
+        HttpStatus.FORBIDDEN,
+        "edit_window_expired",
+        "Messages can only be edited within 10 minutes of sending."
+      );
+    }
+
+    const updated = await this.prisma.message.update({
+      where: { id: messageId },
+      data: { body, editedAt: new Date() },
+      include: messageInclude
+    });
+    const replyCount = await this.prisma.message.count({
+      where: { parentMessageId: messageId }
+    });
+    const dto = toMessageDto(updated, userId, replyCount);
+
+    await broadcast(
+      conversationTopic(message.conversationId),
+      "message:edit",
+      dto
+    );
+
+    return dto;
   }
 
   async toggleReaction(userId: string, messageId: string, emoji: string) {
@@ -546,6 +594,7 @@ function toMessageDto(
     authorName: message.author.name,
     sentAt: message.createdAt.toISOString(),
     body: message.body,
+    editedAt: message.editedAt?.toISOString() ?? null,
     parentMessageId: message.parentMessageId,
     replyCount,
     reactions: [...reactionsByEmoji.values()]
