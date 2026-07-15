@@ -32,7 +32,6 @@ export function HousesDashboardPage() {
   async function handleCreateHouse(data: {
     name: string;
     handle: string;
-    description: string;
     houseType: HouseType;
   }) {
     setIsSubmitting(true);
@@ -97,10 +96,8 @@ export function HousesDashboardPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {houses.map((house) => {
-              const myRole = house.members.find(
-                (member) => member.id === workspace.user.id
-              )?.role;
-              const isOwner = myRole === "Owner";
+              const isPending = house.myRole === null;
+              const isOwner = house.myRole === "Owner";
 
               return (
                 <div
@@ -116,7 +113,11 @@ export function HousesDashboardPage() {
                       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#7257ff] to-[#563df0] text-white">
                         <Home className="h-5 w-5" />
                       </span>
-                      {house.id === workspace.activeHouseId ? (
+                      {isPending ? (
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[0.65rem] font-bold text-amber-600">
+                          Waiting for Approval
+                        </span>
+                      ) : house.id === workspace.activeHouseId ? (
                         <span className="rounded-full bg-[#654cff]/10 px-2 py-0.5 text-[0.65rem] font-bold text-[#654cff]">
                           Active
                         </span>
@@ -137,7 +138,7 @@ export function HousesDashboardPage() {
                       <Users className="h-3.5 w-3.5" />
                       {house.members.length} member
                       {house.members.length === 1 ? "" : "s"}
-                      {myRole ? ` · ${myRole}` : ""}
+                      {house.myRole ? ` · ${house.myRole}` : ""}
                     </div>
                   </button>
 

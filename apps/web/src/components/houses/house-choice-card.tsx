@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
   Building2,
+  Check,
   GraduationCap,
   Hash,
   Heart,
@@ -12,19 +13,24 @@ import {
   Settings2,
   User,
   UserRoundPlus,
-  Users
+  Users,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { HouseChoiceRow } from "@/components/houses/house-choice-row";
+import { checkHandleAvailability } from "@/services/base-workspace.service";
 import {
   HOUSE_TYPES,
   HOUSE_TYPE_INFO,
   type HouseType
 } from "@/lib/house-types";
 
-type Mode = "choice" | "create-type" | "create" | "join" | "request";
+type Mode =
+  "choice" | "create-type" | "create-name" | "create-tag" | "join" | "request";
+
+const HANDLE_PATTERN = /^[a-z0-9]{3,20}$/;
 
 const HOUSE_TYPE_ICONS: Record<HouseType, typeof User> = {
   freelancer: User,
@@ -46,7 +52,6 @@ export function HouseChoiceCard({
   onCreateHouse: (data: {
     name: string;
     handle: string;
-    description: string;
     houseType: HouseType;
   }) => void;
   onJoinHouse: (data: { inviteCode: string }) => void;
@@ -54,16 +59,32 @@ export function HouseChoiceCard({
 }) {
   const [mode, setMode] = useState<Mode>("choice");
   const [houseType, setHouseType] = useState<HouseType>("custom");
+  const [houseName, setHouseName] = useState("");
+  const [houseHandle, setHouseHandle] = useState("");
+  const [handleAvailable, setHandleAvailable] = useState<boolean | null>(null);
+  const [checkingHandle, setCheckingHandle] = useState(false);
+
+  useEffect(() => {
+    if (!HANDLE_PATTERN.test(houseHandle)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting availability status as the handle input changes, not deriving render output
+      setHandleAvailable(null);
+      return;
+    }
+
+    setCheckingHandle(true);
+    const timeout = setTimeout(() => {
+      checkHandleAvailability(houseHandle)
+        .then(setHandleAvailable)
+        .catch(() => setHandleAvailable(null))
+        .finally(() => setCheckingHandle(false));
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [houseHandle]);
 
   function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    onCreateHouse({
-      name: String(form.get("name") ?? ""),
-      handle: String(form.get("handle") ?? ""),
-      description: String(form.get("description") ?? ""),
-      houseType
-    });
+    onCreateHouse({ name: houseName.trim(), handle: houseHandle, houseType });
   }
 
   function handleJoinSubmit(event: FormEvent<HTMLFormElement>) {
@@ -103,7 +124,7 @@ export function HouseChoiceCard({
               key={type}
               onClick={() => {
                 setHouseType(type);
-                setMode("create");
+                setMode("create-name");
               }}
               title={HOUSE_TYPE_INFO[type].label}
               tone="soft"
@@ -114,7 +135,7 @@ export function HouseChoiceCard({
     );
   }
 
-  if (mode === "create") {
+  if (mode === "create-name") {
     return (
       <section className="w-full max-w-[30rem] rounded-3xl border border-black/[0.06] bg-white p-10 shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)] dark:border-white/[0.08] dark:bg-[#171a28]">
         <button
@@ -126,46 +147,101 @@ export function HouseChoiceCard({
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
         <h2 className="text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
-          Create a house
+          Name your house
         </h2>
         <p className="mt-2 text-[0.95rem] leading-relaxed text-[#5f667d] dark:text-[#a8acbf]">
-          Give your production house a name and a unique handle.
+          You can change this anytime from House Settings.
         </p>
         <form
           className="mt-6 grid gap-4 text-left"
-          onSubmit={handleCreateSubmit}
+          onSubmit={(event) => {
+            event.preventDefault();
+            setMode("create-tag");
+          }}
         >
           <div className="grid gap-2">
             <Label htmlFor="house-name">House name</Label>
             <Input
               id="house-name"
-              name="name"
+              onChange={(event) => setHouseName(event.target.value)}
               placeholder="Nova Frame House"
               required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="house-handle">Handle</Label>
-            <Input
-              id="house-handle"
-              name="handle"
-              pattern="[a-z0-9-]+"
-              placeholder="nova-frame"
-              required
-              title="Lowercase letters, numbers, and hyphens only"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="house-description">Description</Label>
-            <Input
-              id="house-description"
-              name="description"
-              placeholder="Commercial films, reels, and event edits."
+              value={houseName}
             />
           </div>
           <Button
             className="mt-1 h-12 w-full rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] font-bold text-white hover:opacity-95"
-            disabled={isSubmitting}
+            disabled={!houseName.trim()}
+            type="submit"
+          >
+            Next
+          </Button>
+        </form>
+      </section>
+    );
+  }
+
+  if (mode === "create-tag") {
+    const validFormat = HANDLE_PATTERN.test(houseHandle);
+    const canSubmit = validFormat && handleAvailable === true;
+
+    return (
+      <section className="w-full max-w-[30rem] rounded-3xl border border-black/[0.06] bg-white p-10 shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)] dark:border-white/[0.08] dark:bg-[#171a28]">
+        <button
+          className="mb-5 flex items-center gap-1.5 text-sm font-bold text-[#5f667d] dark:text-[#a8acbf]"
+          disabled={isSubmitting}
+          onClick={() => setMode("create-name")}
+          type="button"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+        <h2 className="text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
+          Choose a house tag
+        </h2>
+        <p className="mt-2 text-[0.95rem] leading-relaxed text-[#5f667d] dark:text-[#a8acbf]">
+          Lowercase letters and numbers only, 3-20 characters. This is your
+          house&apos;s unique handle.
+        </p>
+        <form
+          className="mt-6 grid gap-2 text-left"
+          onSubmit={handleCreateSubmit}
+        >
+          <Label htmlFor="house-handle">House tag</Label>
+          <Input
+            id="house-handle"
+            onChange={(event) =>
+              setHouseHandle(event.target.value.toLowerCase())
+            }
+            placeholder="filmverse"
+            required
+            value={houseHandle}
+          />
+          {houseHandle && validFormat ? (
+            <p
+              className={`flex items-center gap-1.5 text-sm font-semibold ${
+                handleAvailable ? "text-emerald-600" : "text-red-600"
+              }`}
+            >
+              {checkingHandle ? (
+                "Checking..."
+              ) : handleAvailable ? (
+                <>
+                  <Check className="h-4 w-4" /> {houseHandle} available
+                </>
+              ) : (
+                <>
+                  <X className="h-4 w-4" /> already taken
+                </>
+              )}
+            </p>
+          ) : houseHandle ? (
+            <p className="text-sm font-semibold text-red-600">
+              Lowercase letters and numbers only, 3-20 characters.
+            </p>
+          ) : null}
+          <Button
+            className="mt-3 h-12 w-full rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] font-bold text-white hover:opacity-95"
+            disabled={isSubmitting || !canSubmit}
             type="submit"
           >
             {isSubmitting ? "Creating..." : "Create house"}
