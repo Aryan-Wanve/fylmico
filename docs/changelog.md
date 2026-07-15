@@ -409,3 +409,49 @@ Migration notes:
   `organizations.enabled_modules` (`String[]`, backfilled to every module
   for existing houses) columns (migration
   `20260715180000_house_type_modules`) - run `prisma migrate deploy`.
+
+## 0.13.0 - 2026-07-15
+
+Summary:
+
+- Rebuilt Tasks from a to-do list into a full production workflow
+  (Phase 1, ADR 0047): multi-assignee with responsibilities, subtasks,
+  checklists with auto-computed progress, dependencies ("blocked by"),
+  time tracking (start/stop timer + work log + estimate-vs-actual), and
+  an activity log powering a merged activity/comment timeline with
+  `@mention` support.
+- 20 task types, 6 statuses (added Review/Changes Requested/Archived), 4
+  priorities (added Urgent), real due/start date-times, estimated
+  duration, and recurrence (auto-creates the next occurrence on
+  completion).
+- New rich creation dialog and a full slide-over task detail panel,
+  replacing the old single `window.prompt()` flow.
+- Task attachments now go through the existing House Drive (a task can
+  have files uploaded directly or linked from elsewhere in Drive).
+- List/Kanban (6 columns)/Table/My-Tasks views, bulk multi-select with a
+  status/priority/delete action bar, indicator badges (overdue/blocked/
+  high-priority/waiting-for-review/etc.), and expanded filters
+  (status/type/assignee) and group-by (type/client) options.
+- New notification triggers: task status changes, `@mentions`, review
+  requests, and completion.
+
+Breaking changes:
+
+- `Task.assigneeId`/`Task.role`/`Task.project` (freeform string) removed.
+  `POST`/`PATCH /api/v1/tasks` no longer accept `assigneeId`/`project`;
+  use `assignees: [{ userId, responsibility? }]` and `projectId` instead.
+  `Task.status` no longer accepts `"done"`/`"on-hold"` - use `"completed"`/
+  `"todo"`. `Task.dueDate`/`startDate` are now ISO datetimes, not
+  date-only strings.
+- `GET`/`POST /api/v1/chat/rooms/:roomId/tasks` now return the lighter
+  `ChannelTaskItem` shape instead of the full `Task` shape.
+
+Migration notes:
+
+- Migration `20260715200000_tasks_production_workflow` - adds every new
+  `tasks` column and 5 new tables (`task_assignees`,
+  `task_checklist_items`, `task_dependencies`, `task_activity`,
+  `task_time_entries`), adds `file_entries.task_id`, backfills
+  `task_assignees` from the dropped `assignee_id`/`role` columns, and
+  remaps existing `status` values (`done`→`completed`, `on-hold`→`todo`)
+  before dropping the old columns - run `prisma migrate deploy`.

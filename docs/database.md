@@ -624,52 +624,193 @@ Migration history: `20260714150000_house_join_requests`.
 
 ### Table: `tasks`
 
-Purpose: a single production task scheduled and assigned within a house.
+Purpose: a full production task - creation flow, assignment, scheduling,
+dependencies, checklists, time tracking, and activity history - not just a
+to-do row. Reworked in ADR 0047 from the original single-assignee to-do
+shape.
 
 Ownership: belongs to one `organization`.
 
-Columns: `id`, `organization_id`, `conversation_id` (nullable, added per the
-`20260712080000_conversation_links` migration — set when a task is created
-from within a chat room rather than the standalone Tasks page), `title`,
-`project` (plain string label, not
-a foreign key - even though a real `projects` table exists as of ADR 0022,
-a task's `project` is still freeform text, not a `project_id` FK; see
-Reasoning below), `assignee_id`, `role` (plain string, auto-derived from the
-assignee's current `roles.name` at create/reassign time as of ADR 0026 - not
-a DB foreign key, and no longer a client-supplied field), `due_date` (plain
-string, not a real `DATE`/`TIMESTAMP` - the frontend only ever displays it,
-never computes against it), `status` (default `"todo"` as of ADR 0026;
-`"todo" | "in-progress" | "on-hold" | "done"`, the same vocabulary the
-dashboard's task panel and the standalone Tasks page both use), `priority`
-(default `"medium"`; `"low" | "medium" | "high"`), `created_at`, `updated_at`.
+Columns: `id`, `organization_id`, `conversation_id` (nullable - set when
+created from a chat room), `title`, `description` (nullable, markdown-lite
+text - see `renderMarkdownLite()` in `task-data.ts`), `type` (default
+`"custom"`; 20-value vocab - shoot/edit/color-grade/sound-design/vfx/
+motion-graphics/storyboarding/script-writing/thumbnail/photography/reels/
+social-media/client-review/asset-collection/equipment/location-scouting/
+casting/meeting/admin/custom - validated in the DTO only, not a DB enum),
+`status` (default `"todo"`; `"todo" | "in-progress" | "review" |
+"changes-requested" | "completed" | "archived"` as of ADR 0047, replacing
+the old 4-value vocab), `priority` (default `"medium"`; `"low" | "medium" |
+"high" | "urgent"`), `due_date`/`start_date` (real `TIMESTAMP`, not a plain
+string - ADR 0047 converted the old date-only string column), `estimated_
+minutes` (nullable), `recurrence_rule` (nullable; `"daily" | "weekly" |
+"monthly"`), `recurrence_end_date` (nullable), `created_by_id` ("assigned
+by" - the user who created the task, backfilled from the old `assignee_id`
+during the ADR 0047 migration), `project_id`/`board_id`/`script_id`/
+`shoot_day_event_id` (nullable FKs - `board_id` covers both storyboard and
+shot-list since `Board` contains ordered `Shot`s; `shoot_day_event_id`
+points at a `CalendarEvent` with `category = "shoot"`), `parent_task_id`
+(nullable self-relation - subtasks, cascade delete like `FileEntry.parentId`),
+`equipment`/`deliverables`/`tags` (`String[]`), `location`/`call_time`
+(nullable strings), `progress` (default `0` - auto-recomputed from
+checklist completion ratio, see `tasks.service.ts#recomputeProgress`),
+`created_at`, `updated_at`. "Linked Client" is derived at read time from
+`task.project.clients[0].client` - no redundant direct `client_id` column,
+since `Project` already owns that relation.
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
-`users` via `assignee_id` (no cascade - a task shouldn't vanish if its
-assignee's account is later deleted; that's an unhandled edge case to
-revisit if user deletion is ever implemented); belongs to `conversations`
-(`onDelete: SetNull` - a task outlives the chat room it was created from).
+`users` via `created_by_id`; belongs to `conversations` (`onDelete:
+SetNull`); belongs to `projects`/`boards`/`scripts`/`calendar_events`
+(all nullable, `onDelete: SetNull`); self-relation via `parent_task_id`
+(cascade delete - deleting a parent deletes its subtasks); has many
+`task_assignees`, `task_checklist_items`, `task_activity`,
+`task_time_entries`, `file_entries` (via `FileEntry.task_id`), and
+`task_dependencies` (both directions - `blocking_task_id` and
+`blocked_task_id`).
 
-Indexes: indexes on `organization_id`, `assignee_id`, and `conversation_id`.
+Indexes: indexes on `organization_id`, `conversation_id`, `created_by_id`,
+`project_id`, `board_id`, `script_id`, `shoot_day_event_id`,
+`parent_task_id`.
 
 Constraints: none beyond required foreign keys.
 
 Permissions: create/update/delete via `POST` / `PATCH` / `DELETE
-/api/v1/tasks(/:taskId)` by any member of the task's house (ADR 0021 and
-0026 - no finer-grained role check yet); also creatable/listed room-scoped
-via `POST`/`GET /api/v1/chat/rooms/:roomId/tasks`, which sets
-`conversation_id` to that room.
+/api/v1/tasks(/:taskId)` by any member of the task's house (no
+finer-grained role check yet); also creatable/listed room-scoped via
+`POST`/`GET /api/v1/chat/rooms/:roomId/tasks`.
 
-Reasoning: single `assignee_id` rather than a `task_assignees` join table -
-matches what `docs/api.md`'s contract and the mock actually need
-(one assignee per task); a many-to-many upgrade is deferred until a real
-multi-assignee feature exists (ADR 0021). `project` stays freeform text
-rather than becoming a `project_id` FK (ADR 0026) - the Tasks page lets
-someone type an ad-hoc project label when creating a task without first
-having to create a real `Project` row; linking the two is future work once
-task creation flows through a project-picker instead of free text.
+Reasoning: see ADR 0047 for the full rationale behind the multi-assignee
+join table, the single `TaskActivity` log covering four kinds of history,
+and reusing the polymorphic `Comment` model for task discussion instead of
+a dedicated table.
 
-Migration history: `20260708165828_tasks_chat`, `20260710170043_task_status_default_todo`
-(initial columns); `conversation_id` added in `20260712080000_conversation_links`.
+Migration history: `20260708165828_tasks_chat`,
+`20260710170043_task_status_default_todo` (initial columns);
+`conversation_id` added in `20260712080000_conversation_links`;
+`20260715200000_tasks_production_workflow` (ADR 0047) - full rework:
+dropped `assignee_id`/`role`/freeform `project`, added every column above,
+remapped `status` (`done`→`completed`, `on-hold`→`todo`), backfilled
+`task_assignees` from the old `assignee_id`/`role`.
+
+### Table: `task_assignees`
+
+Purpose: multi-assignee join table, replacing the old single `assignee_id`
+column on `tasks` (ADR 0047).
+
+Ownership: belongs to one `task`.
+
+Columns: `id`, `task_id`, `user_id`, `responsibility` (nullable string -
+free text like "Lead Editor"/"Camera Operator"), `created_at`.
+
+Relationships: belongs to `tasks` (cascade delete); belongs to `users` (no
+cascade).
+
+Indexes: unique `(task_id, user_id)`; index on `task_id`.
+
+Constraints: unique `(task_id, user_id)` - a user can't be assigned to the
+same task twice.
+
+Permissions: managed only through `PATCH /api/v1/tasks/:taskId` (the
+`assignees` array is diffed server-side; add/remove fires
+`task_assigned`/activity-log entries per changed member) - no standalone
+route.
+
+Migration history: `20260715200000_tasks_production_workflow`, backfilled
+from the dropped `tasks.assignee_id`/`tasks.role` columns.
+
+### Table: `task_checklist_items`
+
+Purpose: per-task checklist, drives the auto-computed `tasks.progress`
+percentage.
+
+Ownership: belongs to one `task`.
+
+Columns: `id`, `task_id`, `text`, `done` (default `false`), `order` (int,
+insertion order), `created_at`, `updated_at`.
+
+Relationships: belongs to `tasks` (cascade delete).
+
+Indexes: index on `task_id`.
+
+Permissions: `POST /api/v1/tasks/:taskId/checklist`, `PATCH`/`DELETE
+/api/v1/tasks/:taskId/checklist/:itemId` - any house member.
+
+Migration history: `20260715200000_tasks_production_workflow`.
+
+### Table: `task_dependencies`
+
+Purpose: "blocked by" / "blocking" relationships between tasks in the same
+house.
+
+Ownership: belongs to one house indirectly (both tasks must be in the same
+house - validated in `tasks.service.ts`, not a DB constraint).
+
+Columns: `id`, `blocking_task_id`, `blocked_task_id`, `created_at`. A task
+is "Blocked" (`ProductionTask.isBlocked`) when any row has its
+`blocked_task_id` pointing at it and the `blocking_task_id` task isn't
+`completed`/`archived`.
+
+Relationships: belongs to `tasks` twice (`blocking_task_id` and
+`blocked_task_id`, both cascade delete).
+
+Indexes: unique `(blocking_task_id, blocked_task_id)`.
+
+Constraints: unique pair; self-blocking (a task depending on itself) is
+rejected in the service layer, not via a DB check constraint.
+
+Permissions: `POST`/`DELETE /api/v1/tasks/:taskId/dependencies(/:blockingTaskId)`
+
+- any house member.
+
+Migration history: `20260715200000_tasks_production_workflow`.
+
+### Table: `task_activity`
+
+Purpose: one append-only log powering the task detail panel's activity
+timeline, status history, assignment history, and due-date-change history
+together - a deliberate complexity-reduction call (ADR 0047) instead of
+one table per concern.
+
+Ownership: belongs to one `task`.
+
+Columns: `id`, `task_id`, `actor_id`, `type` (string discriminator -
+`created` | `status_changed` | `priority_changed` | `due_date_changed` |
+`assigned` | `unassigned` | `dependency_added`, etc.), `from_value`/
+`to_value` (nullable strings - human-readable before/after), `created_at`.
+
+Relationships: belongs to `tasks` (cascade delete); belongs to `users` via
+`actor_id`.
+
+Indexes: index on `task_id`.
+
+Permissions: read-only via `GET /api/v1/tasks/:taskId/activity` - written
+only by `tasks.service.ts`'s private `logActivity()` helper, never
+client-supplied.
+
+Migration history: `20260715200000_tasks_production_workflow`.
+
+### Table: `task_time_entries`
+
+Purpose: start/stop timer sessions and manual work-log entries; backs the
+estimate-vs-actual comparison (`SUM(duration_minutes)` vs
+`tasks.estimated_minutes`).
+
+Ownership: belongs to one `task`.
+
+Columns: `id`, `task_id`, `user_id`, `started_at`, `ended_at` (nullable -
+`null` means the timer is actively running, drives the "Active timer"
+indicator), `duration_minutes` (nullable - computed on stop, or supplied
+directly for a manual work-log entry), `note` (nullable), `created_at`.
+
+Relationships: belongs to `tasks` (cascade delete); belongs to `users`.
+
+Indexes: index on `task_id`.
+
+Permissions: `POST /api/v1/tasks/:taskId/time-entries(/start|/stop)`,
+`GET /api/v1/tasks/:taskId/time-entries` - any house member; a user can
+only stop their own running timer.
+
+Migration history: `20260715200000_tasks_production_workflow`.
 
 ### Table: `conversations`
 
@@ -1376,8 +1517,8 @@ Columns: `id`, `organization_id`, `project_id` (nullable), `title`,
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
 `projects` (`onDelete: SetNull`, same reasoning as `boards.project_id`);
-belongs to `users` via `created_by_id` (no cascade, same reasoning as
-`tasks.assignee_id`); has many `boards` (a board can reference the script
+belongs to `users` via `created_by_id` (no cascade - a script shouldn't
+vanish if its creator's account is later deleted); has many `boards` (a board can reference the script
 it's boarding out via `boards.script_id`).
 
 Indexes: indexes on `organization_id` and `project_id`.
@@ -1405,16 +1546,19 @@ behind the Files page - a shared index/tree over files whose actual bytes
 live in the house's single connected Google Drive (ADR 0045).
 
 Ownership: belongs to one `organization`; optionally belongs to a parent
-`file_entries` row (folder nesting) and/or a `conversation` (a file
-attached from within a chat room); records who uploaded/created it via
-`uploaded_by_id`.
+`file_entries` row (folder nesting), a `conversation` (a file attached from
+within a chat room), and/or a `task` (an attachment on a task); records who
+uploaded/created it via `uploaded_by_id`.
 
 Columns: `id`, `organization_id`, `parent_id` (nullable, self-referencing),
-`conversation_id` (nullable), `name`, `type` (`"file"` | `"folder"`),
-`storage_path` (nullable - the Google Drive object id, for both `"file"`
-and `"folder"` rows now that there's one house Drive), `drive_key`
-(nullable, unique per `organization_id` - a stable identifier for
-system-managed folders, e.g. `"clients"`, `"client:<id>"`,
+`conversation_id` (nullable), `task_id` (nullable, added in ADR 0047 -
+mirrors the `conversation_id` pattern exactly; independent of `parent_id`,
+so a file can be uploaded straight to a task or an existing Drive entry can
+be linked to a task without moving it out of its folder), `name`, `type`
+(`"file"` | `"folder"`), `storage_path` (nullable - the Google Drive object
+id, for both `"file"` and `"folder"` rows now that there's one house
+Drive), `drive_key` (nullable, unique per `organization_id` - a stable
+identifier for system-managed folders, e.g. `"clients"`, `"client:<id>"`,
 `"project:<id>:Raw Data"`; `null` for ad-hoc user-created folders/files),
 `sensitive` (`Boolean`, default `false` - gates visibility to Owners only),
 `size` (nullable `Int`, bytes), `mime_type` (nullable), `uploaded_by_id`,
@@ -1423,12 +1567,14 @@ system-managed folders, e.g. `"clients"`, `"client:<id>"`,
 Relationships: belongs to `organizations` (cascade delete); self-relation
 via `parent_id`/`children` (`"FileEntryChildren"`, cascade delete -
 deleting a folder deletes its contents); belongs to `users` via
-`uploaded_by_id` (no cascade, same reasoning as `tasks.assignee_id`);
-belongs to `conversations` (`onDelete: SetNull` - a file outlives the chat
-room it was attached from).
+`uploaded_by_id` (no cascade - a file shouldn't vanish if its uploader's
+account is later deleted); belongs to `conversations` (`onDelete: SetNull`
 
-Indexes: indexes on `organization_id`, `parent_id`, and `conversation_id`;
-unique compound index on `(organization_id, drive_key)`.
+- a file outlives the chat room it was attached from); belongs to `tasks`
+  (`onDelete: SetNull` - a file outlives the task it was attached to).
+
+Indexes: indexes on `organization_id`, `parent_id`, `conversation_id`, and
+`task_id`; unique compound index on `(organization_id, drive_key)`.
 
 Constraints: `(organization_id, drive_key)` unique (`NULL` values don't
 constrain each other, so ad-hoc folders/files are unaffected).
@@ -1462,7 +1608,8 @@ one Drive object - the per-uploader mirror cache ADR 0038 needed
 Migration history: `20260711234500_file_entries` (initial columns);
 `conversation_id` added in `20260712080000_conversation_links`; `drive_key`
 and `sensitive` added in `20260715150000_house_drive_connection` (ADR
-0045), which also dropped `drive_folder_links`.
+0045), which also dropped `drive_folder_links`; `task_id` added in
+`20260715200000_tasks_production_workflow` (ADR 0047).
 
 ### Table: `drive_connections`
 

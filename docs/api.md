@@ -310,8 +310,12 @@ Clients:
 
 Collaboration:
 
-- ~~Tasks (create).~~ Implemented (`POST /api/v1/tasks`, see above). Update/
-  status-change and multi-assignee support are not.
+- ~~Tasks (create, update, status-change, multi-assignee, subtasks,
+  checklists, dependencies, time tracking, activity history,
+  attachments).~~ Fully implemented per ADR 0047 (see "Tasks and Chat"
+  above). Calendar/Gantt views, task templates, custom fields, Pomodoro
+  mode, and proactive due/overdue push notifications are not (no
+  scheduled-job infra, ADR 0042).
 - ~~Conversations, Messages (send).~~ Implemented
   (`POST /api/v1/chat/rooms/:roomId/messages`, see above). Custom room
   creation and private/DM conversations (`conversation_members`) are not.
@@ -618,54 +622,198 @@ per-caller `unreadCount`). Errors: `401 unauthenticated`.
 
 ## Tasks and Chat (Implemented)
 
-Implemented per ADR 0021 (`apps/web/src/server/tasks/*`, `apps/web/src/server/chat/*`),
-extended per ADR 0026 (unified status vocabulary, update/delete, auto-derived
-role).
+Implemented per ADR 0021, extended per ADR 0026, then fully reworked per
+ADR 0047 into a production-workflow system (`apps/web/src/server/tasks/*`,
+`apps/web/src/server/chat/*`): multi-assignee, subtasks, checklists,
+dependencies, time tracking, activity history, and Drive-backed
+attachments.
 
 ### `POST /api/v1/tasks`
 
 Authentication: required. Body:
-`{ "houseId": string, "title": string, "project": string, "assigneeId": string, "dueDate": string, "priority"?: "low"|"medium"|"high", "status"?: "todo"|"in-progress"|"on-hold"|"done" }`.
-`role` is **not** part of the request — it's derived automatically from the
-assignee's current house role. Response:
+`{ "title": string, "description"?: string, "type"?: TaskType, "priority"?: TaskPriority, "status"?: TaskStatus, "assignees"?: { "userId": string, "responsibility"?: string }[], "dueDate"?: string (ISO), "startDate"?: string (ISO), "estimatedMinutes"?: number, "recurrenceRule"?: "daily"|"weekly"|"monthly", "recurrenceEndDate"?: string, "projectId"?: string, "boardId"?: string, "scriptId"?: string, "shootDayEventId"?: string, "parentTaskId"?: string, "equipment"?: string[], "location"?: string, "callTime"?: string, "deliverables"?: string[], "tags"?: string[] }`.
+`houseId` is not in the body — the caller's active house is used, same
+convention as other house-scoped create endpoints. `TaskType` is a
+20-value vocab (shoot/edit/color-grade/sound-design/vfx/motion-graphics/
+storyboarding/script-writing/thumbnail/photography/reels/social-media/
+client-review/asset-collection/equipment/location-scouting/casting/
+meeting/admin/custom); `TaskStatus` is todo/in-progress/review/
+changes-requested/completed/archived; `TaskPriority` is low/medium/high/
+urgent. Response — the full `Task` shape (also returned by every other
+task endpoint below unless noted):
 
 ```json
 {
   "data": {
     "id": "task_123",
-    "title": "Prepare rough cut",
-    "project": "Cafe Noir Opening",
-    "assigneeId": "user_456",
-    "assigneeName": "Mira Kapoor",
-    "role": "Editor",
-    "dueDate": "2026-07-07",
+    "title": "Color grade the interview scene",
+    "description": "**Note:** match the reference LUT",
+    "type": "color-grade",
     "status": "todo",
-    "priority": "medium"
+    "priority": "high",
+    "dueDate": "2026-07-20T15:00:00.000Z",
+    "startDate": null,
+    "estimatedMinutes": 90,
+    "recurrenceRule": null,
+    "recurrenceEndDate": null,
+    "equipment": [],
+    "location": null,
+    "callTime": null,
+    "deliverables": [],
+    "tags": ["urgent-fix", "client-a"],
+    "progress": 0,
+    "createdById": "user_123",
+    "createdByName": "Rehan Patel",
+    "projectId": null,
+    "projectTitle": null,
+    "clientId": null,
+    "clientName": null,
+    "boardId": null,
+    "boardName": null,
+    "scriptId": null,
+    "scriptTitle": null,
+    "shootDayEventId": null,
+    "shootDayEventTitle": null,
+    "parentTaskId": null,
+    "assignees": [
+      {
+        "userId": "user_456",
+        "name": "Mira Kapoor",
+        "responsibility": "Lead Colorist"
+      }
+    ],
+    "checklistItems": [],
+    "subtasks": [],
+    "blockedByTasks": [],
+    "blockingTasks": [],
+    "isBlocked": false,
+    "attachmentIds": [],
+    "createdAt": "2026-07-15T10:00:00.000Z",
+    "updatedAt": "2026-07-15T10:00:00.000Z",
+    "commentCount": 0
   }
 }
 ```
 
-Errors: `400 invalid_request` (missing required fields, or `priority`/`status`
-isn't one of the accepted values), `401 unauthenticated`, `403 forbidden`
-(caller isn't a member of `houseId`), `404 assignee_not_found` (`assigneeId`
-isn't a member of `houseId`). Defaults: `status: "todo"`, `priority: "medium"`.
+`clientId`/`clientName` are derived from `project.clients[0].client` at
+read time, not stored. Errors: `400 invalid_request` (missing `title`, or
+an enum field isn't one of the accepted values), `401 unauthenticated`,
+`403 forbidden` (caller isn't a member of the active house),
+`404 member_not_found` (an `assignees[].userId` isn't a house member).
+Defaults: `status: "todo"`, `priority: "medium"`, `type: "custom"`.
+
+### `GET /api/v1/tasks/:taskId`
+
+Authentication: required. Response: the full `Task` shape above. Errors:
+`401 unauthenticated`, `403 forbidden`, `404 task_not_found`.
 
 ### `PATCH /api/v1/tasks/:taskId`
 
-Authentication: required. Request param: `taskId`. Body: any subset of
-`{ "title": string, "project": string, "assigneeId": string, "dueDate": string, "priority": "low"|"medium"|"high", "status": "todo"|"in-progress"|"on-hold"|"done" }`.
-Response: the updated task, same shape as create. Reassigning `assigneeId`
-re-derives `role` from the new assignee's current house role and notifies
-them (`task_assigned`), same as create. Errors: `400 invalid_request`,
-`401 unauthenticated`, `403 forbidden` (caller isn't a member of the task's
-house), `404 task_not_found`, `404 assignee_not_found` (new `assigneeId`
-isn't a member of the house).
+Authentication: required. Body: any subset of the `POST` body fields above,
+plus `progress?: number` (0-100). Response: the updated task. Changing
+`status`/`priority`/`dueDate` logs a `TaskActivity` entry
+(`status_changed`/`priority_changed`/`due_date_changed`); moving `status`
+to `"review"` fires `task_review_requested`, to `"completed"` fires
+`task_completed` (and, if the task has a `recurrenceRule`, synchronously
+creates the next occurrence — see ADR 0047); diffing `assignees` against
+the current set fires `task_assigned`/logs `assigned`/`unassigned` per
+changed member. Errors: `400 invalid_request`, `401 unauthenticated`,
+`403 forbidden`, `404 task_not_found`, `404 member_not_found`.
 
 ### `DELETE /api/v1/tasks/:taskId`
 
-Authentication: required. Request param: `taskId`. Response:
-`{ "data": { "success": true } }`. Errors: `401 unauthenticated`,
+Authentication: required. Response: `{ "data": { "success": true } }`.
+Errors: `401 unauthenticated`, `403 forbidden`, `404 task_not_found`.
+
+### `POST /api/v1/tasks/:taskId/duplicate`
+
+Authentication: required. No body. Copies the task (title, type, priority,
+assignees, production fields, links) but not its id, dates, checklist
+completion state, time entries, or activity log. Response: the new `Task`.
+Errors: `401 unauthenticated`, `403 forbidden`, `404 task_not_found`.
+
+### `POST /api/v1/tasks/:taskId/checklist`
+
+Authentication: required. Body: `{ "text": string }`. Response: the new
+`TaskChecklistItem` (`{ "id", "text", "done", "order" }`). Adding/toggling/
+removing a checklist item recomputes `Task.progress` from the completion
+ratio. Errors: `400 invalid_request`, `401 unauthenticated`,
 `403 forbidden`, `404 task_not_found`.
+
+### `PATCH`/`DELETE /api/v1/tasks/:taskId/checklist/:itemId`
+
+Authentication: required. `PATCH` body: any subset of
+`{ "text": string, "done": boolean, "order": number }`. `DELETE` response:
+`{ "data": { "success": true } }`. Errors: `401 unauthenticated`,
+`403 forbidden`, `404 task_not_found`/`404 checklist_item_not_found`.
+
+### `POST /api/v1/tasks/:taskId/dependencies`
+
+Authentication: required. Body: `{ "blockingTaskId": string }` — marks
+`:taskId` as blocked by `blockingTaskId` (both tasks must be in the same
+house; self-blocking is rejected). Response: the updated `Task` (with
+`isBlocked`/`blockedByTasks` refreshed). Logs a `dependency_added` activity
+entry. Errors: `400 invalid_request` (self-blocking, or duplicate pair),
+`401 unauthenticated`, `403 forbidden`, `404 task_not_found`.
+
+### `DELETE /api/v1/tasks/:taskId/dependencies/:blockingTaskId`
+
+Authentication: required. Response: the updated `Task`. Errors:
+`401 unauthenticated`, `403 forbidden`, `404 task_not_found`.
+
+### `GET /api/v1/tasks/:taskId/time-entries`
+
+Authentication: required. Response: `{ "data": TaskTimeEntry[] }` (not
+paginated) — `{ "id", "userId", "userName", "startedAt", "endedAt", "durationMinutes", "note" }`;
+`endedAt: null` means that entry is an actively-running timer. Errors:
+`401 unauthenticated`, `403 forbidden`, `404 task_not_found`.
+
+### `POST /api/v1/tasks/:taskId/time-entries/start`
+
+Authentication: required. No body — starts a running timer for the caller
+on this task (`endedAt: null`). Response: the new `TaskTimeEntry`. Errors:
+`401 unauthenticated`, `403 forbidden`, `404 task_not_found`,
+`409 timer_already_running` (caller already has a running timer on this
+task).
+
+### `POST /api/v1/tasks/:taskId/time-entries/stop`
+
+Authentication: required. Body: `{ "note"?: string }`. Stops the caller's
+running timer on this task, computing `durationMinutes` from
+`startedAt`/`now`. Response: the updated `TaskTimeEntry`. Errors:
+`401 unauthenticated`, `403 forbidden`, `404 task_not_found`,
+`404 no_running_timer`.
+
+### `GET /api/v1/tasks/:taskId/activity`
+
+Authentication: required. Response: `{ "data": TaskActivity[] }` (not
+paginated, `createdAt asc`) — `{ "id", "type", "fromValue", "toValue", "actorId", "actorName", "createdAt" }`.
+Read-only; every entry is written internally by `tasks.service.ts`.
+Errors: `401 unauthenticated`, `403 forbidden`, `404 task_not_found`.
+
+### `GET /api/v1/tasks/:taskId/attachments`
+
+Authentication: required. Response: `{ "data": FileEntry[] }` (not
+paginated) — `file_entries` rows with this task's id set as `taskId`,
+same shape as the Files endpoints. Errors: `401 unauthenticated`,
+`403 forbidden`, `404 task_not_found`.
+
+### `POST /api/v1/tasks/:taskId/attachments`
+
+Authentication: required. Body: `{ "entryId": string }` — links an
+existing Drive `FileEntry` to this task without moving it out of its
+folder (sets `taskId`, leaves `parentId` untouched). To upload a new file
+directly to a task, use `POST /api/v1/houses/:houseId/files/upload` with a
+`taskId` field in the multipart form body instead. Response: the updated
+`FileEntry`. Errors: `401 unauthenticated`, `403 forbidden`,
+`404 task_not_found`/`404 file_not_found`.
+
+### `DELETE /api/v1/tasks/:taskId/attachments/:entryId`
+
+Authentication: required. Unlinks the file from the task (clears `taskId`;
+does not delete the underlying `FileEntry`). Response:
+`{ "data": { "success": true } }`. Errors: `401 unauthenticated`,
+`403 forbidden`, `404 task_not_found`/`404 file_not_found`.
 
 ### `GET`/`POST /api/v1/chat/rooms/:roomId/messages`
 
@@ -806,13 +954,13 @@ Errors: `401 unauthenticated`, `403 forbidden`, `404 room_not_found`.
 ### `GET`/`POST /api/v1/chat/rooms/:roomId/tasks`
 
 Authentication: required (caller must be a member of the room's house).
-`GET` response: `{ "data": Task[] }` (not paginated) — tasks tied to this
-room, same `Task` shape as `POST /api/v1/tasks`'s response. `POST` body:
-`{ "title": string }` — creates a task assigned to the caller
-(`project: "General"`, `role` derived from the caller's current house
-role, `dueDate` defaulted to 7 days out), then (like `sendMessage`/room
-events) returns the **full updated task list**, not just the created task.
-Errors: `400 invalid_request`, `401 unauthenticated`,
+`GET` response: `{ "data": ChannelTaskItem[] }` (not paginated) — tasks
+tied to this room, a lighter shape than the full `Task` (just what the
+channel's Tasks tab renders): `{ "id", "title", "assignees": [{ "userId", "name", "responsibility" }], "dueDate", "status", "priority" }`.
+`POST` body: `{ "title": string }` — creates a task assigned to the caller
+(`dueDate` defaulted to 7 days out), then (like `sendMessage`/room events)
+returns the **full updated task list** as `ChannelTaskItem[]`, not just the
+created task. Errors: `400 invalid_request`, `401 unauthenticated`,
 `403 forbidden`/`403 not_a_member`, `404 room_not_found`.
 
 ### `POST /api/v1/houses/:houseId/conversations`
@@ -961,10 +1109,13 @@ a `Client` instead.
 ## Notifications (Implemented)
 
 Implemented per ADR 0023 (`apps/web/src/server/notifications/*`). No public
-create endpoint — notifications are always server-triggered (currently:
-task assignment notifies the assignee; joining a house notifies its
-`"Owner"` member(s)). No realtime delivery yet (ADR 0005 not implemented) —
-poll `GET /api/v1/notifications`.
+create endpoint — notifications are always server-triggered. Task-related
+triggers (ADR 0021, expanded ADR 0047): `task_assigned`, `task_comment`,
+`task_mentioned` (`@Name` in a task comment), `task_status_changed`,
+`task_review_requested` (status → `review`), `task_completed`; plus
+house-join notifies its `"Owner"` member(s), and others added since (house
+join requests, announcements, bookings, ...). No realtime delivery yet
+(ADR 0005 not implemented) — poll `GET /api/v1/notifications`.
 
 ### `GET /api/v1/notifications`
 
@@ -1014,6 +1165,10 @@ attaches to a task or a project via nested routes (not a generic
 Authentication: required. `POST` body: `{ "body": string }`. Response
 (both methods): `Comment` — `{ "id", "body", "authorId", "authorName", "createdAt", "updatedAt" }`
 (list is cursor-paginated, `createdAt asc` — see "Response Shape" below).
+Posting a comment notifies every current assignee (`task_comment`), and
+additionally fires `task_mentioned` for each house member whose exact name
+appears as `@Name` in `body` (regex-matched against house member names,
+excluding the comment's own author — ADR 0047; no stored mention entity).
 Errors: `400 invalid_request` (empty `body`, `POST` only),
 `401 unauthenticated`, `403 forbidden` (not a member of the task's house),
 `404 task_not_found`.

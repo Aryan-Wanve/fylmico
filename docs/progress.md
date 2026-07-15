@@ -5058,3 +5058,107 @@ Next task:
 
 - Revisit per-type default module sets once real usage patterns emerge
   across the 5 house types.
+
+## 2026-07-15 Tasks: Production Workflow Rebuild (Phase 1)
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 99%
+
+Features completed:
+
+- Full `Task` schema rework (ADR 0047): multi-assignee with
+  responsibilities (`TaskAssignee`, replacing single `assigneeId`),
+  subtasks (`parentTaskId` self-relation), checklists
+  (`TaskChecklistItem`, auto-computed `progress`), dependencies
+  (`TaskDependency`, `isBlocked`), an append-only activity log
+  (`TaskActivity` powering status/assignment/due-date history and the
+  timeline together), and time tracking (`TaskTimeEntry`, start/stop
+  timer + manual work log + estimate-vs-actual). 20 task types, 6
+  statuses, 4 priorities, real `dueDate`/`startDate` timestamps,
+  recurrence (auto-creates the next occurrence on completion, no cron),
+  and real FK links to Project/Board/Script/shoot-day `CalendarEvent`.
+- `FileEntry` gained a nullable `taskId` (mirrors `conversationId`) -
+  attachments can be uploaded straight to a task or linked from the
+  existing House Drive without moving the file.
+- Rich creation flow (`task-create-dialog.tsx`): sectioned dialog covering
+  every new field, a hand-rolled markdown-lite description editor
+  (`**bold**`, `*italic*`, `- list`, `[link](url)` - no new dependency),
+  and an assignee picker showing each member's live active-task count.
+- Full task detail panel (`task-detail-panel.tsx`, a slide-over dialog):
+  inline-editable header, description, assignees, subtasks, checklist,
+  dependencies with a task picker, links/tags/production-field chips,
+  time tracking, attachments, and a merged activity+comment timeline with
+  `@mention` support (regex-matched against house member names, fires
+  `task_mentioned`).
+- List/Kanban (6 columns)/Table/My-Tasks views, indicator badges
+  (overdue/due-today/due-tomorrow/blocked/high-priority/urgent/waiting-
+  for-review), bulk multi-select with a floating bulk-action bar
+  (status/priority/delete), and expanded filters (status/type/assignee
+  alongside the existing priority filter) plus group-by (added
+  type/client to status/priority/project/assignee).
+- New notification triggers: `task_status_changed`, `task_mentioned`,
+  `task_review_requested`, `task_completed`.
+
+Features started:
+
+- None beyond the above; Calendar/Gantt views, task templates, custom
+  fields, Pomodoro mode, productivity analytics, keyboard shortcuts, a
+  saved/advanced filter builder, and proactive due/overdue push
+  notifications are explicitly deferred to a later phase (no
+  scheduled-job infra on this app's Hostinger deployment, ADR 0042) - see
+  ADR 0047's Future Implications.
+
+Files created:
+
+- `docs/adr/0047-tasks-production-workflow.md`
+- `packages/database/prisma/migrations/20260715200000_tasks_production_workflow/`
+- `apps/web/src/server/tasks/dto/add-checklist-item.dto.ts`,
+  `update-checklist-item.dto.ts`, `add-dependency.dto.ts`,
+  `add-work-log.dto.ts`, `stop-timer.dto.ts`
+- `apps/web/src/app/api/v1/tasks/[taskId]/{activity,attachments,checklist,dependencies,duplicate,time-entries}/` route files
+- `apps/web/src/components/tasks/task-description-editor.tsx`,
+  `task-assignee-picker.tsx`, `task-create-dialog.tsx`,
+  `task-detail-panel.tsx`, `task-indicator-badges.tsx`,
+  `task-table-view.tsx`
+
+Files modified:
+
+- `packages/database/prisma/schema.prisma` (`Task` rework, 5 new models,
+  `FileEntry.taskId`)
+- `apps/web/src/server/tasks/dto/create-task.dto.ts`,
+  `update-task.dto.ts`, `tasks.service.ts` (full rework)
+- `apps/web/src/server/files/files.service.ts` (task attachments),
+  `apps/web/src/server/comments/comments.service.ts` (@mentions),
+  `apps/web/src/server/notifications/notifications.service.ts` (new
+  trigger types), `apps/web/src/server/chat/chat.service.ts`
+  (`ChannelTaskItem` shape)
+- `apps/web/src/types/base.ts`, `apps/web/src/services/base-workspace.service.ts`
+  (full new Task types + client functions)
+- `apps/web/src/components/tasks/*` (task-data.ts, task-row-item.tsx,
+  task-kanban-board.tsx, tasks-page.tsx, tasks-toolbar.tsx,
+  tasks-filters-popover.tsx, tasks-group-by-menu.tsx,
+  task-list-column-header.tsx, task-card-menu.tsx)
+- `apps/web/src/components/dashboard/{my-tasks-panel,stat-cards-row,task-row}.tsx`,
+  `apps/web/src/components/crews/crew-profile-page.tsx`,
+  `apps/web/src/components/layout/create-menu.tsx`,
+  `apps/web/src/components/messages/{messages-page,channel-tasks-list}.tsx`,
+  `apps/web/src/components/projects/project-detail-page.tsx` (all
+  updated for the new `Task` shape)
+
+Known limitations / tradeoffs:
+
+- Linked project/board/script/shoot-day and production fields
+  (equipment/location/call-time/deliverables) are only editable at
+  creation time, not from the detail panel - deferred, not blocking.
+- List-view "Group by assignee" reflects only a task's first/primary
+  assignee, not every assignee on a multi-assigned task.
+- No proactive due-soon/overdue notifications - this remains a
+  UI-computed indicator badge, not a push notification, per ADR 0042's
+  no-scheduled-job constraint.
+
+Next task:
+
+- Phase 2: Calendar/Gantt views, task templates, custom fields, and
+  productivity analytics (time-estimate-vs-actual reporting, Pomodoro
+  mode) once Phase 1 usage surfaces real priorities.

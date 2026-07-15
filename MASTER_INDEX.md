@@ -96,6 +96,7 @@ Current ADRs:
 - [0044-realtime-chat-supabase.md](docs/adr/0044-realtime-chat-supabase.md)
 - [0045-house-drive-connection.md](docs/adr/0045-house-drive-connection.md)
 - [0046-house-type-and-modules.md](docs/adr/0046-house-type-and-modules.md)
+- [0047-tasks-production-workflow.md](docs/adr/0047-tasks-production-workflow.md)
 
 ## Current Sprint Gate
 
