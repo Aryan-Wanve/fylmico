@@ -233,29 +233,57 @@ organizations via `organization_memberships`).
 
 Columns: `id` (cuid), `email` (unique, normalized lowercase), `name`
 (required, collected at signup, added per ADR 0020 once the houses feature
-needed a display name), `email_verified_at` (nullable),
-`active_organization_id` (nullable, added per ADR 0020 — the house the user
-most recently created/joined; no house-switcher UI exists yet to make this a
-real choice), `created_at`, `updated_at`.
+needed a display name), `username` (nullable, unique — a stable `@handle`
+distinct from the freely-editable `name`, self-service via `PATCH
+/api/v1/auth/me`), `avatar_url` (nullable — a public Supabase Storage URL,
+set via `POST /api/v1/auth/me/avatar`), `notification_preferences`
+(nullable `Json` — an array of `{id, email, push}` per-notification-type
+toggles, set via `PATCH /api/v1/auth/me/notification-preferences`),
+`email_verified_at` (nullable), `active_organization_id` (nullable, added
+per ADR 0020 — the house the user most recently created/joined; switchable
+via the `/dashboard` hub and `POST /api/v1/houses/:houseId/activate`, ADR
+0040), `last_seen_at` (nullable, added per ADR 0044 — presence's "last
+seen" fallback for when a user has no live Realtime connection; kept fresh
+by a periodic `POST /api/v1/auth/me/heartbeat` while the app is open, not
+on every request), `created_at`, `updated_at`.
 
 Relationships: has many `auth_accounts`, `sessions`, `email_verification_tokens`,
-`password_reset_tokens`, `organization_memberships`.
+`password_reset_tokens`, `organization_memberships`. Also has many rows
+across every later feature table that records a per-user actor (`tasks`
+assignees, `messages`/`message_reactions` authors, `comments`,
+`crew_profiles`, `calendar_events`/`time_entries`/`bookings` creators,
+`house_invitations`/`house_join_requests` sent and handled, `file_entries`
+uploads, a `drive_connections` row, `drive_folder_links`, `scripts`,
+`call_sheets`, `announcements`) — see each of those tables' own sections.
 
-Indexes: unique index on `email`.
+Indexes: unique indexes on `email` and `username`.
 
-Constraints: `email` unique; `name` non-null.
+Constraints: `email` unique; `username` unique when set; `name` non-null.
 
 Permissions: a user may only read/update their own record via `/api/v1/auth/me`
-(no admin/user-management endpoints exist yet).
+(no admin/user-management endpoints exist yet); avatar upload and
+notification-preference updates go through the same `/api/v1/auth/me/*`
+self-service surface.
 
 Reasoning: kept separate from `auth_accounts` so a user can have multiple login
 methods (email now, OAuth later) without changing this table.
 `active_organization_id` is a plain nullable column rather than a separate
 table since only one "currently active" house per user is meaningful right
-now (no concept of per-device or per-session active house).
+now (no concept of per-device or per-session active house). `avatar_url`
+stores a plain public URL rather than a `file_entries` reference — avatars
+use a small always-public Fylmico-owned Supabase Storage bucket, not the
+per-uploader Drive-backed model `file_entries`/`drive_connections` use for
+house files (ADR 0038), since an avatar has no house/folder context and
+must render inline without a signed-URL round trip.
+`notification_preferences` is a single `Json` column (an array of per-type
+toggles) rather than a separate preferences table, since the type list is
+small and fixed client-side.
 
 Migration history: `20260708161817_init_identity` (initial columns);
-`name`/`active_organization_id` added in `20260708164132_organizations_houses`.
+`name`/`active_organization_id` added in `20260708164132_organizations_houses`;
+`username`/`avatar_url` added in `20260712060000_user_profile_username_avatar`;
+`notification_preferences` added in `20260712090000_notification_preferences`;
+`last_seen_at` added in `20260714200000_conversation_reads_and_presence`.
 
 ### Table: `auth_accounts`
 
@@ -319,42 +347,74 @@ Migration history: `20260708161817_init_identity`.
 
 ### Table: `email_verification_tokens`
 
-Purpose: single-use tokens proving control of an email address.
+Purpose: single-use codes proving control of an email address. **As of ADR
+0039 these are no longer globally-unique opaque link-tokens** — this table
+was redesigned to hold short-lived per-user 6-digit OTP codes (e.g. sent by
+email and typed into a verification form), not a hash embedded in a
+clickable link. Because a 6-digit code space is small, the same code can
+legitimately be issued to different users at different times, so
+`token_hash` is no longer globally unique — uniqueness/lookup is scoped to
+`user_id` instead, and repeated wrong guesses are tracked and locked out via
+`attempts`.
 
 Ownership: belongs to one `user`.
 
-Columns: `id`, `user_id`, `token_hash` (unique, sha256 of the opaque token),
-`expires_at`, `consumed_at` (nullable), `created_at`.
+Columns: `id`, `user_id`, `token_hash` (sha256 of the 6-digit OTP code —
+**not unique**, see Reasoning), `attempts` (`Int`, default `0` — incremented
+on each failed verification attempt against this code, added per ADR 0039
+to lock a code out after repeated guesses), `expires_at`, `consumed_at`
+(nullable), `created_at`.
 
 Relationships: belongs to `users` (cascade delete).
 
-Indexes: unique index on `token_hash`; index on `user_id`.
+Indexes: index on `user_id` (the lookup path — a code is verified by
+looking up the requesting user's active token row, then comparing the
+submitted code's hash and `attempts`, not by looking the hash up globally).
 
-Constraints: `token_hash` unique.
+Constraints: none beyond the required `user_id` foreign key —
+`token_hash`'s global uniqueness constraint was dropped in
+`20260714120000_otp_codes` precisely because OTP codes collide across
+users by design.
 
 Permissions: consumed only via `/api/v1/auth/verify-email`; never listed or
 exposed otherwise.
 
-Reasoning: no email provider is chosen yet (ADR 0019), so the plaintext token
+Reasoning: no email provider is chosen yet (ADR 0019), so the plaintext code
 is logged server-side rather than emailed — a temporary stand-in, not the
-final delivery mechanism.
+final delivery mechanism. Switching from link-tokens to OTP codes (ADR 0039)
+trades a slightly weaker per-guess brute-force surface (mitigated by
+`attempts` locking a code out) for a verification flow that works entirely
+within the app UI, with no dependency on the user opening a link from their
+email client.
 
-Migration history: `20260708161817_init_identity`.
+Migration history: `20260708161817_init_identity` (initial link-token
+columns); `attempts` added and `token_hash`'s unique constraint dropped in
+`20260714120000_otp_codes` (link-token → OTP redesign, ADR 0039).
 
 ### Table: `password_reset_tokens`
 
-Purpose: single-use tokens authorizing a password reset.
+Purpose: single-use codes authorizing a password reset. **As of ADR 0039
+these are no longer globally-unique opaque link-tokens** — same redesign as
+`email_verification_tokens` above: this table now holds short-lived
+per-user 6-digit OTP codes, with `token_hash` scoped to `user_id` rather
+than globally unique, and `attempts` tracking failed guesses.
 
 Ownership: belongs to one `user`.
 
-Columns: `id`, `user_id`, `token_hash` (unique, sha256 of the opaque token),
-`expires_at`, `consumed_at` (nullable), `created_at`.
+Columns: `id`, `user_id`, `token_hash` (sha256 of the 6-digit OTP code —
+**not unique**, see Reasoning), `attempts` (`Int`, default `0` —
+incremented on each failed reset attempt against this code, added per ADR
+0039), `expires_at`, `consumed_at` (nullable), `created_at`.
 
 Relationships: belongs to `users` (cascade delete).
 
-Indexes: unique index on `token_hash`; index on `user_id`.
+Indexes: index on `user_id` (the lookup path, same as
+`email_verification_tokens`).
 
-Constraints: `token_hash` unique.
+Constraints: none beyond the required `user_id` foreign key —
+`token_hash`'s global uniqueness constraint was dropped in
+`20260714120000_otp_codes`, same reasoning as
+`email_verification_tokens`.
 
 Permissions: consumed only via `/api/v1/auth/reset-password`;
 `/api/v1/auth/request-password-reset` always responds identically whether or
@@ -362,9 +422,13 @@ not the email is registered, to avoid leaking account existence.
 
 Reasoning: successfully resetting a password also revokes all of that user's
 existing sessions (ADR 0019), since a reset implies the old password (and any
-session established under it) should no longer be trusted.
+session established under it) should no longer be trusted. See
+`email_verification_tokens` above for why this moved from link-tokens to
+OTP codes (ADR 0039).
 
-Migration history: `20260708161817_init_identity`.
+Migration history: `20260708161817_init_identity` (initial link-token
+columns); `attempts` added and `token_hash`'s unique constraint dropped in
+`20260714120000_otp_codes` (link-token → OTP redesign, ADR 0039).
 
 ### Table: `organizations`
 
@@ -498,13 +562,63 @@ link's exposure profile is treated more like the already-plaintext
 
 Migration history: `20260711100000_house_invitations`.
 
+### Table: `house_join_requests`
+
+Purpose: a request from a user to join a house by its `handle` ("tag" in
+the request's own error copy — "No house exists with that tag"), reviewed
+and approved or rejected by the house's `"Owner"` — the requester-initiated
+counterpart to `house_invitations`' owner-initiated flow.
+
+Ownership: belongs to one `organization`; references the requesting `user`
+and, once reviewed, the responding `user`.
+
+Columns: `id`, `organization_id`, `user_id`, `status` (`"pending"` |
+`"approved"` | `"rejected"`, default `"pending"`), `responded_by_id`
+(nullable), `responded_at` (nullable), `created_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`users` via `user_id` (cascade delete — a join request has no reason to
+survive the requester's account being removed); belongs to `users` via
+`responded_by_id` (set null — losing the reviewing owner's account
+shouldn't block deleting old request rows).
+
+Indexes: unique compound index on `(organization_id, user_id)`; indexes on
+`organization_id` and `user_id`.
+
+Constraints: `(organization_id, user_id)` unique — a user has at most one
+join-request row per house; re-requesting after a rejection updates that
+same row back to `"pending"` rather than inserting a new one, and is
+rejected outright while a request is still `"pending"` (`409
+request_pending`) or the user is already a member (`409 already_member`).
+
+Permissions: created via `POST /api/v1/houses/join-requests` (any
+authenticated user, looked up by house `handle`); listed via `GET
+/api/v1/houses/:houseId/join-requests` (pending only) and reviewed via
+`PATCH /api/v1/houses/:houseId/join-requests/:requestId` (body: `status:
+"approved" | "rejected"`) — both restricted to the house's `"Owner"` role
+via `requireOwnerRole`. Approving creates the resulting
+`organization_memberships` row; both outcomes notify the requester in-app,
+and a new request also notifies the house's owner(s) in-app and by email
+(`buildJoinRequestEmail`).
+
+Reasoning: reuses the same plain-string `"pending"/"approved"/"rejected"`
+workflow-status pattern as `tasks.status`, `bookings.status`, and
+`house_invitations.status` rather than a DB enum type. Owner-only
+review matches the same "only owners decide who's in" posture as
+`house_invitations`, just for the opposite (requester-initiated) direction.
+
+Migration history: `20260714150000_house_join_requests`.
+
 ### Table: `tasks`
 
 Purpose: a single production task scheduled and assigned within a house.
 
 Ownership: belongs to one `organization`.
 
-Columns: `id`, `organization_id`, `title`, `project` (plain string label, not
+Columns: `id`, `organization_id`, `conversation_id` (nullable, added per the
+`20260712080000_conversation_links` migration — set when a task is created
+from within a chat room rather than the standalone Tasks page), `title`,
+`project` (plain string label, not
 a foreign key - even though a real `projects` table exists as of ADR 0022,
 a task's `project` is still freeform text, not a `project_id` FK; see
 Reasoning below), `assignee_id`, `role` (plain string, auto-derived from the
@@ -519,15 +633,18 @@ dashboard's task panel and the standalone Tasks page both use), `priority`
 Relationships: belongs to `organizations` (cascade delete); belongs to
 `users` via `assignee_id` (no cascade - a task shouldn't vanish if its
 assignee's account is later deleted; that's an unhandled edge case to
-revisit if user deletion is ever implemented).
+revisit if user deletion is ever implemented); belongs to `conversations`
+(`onDelete: SetNull` - a task outlives the chat room it was created from).
 
-Indexes: indexes on `organization_id` and `assignee_id`.
+Indexes: indexes on `organization_id`, `assignee_id`, and `conversation_id`.
 
 Constraints: none beyond required foreign keys.
 
 Permissions: create/update/delete via `POST` / `PATCH` / `DELETE
 /api/v1/tasks(/:taskId)` by any member of the task's house (ADR 0021 and
-0026 - no finer-grained role check yet).
+0026 - no finer-grained role check yet); also creatable/listed room-scoped
+via `POST`/`GET /api/v1/chat/rooms/:roomId/tasks`, which sets
+`conversation_id` to that room.
 
 Reasoning: single `assignee_id` rather than a `task_assignees` join table -
 matches what `docs/api.md`'s contract and the mock actually need
@@ -538,7 +655,8 @@ someone type an ad-hoc project label when creating a task without first
 having to create a real `Project` row; linking the two is future work once
 task creation flows through a project-picker instead of free text.
 
-Migration history: `20260708165828_tasks_chat`, `20260710170043_task_status_default_todo`.
+Migration history: `20260708165828_tasks_chat`, `20260710170043_task_status_default_todo`
+(initial columns); `conversation_id` added in `20260712080000_conversation_links`.
 
 ### Table: `conversations`
 
@@ -550,7 +668,10 @@ Ownership: belongs to one `organization`.
 Columns: `id`, `organization_id`, `name`, `topic`, `created_at`.
 
 Relationships: belongs to `organizations` (cascade delete); has many
-`messages`.
+`messages`; has many `tasks`, `calendar_events`, and `file_entries` (each
+via its own optional `conversation_id`, added in
+`20260712080000_conversation_links` — a task/event/file created from
+within this room).
 
 Indexes: unique compound index on `(organization_id, name)`; index on
 `organization_id`.
@@ -580,28 +701,118 @@ Migration history: `20260708165828_tasks_chat`.
 
 ### Table: `messages`
 
-Purpose: a single chat message within a conversation.
+Purpose: a single chat message within a conversation, optionally a threaded
+reply to another message and/or carrying emoji `message_reactions` (see
+below).
 
 Ownership: belongs to one `conversation`.
 
-Columns: `id`, `conversation_id`, `author_id`, `body`, `created_at`.
+Columns: `id`, `conversation_id`, `author_id`, `parent_message_id`
+(nullable, self-referencing — added per the `20260713220000_message_threads_reactions`
+migration for one-level-deep threaded replies), `body`, `created_at`.
 
 Relationships: belongs to `conversations` (cascade delete); belongs to
-`users` via `author_id` (no cascade, same reasoning as `tasks.assignee_id`).
+`users` via `author_id` (no cascade, same reasoning as `tasks.assignee_id`);
+self-relation via `parent_message_id`/`replies` (`"MessageReplies"`, cascade
+delete — deleting a message deletes its replies rather than orphaning
+them); has many `message_reactions` (cascade delete).
 
-Indexes: indexes on `conversation_id` and `author_id`.
+Indexes: indexes on `conversation_id`, `author_id`, and `parent_message_id`.
 
-Constraints: none beyond required foreign keys.
+Constraints: none beyond required foreign keys. `parent_message_id`, when
+provided, is validated at the service layer to be an existing message in
+the same `conversation_id` (`400 invalid_request`), not a DB constraint.
 
 Permissions: created via
 `POST /api/v1/chat/rooms/:roomId/messages` by any member of the room's
-house (ADR 0021). No edit/delete endpoint exists yet.
+house (ADR 0021), optionally with a `parentMessageId` body field to post it
+as a reply; broadcasts to the room's Realtime channel on send (ADR 0044).
+Older history paginates via `GET /api/v1/chat/rooms/:roomId/messages`
+(cursor-based, ADR 0044). No edit/delete endpoint exists yet.
 
-Reasoning: `unreadCount` in the API response is always `0` - read-tracking
-is a real feature (or realtime-adjacent, ADR 0005), not modeled by this
-table.
+Reasoning: threading is intentionally shallow — `parent_message_id` points
+directly at the message being replied to with no separate "thread root"
+concept, matching what the chat UI's designed reply view needs (a flat
+list of replies under one message, not nested sub-threads). Each
+conversation's eager `messages` include is capped to the most recent 50
+(ADR 0044) rather than loading full history on every workspace fetch;
+`listMessages` (cursor-paginated) backs "load earlier messages" beyond
+that cap.
 
-Migration history: `20260708165828_tasks_chat`.
+Migration history: `20260708165828_tasks_chat` (initial columns);
+`parent_message_id` added in `20260713220000_message_threads_reactions`.
+
+### Table: `message_reactions`
+
+Purpose: one user's emoji reaction to a message - the data behind the chat
+UI's reaction picker/counts.
+
+Ownership: belongs to one `message` and one `user`.
+
+Columns: `id`, `message_id`, `user_id`, `emoji`, `created_at`.
+
+Relationships: belongs to `messages` (cascade delete); belongs to `users`
+(cascade delete).
+
+Indexes: unique compound index on `(message_id, user_id, emoji)`; index on
+`message_id`.
+
+Constraints: `(message_id, user_id, emoji)` unique — a user can only react
+with the same emoji once per message; reacting again with that emoji
+removes the reaction instead of erroring (toggle behavior).
+
+Permissions: toggled via `POST /api/v1/messages/:messageId/reactions` (body:
+`emoji`) by any member of the message's room's house; `emoji` must be one of
+a fixed 6-value allow-list (`👍 ❤️ 😂 🎉 😮 👀`) validated at the service
+layer, not a DB constraint. No standalone list/read endpoint - reactions are
+returned grouped by emoji (with counts and whether the requesting user
+reacted) as part of the room/message payload.
+
+Reasoning: a real table (not a `Json` column on `messages`) so
+`(message_id, user_id, emoji)` uniqueness and per-reaction `user_id`
+attribution can be enforced by the database rather than read-modify-write
+logic on a shared JSON blob, and so a reacting user can be looked up
+without deserializing every message's reaction payload.
+
+### Table: `conversation_reads`
+
+Purpose: tracks how far each user has read into each conversation - what
+`unreadCount` in the chat API response is actually computed from (it used
+to be hardcoded to `0`, see the `messages` table's history above).
+
+Ownership: belongs to one `conversation` and one `user`.
+
+Columns: `id`, `conversation_id`, `user_id`, `last_read_message_id`
+(nullable - the last message the user had seen as of `last_read_at`, kept
+for potential future use, not currently read back on its own),
+`last_read_at` (also doubles as this row's creation time - no separate
+`created_at` column).
+
+Relationships: belongs to `conversations` (cascade delete); belongs to
+`users` (cascade delete).
+
+Indexes: unique compound index on `(conversation_id, user_id)`; index on
+`user_id`.
+
+Constraints: `(conversation_id, user_id)` unique - one read-state row per
+user per conversation, upserted rather than inserted repeatedly.
+
+Permissions: upserted via `POST /api/v1/chat/rooms/:roomId/read`, callable
+by any member of the room's house; broadcasts a `read` event on the room's
+Realtime channel so the sender's client can show a live read tick (ADR
+0044). No direct read endpoint - `unreadCount` is derived from this table
+and returned as part of the room/workspace payload instead.
+
+Reasoning: a real per-user table rather than a single `last_message_read`
+column on `organization_memberships`, since read state is genuinely
+per-conversation, not per-house. `unreadCount` compares each conversation's
+_currently loaded_ messages (capped to the last 50, see `messages` above)
+against `last_read_at` - an approximation if unread count ever exceeds 50
+messages since last read, accepted for this pass (ADR 0044).
+
+Migration history: `20260714200000_conversation_reads_and_presence`.
+
+Migration history: `20260713220000_message_threads_reactions`.
 
 ### Table: `projects`
 
@@ -847,10 +1058,13 @@ page's designed UI needs (shoot days, meetings, deliveries) with no prior
 backend equivalent (ADR 0030).
 
 Ownership: belongs to one `organization`; optionally belongs to one
-`project` (nullable - an event with no project is a "My Schedule" entry);
-records who created it via `created_by_id`.
+`project` (nullable - an event with no project is a "My Schedule" entry)
+and/or one `conversation` (nullable - set when the event is created from
+within a chat room); records who created it via `created_by_id`.
 
-Columns: `id`, `organization_id`, `project_id` (nullable), `created_by_id`,
+Columns: `id`, `organization_id`, `project_id` (nullable), `conversation_id`
+(nullable, added per the `20260712080000_conversation_links` migration),
+`created_by_id`,
 `title`, `date` (string, `YYYY-MM-DD` - opaque string like
 `tasks.due_date`, not a real `DateTime`), `time` (freeform string, e.g.
 `"2:00 PM"` or `"EOD"` - matches the frontend's non-24-hour input, not
@@ -862,23 +1076,29 @@ validated at the DTO layer), `created_at`, `updated_at`.
 Relationships: belongs to `organizations` (cascade delete); belongs to
 `projects` (`onDelete: SetNull` - deleting a project keeps its past
 calendar events, just detaches them back to "My Schedule" rather than
-deleting event history); belongs to `users` via `created_by_id` (no
-cascade rule specified beyond the default restrict).
+deleting event history); belongs to `conversations` (`onDelete: SetNull` -
+an event outlives the chat room it was created from); belongs to `users`
+via `created_by_id` (no cascade rule specified beyond the default
+restrict).
 
-Indexes: index on `organization_id`; index on `project_id`.
+Indexes: index on `organization_id`; index on `project_id`; index on
+`conversation_id`.
 
 Constraints: none beyond required foreign keys.
 
 Permissions: created/read via `POST`/`GET
-/api/v1/houses/:houseId/calendar-events` by any house member. No
-update/delete endpoint yet.
+/api/v1/houses/:houseId/calendar-events` by any house member; also
+creatable/listed room-scoped via `POST`/`GET
+/api/v1/chat/rooms/:roomId/events`, which sets `conversation_id` to that
+room. No update/delete endpoint yet.
 
 Reasoning: a real "calendar" concept per house isn't a separate table -
 "calendars" in the UI are just "My Schedule" (events with `project_id =
 null`) plus one entry per real `Project`, so filtering by calendar is
 filtering by `project_id`, no additional join table needed (ADR 0030).
 
-Migration history: `20260710221800_calendar_events`.
+Migration history: `20260710221800_calendar_events` (initial columns);
+`conversation_id` added in `20260712080000_conversation_links`.
 
 ### Table: `time_entries`
 
@@ -922,6 +1142,429 @@ page's phase/day/project breakdowns need many rows per person, not one.
 
 Migration history: `20260710223849_time_entries`.
 
+### Table: `resources`
+
+Purpose: a bookable physical resource within a house (equipment, a vehicle,
+an edit bay) - the thing a `bookings` row reserves time on.
+
+Ownership: belongs to one `organization`.
+
+Columns: `id`, `organization_id`, `name`, `category` (default
+`"equipment"`, freeform, validated at the DTO layer), `subtitle`
+(nullable), `tag` (nullable), `created_at`.
+
+Relationships: belongs to `organizations` (cascade delete); has many
+`bookings`.
+
+Indexes: index on `organization_id`.
+
+Constraints: none beyond required foreign keys - resource names are not
+unique within a house at the DB level, though `BookingsService`'s
+find-or-create matches an existing resource case-insensitively by name
+before creating a new one.
+
+Permissions: no standalone CRUD endpoint - created implicitly the first
+time a booking names a resource that doesn't already exist in the house
+(`POST /api/v1/houses/:houseId/bookings`).
+
+Reasoning: kept separate from `bookings` so the same physical resource can
+be booked more than once over time without repeating its name/category/
+subtitle/tag on every booking row; created lazily rather than through a
+dedicated "add equipment" flow since the Bookings page's designed UI only
+ever creates a resource by naming it inline when booking it.
+
+Migration history: `20260711224500_bookings`.
+
+### Table: `bookings`
+
+Purpose: a reservation of a `resource` for a date/time window, optionally
+tied to a `project` - the data behind the Bookings page.
+
+Ownership: belongs to one `organization` and one `resource`; optionally
+belongs to one `project`; records who made it via `booked_by_id`.
+
+Columns: `id`, `organization_id`, `resource_id`, `project_id` (nullable),
+`start_date`, `end_date`, `start_time`, `end_time` (all plain strings, same
+non-real-date/time choice as `tasks.due_date`/`calendar_events.date`/
+`time`), `status` (default `"confirmed"` at the schema level, though
+`BookingsService.create` always sets it to `"pending"` unless the DTO says
+otherwise; `"pending" | "confirmed" | "cancelled"`, validated at the DTO
+layer), `booked_by_id`, `notes` (nullable), `created_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`resources` (cascade delete - a booking has no meaning once its resource is
+gone); belongs to `projects` (`onDelete: SetNull`, same reasoning as
+`calendar_events.project_id`); belongs to `users` via `booked_by_id` (no
+cascade, same reasoning as `tasks.assignee_id`).
+
+Indexes: indexes on `organization_id`, `resource_id`, and `project_id`.
+
+Constraints: none beyond required foreign keys.
+
+Permissions: created via `POST /api/v1/houses/:houseId/bookings` and listed
+via `GET /api/v1/houses/:houseId/bookings` by any house member (creating a
+booking notifies the house's `"Owner"` member(s)); status updated via
+`PATCH /api/v1/bookings/:bookingId`, restricted to the `"Owner"` role
+(`requireOwnerRole`) and notifies the original booker when the status
+changes away from `"pending"`.
+
+Reasoning: a new booking defaults to `"pending"` (owner approval required)
+rather than `"confirmed"`, distinguishing a request from an approved
+reservation - the same requester/owner-approval shape as
+`house_join_requests`, just for equipment instead of house membership.
+
+Migration history: `20260711224500_bookings`.
+
+### Table: `boards`
+
+Purpose: a storyboard - an ordered sequence of `shots` for a project or
+script, the data behind the Storyboard page.
+
+Ownership: belongs to one `organization`; optionally belongs to one
+`project` and/or one `script`.
+
+Columns: `id`, `organization_id`, `project_id` (nullable), `script_id`
+(nullable, added once `scripts` existed), `name`, `description` (nullable),
+`created_at`, `updated_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`projects` (`onDelete: SetNull`, same reasoning as
+`calendar_events.project_id`); belongs to `scripts` (`onDelete: SetNull` -
+a board can reference the script it's boarding out, but outlives that
+script being deleted); has many `shots`.
+
+Indexes: indexes on `organization_id`, `project_id`, and `script_id`.
+
+Constraints: none beyond required foreign keys - board names are not
+unique within a house.
+
+Permissions: created/listed via `POST`/`GET
+/api/v1/houses/:houseId/boards` by any house member (creation can seed an
+initial batch of `shots` in the same request); updated/deleted via
+`PATCH`/`DELETE /api/v1/houses/:houseId/boards/:boardId` by any house
+member.
+
+Reasoning: a board's `updated_at` is bumped whenever one of its `shots` is
+added (`StoryboardService.createShot`), even though the shot itself is a
+separate row - keeps the boards list's "last updated" sort meaningful
+without joining through `shots` at query time.
+
+Migration history: `20260711231500_storyboard` (initial columns);
+`script_id` added in `20260712160000_scripts`.
+
+### Table: `shots`
+
+Purpose: a single storyboard panel within a `board`.
+
+Ownership: belongs to one `board`.
+
+Columns: `id`, `board_id`, `order` (`Int`, default `0`), `description`,
+`camera_angle` (nullable), `notes` (nullable), `image_url` (nullable),
+`created_at`, `updated_at`.
+
+Relationships: belongs to `boards` (cascade delete).
+
+Indexes: index on `board_id`.
+
+Constraints: none beyond required foreign keys - `order` is a plain `Int`
+maintained by the service layer (new shots default to one past the current
+max), not a DB-enforced sequence or unique-per-board constraint.
+
+Permissions: created via `POST
+/api/v1/houses/:houseId/boards/:boardId/shots`; updated via `PATCH
+/api/v1/houses/:houseId/shots/:shotId` - both by any house member. No
+delete or reorder endpoint exists yet.
+
+Reasoning: `image_url` is a plain nullable string, not a `file_entries`
+link - shot images aren't modeled as house files with an uploader/Drive
+backing, just a URL the client sets directly.
+
+Migration history: `20260711231500_storyboard`.
+
+### Table: `characters`
+
+Purpose: a character in a project's story - a Storyboard-adjacent reference
+list, not tied to any specific board/shot.
+
+Ownership: belongs to one `organization`; optionally belongs to one
+`project`.
+
+Columns: `id`, `organization_id`, `project_id` (nullable), `name`, `role`
+(freeform, e.g. `"Protagonist"`), `description` (nullable), `created_at`,
+`updated_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`projects` (`onDelete: SetNull`, same reasoning as `boards.project_id`).
+
+Indexes: indexes on `organization_id` and `project_id`.
+
+Constraints: none beyond required foreign keys - character names are not
+unique within a house or project.
+
+Permissions: created/listed via `POST`/`GET
+/api/v1/houses/:houseId/characters`; deleted via `DELETE
+/api/v1/houses/:houseId/characters/:characterId` - both by any house
+member. No update endpoint exists yet.
+
+Reasoning: added later than `boards`/`shots` as a separate flat reference
+table rather than a column on `shots` - a character is referenced across
+many shots/boards, not owned by any single one.
+
+Migration history: `20260712070000_storyboard_characters_locations`.
+
+### Table: `story_locations`
+
+Purpose: a shooting location referenced by a project's story - `shot_count`
+mirrors how many shots are tagged to it in the designed UI.
+
+Ownership: belongs to one `organization`; optionally belongs to one
+`project`.
+
+Columns: `id`, `organization_id`, `project_id` (nullable), `name`, `type`
+(freeform, e.g. `"Interior"`/`"Exterior"`), `shot_count` (`Int`, default
+`0`), `created_at`, `updated_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`projects` (`onDelete: SetNull`, same reasoning as `characters.project_id`).
+
+Indexes: indexes on `organization_id` and `project_id`.
+
+Constraints: none beyond required foreign keys.
+
+Permissions: created/listed via `POST`/`GET
+/api/v1/houses/:houseId/locations`; deleted via `DELETE
+/api/v1/houses/:houseId/locations/:locationId` - both by any house member.
+No update endpoint exists yet.
+
+Reasoning: `shot_count` is a plain stored `Int` rather than computed from a
+real `shots.location_id` foreign key - shots don't reference a location at
+all yet, so this column is a manually-tracked placeholder count, not a
+live aggregate (a known gap to revisit once shots gain a real location
+link).
+
+Migration history: `20260712070000_storyboard_characters_locations`.
+
+### Table: `scripts`
+
+Purpose: a screenplay/script document - free-text `content`, the data
+behind the Scripts module.
+
+Ownership: belongs to one `organization`; optionally belongs to one
+`project`; records who created it via `created_by_id`.
+
+Columns: `id`, `organization_id`, `project_id` (nullable), `title`,
+`content` (default `""` - the full script body, freeform text),
+`created_by_id`, `created_at`, `updated_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`projects` (`onDelete: SetNull`, same reasoning as `boards.project_id`);
+belongs to `users` via `created_by_id` (no cascade, same reasoning as
+`tasks.assignee_id`); has many `boards` (a board can reference the script
+it's boarding out via `boards.script_id`).
+
+Indexes: indexes on `organization_id` and `project_id`.
+
+Constraints: none beyond required foreign keys - script titles are not
+unique within a house.
+
+Permissions: created/listed via `POST`/`GET
+/api/v1/houses/:houseId/scripts`; read/updated/deleted via `GET`/`PATCH`/
+`DELETE /api/v1/houses/:houseId/scripts/:scriptId` - all by any house
+member. No edit-locking or version history exists yet.
+
+Reasoning: `content` is a single `String` column (whole-document overwrite
+on every update) rather than a versioned/paragraph-level structure - matches
+the module's current scope (a single collaborative text blob), with a
+`wordCount` computed at read time from `content.split(/\s+/)` rather than
+stored.
+
+Migration history: `20260712160000_scripts`.
+
+### Table: `file_entries`
+
+Purpose: the house-wide file/folder tree (files and folders), the data
+behind the Files page - a shared index/tree over files whose actual bytes
+live in each uploader's own Google Drive (ADR 0038).
+
+Ownership: belongs to one `organization`; optionally belongs to a parent
+`file_entries` row (folder nesting) and/or a `conversation` (a file
+attached from within a chat room); records who uploaded/created it via
+`uploaded_by_id`.
+
+Columns: `id`, `organization_id`, `parent_id` (nullable, self-referencing),
+`conversation_id` (nullable), `name`, `type` (`"file"` | `"folder"`),
+`storage_path` (nullable - the Google Drive file id for a `"file"` row,
+`null` for folders), `size` (nullable `Int`, bytes), `mime_type`
+(nullable), `uploaded_by_id`, `created_at`, `updated_at`.
+
+Relationships: belongs to `organizations` (cascade delete); self-relation
+via `parent_id`/`children` (`"FileEntryChildren"`, cascade delete -
+deleting a folder deletes its contents); belongs to `users` via
+`uploaded_by_id` (no cascade, same reasoning as `tasks.assignee_id`);
+belongs to `conversations` (`onDelete: SetNull` - a file outlives the chat
+room it was attached from); has many `drive_folder_links`.
+
+Indexes: indexes on `organization_id`, `parent_id`, and `conversation_id`.
+
+Constraints: none beyond required foreign keys.
+
+Permissions: listed/created (folders and file uploads) via `GET`/`POST
+/api/v1/houses/:houseId/files` and `POST
+/api/v1/houses/:houseId/files/upload`; deleted via `DELETE
+/api/v1/houses/:houseId/files/:entryId` (recursively removes the
+corresponding Drive files/folders across every uploader whose Drive holds a
+copy); usage summary via `GET /api/v1/houses/:houseId/files/summary` - all
+by any house member. Chat rooms can also list/attach files scoped to their
+`conversation_id` via `GET`/`POST /api/v1/chat/rooms/:roomId/files`.
+Downloads are served via a short-lived signed token (`GET
+/api/v1/files/download/:token`), not a direct Drive URL.
+
+Reasoning: no object storage of its own - `storage_path` is a Google Drive
+file id, not a bucket key, per ADR 0038's "each uploader's files live in
+their own Drive, not storage Fylmico pays for" decision (distinct from
+`users.avatar_url`, which uses a small Fylmico-owned Supabase Storage
+bucket for avatars specifically). A shared folder therefore doesn't have
+one Drive folder id - see `drive_folder_links` below for how a folder's
+per-uploader Drive mirror is resolved.
+
+Migration history: `20260711234500_file_entries` (initial columns);
+`conversation_id` added in `20260712080000_conversation_links`.
+
+### Table: `drive_connections`
+
+Purpose: one user's personal Google Drive OAuth connection - files that
+user uploads live in a `"Fylmico"` folder inside _their own_ Drive, not in
+storage Fylmico pays for (ADR 0038).
+
+Ownership: belongs to one `user` (1:1).
+
+Columns: `id`, `user_id` (unique), `refresh_token`, `drive_folder_id` (the
+Drive id of that user's root `"Fylmico"` folder), `google_email`
+(nullable), `created_at`, `updated_at`.
+
+Relationships: belongs to `users` (cascade delete).
+
+Indexes: unique index on `user_id`.
+
+Constraints: `user_id` unique - one Drive connection per user.
+
+Permissions: created via the OAuth flow (`GET /api/v1/drive/connect-url` to
+start it, `GET /api/v1/drive/callback` to complete it - both self-service,
+scoped to the requesting user via a signed state token, see
+`drive-token.util.ts`); checked via `GET /api/v1/drive/status`; removed via
+`DELETE /api/v1/drive/disconnect`.
+
+Reasoning: `refresh_token` is stored in plaintext in this pass (no
+encryption-at-rest layer exists yet anywhere in this schema) - a known gap
+consistent with this codebase's general "no encryption beyond password/
+token hashing" posture; access tokens themselves are never stored, only
+refreshed on demand from `refresh_token` (`DriveService.getValidAccessToken`).
+
+Migration history: `20260712150000_drive_connections`.
+
+### Table: `drive_folder_links`
+
+Purpose: caches which Drive folder id a shared `file_entries` folder maps
+to inside one specific user's Drive - since a shared app-level folder has
+no single Drive folder id of its own (each uploader's mirror is created
+lazily the first time they place something in it), per ADR 0038.
+
+Ownership: belongs to one `file_entries` row and one `user`.
+
+Columns: `id`, `file_entry_id`, `user_id`, `drive_folder_id`, `created_at`.
+
+Relationships: belongs to `file_entries` (cascade delete); belongs to
+`users` (cascade delete).
+
+Indexes: unique compound index on `(file_entry_id, user_id)`.
+
+Constraints: `(file_entry_id, user_id)` unique - one cached mapping per
+(folder, user) pair.
+
+Permissions: no direct endpoint - created/read only as a side effect of
+`FilesService.resolveDriveFolderId` when a user uploads into or creates a
+subfolder of a shared folder for the first time.
+
+Reasoning: a cache table rather than deriving the mapping on every request
+
+- mirroring a folder into a user's Drive is a real (rate-limited) Drive API
+  call, so the mapping is created once and reused afterward.
+
+Migration history: `20260712170000_drive_folder_links`.
+
+### Table: `call_sheets`
+
+Purpose: a single shoot day's call sheet (crew call times, location,
+weather, notes) - the data behind the Call Sheets module.
+
+Ownership: belongs to one `organization`; optionally belongs to one
+`project`; records who created it via `created_by_id`.
+
+Columns: `id`, `organization_id`, `project_id` (nullable), `title`,
+`shoot_date` (plain string, same non-real-date choice as `tasks.due_date`),
+`general_call_time` (plain string), `location` (nullable), `weather`
+(nullable), `notes` (nullable), `crew_call_times` (`Json` - an array of
+`{userId, name, jobTitle, callTime}` entries), `created_by_id`,
+`created_at`, `updated_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`projects` (`onDelete: SetNull`, same reasoning as `boards.project_id`);
+belongs to `users` via `created_by_id` (no cascade, same reasoning as
+`tasks.assignee_id`).
+
+Indexes: indexes on `organization_id` and `project_id`.
+
+Constraints: none beyond required foreign keys - `project_id`, when
+provided, is validated at the service layer to belong to the same house
+(`400 invalid_request`), not a DB constraint.
+
+Permissions: created/listed via `POST`/`GET
+/api/v1/houses/:houseId/call-sheets`; read/updated/deleted via `GET`/
+`PATCH`/`DELETE /api/v1/call-sheets/:callSheetId` - all by any house
+member.
+
+Reasoning: `crew_call_times` is a single denormalized `Json` array (each
+entry snapshotting a crew member's name/job title/call time at the moment
+the call sheet was written) rather than a join table to
+`organization_memberships` - a call sheet is a point-in-time printed/shared
+document, so it shouldn't silently change if a crew member's job title is
+later edited.
+
+Migration history: `20260713221000_call_sheets`.
+
+### Table: `announcements`
+
+Purpose: a house-wide announcement, optionally pinned - the data behind the
+Announcements module.
+
+Ownership: belongs to one `organization`; records who posted it via
+`author_id`.
+
+Columns: `id`, `organization_id`, `author_id`, `title`, `body`, `pinned`
+(`Boolean`, default `false`), `created_at`, `updated_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`users` via `author_id` (no cascade, same reasoning as `tasks.assignee_id`).
+
+Indexes: index on `organization_id`.
+
+Constraints: none beyond required foreign keys.
+
+Permissions: listed via `GET /api/v1/houses/:houseId/announcements` by any
+house member (pinned first, then newest first); created via `POST
+/api/v1/houses/:houseId/announcements`; updated/deleted via `PATCH`/
+`DELETE /api/v1/announcements/:announcementId` - all restricted to the
+house's `"Owner"` role (`requireOwnerRole`). Posting one notifies every
+other house member in-app.
+
+Reasoning: only owners can post/edit/delete - unlike most other modules in
+this schema (tasks, comments, booking creation, etc.), which allow any
+member, an announcement is a broadcast to the whole house, matching the
+same owner-only posture already established for reviewing
+`house_join_requests` and `bookings` status changes.
+
+Migration history: `20260713222000_announcements`.
+
 ## Table Documentation Template
 
 Use this template for every table once schema work begins.
@@ -952,6 +1595,11 @@ Migration history:
   `roles` table implemented per ADR 0020 is a label only (name/color/
   description), not yet tied to `resource.action` grants.
 - Audit log payload shape.
-- Asset storage provider metadata.
+- Asset storage provider metadata — resolved for house files via
+  `file_entries`/`drive_connections`/`drive_folder_links` (ADR 0038,
+  Google-Drive-backed, one connection per uploader); avatars separately use
+  a small Fylmico-owned Supabase Storage bucket. No equivalent exists yet
+  for a dedicated, versioned "assets" module (see the Creative production
+  group above — `assets`/`asset_versions` remain planning only).
 - Search indexing strategy.
 - Billing and subscription tables.
