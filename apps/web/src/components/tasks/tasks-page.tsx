@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/lib/workspace-context";
 import {
   createTask as createTaskApi,
+  createTaskFromTemplate,
   deleteTask as deleteTaskApi,
   duplicateTaskRequest,
+  saveTaskAsTemplate,
   updateTask as updateTaskApi
 } from "@/services/base-workspace.service";
 import { TasksHeader } from "@/components/tasks/tasks-header";
@@ -27,6 +29,7 @@ import { UpcomingDeadlinesPanel } from "@/components/tasks/upcoming-deadlines-pa
 import { MyTasksStatPanel } from "@/components/tasks/my-tasks-stat-panel";
 import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
 import { TaskDetailPanel } from "@/components/tasks/task-detail-panel";
+import { TaskTemplatesPopover } from "@/components/tasks/task-templates-popover";
 import {
   PRIORITY_META,
   PRIORITY_ORDER,
@@ -162,6 +165,23 @@ export function TasksPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
+  // "n" opens New Task, unless the user is typing in a field.
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement;
+      const isTyping =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
+      if (event.key === "n" && !isTyping && !event.metaKey && !event.ctrlKey) {
+        event.preventDefault();
+        setCreateOpen(true);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const counts: Record<TasksTab, number> = useMemo(
     () => ({
       all: tasks.length,
@@ -270,6 +290,31 @@ export function TasksPage() {
     }
   }
 
+  async function handleSaveAsTemplate(taskId: string) {
+    try {
+      await saveTaskAsTemplate(taskId);
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not save this task as a template."
+      );
+    }
+  }
+
+  async function handleUseTemplate(templateId: string) {
+    try {
+      await createTaskFromTemplate(templateId);
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not create a task from this template."
+      );
+    }
+  }
+
   async function handleDelete(taskId: string) {
     try {
       await deleteTaskApi(taskId);
@@ -360,6 +405,13 @@ export function TasksPage() {
           onViewModeChange={setViewMode}
           viewMode={viewMode}
         />
+
+        {activeHouse ? (
+          <TaskTemplatesPopover
+            houseId={activeHouse.id}
+            onUseTemplate={handleUseTemplate}
+          />
+        ) : null}
 
         {selectedIds.size > 0 ? (
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#654cff]/20 bg-[#654cff]/5 px-4 py-2.5">
@@ -459,6 +511,9 @@ export function TasksPage() {
                             onDelete={() => handleDelete(task.id)}
                             onDuplicate={() => handleDuplicate(task.id)}
                             onOpen={() => setSelectedTaskId(task.id)}
+                            onSaveAsTemplate={() =>
+                              handleSaveAsTemplate(task.id)
+                            }
                             onToggleComplete={() => toggleComplete(task.id)}
                             onToggleSelect={() => toggleSelect(task.id)}
                             selected={selectedIds.has(task.id)}

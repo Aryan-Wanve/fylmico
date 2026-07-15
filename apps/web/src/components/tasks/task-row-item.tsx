@@ -19,6 +19,7 @@ export function TaskRowItem({
   onOpen,
   onToggleComplete,
   onDuplicate,
+  onSaveAsTemplate,
   onDelete
 }: {
   task: ProductionTask;
@@ -27,6 +28,7 @@ export function TaskRowItem({
   onOpen: () => void;
   onToggleComplete: () => void;
   onDuplicate: () => void;
+  onSaveAsTemplate: () => void;
   onDelete: () => void;
 }) {
   const isDone = task.status === "completed";
@@ -134,7 +136,11 @@ export function TaskRowItem({
         {priority.label}
       </span>
 
-      <TaskCardMenu onDelete={onDelete} onDuplicate={onDuplicate} />
+      <TaskCardMenu
+        onDelete={onDelete}
+        onDuplicate={onDuplicate}
+        onSaveAsTemplate={onSaveAsTemplate}
+      />
     </div>
   );
 }

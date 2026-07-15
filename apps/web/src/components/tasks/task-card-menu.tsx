@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, MoreVertical, Trash2 } from "lucide-react";
+import { Copy, MoreVertical, Sparkles, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +10,11 @@ import {
 
 export function TaskCardMenu({
   onDuplicate,
+  onSaveAsTemplate,
   onDelete
 }: {
   onDuplicate: () => void;
+  onSaveAsTemplate: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -28,10 +30,14 @@ export function TaskCardMenu({
           </button>
         }
       />
-      <DropdownMenuContent align="end" className="w-36">
+      <DropdownMenuContent align="end" className="w-44">
         <DropdownMenuItem onClick={onDuplicate}>
           <Copy className="h-4 w-4" />
           Duplicate
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onSaveAsTemplate}>
+          <Sparkles className="h-4 w-4" />
+          Save as Template
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onDelete} variant="destructive">
           <Trash2 className="h-4 w-4" />
