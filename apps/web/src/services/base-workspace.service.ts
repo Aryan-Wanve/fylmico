@@ -4,6 +4,7 @@ import type {
   AccountSession,
   Analytics,
   Announcement,
+  AssignRoleRequest,
   Board,
   Booking,
   CalendarEvent,
@@ -257,6 +258,47 @@ export async function respondToJoinRequest(
       method: "PATCH",
       body: { status }
     }
+  );
+}
+
+export async function checkHandleAvailability(
+  handle: string
+): Promise<boolean> {
+  const result = await apiRequest<{ available: boolean }>(
+    "/houses/check-handle",
+    { query: { handle } }
+  );
+  return result.available;
+}
+
+export async function assignRole(
+  houseId: string,
+  membershipId: string,
+  request: AssignRoleRequest
+): Promise<House> {
+  return apiRequest<House>(
+    `/houses/${houseId}/pending-members/${membershipId}/assign-role`,
+    { method: "POST", body: request }
+  );
+}
+
+export async function rejectPendingMember(
+  houseId: string,
+  membershipId: string
+): Promise<House> {
+  return apiRequest<House>(
+    `/houses/${houseId}/pending-members/${membershipId}/reject`,
+    { method: "POST" }
+  );
+}
+
+export async function banPendingMember(
+  houseId: string,
+  membershipId: string
+): Promise<House> {
+  return apiRequest<House>(
+    `/houses/${houseId}/pending-members/${membershipId}/ban`,
+    { method: "POST" }
   );
 }
 

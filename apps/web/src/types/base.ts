@@ -1,14 +1,8 @@
 import type { HouseType } from "@/lib/house-types";
 
-export type RoleName =
-  | "Owner"
-  | "Producer"
-  | "Editor"
-  | "Videographer"
-  | "Photographer"
-  | "Designer"
-  | "Client"
-  | "Member";
+// Freeform - Positions are house-defined text (see POSITION_SUGGESTIONS
+// in @/lib/permissions for the picker's suggested list), not a fixed set.
+export type RoleName = string;
 
 export type TaskType =
   | "shoot"
@@ -121,7 +115,10 @@ export type CrewDepartment =
   | "Electric"
   | "Sound"
   | "Costume"
-  | "Post-Production";
+  | "Post-Production"
+  | "Creative"
+  | "Marketing"
+  | "Management";
 
 export type CrewRoleCategory =
   | "Director"
@@ -156,6 +153,7 @@ export type HouseRole = {
   name: RoleName;
   color: string;
   description: string;
+  permissions: string[];
   memberCount: number;
 };
 
@@ -167,6 +165,15 @@ export type HouseMember = {
   lastSeenAt: string | null;
 };
 
+export type PendingMember = {
+  membershipId: string;
+  userId: string;
+  name: string;
+  username: string | null;
+  avatarUrl: string | null;
+  joinedAt: string;
+};
+
 export type House = {
   id: string;
   name: string;
@@ -175,7 +182,9 @@ export type House = {
   inviteCode: string;
   type: HouseType;
   enabledModules: string[];
+  myRole: RoleName | null;
   members: HouseMember[];
+  pendingMembers: PendingMember[];
   roles: HouseRole[];
 };
 
@@ -435,8 +444,14 @@ export type ResetPasswordRequest = {
 export type CreateHouseRequest = {
   name: string;
   handle: string;
-  description: string;
+  description?: string;
   houseType: HouseType;
+};
+
+export type AssignRoleRequest = {
+  roleName: string;
+  team: string;
+  permissions: string[];
 };
 
 export type JoinHouseRequest = {
