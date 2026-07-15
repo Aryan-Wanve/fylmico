@@ -13,6 +13,7 @@ import {
   requestToJoinHouse
 } from "@/services/base-workspace.service";
 import type { House } from "@/types/base";
+import type { HouseType } from "@/lib/house-types";
 
 export function HousesDashboardPage() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export function HousesDashboardPage() {
     name: string;
     handle: string;
     description: string;
+    houseType: HouseType;
   }) {
     setIsSubmitting(true);
     setError("");

@@ -1,3 +1,5 @@
+import type { HouseType } from "@/lib/house-types";
+
 export type RoleName =
   | "Owner"
   | "Producer"
@@ -93,6 +95,8 @@ export type House = {
   handle: string;
   description: string;
   inviteCode: string;
+  type: HouseType;
+  enabledModules: string[];
   members: HouseMember[];
   roles: HouseRole[];
 };
@@ -324,6 +328,7 @@ export type CreateHouseRequest = {
   name: string;
   handle: string;
   description: string;
+  houseType: HouseType;
 };
 
 export type JoinHouseRequest = {
@@ -672,6 +677,7 @@ export type UpdateHouseRequest = Partial<{
   name: string;
   handle: string;
   description: string;
+  enabledModules: string[];
 }>;
 
 export type UpdateMeRequest = Partial<{

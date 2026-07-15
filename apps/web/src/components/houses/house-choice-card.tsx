@@ -2,13 +2,37 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, Hash, Plus, UserRoundPlus, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  GraduationCap,
+  Hash,
+  Heart,
+  Plus,
+  Settings2,
+  User,
+  UserRoundPlus,
+  Users
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { HouseChoiceRow } from "@/components/houses/house-choice-row";
+import {
+  HOUSE_TYPES,
+  HOUSE_TYPE_INFO,
+  type HouseType
+} from "@/lib/house-types";
 
-type Mode = "choice" | "create" | "join" | "request";
+type Mode = "choice" | "create-type" | "create" | "join" | "request";
+
+const HOUSE_TYPE_ICONS: Record<HouseType, typeof User> = {
+  freelancer: User,
+  agency: Building2,
+  college: GraduationCap,
+  hobbyist: Heart,
+  custom: Settings2
+};
 
 export function HouseChoiceCard({
   isSubmitting,
@@ -23,11 +47,13 @@ export function HouseChoiceCard({
     name: string;
     handle: string;
     description: string;
+    houseType: HouseType;
   }) => void;
   onJoinHouse: (data: { inviteCode: string }) => void;
   onRequestJoinHouse: (data: { handle: string }) => void;
 }) {
   const [mode, setMode] = useState<Mode>("choice");
+  const [houseType, setHouseType] = useState<HouseType>("custom");
 
   function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,7 +61,8 @@ export function HouseChoiceCard({
     onCreateHouse({
       name: String(form.get("name") ?? ""),
       handle: String(form.get("handle") ?? ""),
-      description: String(form.get("description") ?? "")
+      description: String(form.get("description") ?? ""),
+      houseType
     });
   }
 
@@ -51,13 +78,49 @@ export function HouseChoiceCard({
     onRequestJoinHouse({ handle: String(form.get("handle") ?? "") });
   }
 
+  if (mode === "create-type") {
+    return (
+      <section className="w-full max-w-[30rem] rounded-3xl border border-black/[0.06] bg-white p-10 shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)] dark:border-white/[0.08] dark:bg-[#171a28]">
+        <button
+          className="mb-5 flex items-center gap-1.5 text-sm font-bold text-[#5f667d] dark:text-[#a8acbf]"
+          onClick={() => setMode("choice")}
+          type="button"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+        <h2 className="text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
+          Choose your house type
+        </h2>
+        <p className="mt-2 text-[0.95rem] leading-relaxed text-[#5f667d] dark:text-[#a8acbf]">
+          This sets which modules are enabled by default — you can change this
+          anytime from House Settings.
+        </p>
+        <div className="mt-6 grid gap-3 text-left">
+          {HOUSE_TYPES.map((type) => (
+            <HouseChoiceRow
+              description={HOUSE_TYPE_INFO[type].description}
+              icon={HOUSE_TYPE_ICONS[type]}
+              key={type}
+              onClick={() => {
+                setHouseType(type);
+                setMode("create");
+              }}
+              title={HOUSE_TYPE_INFO[type].label}
+              tone="soft"
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   if (mode === "create") {
     return (
       <section className="w-full max-w-[30rem] rounded-3xl border border-black/[0.06] bg-white p-10 shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)] dark:border-white/[0.08] dark:bg-[#171a28]">
         <button
           className="mb-5 flex items-center gap-1.5 text-sm font-bold text-[#5f667d] dark:text-[#a8acbf]"
           disabled={isSubmitting}
-          onClick={() => setMode("choice")}
+          onClick={() => setMode("create-type")}
           type="button"
         >
           <ArrowLeft className="h-4 w-4" /> Back
@@ -217,7 +280,7 @@ export function HouseChoiceCard({
           description="Build your own space. Invite your team and start collaborating."
           disabled={isSubmitting}
           icon={Plus}
-          onClick={() => setMode("create")}
+          onClick={() => setMode("create-type")}
           title="Create a house"
           tone="solid"
         />
