@@ -109,10 +109,10 @@ Hostinger at all, sidestepping the WebSocket-passthrough unknown entirely.
   back, so there's no self-echo dedup needed - only _other_ connected
   clients see the message via the channel.
 - Message states: `sending` (optimistic, pre-POST) -> `sent` (POST
-  resolved) -> `read` (derived from the latest `read` event timestamp from
-  any other conversation member exceeding the message's `sentAt`). A
-  distinct `delivered` tick (server pushed it to an actively-connected
-  recipient, short of read) was scoped out of this pass - see Costs.
+  resolved) -> `delivered` (an ephemeral `delivered` ack broadcast back by
+  a recipient's client, see Amendment) -> `read` (derived from the latest
+  `read` event timestamp from any other conversation member exceeding the
+  message's `sentAt`).
 - Scroll behavior: auto-scrolls to bottom only when the user was already
   near the bottom (tracked via a scroll-position ref, not React state, to
   avoid re-render churn on every scroll event); otherwise shows a "New
@@ -167,9 +167,8 @@ Costs:
   elsewhere for invite links and reset tokens (ADR 0036/0039) - unguessable
   rather than access-list-enforced - but it's a real gap relative to the
   DB-level membership checks every REST chat endpoint already enforces.
-- **No true "delivered" state** - only sending/sent/read. A real delivered
-  tick (recipient's client actively received the push, distinct from having
-  read it) was scoped out; sent and delivered are visually the same today.
+- ~~**No true "delivered" state"** - only sending/sent/read.~~ Resolved
+  the same day - see Amendment below.
 - **`unreadCount` approximates from the last 50 loaded messages per
   conversation**, not a true full-history count.
 - **No message-list virtualization.** Given the 50-message cap plus
@@ -189,9 +188,6 @@ Costs:
   Supabase-signed JWT minted per session with the user's id as a claim)
   is the documented upgrade path - deferred here for scope, not because it
   isn't the more correct long-term answer.
-- A true `delivered` tick is addable later as another ephemeral broadcast
-  (recipient acks receipt of `message:new` back to the sender) without any
-  schema change.
 - `RECENT_MESSAGES_LIMIT` (currently 50) and the pagination page size are
   both centralized constants - easy to tune if usage patterns demand it.
 - The outbound send-queue (offline support, see the commit alongside this
@@ -199,3 +195,31 @@ Costs:
   project ever needs delivery guarantees stronger than "best-effort
   retry from the tab that queued it," that queue would need to move
   server-side (an actual outbox table) instead.
+
+## Amendment (2026-07-15)
+
+Three follow-ups landed the same day, after initial production testing
+surfaced a live-delivery report and two requested features:
+
+- **Diagnostic logging for the silent no-op.** `broadcast.ts`'s
+  unconfigured-env-var branch previously returned with zero log output -
+  undiagnosable from Hostinger Runtime Logs alone. It now logs a warning
+  once (not per-call) the first time a broadcast is attempted without
+  `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` set. Also added an explicit
+  `"private": false` field to the broadcast payload defensively.
+- **The `delivered` tick this ADR originally scoped out is now
+  implemented**, exactly as predicted above: an ephemeral
+  client-to-client broadcast, not a schema change. When a client's
+  `message:new` handler receives a message authored by someone else, it
+  immediately sends a `delivered` broadcast back on the same
+  `conversation:<roomId>` channel with `{ messageId, userId }`; the
+  sender's client upgrades that message's local status from `sent` to
+  `delivered` (never downgrading from `read`). Same ephemeral/no-persistence
+  tradeoffs as typing and presence apply.
+- **Message editing**, author-only within 10 minutes of `createdAt`
+  (`editMessage` in `chat.service.ts`, `PATCH /api/v1/messages/:messageId`).
+  Added a nullable `Message.editedAt` column
+  (`20260715120000_message_edited_at`), enforced server-side (not just
+  hidden in the UI), and broadcasts a new `message:edit` event on the same
+  channel/shape as `reaction:update` so other open clients update the
+  bubble live rather than needing a refresh.

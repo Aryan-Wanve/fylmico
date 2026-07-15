@@ -4784,3 +4784,85 @@ Next task:
   delivery with two real browser sessions. Beyond that: real presence
   app-wide, a true `delivered` tick, and the standing RBAC/distributed-
   rate-limit backlog from the previous entry.
+
+## 2026-07-15 Chat: Live-Delivery Diagnostics, Message Editing, Delivered Ticks
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 99%
+
+Features completed:
+
+- Diagnosed a live user report that new messages required a manual
+  refresh to appear even though typing indicators worked live: typing is
+  pure client-to-client and never touches server env vars, while actual
+  message delivery depends on the server's `broadcast()` call succeeding,
+  which requires `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` server-side
+  (separate from the two `NEXT_PUBLIC_` client vars). `broadcast.ts`
+  previously no-op'd on missing config with zero log output, making this
+  undiagnosable from Hostinger Runtime Logs. It now logs a one-time
+  warning the first time this happens; also added an explicit
+  `"private": false` field to the broadcast payload defensively.
+- Message editing: author-only, within 10 minutes of sending
+  (`editMessage` in `chat.service.ts`, new `PATCH
+/api/v1/messages/:messageId`, enforced server-side not just hidden in
+  the UI). New nullable `Message.editedAt` column. Broadcasts a
+  `message:edit` realtime event so other open clients update the bubble
+  live. Frontend: an inline edit affordance (textarea + Save/Cancel) on
+  the sender's own recent messages, an "(edited)" label once saved.
+- The `delivered` tick ADR 0044 originally scoped out is now
+  implemented, exactly as that ADR predicted: an ephemeral
+  client-to-client broadcast (no schema change). A recipient's client
+  acks receipt of `message:new` back to the sender on the same
+  conversation channel; the sender's client advances that message's
+  local status from `sent` to `delivered` (never downgrading from
+  `read`). See ADR 0044's Amendment section for the full writeup.
+
+Features started:
+
+- None beyond the above.
+
+Files created:
+
+- `apps/web/src/server/chat/dto/edit-message.dto.ts`
+- `apps/web/src/app/api/v1/messages/[messageId]/route.ts`
+- `packages/database/prisma/migrations/20260715120000_message_edited_at/`
+
+Files modified:
+
+- `apps/web/src/server/realtime/broadcast.ts` (one-time unconfigured
+  warning, `private: false`)
+- `apps/web/src/lib/realtime/use-conversation-channel.ts` (`onEdit`,
+  `onDelivered` handlers; ephemeral `delivered` ack send/receive;
+  `message:edit` broadcast listener)
+- `apps/web/src/server/chat/chat.service.ts` (`editMessage`,
+  `editedAt` in `toMessageDto`)
+- `apps/web/src/components/messages/messages-page.tsx` (`handleEditMessage`,
+  `onEdit`/`onDelivered` wiring)
+- `apps/web/src/components/messages/message-bubble.tsx` (inline edit UI,
+  "(edited)" label, edit-window check)
+- `apps/web/src/types/base.ts` (`ChatMessage.editedAt`,
+  `EditChatMessageRequest`)
+- `apps/web/src/services/base-workspace.service.ts` (`editChatMessage`)
+- `packages/database/prisma/schema.prisma` (`Message.editedAt`)
+- `docs/adr/0044-realtime-chat-supabase.md` (Amendment section)
+
+Known limitations / tradeoffs:
+
+- The live-delivery root cause (missing server-side Supabase env vars in
+  Hostinger) could not be directly confirmed or fixed from this session -
+  only made diagnosable. The user needs to check Hostinger Runtime Logs
+  for the new warning, or confirm the two server-side env vars are set.
+- The `delivered` ack could not be live-tested end-to-end in this session
+  (requires two concurrently connected Realtime clients, and local dev
+  has no Supabase credentials configured) - verified by code review and
+  the same graceful-degradation pattern used elsewhere, not a live
+  two-browser test.
+- No message delete endpoint yet - editing only.
+
+Next task:
+
+- Confirm in production that the new `broadcast.ts` warning (or its
+  absence) resolves the live-delivery question, then live-test the
+  `delivered` tick and message editing with two real accounts once
+  Supabase is fully configured.

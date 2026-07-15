@@ -315,3 +315,28 @@ Migration notes:
   side, safe to expose - see `docs/hostinger-deployment.md`). Without
   them the feature degrades gracefully (a "Reconnecting…" badge, no
   live push) rather than breaking.
+
+## 0.10.1 - 2026-07-15
+
+Summary:
+
+- Fixed: server-side realtime broadcasts (new messages, reactions, read
+  receipts) silently no-op'd with zero log output when
+  `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` weren't configured -
+  undiagnosable from Hostinger Runtime Logs. Now logs a one-time warning.
+- Added message editing: author-only, within 10 minutes of sending
+  (`PATCH /api/v1/messages/:messageId`), enforced server-side. New
+  `Message.editedAt` column; broadcasts a `message:edit` event so other
+  open clients see the edit live; "(edited)" label in the UI.
+- Added a real `delivered` read-receipt tick (sending -> sent ->
+  delivered -> read), via an ephemeral client-to-client acknowledgment -
+  no schema change, see ADR 0044's Amendment section.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- New nullable `messages.edited_at` column (migration
+  `20260715120000_message_edited_at`) - run `prisma migrate deploy`.

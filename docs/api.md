@@ -329,6 +329,9 @@ Collaboration:
 - ~~Message reactions.~~ Implemented
   (`POST /api/v1/messages/:messageId/reactions`, see "Tasks and Chat"
   above). Threaded replies (`parentMessageId`) also implemented.
+- ~~Message editing.~~ Implemented
+  (`PATCH /api/v1/messages/:messageId`, see "Tasks and Chat" above) —
+  author-only, within 10 minutes of sending. No delete endpoint yet.
 
 Creative production:
 
@@ -677,6 +680,7 @@ the unit of both endpoints now (`POST`'s response is one `Message`; `GET`'s
   "authorName": "Aryan Sharma",
   "sentAt": "2026-07-04T10:25:00.000Z",
   "body": "Version 03 is ready for producer review.",
+  "editedAt": null,
   "parentMessageId": null,
   "replyCount": 0,
   "reactions": [{ "emoji": "👍", "count": 2, "reactedByMe": true }]
@@ -726,6 +730,7 @@ messages still come back as a nested array):
         "authorName": "Aryan Sharma",
         "sentAt": "2026-07-04T10:25:00.000Z",
         "body": "Version 03 is ready for producer review.",
+        "editedAt": null,
         "parentMessageId": null,
         "replyCount": 0,
         "reactions": [{ "emoji": "👍", "count": 2, "reactedByMe": true }]
@@ -753,6 +758,19 @@ Response: the single updated `Message`, same shape as
 `reaction:update` realtime event (full `Message` payload) on the room's
 topic. Errors: `400 invalid_request` (unsupported or missing emoji),
 `401 unauthenticated`, `403 forbidden`, `404 message_not_found`.
+
+### `PATCH /api/v1/messages/:messageId`
+
+Authentication: required. Request param: `messageId`. Body:
+`{ "body": string }`. Edits a message's text — author-only, and only
+within 10 minutes of `sentAt`; sets `editedAt` to the current time.
+Response: the single updated `Message` (with `editedAt` now populated),
+same shape as the endpoints above. Broadcasts a `message:edit` realtime
+event (full `Message` payload) on the room's topic (ADR 0044) so other
+open clients update the bubble live. Errors: `400 invalid_request` (empty
+`body`), `401 unauthenticated`, `403 not_author` (caller didn't author this
+message), `403 edit_window_expired` (more than 10 minutes since
+`sentAt`), `404 message_not_found`.
 
 ### `GET`/`POST /api/v1/chat/rooms/:roomId/events`
 
@@ -1692,6 +1710,7 @@ fallback pattern as the mailer/storage modules. Emitted by
 | `message:new`     | `conversation:<roomId>`       | full `Message` (same shape as `POST /api/v1/chat/rooms/:roomId/messages`'s response) | `sendMessage`                                       | The `Message` row is already committed before broadcasting; the event is a push notification of it, not the source of truth. |
 | `message:new`     | `house:<organizationId>:chat` | `{ conversationId, messageId, authorId, body, sentAt }` (slimmer, house-wide)        | `sendMessage`                                       | Same as above — for cross-room unread badges without subscribing to every room.                                              |
 | `reaction:update` | `conversation:<roomId>`       | full `Message` (updated `reactions`)                                                 | `toggleReaction`                                    | `MessageReaction` row already committed.                                                                                     |
+| `message:edit`    | `conversation:<roomId>`       | full `Message` (updated `body`, `editedAt`)                                          | `editMessage` (`PATCH /api/v1/messages/:messageId`) | The `Message` row is already committed before broadcasting.                                                                  |
 | `read`            | `conversation:<roomId>`       | `{ userId, lastReadAt }`                                                             | `markRead` (`POST /api/v1/chat/rooms/:roomId/read`) | `ConversationRead` row already committed.                                                                                    |
 
 No client-side subscription code or permission check happens at the
@@ -1699,6 +1718,19 @@ broadcast layer itself — anyone who can derive/guess a topic name and has
 a valid Supabase Realtime client could theoretically subscribe; the actual
 authorization boundary is still the HTTP endpoints above (membership
 checks happen there, before broadcasting).
+
+### Client-to-client (ephemeral, no server round-trip)
+
+These are sent directly browser-to-browser on the same
+`conversation:<roomId>` channel via the Realtime client's own `.send()`,
+bypassing `broadcast.ts`/the server entirely — inherently ephemeral, never
+persisted, and simply unseen by anyone if no other client is connected to
+the channel at that moment (the correct behavior for both):
+
+| Event       | Payload                 | Sent by                                                                                          | Purpose                                                                                                                                                                                                                  |
+| ----------- | ----------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `typing`    | `{ userId, name }`      | `notifyTyping()`, throttled to once per 2s while typing                                          | Renders "X is typing…"; the receiving client clears it after 3s of silence.                                                                                                                                              |
+| `delivered` | `{ messageId, userId }` | Automatically, when a client's `message:new` handler receives a message authored by someone else | Lets the sender's client advance that message's own tick from `sent` to `delivered` without waiting for a full `read` — the "true delivered state" ADR 0044 scoped out is now covered this way, no schema change needed. |
 
 Presence (`house:<organizationId>:presence`) is handled entirely
 client-side and doesn't go through `broadcast.ts` at all: each connected

@@ -709,7 +709,8 @@ Ownership: belongs to one `conversation`.
 
 Columns: `id`, `conversation_id`, `author_id`, `parent_message_id`
 (nullable, self-referencing — added per the `20260713220000_message_threads_reactions`
-migration for one-level-deep threaded replies), `body`, `created_at`.
+migration for one-level-deep threaded replies), `body`, `created_at`,
+`edited_at` (nullable, set on edit — `20260715120000_message_edited_at`).
 
 Relationships: belongs to `conversations` (cascade delete); belongs to
 `users` via `author_id` (no cascade, same reasoning as `tasks.assignee_id`);
@@ -728,7 +729,10 @@ Permissions: created via
 house (ADR 0021), optionally with a `parentMessageId` body field to post it
 as a reply; broadcasts to the room's Realtime channel on send (ADR 0044).
 Older history paginates via `GET /api/v1/chat/rooms/:roomId/messages`
-(cursor-based, ADR 0044). No edit/delete endpoint exists yet.
+(cursor-based, ADR 0044). Edited via `PATCH /api/v1/messages/:messageId`
+(author-only, `403 not_author`/`403 edit_window_expired` otherwise) within
+10 minutes of `created_at`, sets `edited_at` and broadcasts `message:edit`
+on the same channel. No delete endpoint exists yet.
 
 Reasoning: threading is intentionally shallow — `parent_message_id` points
 directly at the message being replied to with no separate "thread root"
@@ -740,7 +744,8 @@ conversation's eager `messages` include is capped to the most recent 50
 that cap.
 
 Migration history: `20260708165828_tasks_chat` (initial columns);
-`parent_message_id` added in `20260713220000_message_threads_reactions`.
+`parent_message_id` added in `20260713220000_message_threads_reactions`;
+`edited_at` added in `20260715120000_message_edited_at`.
 
 ### Table: `message_reactions`
 
