@@ -56,9 +56,15 @@ successfully but serve `403 Forbidden` on every route until they're set:
   in production until this was caught: verification/OTP/reset emails
   never reached real users), `MAIL_FROM` (a sender address on a domain
   verified in Resend - e.g. `Fylmico <noreply@yourdomain.com>`; doesn't
-  need to be a real mailbox, just DNS-verified). `NEXT_PUBLIC_API_URL`
-  no longer applies - the frontend calls its own same-origin `/api/v1`
-  path now, not a separate host.
+  need to be a real mailbox, just DNS-verified), `SUPABASE_URL`,
+  `SUPABASE_SERVICE_ROLE_KEY` (file storage, and now also server-side
+  Realtime broadcasts - see ADR 0044), `NEXT_PUBLIC_SUPABASE_URL` (same
+  value as `SUPABASE_URL`) and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (the
+  browser needs these two to open a Realtime connection directly to
+  Supabase for live chat - find the anon key on the Supabase project's
+  API settings page; it's meant to be public, unlike the service role
+  key). `NEXT_PUBLIC_API_URL` no longer applies - the frontend calls its
+  own same-origin `/api/v1` path now, not a separate host.
 
 Leave **Output directory** blank - this is a running Node process, not a
 static folder Hostinger copies files out of.
