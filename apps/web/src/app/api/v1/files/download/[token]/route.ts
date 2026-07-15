@@ -42,7 +42,7 @@ export async function GET(
 
   try {
     const driveResponse = await driveService.download(
-      entry.uploadedById,
+      entry.organizationId,
       entry.storagePath
     );
 

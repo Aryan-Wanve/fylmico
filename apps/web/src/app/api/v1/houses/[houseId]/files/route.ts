@@ -8,7 +8,8 @@ export const GET = withParamsRoute<{ houseId: string }>(
   async (request: NextRequest, { houseId }) => {
     const user = requireUser(request);
     const parentId = request.nextUrl.searchParams.get("parentId");
-    return filesService.list(user.id, houseId, parentId);
+    const sensitive = request.nextUrl.searchParams.get("sensitive") === "true";
+    return filesService.list(user.id, houseId, parentId, sensitive);
   }
 );
 
