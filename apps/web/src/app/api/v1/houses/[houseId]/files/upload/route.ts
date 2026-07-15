@@ -19,6 +19,7 @@ export const POST = withParamsRoute<{ houseId: string }>(
 
     const parentId = formData.get("parentId");
     const conversationId = formData.get("conversationId");
+    const taskId = formData.get("taskId");
 
     return filesService.uploadFile(
       user.id,
@@ -32,7 +33,8 @@ export const POST = withParamsRoute<{ houseId: string }>(
       },
       typeof conversationId === "string" && conversationId
         ? conversationId
-        : null
+        : null,
+      typeof taskId === "string" && taskId ? taskId : null
     );
   }
 );

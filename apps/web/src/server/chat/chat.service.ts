@@ -412,18 +412,19 @@ class ChatService {
 
     const tasks = await this.prisma.task.findMany({
       where: { conversationId: roomId },
-      include: { assignee: true },
+      include: { assignees: { include: { user: true } } },
       orderBy: { createdAt: "desc" }
     });
 
     return tasks.map((task) => ({
       id: task.id,
       title: task.title,
-      project: task.project,
-      assigneeId: task.assigneeId,
-      assigneeName: task.assignee.name,
-      role: task.role,
-      dueDate: task.dueDate,
+      assignees: task.assignees.map((a) => ({
+        userId: a.userId,
+        name: a.user.name,
+        responsibility: a.responsibility
+      })),
+      dueDate: task.dueDate?.toISOString() ?? null,
       status: task.status,
       priority: task.priority
     }));
@@ -455,11 +456,12 @@ class ChatService {
       data: {
         organizationId: conversation.organizationId,
         conversationId: roomId,
+        createdById: userId,
         title: title.trim(),
-        project: "General",
-        assigneeId: userId,
-        role: membership.role.name,
-        dueDate: dueDate.toISOString().slice(0, 10)
+        dueDate,
+        assignees: {
+          create: [{ userId, responsibility: membership.role.name }]
+        }
       }
     });
 

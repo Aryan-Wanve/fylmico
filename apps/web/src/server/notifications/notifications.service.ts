@@ -15,7 +15,11 @@ import { prisma } from "../prisma";
 const TYPE_TO_PREFERENCE_ID: Record<string, string> = {
   task_assigned: "task-reminders",
   task_comment: "comments",
-  project_comment: "comments"
+  project_comment: "comments",
+  task_status_changed: "task-reminders",
+  task_mentioned: "comments",
+  task_review_requested: "task-reminders",
+  task_completed: "task-reminders"
 };
 
 class NotificationsService {

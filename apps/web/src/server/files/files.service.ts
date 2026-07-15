@@ -78,7 +78,8 @@ class FilesService {
     houseId: string,
     parentId: string | null,
     file: { name: string; buffer: ArrayBuffer; mimeType: string; size: number },
-    conversationId?: string | null
+    conversationId?: string | null,
+    taskId?: string | null
   ) {
     await organizationsService.requireMembership(houseId, userId);
 
@@ -98,6 +99,7 @@ class FilesService {
         organizationId: houseId,
         parentId,
         conversationId: conversationId ?? null,
+        taskId: taskId ?? null,
         name: file.name,
         type: "file",
         storagePath,
@@ -119,6 +121,63 @@ class FilesService {
     );
 
     return toFileEntryDto(entry);
+  }
+
+  async listForTask(userId: string, taskId: string) {
+    const houseId = await this.requireTaskHouseId(taskId);
+    await organizationsService.requireMembership(houseId, userId);
+
+    const entries = await this.prisma.fileEntry.findMany({
+      where: { organizationId: houseId, taskId },
+      include: { uploadedBy: true },
+      orderBy: { createdAt: "desc" }
+    });
+
+    return entries.map(toFileEntryDto);
+  }
+
+  async linkToTask(userId: string, taskId: string, entryId: string) {
+    const houseId = await this.requireTaskHouseId(taskId);
+    await organizationsService.requireMembership(houseId, userId);
+    const entry = await this.requireEntry(houseId, entryId, userId);
+
+    const linked = await this.prisma.fileEntry.update({
+      where: { id: entry.id },
+      data: { taskId },
+      include: { uploadedBy: true }
+    });
+
+    return toFileEntryDto(linked);
+  }
+
+  async unlinkFromTask(
+    userId: string,
+    taskId: string,
+    entryId: string
+  ): Promise<void> {
+    const houseId = await this.requireTaskHouseId(taskId);
+    await organizationsService.requireMembership(houseId, userId);
+    const entry = await this.requireEntry(houseId, entryId, userId);
+
+    await this.prisma.fileEntry.update({
+      where: { id: entry.id },
+      data: { taskId: null }
+    });
+  }
+
+  private async requireTaskHouseId(taskId: string): Promise<string> {
+    const task = await this.prisma.task.findUnique({
+      where: { id: taskId },
+      select: { organizationId: true }
+    });
+    if (!task) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "task_not_found",
+        "This task does not exist."
+      );
+    }
+    return task.organizationId;
   }
 
   async resolveDestination(
@@ -394,6 +453,7 @@ export const filesService = new FilesService();
 function toFileEntryDto(entry: {
   id: string;
   parentId: string | null;
+  taskId: string | null;
   name: string;
   type: string;
   storagePath: string | null;
@@ -407,6 +467,7 @@ function toFileEntryDto(entry: {
   return {
     id: entry.id,
     parentId: entry.parentId,
+    taskId: entry.taskId,
     name: entry.name,
     type: entry.type,
     size: entry.size,

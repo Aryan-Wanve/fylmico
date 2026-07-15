@@ -27,7 +27,10 @@ class CommentsService {
     taskId: string,
     body: string
   ): Promise<CommentDto> {
-    const task = await this.prisma.task.findUnique({ where: { id: taskId } });
+    const task = await this.prisma.task.findUnique({
+      where: { id: taskId },
+      include: { assignees: true }
+    });
     if (!task) {
       throw new AppException(
         HttpStatus.NOT_FOUND,
@@ -44,14 +47,21 @@ class CommentsService {
       body
     );
 
-    if (task.assigneeId && task.assigneeId !== userId) {
-      await notificationsService.create(
-        task.assigneeId,
-        "task_comment",
-        `New comment on "${task.title}"`,
-        `${comment.authorName} commented: ${excerpt(body)}`
-      );
-    }
+    const recipientIds = task.assignees
+      .map((a) => a.userId)
+      .filter((id) => id !== userId);
+    await Promise.all(
+      recipientIds.map((recipientId) =>
+        notificationsService.create(
+          recipientId,
+          "task_comment",
+          `New comment on "${task.title}"`,
+          `${comment.authorName} commented: ${excerpt(body)}`
+        )
+      )
+    );
+
+    await this.notifyMentions(task.organizationId, taskId, body, comment);
 
     return comment;
   }
@@ -131,6 +141,34 @@ class CommentsService {
       "project",
       projectId,
       pagination
+    );
+  }
+
+  private async notifyMentions(
+    organizationId: string,
+    taskId: string,
+    body: string,
+    comment: CommentDto
+  ): Promise<void> {
+    const members = await this.prisma.organizationMembership.findMany({
+      where: { organizationId },
+      include: { user: true }
+    });
+
+    const task = await this.prisma.task.findUnique({ where: { id: taskId } });
+    const mentioned = members.filter(
+      (m) => m.userId !== comment.authorId && body.includes(`@${m.user.name}`)
+    );
+
+    await Promise.all(
+      mentioned.map((m) =>
+        notificationsService.create(
+          m.userId,
+          "task_mentioned",
+          `You were mentioned on "${task?.title ?? "a task"}"`,
+          `${comment.authorName} mentioned you: ${excerpt(body)}`
+        )
+      )
     );
   }
 

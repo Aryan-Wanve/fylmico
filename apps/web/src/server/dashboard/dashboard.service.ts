@@ -49,7 +49,7 @@ class DashboardService {
         where: { organizationId: houseId },
         orderBy: { createdAt: "desc" },
         take: 8,
-        include: { assignee: true }
+        include: { createdBy: true }
       }),
       this.prisma.message.findMany({
         where: { conversation: { organizationId: houseId } },
@@ -101,7 +101,7 @@ class DashboardService {
     const activity = [
       ...recentTasks.map((task) => ({
         id: `task-${task.id}`,
-        actorName: task.assignee.name,
+        actorName: task.createdBy.name,
         text: `added a new task "${task.title}"`,
         occurredAt: task.createdAt
       })),
