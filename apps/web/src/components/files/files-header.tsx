@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, FolderPlus, Upload } from "lucide-react";
+import { ChevronDown, FolderPlus, Lock, Upload } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,10 +10,16 @@ import {
 
 export function FilesHeader({
   onUpload,
-  onNewFolder
+  onNewFolder,
+  showSensitiveToggle = false,
+  sensitiveView = false,
+  onToggleSensitive
 }: {
   onUpload: () => void;
   onNewFolder: () => void;
+  showSensitiveToggle?: boolean;
+  sensitiveView?: boolean;
+  onToggleSensitive?: () => void;
 }) {
   return (
     <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
@@ -26,6 +32,20 @@ export function FilesHeader({
         </p>
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-3">
+        {showSensitiveToggle ? (
+          <button
+            className={`flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-bold ${
+              sensitiveView
+                ? "border-[#654cff]/40 bg-[#654cff]/10 text-[#654cff]"
+                : "border-black/10 bg-white text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
+            }`}
+            onClick={onToggleSensitive}
+            type="button"
+          >
+            <Lock className="h-4 w-4" />
+            {sensitiveView ? "House Files" : "Sensitive"}
+          </button>
+        ) : null}
         <button
           className="flex h-10 items-center gap-2 rounded-xl border border-black/10 bg-white px-4 text-sm font-bold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
           onClick={onUpload}

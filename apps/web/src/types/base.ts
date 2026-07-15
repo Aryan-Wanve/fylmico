@@ -126,6 +126,18 @@ export type Project = {
   clients: { id: string; name: string }[];
 };
 
+export type UploadCategory =
+  "raw" | "assets" | "deliverables" | "project-files";
+
+export type ClientItem = {
+  id: string;
+  name: string;
+  contactName: string | null;
+  contactEmail: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Comment = {
   id: string;
   body: string;
@@ -629,6 +641,7 @@ export type FileEntryItem = {
   type: FileEntryType;
   size: number | null;
   mimeType: string | null;
+  sensitive: boolean;
   uploadedById: string;
   uploadedByName: string;
   createdAt: string;

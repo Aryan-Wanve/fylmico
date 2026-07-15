@@ -12,6 +12,7 @@ import type {
   BookingStatus,
   ChatMessage,
   ChatRoom,
+  ClientItem,
   Comment,
   CreateBoardRequest,
   CreateAnnouncementRequest,
@@ -65,11 +66,16 @@ import type {
   UpdateScriptRequest,
   UpdateShotRequest,
   UpdateTaskRequest,
+  UploadCategory,
   UserProfile,
   WorkspaceSnapshot
 } from "../types/base";
 
 let activeHouseId: string | null = null;
+
+export function getActiveHouseId(): string | null {
+  return activeHouseId;
+}
 
 type TokenPair = {
   accessToken: string;
@@ -349,6 +355,16 @@ export async function updateTask(
 export async function deleteTask(taskId: string): Promise<void> {
   await apiRequest<{ success: boolean }>(`/tasks/${taskId}`, {
     method: "DELETE"
+  });
+}
+
+export async function listClients(): Promise<ClientItem[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing clients.");
+  }
+
+  return apiRequest<ClientItem[]>(`/houses/${activeHouseId}/clients`, {
+    query: { limit: 100 }
   });
 }
 
@@ -735,15 +751,45 @@ export async function markAllNotificationsRead(): Promise<void> {
 }
 
 export async function listFileEntries(
-  parentId: string | null
+  parentId: string | null,
+  sensitive = false
 ): Promise<FileEntryItem[]> {
   if (!activeHouseId) {
     throw new Error("Join or create a house before viewing files.");
   }
 
   return apiRequest<FileEntryItem[]>(`/houses/${activeHouseId}/files`, {
-    query: parentId ? { parentId } : undefined
+    query: { ...(parentId ? { parentId } : {}), sensitive: String(sensitive) }
   });
+}
+
+export async function resolveFileDestination(params: {
+  clientId: string;
+  projectId?: string;
+  category?: UploadCategory;
+}): Promise<{ parentId: string }> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before uploading files.");
+  }
+
+  return apiRequest<{ parentId: string }>(
+    `/houses/${activeHouseId}/files/resolve-destination`,
+    { method: "POST", body: params }
+  );
+}
+
+export async function addFileToPortfolio(
+  entryId: string,
+  category?: string
+): Promise<FileEntryItem> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before updating the Portfolio.");
+  }
+
+  return apiRequest<FileEntryItem>(
+    `/houses/${activeHouseId}/files/${entryId}/add-to-portfolio`,
+    { method: "POST", body: { category } }
+  );
 }
 
 export async function createFolder(

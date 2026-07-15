@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useWorkspace } from "@/lib/workspace-context";
 import { FilesHeader } from "@/components/files/files-header";
 import {
   FilesBreadcrumb,
@@ -16,6 +17,7 @@ import { FilesEmptyState } from "@/components/files/files-empty-state";
 import { StorageOverviewPanel } from "@/components/files/storage-overview-panel";
 import { RecentFileActivityPanel } from "@/components/files/recent-file-activity-panel";
 import { DriveConnectionBanner } from "@/components/files/drive-connection-banner";
+import { UploadDestinationDialog } from "@/components/files/upload-destination-dialog";
 import {
   UploadProgressToast,
   type UploadProgressItem
@@ -23,11 +25,15 @@ import {
 import { PaginationFooter } from "@/components/layout/pagination-footer";
 import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
+  addFileToPortfolio,
   createFolder,
   deleteFileEntry,
   getFileDownloadUrl,
   getFilesSummary,
+  listClients,
   listFileEntries,
+  listProjects,
+  resolveFileDestination,
   uploadFileEntryWithProgress,
   type UploadHandle
 } from "@/services/base-workspace.service";
@@ -37,13 +43,25 @@ import {
   getDriveStatus,
   type DriveStatus
 } from "@/services/drive.service";
-import type { FileEntryItem, FilesSummary } from "@/types/base";
+import type {
+  ClientItem,
+  FileEntryItem,
+  FilesSummary,
+  Project,
+  UploadCategory
+} from "@/types/base";
 
 type Crumb = { id: string | null; name: string };
 
 export function FilesPage() {
   const prompt = usePrompt();
+  const { activeHouse, workspace } = useWorkspace();
+  const isOwner =
+    activeHouse?.members.find((member) => member.id === workspace.user.id)
+      ?.role === "Owner";
+
   const [path, setPath] = useState<Crumb[]>([{ id: null, name: "All Files" }]);
+  const [sensitiveView, setSensitiveView] = useState(false);
   const [entries, setEntries] = useState<FileEntryItem[]>([]);
   const [summary, setSummary] = useState<FilesSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,10 +74,24 @@ export function FilesPage() {
   });
   const [uploads, setUploads] = useState<UploadProgressItem[]>([]);
   const [previewFile, setPreviewFile] = useState<FileEntryItem | null>(null);
+  const [clients, setClients] = useState<ClientItem[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [destinationDialogOpen, setDestinationDialogOpen] = useState(false);
   const uploadHandles = useRef(new Map<string, UploadHandle>());
   const uploadStartTimes = useRef(new Map<string, number>());
 
   const currentFolderId = path[path.length - 1].id;
+
+  useEffect(() => {
+    Promise.all([listClients(), listProjects()])
+      .then(([clientList, projectList]) => {
+        setClients(clientList);
+        setProjects(projectList);
+      })
+      .catch(() => {
+        // Destination picker just shows fewer options if this fails.
+      });
+  }, []);
 
   useEffect(() => {
     getDriveStatus()
@@ -114,7 +146,7 @@ export function FilesPage() {
   useEffect(() => {
     let cancelled = false;
 
-    listFileEntries(currentFolderId)
+    listFileEntries(currentFolderId, sensitiveView)
       .then((data) => {
         if (!cancelled) {
           setEntries(data);
@@ -136,7 +168,13 @@ export function FilesPage() {
     return () => {
       cancelled = true;
     };
-  }, [currentFolderId]);
+  }, [currentFolderId, sensitiveView]);
+
+  function handleToggleSensitive() {
+    setSensitiveView((current) => !current);
+    setPath([{ id: null, name: sensitiveView ? "All Files" : "Sensitive" }]);
+    setPage(1);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -193,12 +231,29 @@ export function FilesPage() {
     }
   }
 
-  function handleUpload() {
-    if (!driveStatus.connected) {
-      window.alert("Connect your Google Drive before uploading files.");
+  async function promptAddToPortfolio(entryId: string) {
+    if (!window.confirm("Add this to the House Portfolio?")) {
       return;
     }
+    const category = await prompt(
+      "Portfolio category (Commercials/Reels/Films/Photography/Misc)",
+      "Misc"
+    );
+    try {
+      await addFileToPortfolio(entryId, category?.trim() || "Misc");
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not add this to the Portfolio."
+      );
+    }
+  }
 
+  function startUpload(
+    targetParentId: string | null,
+    category?: UploadCategory
+  ) {
     const input = document.createElement("input");
     input.type = "file";
     input.onchange = () => {
@@ -223,7 +278,7 @@ export function FilesPage() {
 
       const handle = uploadFileEntryWithProgress(
         file,
-        currentFolderId,
+        targetParentId,
         (loaded, total) => {
           const startedAt =
             uploadStartTimes.current.get(uploadId) ?? performance.now();
@@ -243,7 +298,9 @@ export function FilesPage() {
 
       handle.promise
         .then((uploaded) => {
-          setEntries((current) => [uploaded, ...current]);
+          if (targetParentId === currentFolderId) {
+            setEntries((current) => [uploaded, ...current]);
+          }
           setUploads((current) =>
             current.map((upload) =>
               upload.id === uploadId
@@ -256,6 +313,10 @@ export function FilesPage() {
               current.filter((upload) => upload.id !== uploadId)
             );
           }, 4000);
+
+          if (category === "deliverables") {
+            void promptAddToPortfolio(uploaded.id);
+          }
         })
         .catch((error) => {
           setUploads((current) =>
@@ -279,6 +340,37 @@ export function FilesPage() {
         });
     };
     input.click();
+  }
+
+  function handleUpload() {
+    if (!driveStatus.connected) {
+      window.alert("Connect your Google Drive before uploading files.");
+      return;
+    }
+
+    if (!sensitiveView && currentFolderId === null) {
+      setDestinationDialogOpen(true);
+      return;
+    }
+
+    startUpload(currentFolderId);
+  }
+
+  async function handleConfirmDestination(destination: {
+    clientId: string;
+    projectId?: string;
+    category: UploadCategory;
+  }) {
+    try {
+      const { parentId } = await resolveFileDestination(destination);
+      startUpload(parentId, destination.category);
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not resolve where to upload this file."
+      );
+    }
   }
 
   function handleDismissUpload(uploadId: string) {
@@ -319,9 +411,16 @@ export function FilesPage() {
 
   return (
     <div className="grid grid-cols-1 gap-6 p-8">
-      <FilesHeader onNewFolder={handleNewFolder} onUpload={handleUpload} />
+      <FilesHeader
+        onNewFolder={handleNewFolder}
+        onToggleSensitive={handleToggleSensitive}
+        onUpload={handleUpload}
+        sensitiveView={sensitiveView}
+        showSensitiveToggle={isOwner}
+      />
 
       <DriveConnectionBanner
+        canManage={isOwner}
         onConnect={handleConnectDrive}
         onDisconnect={handleDisconnectDrive}
         status={driveStatus}
@@ -408,6 +507,14 @@ export function FilesPage() {
         onCancel={handleCancelUpload}
         onDismiss={handleDismissUpload}
         uploads={uploads}
+      />
+
+      <UploadDestinationDialog
+        clients={clients}
+        onConfirm={handleConfirmDestination}
+        onOpenChange={setDestinationDialogOpen}
+        open={destinationDialogOpen}
+        projects={projects}
       />
 
       {previewFile ? (

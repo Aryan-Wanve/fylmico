@@ -6,11 +6,13 @@ import type { DriveStatus } from "@/services/drive.service";
 export function DriveConnectionBanner({
   status,
   onConnect,
-  onDisconnect
+  onDisconnect,
+  canManage
 }: {
   status: DriveStatus;
   onConnect: () => void;
   onDisconnect: () => void;
+  canManage: boolean;
 }) {
   if (status.connected) {
     return (
@@ -21,21 +23,23 @@ export function DriveConnectionBanner({
           </div>
           <div>
             <p className="font-bold text-[#11142c] dark:text-[#f1f2f8]">
-              Google Drive connected
+              House Google Drive connected
             </p>
             <p className="text-[#8a90a3] dark:text-[#7d8299]">
-              Uploads are saved to the Fylmico folder in{" "}
-              {status.email ?? "your Drive"}.
+              Files are organized automatically in{" "}
+              {status.email ?? "the connected Drive"}.
             </p>
           </div>
         </div>
-        <button
-          className="h-9 rounded-xl border border-black/10 px-3 text-sm font-bold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
-          onClick={onDisconnect}
-          type="button"
-        >
-          Disconnect
-        </button>
+        {canManage ? (
+          <button
+            className="h-9 rounded-xl border border-black/10 px-3 text-sm font-bold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
+            onClick={onDisconnect}
+            type="button"
+          >
+            Disconnect
+          </button>
+        ) : null}
       </div>
     );
   }
@@ -48,21 +52,24 @@ export function DriveConnectionBanner({
         </div>
         <div>
           <p className="font-bold text-[#11142c] dark:text-[#f1f2f8]">
-            Connect your Google Drive
+            Connect this house&apos;s Google Drive
           </p>
           <p className="text-[#8a90a3] dark:text-[#7d8299]">
-            Files you upload here are stored in a Fylmico folder in your own
-            Drive — not on our servers.
+            {canManage
+              ? "Fylmico will automatically create and manage the folder structure — Clients, Resources, Portfolio, and a private Sensitive folder."
+              : "Ask a house Owner to connect Google Drive to unlock uploads."}
           </p>
         </div>
       </div>
-      <button
-        className="h-9 rounded-xl bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
-        onClick={onConnect}
-        type="button"
-      >
-        Connect Drive
-      </button>
+      {canManage ? (
+        <button
+          className="h-9 rounded-xl bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+          onClick={onConnect}
+          type="button"
+        >
+          Connect Drive
+        </button>
+      ) : null}
     </div>
   );
 }
