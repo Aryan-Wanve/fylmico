@@ -3,6 +3,7 @@ import { requireEnv } from "../env";
 
 interface DriveStateClaims {
   purpose: "drive_connect";
+  organizationId: string;
   userId: string;
 }
 
@@ -11,19 +12,26 @@ interface DownloadTokenClaims {
   entryId: string;
 }
 
-export function signDriveState(userId: string): string {
+export function signDriveState(organizationId: string, userId: string): string {
   const secret = requireEnv("JWT_ACCESS_SECRET");
-  const claims: DriveStateClaims = { purpose: "drive_connect", userId };
+  const claims: DriveStateClaims = {
+    purpose: "drive_connect",
+    organizationId,
+    userId
+  };
   return jwt.sign(claims, secret, { expiresIn: "10m" });
 }
 
-export function verifyDriveState(state: string): string {
+export function verifyDriveState(state: string): {
+  organizationId: string;
+  userId: string;
+} {
   const secret = requireEnv("JWT_ACCESS_SECRET");
   const payload = jwt.verify(state, secret) as unknown as DriveStateClaims;
   if (payload.purpose !== "drive_connect") {
     throw new Error("Invalid Drive connect state.");
   }
-  return payload.userId;
+  return { organizationId: payload.organizationId, userId: payload.userId };
 }
 
 export function signDownloadToken(entryId: string): string {

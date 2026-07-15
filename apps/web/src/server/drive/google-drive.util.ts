@@ -95,38 +95,10 @@ export async function fetchDriveAccountEmail(
   return json.email;
 }
 
-export async function createFylmicoFolder(
-  accessToken: string
-): Promise<string> {
-  const response = await fetch(
-    "https://www.googleapis.com/drive/v3/files?fields=id",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        name: "Fylmico",
-        mimeType: "application/vnd.google-apps.folder"
-      })
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      `Could not create the Fylmico folder in Google Drive (status ${response.status})`
-    );
-  }
-
-  const json = (await response.json()) as { id: string };
-  return json.id;
-}
-
 export async function createDriveFolder(params: {
   accessToken: string;
   name: string;
-  parentFolderId: string;
+  parentFolderId?: string;
 }): Promise<string> {
   const response = await fetch(
     "https://www.googleapis.com/drive/v3/files?fields=id",
@@ -139,7 +111,7 @@ export async function createDriveFolder(params: {
       body: JSON.stringify({
         name: params.name,
         mimeType: "application/vnd.google-apps.folder",
-        parents: [params.parentFolderId]
+        ...(params.parentFolderId ? { parents: [params.parentFolderId] } : {})
       })
     }
   );
@@ -152,6 +124,25 @@ export async function createDriveFolder(params: {
 
   const json = (await response.json()) as { id: string };
   return json.id;
+}
+
+export async function moveDriveFile(params: {
+  accessToken: string;
+  fileId: string;
+  addParentId: string;
+  removeParentId: string;
+}): Promise<void> {
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${params.fileId}?addParents=${params.addParentId}&removeParents=${params.removeParentId}`,
+    {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${params.accessToken}` }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Google Drive move failed with status ${response.status}`);
+  }
 }
 
 export async function uploadDriveFile(params: {
