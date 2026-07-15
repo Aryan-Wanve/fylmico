@@ -380,11 +380,13 @@ was implemented.
 ### `POST /api/v1/houses`
 
 Authentication: required. Body:
-`{ "name": string, "handle": string (lowercase, url-safe, unique), "description"?: string, "houseType": "freelancer" | "agency" | "college" | "hobbyist" | "custom" }`.
+`{ "name": string, "handle": string (lowercase letters + digits, 3-20 chars, unique), "description"?: string, "houseType": "freelancer" | "agency" | "college" | "hobbyist" | "custom" }`.
 `houseType` (ADR 0046) sets `enabledModules` to that type's default set
 (`HOUSE_TYPE_DEFAULT_MODULES` in `apps/web/src/lib/house-types.ts`) —
 `"agency"`/`"custom"` enable every module, the others exclude a few (e.g.
 `"freelancer"` excludes Crews/Messages/Call Sheets/Announcements).
+`description` has a server-side fallback ("A new creative production
+house.") if omitted - the creation UI no longer asks for it (ADR 0048).
 Response:
 
 ```json
@@ -392,11 +394,12 @@ Response:
   "data": {
     "id": "house_123",
     "name": "North Star Films",
-    "handle": "north-star",
+    "handle": "northstar",
     "description": "Commercial film and launch content studio.",
     "inviteCode": "NORT-2048",
     "type": "agency",
     "enabledModules": ["home", "projects", "calendar", "..."],
+    "myRole": "Owner",
     "members": [
       {
         "id": "user_123",
@@ -406,20 +409,15 @@ Response:
         "lastSeenAt": "2026-07-15T10:00:00.000Z"
       }
     ],
+    "pendingMembers": [],
     "roles": [
       {
         "id": "role_1",
         "name": "Owner",
         "color": "#654cff",
         "description": "Controls house settings, roles, invites, and billing.",
+        "permissions": ["view_projects", "edit_projects", "..."],
         "memberCount": 1
-      },
-      {
-        "id": "role_2",
-        "name": "Producer",
-        "color": "#16c784",
-        "description": "Plans shoots, schedules tasks, and coordinates delivery.",
-        "memberCount": 0
       }
     ]
   }
@@ -427,37 +425,53 @@ Response:
 ```
 
 (5 default roles are seeded — Owner, Producer, Editor, Videographer,
-Photographer — matching `apps/web/src/services/base-workspace.service.ts`'s
-`defaultRoles` exactly; only Owner has a member until others join. A
-member's `status` is currently just `"online"` for the requesting caller
-themselves and `"offline"` for everyone else — not yet derived from
-`lastSeenAt`'s recency, see `POST /api/v1/auth/me/heartbeat` below.
-`lastSeenAt` is `null` until a member's client has called that heartbeat
-endpoint at least once.)
+Photographer — each with a starting `permissions` set (Owner gets all 18,
+see `PERMISSION_PRESETS` in `apps/web/src/lib/permissions.ts`); only Owner
+has a member until others are approved. `myRole` (ADR 0048) is the
+_requesting_ caller's own role name in this house, or `null` if they're a
+pending member awaiting approval — the client uses this to decide whether
+to render the workspace or the waiting screen. `members` only ever
+includes active (role-assigned) members; `pendingMembers` is populated
+only when the requester holds `approve_members` (or is Owner) — see the
+Pending Members endpoints below. A member's `status` is currently just
+`"online"` for the requesting caller themselves and `"offline"` for
+everyone else — not yet derived from `lastSeenAt`'s recency, see
+`POST /api/v1/auth/me/heartbeat` below.)
 
 Errors: `400 invalid_request`, `401 unauthenticated`, `409 handle_unavailable`.
 Expected behavior: creates the organization, seeds default roles, makes the
 creator an `"Owner"` member, and sets the creator's active house.
 
+### `GET /api/v1/houses/check-handle`
+
+Added per ADR 0048 for the simplified 2-step creation flow's live
+availability check. Authentication: required. Query: `handle` (string).
+Response: `{ "data": { "available": boolean } }`. No error responses
+beyond the standard `401 unauthenticated` - an empty/invalid handle just
+resolves `available: false`.
+
 ### `PATCH /api/v1/houses/:houseId`
 
-Authentication: required (caller must be a member of `houseId` for
-`name`/`handle`/`description`; caller must additionally hold the
+Authentication: required (caller must be an _active_ member of `houseId`
+for `name`/`handle`/`description`; caller must additionally hold the
 `"Owner"` role if `enabledModules` is included). Body: any subset of
 `{ "name": string, "handle": string (lowercase, url-safe, unique), "description": string, "enabledModules": string[] }`
 (ADR 0046 for `enabledModules`). Response: same `House` shape as create.
 Errors: `400 invalid_request`, `401 unauthenticated`, `403 forbidden` (not
-a member, or not an Owner when setting `enabledModules`),
+an active member, or not an Owner when setting `enabledModules`),
 `409 handle_unavailable`.
 
 ### `POST /api/v1/houses/join`
 
 Authentication: required. Body: `{ "inviteCode": string }`. Response: same
-`House` shape as create. New joiners get role `"Member"` (created lazily on
-first join if the house doesn't have one yet — see ADR 0020 for why "Member"
-rather than "Client" or a joiner-specified role).
-Errors: `400 invalid_request`, `401 unauthenticated`, `404 invite_not_found`,
-`409 already_member`.
+`House` shape as create, with `myRole: null` — as of ADR 0048, joining
+creates a **pending** membership (`roleId: null`), not an immediately
+active one. The joiner sees their house appear on the Dashboard right
+away but is shown a waiting screen (no sidebar, no data access anywhere)
+until an admin assigns them a role via the Pending Members endpoints
+below. Errors: `400 invalid_request`, `401 unauthenticated`,
+`403 banned_from_house` (this user was previously banned from this
+house), `404 invite_not_found`, `409 already_member`.
 
 ### `GET /api/v1/houses/join/:code/preview`
 
@@ -505,33 +519,68 @@ Errors: `401 unauthenticated`, `403 forbidden` (caller isn't an Owner).
 ### `PATCH /api/v1/houses/:houseId/join-requests/:requestId`
 
 Authentication: required, caller must hold the `"Owner"` role in `houseId`.
-Body: `{ "status": "approved" | "rejected" }`. Approving adds the requester
-as a `"Member"` and notifies them (`house_join_approved`); rejecting just
-notifies them (`house_join_rejected`) — the request stays reviewable again
-via a fresh `POST /api/v1/houses/join-requests` later. Response:
+Body: `{ "status": "approved" | "rejected" }`. Approving this _join
+request_ (gating whether the person can join the house at all) creates
+the same **pending** membership `POST /api/v1/houses/join` does (`roleId:
+null`) and notifies them (`house_join_approved`) — they still land on the
+waiting screen and need a role assigned via the Pending Members endpoints
+below before they get any access. Rejecting just notifies them
+(`house_join_rejected`) — the request stays reviewable again via a fresh
+`POST /api/v1/houses/join-requests` later. Response:
 `{ "data": { "success": true } }`. Errors: `400 invalid_request` (request
 was already reviewed), `401 unauthenticated`, `403 forbidden` (caller isn't
 an Owner), `404 join_request_not_found`.
 
+### `POST /api/v1/houses/:houseId/pending-members/:membershipId/assign-role`
+
+Added per ADR 0048. Authentication: required, caller must hold the
+`approve_members` permission (or be Owner) in `houseId`. Body:
+`{ "roleName": string, "team": string, "permissions": string[] }` — the
+three steps of the Assign Role wizard (Position/Team/Permissions).
+Finds-or-creates a `Role` named `roleName` in this house and **overwrites
+its `permissions`** with the submitted array (affects everyone holding
+that Position, not just this member); sets the target `role_id`; upserts
+the member's `CrewProfile` (`jobTitle: roleName, department: team`);
+notifies the member (`member_role_assigned`). Response: the updated
+`House`. Errors: `401 unauthenticated`, `403 forbidden` (caller lacks
+`approve_members`), `404 pending_member_not_found`.
+
+### `POST /api/v1/houses/:houseId/pending-members/:membershipId/reject`
+
+Authentication: required, caller must hold `approve_members`. Deletes the
+pending membership outright (they can request/join again later). Response:
+the updated `House`. Errors: `401 unauthenticated`, `403 forbidden`,
+`404 pending_member_not_found`.
+
+### `POST /api/v1/houses/:houseId/pending-members/:membershipId/ban`
+
+Authentication: required, caller must hold `approve_members`. Deletes the
+pending membership and appends the user's id to
+`organization.bannedUserIds`, blocking any future join attempt by that
+user into this house (`403 banned_from_house` on
+`POST /api/v1/houses/join`). Response: the updated `House`. Errors:
+`401 unauthenticated`, `403 forbidden`, `404 pending_member_not_found`.
+
 ### `POST /api/v1/houses/:houseId/activate`
 
-Authentication: required (caller must be a member of `houseId`). Sets
-`houseId` as the caller's active house (`activeOrganizationId`) — used to
-switch between houses the caller belongs to. Response:
+Authentication: required (caller must have _any_ membership in `houseId` -
+pending or active, ADR 0048, so a pending member can still switch their
+active house to the one they're waiting in). Sets `houseId` as the
+caller's active house (`activeOrganizationId`). Response:
 `{ "data": { "success": true } }`. Errors: `401 unauthenticated`,
-`403 forbidden` (not a member).
+`403 forbidden` (no membership at all).
 
 ### `POST /api/v1/houses/:houseId/leave`
 
-Implemented per ADR 0036. Authentication: required (caller must be a member
-of `houseId`). Removes the caller's membership and crew profile. If
-`houseId` was the caller's active house, their active house switches to
-another house they belong to, or `null` if none remain (the frontend then
-shows the "create or join a house" onboarding). Response:
-`{ "data": { "success": true } }`.
+Implemented per ADR 0036. Authentication: required (caller must have any
+membership, pending or active, in `houseId`). Removes the caller's
+membership and crew profile (if any). If `houseId` was the caller's
+active house, their active house switches to another house they belong
+to, or `null` if none remain (the frontend then shows the "create or join
+a house" onboarding). Response: `{ "data": { "success": true } }`.
 Errors: `400 invalid_request` (caller is the house's only member — add
-another member first), `401 unauthenticated`, `403 forbidden` (not a
-member).
+another member first), `401 unauthenticated`, `403 forbidden` (no
+membership).
 
 ### `POST /api/v1/houses/:houseId/invitations`
 

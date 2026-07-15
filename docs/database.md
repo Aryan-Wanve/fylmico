@@ -443,8 +443,10 @@ Columns: `id`, `name`, `handle` (unique, lowercase URL-safe), `description`,
 custom`, set once at creation, added per ADR 0046), `enabled_modules`
 (`String[]`, default `[]` — nav-item ids like `"crews"`/`"messages"`
 enabled for this house, defaulted per `type` at creation and independently
-toggleable afterward from House Settings, ADR 0046), `created_at`,
-`updated_at`.
+toggleable afterward from House Settings, ADR 0046), `banned_user_ids`
+(`String[]`, default `[]` — users banned from this house via the Pending
+Members panel; checked before creating a new membership, ADR 0048),
+`created_at`, `updated_at`.
 
 Relationships: has many `roles`, `organization_memberships`.
 
@@ -454,30 +456,43 @@ Constraints: `handle` and `invite_code` unique.
 
 Permissions: created by any authenticated user
 (`POST /api/v1/houses`, body now includes `houseType`); joined via
-`invite_code` (`POST /api/v1/houses/join`); updated via
-`PATCH /api/v1/houses/:houseId` (any member for name/handle/description,
-but `enabledModules` specifically requires the `"Owner"` role).
+`invite_code` (`POST /api/v1/houses/join`, creates a **pending**
+membership - see below); updated via `PATCH /api/v1/houses/:houseId` (any
+active member for name/handle/description, but `enabledModules`
+specifically requires the `"Owner"` role).
 
-Reasoning: `invite_code` is a single code per organization (not per role) in
-this pass — see ADR 0020 for why joining defaults to a generic `"Member"`
-role rather than a role the invite code itself specifies. `enabledModules`
-is a plain string array rather than a relational table since it's always
-exactly the fixed, well-known set of `nav-items.ts` ids with no per-module
-metadata beyond on/off (ADR 0046); disabling a module only hides its
-sidebar entry today, it doesn't block the underlying route/API.
+Reasoning: `invite_code` is a single code per organization (not per role).
+`enabledModules` is a plain string array rather than a relational table
+since it's always exactly the fixed, well-known set of `nav-items.ts` ids
+with no per-module metadata beyond on/off (ADR 0046); disabling a module
+only hides its sidebar entry today, it doesn't block the underlying
+route/API. `bannedUserIds` follows the same plain-array convention rather
+than a separate ban-list table (ADR 0048) - a small, house-scoped list
+with no per-ban metadata needed yet.
 
 Migration history: `20260708164132_organizations_houses`; `type` and
-`enabled_modules` added in `20260715180000_house_type_modules` (ADR 0046).
+`enabled_modules` added in `20260715180000_house_type_modules` (ADR 0046);
+`banned_user_ids` added in `20260716090000_pending_members_permissions`
+(ADR 0048).
 
 ### Table: `roles`
 
-Purpose: an organization-scoped label (name/color/description) — "who has
-which crew role" in the UI. Does not yet carry granular permission grants
-(see ADR 0020/0004 — `permissions`/`role_permissions` are deferred).
+Purpose: an organization-scoped, named Position ("Owner", "Editor",
+"Producer", or a custom name) - shared by everyone holding it, carrying
+both display info (name/color/description) and, as of ADR 0048, its
+modular permission grants.
 
 Ownership: belongs to one `organization`.
 
-Columns: `id`, `organization_id`, `name`, `color`, `description`, `created_at`.
+Columns: `id`, `organization_id`, `name`, `color`, `description`,
+`permissions` (`String[]`, default `[]` - a flat list from the 18-key
+vocabulary in `apps/web/src/lib/permissions.ts`: `view_projects`,
+`edit_projects`, `create_tasks`, `delete_tasks`, `view_files`,
+`upload_files`, `delete_files`, `manage_crew`, `invite_members`,
+`remove_members`, `manage_calendar`, `manage_bookings`,
+`manage_house_settings`, `manage_roles`, `approve_members`,
+`manage_drive`, `manage_storyboards`, `manage_budget`, `manage_clients`),
+`created_at`.
 
 Relationships: belongs to `organizations` (cascade delete); has many
 `organization_memberships`.
@@ -485,55 +500,76 @@ Relationships: belongs to `organizations` (cascade delete); has many
 Indexes: unique compound index on `(organization_id, name)`; index on
 `organization_id`.
 
-Constraints: `(organization_id, name)` unique — role names are unique within
+Constraints: `(organization_id, name)` unique - role names are unique within
 a house, not globally.
 
 Permissions: the 5 default roles (Owner/Producer/Editor/Videographer/
-Photographer) are seeded automatically at house creation; `"Member"` is
-seeded lazily on first invite-code join. No endpoint to create/edit custom
-roles exists yet.
+Photographer) are seeded automatically at house creation, each with a
+starting `permissions` set (Owner gets all 18). Created/updated
+find-or-create style by `POST /api/v1/houses/:houseId/pending-members/
+:membershipId/assign-role` (requires the `approve_members` permission) -
+assigning a Position an admin picks or types overwrites that Position's
+`permissions` for everyone who holds it, not just the member being
+assigned (ADR 0048).
 
-Reasoning: seeded role names/colors/descriptions match
-`apps/web/src/services/base-workspace.service.ts`'s `defaultRoles` exactly,
-so the real API's house-creation response is indistinguishable in shape from
-what the frontend's mock already returns.
+Reasoning: permissions belong to the named Position rather than to each
+individual membership - matches the request's own "Editor preset"/
+"Producer preset" framing and avoids two people with the same Position
+silently drifting to different access.
 
-Migration history: `20260708164132_organizations_houses`.
+Migration history: `20260708164132_organizations_houses`; `permissions`
+added (and backfilled per existing role name) in
+`20260716090000_pending_members_permissions` (ADR 0048).
 
 ### Table: `organization_memberships`
 
-Purpose: links a user to an organization with a role — the actual
-"membership" record.
+Purpose: links a user to an organization, optionally with a role - the
+actual "membership" record. As of ADR 0048, `role_id` can be `null`,
+meaning the user has joined but is awaiting an admin's role assignment.
 
 Ownership: belongs to one `organization` and one `user`.
 
-Columns: `id`, `organization_id`, `user_id`, `role_id`, `created_at`.
+Columns: `id`, `organization_id`, `user_id`, `role_id` (nullable),
+`created_at`.
 
 Relationships: belongs to `organizations` and `users` (both cascade delete);
-belongs to `roles` (no cascade — a role should not disappear out from under
-a membership; roles aren't deletable via any endpoint yet anyway).
+belongs to `roles` (nullable, no cascade - a role should not disappear out
+from under a membership; roles aren't deletable via any endpoint yet
+anyway).
 
 Indexes: unique compound index on `(organization_id, user_id)`; indexes on
 `organization_id` and `user_id`.
 
-Constraints: `(organization_id, user_id)` unique — one membership per user
+Constraints: `(organization_id, user_id)` unique - one membership per user
 per house, matching ADR 0011's model.
 
-Permissions: created by house creation (creator, `"Owner"` role),
-`POST /api/v1/houses/join` (joiner, `"Member"` role), or
-`POST /api/v1/invitations/:token/accept` (invitee, `"Member"` role, per ADR
-0036). Removed by `DELETE /api/v1/houses/:houseId/crew/:userId` (another
-member removing someone, ADR 0028) or `POST /api/v1/houses/:houseId/leave`
-(a member removing themself, ADR 0036) — both refuse to remove the
-house's last remaining membership. No endpoint to change a member's role
-exists yet.
+Permissions: created by house creation (creator, `"Owner"` role,
+active immediately), `POST /api/v1/houses/join` (joiner, `role_id: null`,
+**pending**), or `POST /api/v1/invitations/:token/accept` (invitee,
+`role_id: null`, **pending**) - see ADR 0048. A pending membership becomes
+active via `POST /api/v1/houses/:houseId/pending-members/:membershipId/
+assign-role` (sets `role_id`, requires `approve_members`); it's removed
+outright via `.../reject` or `.../ban` (ban also appends to
+`organizations.banned_user_ids`). Active memberships are removed by
+`DELETE /api/v1/houses/:houseId/crew/:userId` (another member removing
+someone, ADR 0028) or `POST /api/v1/houses/:houseId/leave` (a member
+removing themself, ADR 0036) - both refuse to remove the house's last
+remaining membership.
 
 Reasoning: `HouseMember.status` (online/away/offline) in the API response is
 computed at read time (`"online"` for the requesting user, `"offline"` for
-everyone else), not stored here — real presence belongs to the realtime
-system (ADR 0005), not this table.
+everyone else), not stored here - real presence belongs to the realtime
+system (ADR 0005), not this table. `organizationsService.requireMembership`
 
-Migration history: `20260708164132_organizations_houses`.
+- the single method every domain service calls to gate access - now
+  additionally asserts `role_id` is non-null, so a pending member is blocked
+  from every existing route (tasks, chat, files, projects, ...) automatically
+  (ADR 0048); a separate `requireAnyMembership` covers the couple of calls
+  (activating/leaving a house) that must work while still pending.
+
+Migration history: `20260708164132_organizations_houses`; `role_id`
+relaxed to nullable in `20260716090000_pending_members_permissions`
+(ADR 0048).
 
 ### Table: `house_invitations`
 
@@ -1165,8 +1201,10 @@ Ownership: belongs to one `organization` and one `user`; conceptually a
 key to `organization_memberships` itself.
 
 Columns: `id`, `organization_id`, `user_id`, `job_title`, `department`
-(default `"Production"`; one of 7 fixed values, validated at the service
-layer), `role_category` (default `"Other"`; one of 6 fixed values),
+(default `"Production"`; a suggested-list-of-10 string, validated at the
+service layer - this is also the "Team" concept from ADR 0048's Assign
+Role wizard, reused rather than adding a separate column/model),
+`role_category` (default `"Other"`; one of 6 fixed values),
 `status` (default `"available"`; `"available" | "on-set" | "on-leave" |
 "unavailable"` - a production-availability status, distinct from
 `organizations.toHouseDto`'s unrelated online/away/offline presence
@@ -1188,7 +1226,11 @@ Constraints: unique `(organization_id, user_id)` - one profile per member
 per house.
 
 Permissions: auto-created (not via a public endpoint) when a user creates
-or joins a house (`OrganizationsService.createHouse`/`joinHouse`); read via
+a house (`OrganizationsService.createHouse`, immediately - the creator is
+always an active Owner) or when an admin assigns a pending member their
+first role (`OrganizationsService.assignRole`, ADR 0048 - joining alone no
+longer creates one, since there's no Position/Team to seed it with until
+a role exists); read via
 `GET /api/v1/houses/:houseId/crew` by any house member; updated via
 `PATCH .../crew/:userId` by any house member (no restriction to "only the
 profile's own owner may edit it" - matches the app's existing lax

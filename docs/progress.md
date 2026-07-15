@@ -5162,3 +5162,115 @@ Next task:
 - Phase 2: Calendar/Gantt views, task templates, custom fields, and
   productivity analytics (time-estimate-vs-actual reporting, Pomodoro
   mode) once Phase 1 usage surfaces real priorities.
+
+## 2026-07-16 Dashboard + Onboarding Redesign: Pending Members & Permissions (Phase 1)
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 99%
+
+Features completed:
+
+- Joining a house (invite code, invite link, or an approved join-request)
+  now creates an immediately-visible but **pending** membership
+  (`roleId: null`) instead of instant "Member" access - the joiner sees
+  their house on the Dashboard right away but gets a full-screen Waiting
+  Screen (no sidebar, no data access on any route) until an admin assigns
+  a role (ADR 0048).
+- `organizationsService.requireMembership` - the single method all 18
+  domain services already call - now requires an active role, so every
+  existing route is correctly gated against pending members with zero
+  changes to those services.
+- New Crews "Pending Members" panel + a 3-step Assign Role wizard
+  (Position → Team → Permissions, with Owner/Admin/Producer/Editor/
+  Client/Custom presets covering 18 modular permissions) plus
+  Reject/Ban actions (Ban blocks future re-joins via a new
+  `Organization.bannedUserIds` list).
+- New centralized `apps/web/src/lib/permissions.ts` (permission keys,
+  labels, presets, suggested Position list) - the single source of truth
+  future modules extend by adding keys, with no gating-mechanism changes
+  needed.
+- "Team" reuses the existing `CrewProfile.department` field (extended
+  with Creative/Marketing/Management) rather than a new column/model.
+- Simplified house creation to 2 steps (Name → Tag), dropping Description
+  entirely; the Tag step live-checks handle availability via a new
+  `GET /api/v1/houses/check-handle` endpoint.
+- Dashboard route (`/dashboard`) now always hides the full sidebar/topbar
+  (previously showed a "compact" sidebar) and stays reachable as the
+  house-switcher even for a pending member, showing a "Waiting for
+  Approval" badge on their pending house's card instead of the normal
+  role/member-count line.
+- Waiting screen self-polls every 5s and the app auto-transitions into
+  the normal workspace (with a one-time welcome toast) the moment a role
+  is assigned - no manual refresh, no new realtime channel.
+
+Features started:
+
+- None beyond the above; retrofitting the new `requirePermission` check
+  into the other 17 domain services (today's Owner-only/any-member gates
+  are unchanged) and every Dashboard visual extra (favorites, pins,
+  drag-reorder, archive, search, storage/activity badges, cross-house
+  notification feed, per-house last-page memory) are explicitly deferred
+  to a later phase - see ADR 0048.
+
+Files created:
+
+- `docs/adr/0048-pending-members-and-permissions.md`
+- `packages/database/prisma/migrations/20260716090000_pending_members_permissions/`
+- `apps/web/src/lib/permissions.ts`
+- `apps/web/src/server/organizations/dto/assign-role.dto.ts`
+- `apps/web/src/app/api/v1/houses/check-handle/route.ts`
+- `apps/web/src/app/api/v1/houses/[houseId]/pending-members/[membershipId]/{assign-role,reject,ban}/route.ts`
+- `apps/web/src/components/houses/waiting-for-approval-page.tsx`
+- `apps/web/src/components/crews/pending-members-panel.tsx`,
+  `assign-role-dialog.tsx`
+
+Files modified:
+
+- `packages/database/prisma/schema.prisma` (`OrganizationMembership.roleId`
+  nullable, `Role.permissions`, `Organization.bannedUserIds`)
+- `apps/web/src/server/organizations/organizations.service.ts` (full
+  rework: `requireMembership` gates on active role, new
+  `requireAnyMembership`/`requirePermission`/`assignRole`/
+  `rejectPendingMember`/`banPendingMember`/`checkHandleAvailability`,
+  `addMembership` creates pending rows, `toHouseDto` adds
+  `myRole`/`pendingMembers`)
+- `apps/web/src/server/organizations/dto/create-house.dto.ts` (tightened
+  handle validation)
+- `apps/web/src/server/chat/chat.service.ts` (optional-chain the now-
+  nullable `membership.role`)
+- `apps/web/src/types/base.ts` (`RoleName` relaxed to `string`,
+  `House.myRole`/`pendingMembers`, `HouseRole.permissions`,
+  `PendingMember`, `AssignRoleRequest`, `CrewDepartment` gained
+  Creative/Marketing/Management)
+- `apps/web/src/services/base-workspace.service.ts` (new client
+  functions)
+- `apps/web/src/components/houses/house-choice-card.tsx` (2-step
+  creation flow), `houses-dashboard-page.tsx` (pending badge, `myRole`)
+- `apps/web/src/components/layout/app-shell-gate.tsx` (dashboard sidebar
+  hiding, waiting-screen short-circuit, welcome toast), `app-sidebar.tsx`
+  (logo → `/dashboard`)
+- `apps/web/src/components/crews/crews-page.tsx`, `crew-data.ts`
+  (extended department list)
+
+Known limitations / tradeoffs:
+
+- Only `approve_members` is enforced via the new `requirePermission`
+  helper this pass; the other 17 permissions are stored/toggleable but
+  not yet wired into any existing endpoint's authorization.
+- Editing a shared Position's permissions from the Assign Role wizard
+  changes access for everyone holding that Position, not just the member
+  being assigned - intentional, but a different mental model than
+  per-person permissions.
+- Verified end-to-end using a synthetic pending-membership row (direct
+  DB insert) for the second account rather than two live concurrent
+  logins, since driving a second real login wasn't available in this
+  pass - confirmed correct via the resulting DB state and the same
+  polling/gating mechanism already proven live for the waiting screen.
+
+Next task:
+
+- Phase 2: Dashboard visual layer (favorites, pins, drag-reorder,
+  archive, search, storage/activity badges), cross-house notification
+  aggregation, instant per-house last-page memory, and retrofitting
+  `requirePermission` into the remaining domain services.

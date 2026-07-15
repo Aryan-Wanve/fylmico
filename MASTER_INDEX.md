@@ -97,6 +97,7 @@ Current ADRs:
 - [0045-house-drive-connection.md](docs/adr/0045-house-drive-connection.md)
 - [0046-house-type-and-modules.md](docs/adr/0046-house-type-and-modules.md)
 - [0047-tasks-production-workflow.md](docs/adr/0047-tasks-production-workflow.md)
+- [0048-pending-members-and-permissions.md](docs/adr/0048-pending-members-and-permissions.md)
 
 ## Current Sprint Gate
 

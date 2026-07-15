@@ -455,3 +455,47 @@ Migration notes:
   `task_assignees` from the dropped `assignee_id`/`role` columns, and
   remaps existing `status` values (`done`→`completed`, `on-hold`→`todo`)
   before dropping the old columns - run `prisma migrate deploy`.
+
+## 0.14.0 - 2026-07-16
+
+Summary:
+
+- Joining a house (invite code, invite link, or an approved join
+  request) now creates a **pending** membership instead of instant
+  access - the joiner sees their house on the Dashboard immediately but
+  is shown a full-screen Waiting Screen (no sidebar, no data access
+  anywhere) until an admin assigns them a role (ADR 0048).
+- New Crews "Pending Members" panel with a 3-step Assign Role wizard
+  (Position → Team → Permissions, with Owner/Admin/Producer/Editor/
+  Client/Custom presets) plus Reject and Ban actions.
+- New centralized, modular permission system (18 permission keys) -
+  `Role.permissions`, shared by everyone holding that Position in a
+  house - the foundation future modules (Invoices, CRM, etc.) will
+  extend.
+- Simplified house creation to 2 steps (Name → Tag), dropped the
+  Description field, and added a live handle-availability check.
+- The Dashboard route now always hides the app sidebar (previously
+  showed a "compact" version) and shows a "Waiting for Approval" badge
+  on a pending house's card; the waiting screen auto-transitions into
+  the workspace (with a welcome toast) within seconds of a role being
+  assigned, no manual refresh needed.
+
+Breaking changes:
+
+- `OrganizationMembership.roleId` is nullable - `POST /api/v1/houses/join`
+  and an approved `PATCH /api/v1/houses/:houseId/join-requests/:requestId`
+  no longer grant an active "Member" role; the new membership is pending
+  until an admin calls the new Assign Role endpoint. `House.members` now
+  only lists active (role-assigned) members; a new `House.myRole` field
+  (nullable) and `House.pendingMembers` array were added to the response.
+- `POST /api/v1/houses` handle validation tightened to lowercase letters
+  and digits only, 3-20 characters (previously also allowed hyphens);
+  existing hyphenated handles are unaffected.
+
+Migration notes:
+
+- Migration `20260716090000_pending_members_permissions` - adds
+  `roles.permissions` (`text[]`, backfilled per existing role name) and
+  `organizations.banned_user_ids` (`text[]`), and drops the `NOT NULL`
+  constraint on `organization_memberships.role_id` - run
+  `prisma migrate deploy`.
