@@ -15,6 +15,7 @@ import { ActivityHeatmapPanel } from "@/components/analytics/activity-heatmap-pa
 import { TopContributorsPanel } from "@/components/analytics/top-contributors-panel";
 import { TopActiveProjectsPanel } from "@/components/analytics/top-active-projects-panel";
 import { TeamWorkloadPanel } from "@/components/analytics/team-workload-panel";
+import { TaskEstimatePanel } from "@/components/analytics/task-estimate-panel";
 import { InsightBanner } from "@/components/analytics/insight-banner";
 import {
   createTimeEntry,
@@ -128,6 +129,10 @@ export function AnalyticsPage() {
         <ActivityHeatmapPanel heatmap={analytics.activityHeatmap} />
         <TopContributorsPanel contributors={analytics.topContributors} />
       </div>
+
+      <TaskEstimatePanel
+        taskEstimateVsActual={analytics.taskEstimateVsActual}
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="grid gap-6">
