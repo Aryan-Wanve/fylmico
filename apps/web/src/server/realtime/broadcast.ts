@@ -5,6 +5,8 @@ import { getOptionalEnv } from "../env";
 // from a stateless route handler, matching how mailer.ts calls Resend).
 // Degrades to a no-op if Realtime isn't configured, same fallback pattern
 // as the mailer/storage modules when their env vars are unset.
+let warnedUnconfigured = false;
+
 export async function broadcast(
   topic: string,
   event: string,
@@ -13,6 +15,17 @@ export async function broadcast(
   const url = getOptionalEnv("SUPABASE_URL");
   const serviceRoleKey = getOptionalEnv("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !serviceRoleKey) {
+    // Logged once (not per-call, which would spam Runtime Logs on every
+    // message) so a missing config is actually visible instead of chat
+    // silently never going live.
+    if (!warnedUnconfigured) {
+      warnedUnconfigured = true;
+      console.warn(
+        "[realtime] SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY not configured - " +
+          "server-side broadcasts (new messages, reactions, read receipts) " +
+          "are disabled. Clients will only see updates after a manual refresh."
+      );
+    }
     return;
   }
 
@@ -23,7 +36,9 @@ export async function broadcast(
       apikey: serviceRoleKey,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ messages: [{ topic, event, payload }] })
+    body: JSON.stringify({
+      messages: [{ topic, event, payload, private: false }]
+    })
   });
 
   if (!response.ok) {
