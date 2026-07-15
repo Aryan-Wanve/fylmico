@@ -8,7 +8,10 @@ import {
 } from "lucide-react";
 import type { ChatMessage, ChatRoom } from "@/types/base";
 
-export type ChatMessageItem = ChatMessage & { time: string };
+export type ChatMessageItem = ChatMessage & {
+  time: string;
+  status?: "sending" | "sent" | "delivered" | "read";
+};
 
 export type Channel = {
   id: string;

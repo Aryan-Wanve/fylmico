@@ -5,14 +5,12 @@ import {
   FileText,
   ListChecks
 } from "lucide-react";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount
-} from "@/components/ui/avatar";
+import { AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
+import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import { ChannelAvatar } from "@/components/messages/channel-avatar";
 import { getInitials, type Channel } from "@/components/messages/message-data";
+import { formatRelativeTime } from "@/lib/relative-time";
+import { useTicker } from "@/lib/use-ticker";
 import type { ChatTab } from "@/components/messages/chat-tabs";
 import type { HouseMember } from "@/types/base";
 
@@ -20,13 +18,16 @@ export function ChannelInfoPanel({
   channel,
   members,
   onRename,
-  onSelectTab
+  onSelectTab,
+  onlineUserIds
 }: {
   channel: Channel;
   members: HouseMember[];
   onRename: () => void;
   onSelectTab: (tab: ChatTab) => void;
+  onlineUserIds: Set<string>;
 }) {
+  useTicker();
   const visibleMembers = members.slice(0, 4);
   const overflow = members.length - visibleMembers.length;
 
@@ -58,14 +59,36 @@ export function ChannelInfoPanel({
         </strong>
         <AvatarGroup className="mt-2">
           {visibleMembers.map((member) => (
-            <Avatar key={member.id}>
-              <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
-            </Avatar>
+            <AvatarWithStatus
+              key={member.id}
+              label={getInitials(member.name)}
+              status={onlineUserIds.has(member.id) ? "online" : "offline"}
+              userId={member.id}
+            />
           ))}
           {overflow > 0 ? (
             <AvatarGroupCount>+{overflow}</AvatarGroupCount>
           ) : null}
         </AvatarGroup>
+        <ul className="mt-3 grid gap-1.5">
+          {members.map((member) => (
+            <li
+              className="flex items-center justify-between text-xs text-[#8a90a3] dark:text-[#7d8299]"
+              key={member.id}
+            >
+              <span className="font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
+                {member.name}
+              </span>
+              <span>
+                {onlineUserIds.has(member.id)
+                  ? "Online"
+                  : member.lastSeenAt
+                    ? `Last seen ${formatRelativeTime(member.lastSeenAt)}`
+                    : "Offline"}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="grid gap-1 border-t border-black/5 pt-4 dark:border-white/[0.06]">

@@ -8,12 +8,14 @@ export function MessageComposer({
   onSend,
   roomId,
   replyingToName,
-  onCancelReply
+  onCancelReply,
+  onTyping
 }: {
   onSend: (body: string) => void;
   roomId: string;
   replyingToName?: string;
   onCancelReply?: () => void;
+  onTyping?: () => void;
 }) {
   const [value, setValue] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -59,7 +61,10 @@ export function MessageComposer({
       ) : null}
       <textarea
         className="min-h-[2.75rem] w-full resize-none bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => {
+          setValue(event.target.value);
+          onTyping?.();
+        }}
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();

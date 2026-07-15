@@ -1,15 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { CornerUpLeft, Plus } from "lucide-react";
+import { Check, CheckCheck, Clock, CornerUpLeft, Plus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
+  formatMessageTime,
   getInitials,
   type ChatMessageItem
 } from "@/components/messages/message-data";
+import { formatRelativeTime } from "@/lib/relative-time";
+import { useTicker } from "@/lib/use-ticker";
 
 const MENTION_PATTERN = /@[A-Z][a-z]+(?:\s[A-Z][a-z]+)?/g;
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🎉", "😮", "👀"];
+const RELATIVE_TIME_WINDOW_MS = 60 * 60_000;
+
+function getDisplayTime(sentAt: string): string {
+  const age = Date.now() - new Date(sentAt).getTime();
+  return age < RELATIVE_TIME_WINDOW_MS
+    ? formatRelativeTime(sentAt)
+    : formatMessageTime(sentAt);
+}
 
 function renderBody(body: string) {
   const parts = body.split(MENTION_PATTERN);
@@ -27,27 +38,59 @@ function renderBody(body: string) {
   ));
 }
 
+function ReadStatusIcon({
+  status
+}: {
+  status: "sending" | "sent" | "delivered" | "read";
+}) {
+  if (status === "sending") {
+    return <Clock className="h-3 w-3 text-[#8a90a3] dark:text-[#7d8299]" />;
+  }
+  if (status === "read") {
+    return <CheckCheck className="h-3 w-3 text-[#654cff]" />;
+  }
+  if (status === "delivered") {
+    return (
+      <CheckCheck className="h-3 w-3 text-[#8a90a3] dark:text-[#7d8299]" />
+    );
+  }
+  return <Check className="h-3 w-3 text-[#8a90a3] dark:text-[#7d8299]" />;
+}
+
 export function MessageBubble({
   message,
   parentAuthorName,
   onReply,
-  onToggleReaction
+  onToggleReaction,
+  grouped = false,
+  isOwn = false,
+  readStatus
 }: {
   message: ChatMessageItem;
   parentAuthorName?: string;
   onReply: () => void;
   onToggleReaction: (emoji: string) => void;
+  grouped?: boolean;
+  isOwn?: boolean;
+  readStatus?: "sending" | "sent" | "delivered" | "read";
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const isReply = Boolean(message.parentMessageId);
+  useTicker();
+
+  const displayTime = getDisplayTime(message.sentAt);
 
   return (
     <div
-      className={`group flex items-start gap-3 ${isReply ? "ml-10 border-l-2 border-black/[0.06] pl-3 dark:border-white/[0.08]" : ""}`}
+      className={`group flex items-start gap-3 ${isReply ? "ml-10 border-l-2 border-black/[0.06] pl-3 dark:border-white/[0.08]" : ""} ${grouped ? "-mt-2.5" : ""}`}
     >
-      <Avatar>
-        <AvatarFallback>{getInitials(message.authorName)}</AvatarFallback>
-      </Avatar>
+      <div className="w-8 shrink-0">
+        {grouped ? null : (
+          <Avatar>
+            <AvatarFallback>{getInitials(message.authorName)}</AvatarFallback>
+          </Avatar>
+        )}
+      </div>
       <div className="min-w-0 flex-1">
         {isReply && parentAuthorName ? (
           <div className="mb-0.5 flex items-center gap-1 text-xs text-[#8a90a3] dark:text-[#7d8299]">
@@ -55,17 +98,26 @@ export function MessageBubble({
             Replying to {parentAuthorName}
           </div>
         ) : null}
-        <div className="flex items-center gap-2">
-          <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
-            {message.authorName}
-          </strong>
-          <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
-            {message.time}
-          </span>
+        {grouped ? null : (
+          <div className="flex items-center gap-2">
+            <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
+              {message.authorName}
+            </strong>
+            <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+              {displayTime}
+            </span>
+          </div>
+        )}
+        <div className="flex items-center gap-1.5">
+          <p className="mt-0.5 text-sm leading-relaxed text-[#3a3f57] dark:text-[#b4b8cc]">
+            {renderBody(message.body)}
+          </p>
+          {grouped ? (
+            <span className="mt-0.5 text-xs whitespace-nowrap text-[#8a90a3] opacity-0 group-hover:opacity-100 dark:text-[#7d8299]">
+              {displayTime}
+            </span>
+          ) : null}
         </div>
-        <p className="mt-0.5 text-sm leading-relaxed text-[#3a3f57] dark:text-[#b4b8cc]">
-          {renderBody(message.body)}
-        </p>
 
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           {message.reactions.map((reaction) => (
@@ -125,6 +177,12 @@ export function MessageBubble({
             <span className="text-xs font-semibold text-[#654cff]">
               {message.replyCount}{" "}
               {message.replyCount === 1 ? "reply" : "replies"}
+            </span>
+          ) : null}
+
+          {isOwn && readStatus ? (
+            <span className="ml-auto flex items-center">
+              <ReadStatusIcon status={readStatus} />
             </span>
           ) : null}
         </div>
