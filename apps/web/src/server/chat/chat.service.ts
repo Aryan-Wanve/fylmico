@@ -1,19 +1,42 @@
 import type { Prisma } from "@fylmico/database";
 import { AppException, HttpStatus } from "../http";
 import { organizationsService } from "../organizations/organizations.service";
+import {
+  buildPage,
+  resolveLimit,
+  type CursorPaginationDto,
+  type Page
+} from "../pagination";
 import { prisma } from "../prisma";
+import {
+  broadcast,
+  conversationTopic,
+  houseChatTopic
+} from "../realtime/broadcast";
 import type { CreateConversationDto } from "./dto/create-conversation.dto";
 import type { UpdateConversationDto } from "./dto/update-conversation.dto";
+
+const RECENT_MESSAGES_LIMIT = 50;
 
 const roomInclude = {
   messages: {
     include: { author: true, reactions: true },
-    orderBy: { createdAt: "asc" }
+    orderBy: { createdAt: "desc" },
+    take: RECENT_MESSAGES_LIMIT
   }
 } satisfies Prisma.ConversationInclude;
 
 type ConversationWithRelations = Prisma.ConversationGetPayload<{
   include: typeof roomInclude;
+}>;
+
+const messageInclude = {
+  author: true,
+  reactions: true
+} satisfies Prisma.MessageInclude;
+
+type MessageWithRelations = Prisma.MessageGetPayload<{
+  include: typeof messageInclude;
 }>;
 
 const REACTION_EMOJIS = ["👍", "❤️", "😂", "🎉", "😮", "👀"];
@@ -56,16 +79,90 @@ class ChatService {
       }
     }
 
-    await this.prisma.message.create({
+    const created = await this.prisma.message.create({
       data: {
         conversationId: roomId,
         authorId: userId,
         body,
         parentMessageId: parentMessageId ?? null
+      },
+      include: messageInclude
+    });
+
+    const dto = toMessageDto(created, userId, 0);
+
+    await broadcast(conversationTopic(roomId), "message:new", dto);
+    await broadcast(
+      houseChatTopic(conversation.organizationId),
+      "message:new",
+      {
+        conversationId: roomId,
+        messageId: dto.id,
+        authorId: dto.authorId,
+        body: dto.body,
+        sentAt: dto.sentAt
+      }
+    );
+
+    return dto;
+  }
+
+  async listMessages(
+    userId: string,
+    roomId: string,
+    pagination: CursorPaginationDto
+  ): Promise<Page<ReturnType<typeof toMessageDto>>> {
+    await this.requireConversation(userId, roomId);
+
+    const limit = resolveLimit(pagination);
+    const messages = await this.prisma.message.findMany({
+      where: { conversationId: roomId },
+      include: messageInclude,
+      orderBy: { createdAt: "desc" },
+      take: limit + 1,
+      ...(pagination.cursor
+        ? { cursor: { id: pagination.cursor }, skip: 1 }
+        : {})
+    });
+
+    const page = buildPage(messages, limit, pagination.cursor);
+    const replyCountByParent = await this.countReplies(
+      page.data.map((message) => message.id)
+    );
+
+    return {
+      ...page,
+      data: page.data
+        .slice()
+        .reverse()
+        .map((message) =>
+          toMessageDto(message, userId, replyCountByParent.get(message.id) ?? 0)
+        )
+    };
+  }
+
+  async markRead(userId: string, roomId: string): Promise<void> {
+    await this.requireConversation(userId, roomId);
+
+    const latest = await this.prisma.message.findFirst({
+      where: { conversationId: roomId },
+      orderBy: { createdAt: "desc" }
+    });
+
+    const read = await this.prisma.conversationRead.upsert({
+      where: { conversationId_userId: { conversationId: roomId, userId } },
+      update: { lastReadMessageId: latest?.id ?? null, lastReadAt: new Date() },
+      create: {
+        conversationId: roomId,
+        userId,
+        lastReadMessageId: latest?.id ?? null
       }
     });
 
-    return this.getRoomDto(roomId, userId);
+    await broadcast(conversationTopic(roomId), "read", {
+      userId,
+      lastReadAt: read.lastReadAt.toISOString()
+    });
   }
 
   async toggleReaction(userId: string, messageId: string, emoji: string) {
@@ -110,7 +207,22 @@ class ChatService {
       });
     }
 
-    return this.getRoomDto(message.conversationId, userId);
+    const updated = await this.prisma.message.findUniqueOrThrow({
+      where: { id: messageId },
+      include: messageInclude
+    });
+    const replyCount = await this.prisma.message.count({
+      where: { parentMessageId: messageId }
+    });
+    const dto = toMessageDto(updated, userId, replyCount);
+
+    await broadcast(
+      conversationTopic(message.conversationId),
+      "reaction:update",
+      dto
+    );
+
+    return dto;
   }
 
   async createConversation(
@@ -202,7 +314,23 @@ class ChatService {
       orderBy: { createdAt: "asc" }
     });
 
-    return conversations.map((conversation) => toRoomDto(conversation, userId));
+    const reads = await this.prisma.conversationRead.findMany({
+      where: {
+        userId,
+        conversationId: { in: conversations.map((c) => c.id) }
+      }
+    });
+    const readByConversationId = new Map(
+      reads.map((read) => [read.conversationId, read])
+    );
+
+    return conversations.map((conversation) =>
+      toRoomDto(
+        conversation,
+        userId,
+        readByConversationId.get(conversation.id) ?? null
+      )
+    );
   }
 
   async listRoomFiles(userId: string, roomId: string) {
@@ -331,6 +459,29 @@ class ChatService {
     return this.listRoomEvents(userId, roomId);
   }
 
+  private async countReplies(
+    messageIds: string[]
+  ): Promise<Map<string, number>> {
+    if (messageIds.length === 0) {
+      return new Map();
+    }
+
+    const groups = await this.prisma.message.groupBy({
+      by: ["parentMessageId"],
+      where: { parentMessageId: { in: messageIds } },
+      _count: { _all: true }
+    });
+
+    return new Map(
+      groups
+        .filter(
+          (group): group is typeof group & { parentMessageId: string } =>
+            group.parentMessageId !== null
+        )
+        .map((group) => [group.parentMessageId, group._count._all])
+    );
+  }
+
   private async requireConversation(userId: string, roomId: string) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: roomId }
@@ -356,15 +507,60 @@ class ChatService {
       where: { id: roomId },
       include: roomInclude
     });
-    return toRoomDto(conversation, userId);
+    const read = await this.prisma.conversationRead.findUnique({
+      where: { conversationId_userId: { conversationId: roomId, userId } }
+    });
+    return toRoomDto(conversation, userId, read);
   }
 }
 
 export const chatService = new ChatService();
 
-function toRoomDto(conversation: ConversationWithRelations, userId: string) {
+function toMessageDto(
+  message: MessageWithRelations,
+  userId: string,
+  replyCount: number
+) {
+  const reactionsByEmoji = new Map<
+    string,
+    { emoji: string; count: number; reactedByMe: boolean }
+  >();
+  for (const reaction of message.reactions) {
+    const existing = reactionsByEmoji.get(reaction.emoji);
+    if (existing) {
+      existing.count += 1;
+      existing.reactedByMe ||= reaction.userId === userId;
+    } else {
+      reactionsByEmoji.set(reaction.emoji, {
+        emoji: reaction.emoji,
+        count: 1,
+        reactedByMe: reaction.userId === userId
+      });
+    }
+  }
+
+  return {
+    id: message.id,
+    conversationId: message.conversationId,
+    authorId: message.authorId,
+    authorName: message.author.name,
+    sentAt: message.createdAt.toISOString(),
+    body: message.body,
+    parentMessageId: message.parentMessageId,
+    replyCount,
+    reactions: [...reactionsByEmoji.values()]
+  };
+}
+
+function toRoomDto(
+  conversation: ConversationWithRelations,
+  userId: string,
+  read: { lastReadAt: Date } | null
+) {
+  const messagesAscending = conversation.messages.slice().reverse();
+
   const replyCountByParent = new Map<string, number>();
-  for (const message of conversation.messages) {
+  for (const message of messagesAscending) {
     if (message.parentMessageId) {
       replyCountByParent.set(
         message.parentMessageId,
@@ -373,40 +569,18 @@ function toRoomDto(conversation: ConversationWithRelations, userId: string) {
     }
   }
 
+  const lastReadAt = read?.lastReadAt ?? new Date(0);
+  const unreadCount = messagesAscending.filter(
+    (message) => message.authorId !== userId && message.createdAt > lastReadAt
+  ).length;
+
   return {
     id: conversation.id,
     name: conversation.name,
     topic: conversation.topic,
-    unreadCount: 0,
-    messages: conversation.messages.map((message) => {
-      const reactionsByEmoji = new Map<
-        string,
-        { emoji: string; count: number; reactedByMe: boolean }
-      >();
-      for (const reaction of message.reactions) {
-        const existing = reactionsByEmoji.get(reaction.emoji);
-        if (existing) {
-          existing.count += 1;
-          existing.reactedByMe ||= reaction.userId === userId;
-        } else {
-          reactionsByEmoji.set(reaction.emoji, {
-            emoji: reaction.emoji,
-            count: 1,
-            reactedByMe: reaction.userId === userId
-          });
-        }
-      }
-
-      return {
-        id: message.id,
-        authorId: message.authorId,
-        authorName: message.author.name,
-        sentAt: message.createdAt.toISOString(),
-        body: message.body,
-        parentMessageId: message.parentMessageId,
-        replyCount: replyCountByParent.get(message.id) ?? 0,
-        reactions: [...reactionsByEmoji.values()]
-      };
-    })
+    unreadCount,
+    messages: messagesAscending.map((message) =>
+      toMessageDto(message, userId, replyCountByParent.get(message.id) ?? 0)
+    )
   };
 }

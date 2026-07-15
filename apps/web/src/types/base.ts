@@ -84,6 +84,7 @@ export type HouseMember = {
   name: string;
   role: RoleName;
   status: "online" | "away" | "offline";
+  lastSeenAt: string | null;
 };
 
 export type House = {
@@ -259,6 +260,7 @@ export type MessageReactionSummary = {
 
 export type ChatMessage = {
   id: string;
+  conversationId: string;
   authorId: string;
   authorName: string;
   sentAt: string;

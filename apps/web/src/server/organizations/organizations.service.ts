@@ -845,7 +845,8 @@ function toHouseDto(
       id: membership.user.id,
       name: membership.user.name,
       role: membership.role.name,
-      status: membership.user.id === requestingUserId ? "online" : "offline"
+      status: membership.user.id === requestingUserId ? "online" : "offline",
+      lastSeenAt: membership.user.lastSeenAt?.toISOString() ?? null
     })),
     roles: organization.roles.map((role) => ({
       id: role.id,

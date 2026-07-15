@@ -2,7 +2,25 @@ import type { NextRequest } from "next/server";
 import { requireUser } from "@/server/auth/require-user";
 import { chatService } from "@/server/chat/chat.service";
 import { SendMessageDto } from "@/server/chat/dto/send-message.dto";
-import { readJsonBody, validateDto, withParamsRoute } from "@/server/http";
+import {
+  queryToObject,
+  readJsonBody,
+  validateDto,
+  withParamsRoute,
+  withPaginatedParamsRoute
+} from "@/server/http";
+import { CursorPaginationDto } from "@/server/pagination";
+
+export const GET = withPaginatedParamsRoute<{ roomId: string }>(
+  async (request: NextRequest, { roomId }) => {
+    const user = requireUser(request);
+    const pagination = await validateDto(
+      CursorPaginationDto,
+      queryToObject(request)
+    );
+    return chatService.listMessages(user.id, roomId, pagination);
+  }
+);
 
 export const POST = withParamsRoute<{ roomId: string }>(
   async (request: NextRequest, { roomId }) => {

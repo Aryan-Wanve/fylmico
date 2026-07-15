@@ -451,6 +451,17 @@ class AuthService {
     return toPublicUser(user);
   }
 
+  // Called periodically by an active client so `lastSeenAt` stays fresh for
+  // presence UI ("last seen 3m ago") once a user's realtime connection
+  // drops - the connection itself already gives instant online/offline via
+  // Supabase Presence, this only covers the offline fallback display.
+  async heartbeat(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { lastSeenAt: new Date() }
+    });
+  }
+
   async updateMe(
     userId: string,
     updates: { name?: string; username?: string }

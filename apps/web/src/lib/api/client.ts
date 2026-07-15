@@ -147,3 +147,42 @@ export async function apiRequest<T>(
 
   return (payload as { data: T })?.data;
 }
+
+export interface Page<T> {
+  data: T[];
+  page: { limit: number; cursor: string | null; nextCursor: string | null };
+}
+
+// Paginated routes return `{ data, page }` at the top level rather than
+// `{ data: <everything> } `- apiRequest's single-level unwrap would silently
+// drop `page` (the cursor callers need for "load more"), so this returns
+// the envelope as-is instead.
+export async function apiRequestPage<T>(
+  path: string,
+  options: RequestOptions = {}
+): Promise<Page<T>> {
+  const { auth = true } = options;
+
+  let { ok, status, payload } = await rawFetch<T>(path, options);
+
+  if (!ok && status === 401 && auth && getRefreshToken()) {
+    const refreshed = await refreshSession();
+    if (refreshed) {
+      ({ ok, status, payload } = await rawFetch<T>(path, options));
+    }
+  }
+
+  if (!ok) {
+    if (status === 401) {
+      clearSession();
+    }
+    const errorInfo = payload?.error;
+    throw new ApiError(
+      status,
+      errorInfo?.code ?? "unknown_error",
+      errorInfo?.message ?? "Something went wrong. Please try again."
+    );
+  }
+
+  return payload as unknown as Page<T>;
+}

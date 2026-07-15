@@ -1,4 +1,4 @@
-import { apiRequest, refreshSession } from "@/lib/api/client";
+import { apiRequest, apiRequestPage, refreshSession } from "@/lib/api/client";
 import { clearSession, getAccessToken, setSession } from "@/lib/session";
 import type {
   AccountSession,
@@ -10,6 +10,7 @@ import type {
   CallSheet,
   ChangePasswordRequest,
   BookingStatus,
+  ChatMessage,
   ChatRoom,
   Comment,
   CreateBoardRequest,
@@ -512,22 +513,45 @@ export async function getAnalytics(days = 7): Promise<Analytics> {
 
 export async function sendChatMessage(
   request: SendChatMessageRequest
-): Promise<ChatRoom> {
+): Promise<ChatMessage> {
   if (!request.body.trim()) {
     throw new Error("Write a message before sending.");
   }
 
-  return apiRequest<ChatRoom>(`/chat/rooms/${request.roomId}/messages`, {
+  return apiRequest<ChatMessage>(`/chat/rooms/${request.roomId}/messages`, {
     method: "POST",
     body: { body: request.body, parentMessageId: request.parentMessageId }
+  });
+}
+
+export async function listOlderMessages(
+  roomId: string,
+  cursor?: string
+): Promise<{ messages: ChatMessage[]; nextCursor: string | null }> {
+  const { data, page } = await apiRequestPage<ChatMessage>(
+    `/chat/rooms/${roomId}/messages`,
+    { query: { cursor, limit: 40 } }
+  );
+  return { messages: data, nextCursor: page.nextCursor };
+}
+
+export async function markConversationRead(roomId: string): Promise<void> {
+  await apiRequest<{ success: boolean }>(`/chat/rooms/${roomId}/read`, {
+    method: "POST"
+  });
+}
+
+export async function sendHeartbeat(): Promise<void> {
+  await apiRequest<{ success: boolean }>("/auth/me/heartbeat", {
+    method: "POST"
   });
 }
 
 export async function toggleMessageReaction(
   messageId: string,
   emoji: string
-): Promise<ChatRoom> {
-  return apiRequest<ChatRoom>(`/messages/${messageId}/reactions`, {
+): Promise<ChatMessage> {
+  return apiRequest<ChatMessage>(`/messages/${messageId}/reactions`, {
     method: "POST",
     body: { emoji }
   });
