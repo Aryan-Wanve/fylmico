@@ -4,6 +4,13 @@ import { readJsonBody, validateDto, withParamsRoute } from "@/server/http";
 import { UpdateTaskDto } from "@/server/tasks/dto/update-task.dto";
 import { tasksService } from "@/server/tasks/tasks.service";
 
+export const GET = withParamsRoute<{ taskId: string }>(
+  async (request: NextRequest, { taskId }) => {
+    const user = requireUser(request);
+    return tasksService.getTask(user.id, taskId);
+  }
+);
+
 export const PATCH = withParamsRoute<{ taskId: string }>(
   async (request: NextRequest, { taskId }) => {
     const user = requireUser(request);
