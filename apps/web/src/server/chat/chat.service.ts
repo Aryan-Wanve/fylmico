@@ -460,7 +460,7 @@ class ChatService {
         title: title.trim(),
         dueDate,
         assignees: {
-          create: [{ userId, responsibility: membership.role.name }]
+          create: [{ userId, responsibility: membership.role?.name }]
         }
       }
     });

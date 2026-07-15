@@ -13,8 +13,9 @@ export class CreateHouseDto {
   name!: string;
 
   @IsString()
-  @Matches(/^[a-z0-9-]+$/, {
-    message: "handle must contain only lowercase letters, numbers, and hyphens"
+  @Matches(/^[a-z0-9]{3,20}$/, {
+    message:
+      "handle must be 3-20 characters, lowercase letters and numbers only"
   })
   handle!: string;
 
