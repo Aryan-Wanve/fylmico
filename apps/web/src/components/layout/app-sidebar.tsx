@@ -6,20 +6,29 @@ import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { navItems } from "@/components/layout/nav-items";
 import { SidebarUserFooter } from "@/components/layout/sidebar-user-footer";
+import { ALWAYS_ENABLED_MODULES } from "@/lib/house-types";
 import type { UserProfile } from "@/types/base";
 
 export function AppSidebar({
   compact,
   user,
+  enabledModules,
   mobileOpen = false,
   onCloseMobile
 }: {
   compact: boolean;
   user: UserProfile;
+  enabledModules: string[] | null;
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
 }) {
   const pathname = usePathname();
+  const visibleNavItems = navItems.filter(
+    (item) =>
+      !enabledModules ||
+      ALWAYS_ENABLED_MODULES.includes(item.id) ||
+      enabledModules.includes(item.id)
+  );
 
   return (
     <>
@@ -78,7 +87,7 @@ export function AppSidebar({
         </div>
 
         <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.href !== null && pathname === item.href;
             const content = (

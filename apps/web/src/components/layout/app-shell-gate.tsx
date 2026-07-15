@@ -50,6 +50,7 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-[#f7f7fb] dark:bg-[#0e0f18]">
       <AppSidebar
         compact={isCompact}
+        enabledModules={activeHouse?.enabledModules ?? null}
         mobileOpen={mobileNavOpen}
         onCloseMobile={() => setMobileNavOpen(false)}
         user={workspace.user}
