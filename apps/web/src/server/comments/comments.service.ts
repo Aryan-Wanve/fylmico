@@ -56,7 +56,8 @@ class CommentsService {
           recipientId,
           "task_comment",
           `New comment on "${task.title}"`,
-          `${comment.authorName} commented: ${excerpt(body)}`
+          `${comment.authorName} commented: ${excerpt(body)}`,
+          task.organizationId
         )
       )
     );
@@ -112,7 +113,8 @@ class CommentsService {
           recipientId,
           "project_comment",
           `New comment on "${project.name}"`,
-          `${comment.authorName} commented: ${excerpt(body)}`
+          `${comment.authorName} commented: ${excerpt(body)}`,
+          project.organizationId
         )
       )
     );
@@ -166,7 +168,8 @@ class CommentsService {
           m.userId,
           "task_mentioned",
           `You were mentioned on "${task?.title ?? "a task"}"`,
-          `${comment.authorName} mentioned you: ${excerpt(body)}`
+          `${comment.authorName} mentioned you: ${excerpt(body)}`,
+          organizationId
         )
       )
     );

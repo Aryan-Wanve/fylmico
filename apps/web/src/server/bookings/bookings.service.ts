@@ -119,7 +119,8 @@ class BookingsService {
         updated.bookedById,
         "booking_status_changed",
         `Booking ${status}: ${updated.resource.name}`,
-        `Your booking for ${updated.resource.name} was ${status}.`
+        `Your booking for ${updated.resource.name} was ${status}.`,
+        updated.organizationId
       );
     }
 

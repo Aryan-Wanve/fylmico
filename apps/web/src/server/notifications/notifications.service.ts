@@ -29,7 +29,8 @@ class NotificationsService {
     userId: string,
     type: string,
     title: string,
-    body: string
+    body: string,
+    organizationId?: string
   ): Promise<void> {
     const preferenceId = TYPE_TO_PREFERENCE_ID[type];
     if (preferenceId && !(await this.isPushEnabled(userId, preferenceId))) {
@@ -37,7 +38,7 @@ class NotificationsService {
     }
 
     await this.prisma.notification.create({
-      data: { userId, type, title, body }
+      data: { userId, type, title, body, organizationId }
     });
   }
 
@@ -122,6 +123,7 @@ function toNotificationDto(notification: Notification) {
     type: notification.type,
     title: notification.title,
     body: notification.body,
+    organizationId: notification.organizationId,
     readAt: notification.readAt,
     createdAt: notification.createdAt
   };

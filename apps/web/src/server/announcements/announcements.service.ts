@@ -57,7 +57,8 @@ class AnnouncementsService {
           member.userId,
           "announcement_posted",
           `New announcement: ${announcement.title}`,
-          `${announcement.author.name} posted: ${excerpt(announcement.body)}`
+          `${announcement.author.name} posted: ${excerpt(announcement.body)}`,
+          houseId
         )
       )
     );
