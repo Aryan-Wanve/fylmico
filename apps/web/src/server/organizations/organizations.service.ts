@@ -312,7 +312,8 @@ class OrganizationsService {
         : `Your request to join ${organization.name} was declined`,
       approve
         ? `Your request to join ${organization.name} was approved.`
-        : `Your request to join ${organization.name} was declined by the house owner.`
+        : `Your request to join ${organization.name} was declined by the house owner.`,
+      organizationId
     );
   }
 
@@ -508,7 +509,8 @@ class OrganizationsService {
           invitation.invitedById,
           "invitation_accepted",
           `${invitee.name} accepted your invite`,
-          `${invitee.name} joined ${organization.name} using the invite you sent to ${invitation.email}.`
+          `${invitee.name} joined ${organization.name} using the invite you sent to ${invitation.email}.`,
+          organization.id
         );
       }
     }
@@ -682,7 +684,13 @@ class OrganizationsService {
       owners
         .filter((owner) => owner.userId !== excludeUserId)
         .map((owner) =>
-          notificationsService.create(owner.userId, type, title, body)
+          notificationsService.create(
+            owner.userId,
+            type,
+            title,
+            body,
+            organizationId
+          )
         )
     );
   }
@@ -929,7 +937,8 @@ class OrganizationsService {
       membership.userId,
       "member_role_assigned",
       `You're in ${organization.name}!`,
-      `You were assigned ${roleName} in ${organization.name}. Your workspace is ready.`
+      `You were assigned ${roleName} in ${organization.name}. Your workspace is ready.`,
+      organizationId
     );
 
     return this.getHouseDto(organizationId, approverUserId);
@@ -1014,16 +1023,105 @@ class OrganizationsService {
       return [];
     }
 
+    const organizationIds = memberships.map((m) => m.organizationId);
+
     // Batched into a single query rather than one findUnique per house -
     // this runs on every authenticated page load via GET /workspace.
     const organizations = await this.prisma.organization.findMany({
-      where: { id: { in: memberships.map((m) => m.organizationId) } },
+      where: { id: { in: organizationIds } },
       include: houseInclude
     });
 
-    return organizations.map((organization) =>
-      toHouseDto(organization, userId)
+    const aggregates = await this.getStorageAndActivity(organizationIds);
+
+    return organizations
+      .map((organization) => ({
+        ...toHouseDto(organization, userId),
+        ...(aggregates.get(organization.id) ?? {
+          storageBytes: 0,
+          lastActivityAt: null
+        })
+      }))
+      .sort(compareHouses);
+  }
+
+  async toggleFavorite(organizationId: string, userId: string) {
+    return this.toggleMembershipFlag(organizationId, userId, "favoritedAt");
+  }
+
+  async togglePin(organizationId: string, userId: string) {
+    return this.toggleMembershipFlag(organizationId, userId, "pinnedAt");
+  }
+
+  async toggleArchive(organizationId: string, userId: string) {
+    return this.toggleMembershipFlag(organizationId, userId, "archivedAt");
+  }
+
+  async reorderHouses(
+    userId: string,
+    organizationIds: string[]
+  ): Promise<void> {
+    await this.prisma.$transaction(
+      organizationIds.map((organizationId, index) =>
+        this.prisma.organizationMembership.updateMany({
+          where: { organizationId, userId },
+          data: { order: index }
+        })
+      )
     );
+  }
+
+  private async toggleMembershipFlag(
+    organizationId: string,
+    userId: string,
+    field: "favoritedAt" | "pinnedAt" | "archivedAt"
+  ) {
+    const membership = await this.requireMembership(organizationId, userId);
+    await this.prisma.organizationMembership.update({
+      where: { id: membership.id },
+      data: { [field]: membership[field] ? null : new Date() }
+    });
+    return this.getHouseDto(organizationId, userId);
+  }
+
+  private async getStorageAndActivity(
+    organizationIds: string[]
+  ): Promise<
+    Map<string, { storageBytes: number; lastActivityAt: string | null }>
+  > {
+    const [storage, activity] = await Promise.all([
+      this.prisma.fileEntry.groupBy({
+        by: ["organizationId"],
+        where: { organizationId: { in: organizationIds } },
+        _sum: { size: true }
+      }),
+      this.prisma.task.groupBy({
+        by: ["organizationId"],
+        where: { organizationId: { in: organizationIds } },
+        _max: { updatedAt: true }
+      })
+    ]);
+
+    const result = new Map<
+      string,
+      { storageBytes: number; lastActivityAt: string | null }
+    >();
+    for (const organizationId of organizationIds) {
+      result.set(organizationId, { storageBytes: 0, lastActivityAt: null });
+    }
+    for (const row of storage) {
+      const entry = result.get(row.organizationId);
+      if (entry) {
+        entry.storageBytes = row._sum.size ?? 0;
+      }
+    }
+    for (const row of activity) {
+      const entry = result.get(row.organizationId);
+      if (entry && row._max.updatedAt) {
+        entry.lastActivityAt = row._max.updatedAt.toISOString();
+      }
+    }
+    return result;
   }
 
   private async getHouseDto(organizationId: string, requestingUserId: string) {
@@ -1031,7 +1129,14 @@ class OrganizationsService {
       where: { id: organizationId },
       include: houseInclude
     });
-    return toHouseDto(organization, requestingUserId);
+    const aggregates = await this.getStorageAndActivity([organizationId]);
+    return {
+      ...toHouseDto(organization, requestingUserId),
+      ...(aggregates.get(organizationId) ?? {
+        storageBytes: 0,
+        lastActivityAt: null
+      })
+    };
   }
 }
 
@@ -1072,6 +1177,10 @@ function toHouseDto(
     type: organization.type as HouseType,
     enabledModules: organization.enabledModules,
     myRole: myMembership?.role?.name ?? null,
+    isFavorite: Boolean(myMembership?.favoritedAt),
+    isPinned: Boolean(myMembership?.pinnedAt),
+    isArchived: Boolean(myMembership?.archivedAt),
+    order: myMembership?.order ?? 0,
     members: activeMemberships.map((membership) => ({
       id: membership.user.id,
       name: membership.user.name,
@@ -1098,6 +1207,22 @@ function toHouseDto(
       memberCount: memberCountByRoleId.get(role.id) ?? 0
     }))
   };
+}
+
+function compareHouses(
+  a: ReturnType<typeof toHouseDto>,
+  b: ReturnType<typeof toHouseDto>
+): number {
+  if (a.isPinned !== b.isPinned) {
+    return a.isPinned ? -1 : 1;
+  }
+  if (a.isFavorite !== b.isFavorite) {
+    return a.isFavorite ? -1 : 1;
+  }
+  if (a.order !== b.order) {
+    return a.order - b.order;
+  }
+  return a.name.localeCompare(b.name);
 }
 
 function toInvitationDto(invitation: HouseInvitation, inviteUrl?: string) {
