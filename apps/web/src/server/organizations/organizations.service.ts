@@ -12,6 +12,7 @@ import {
 import { getEnv } from "../env";
 import { driveStructureService } from "../drive/drive-structure.service";
 import { AppException, HttpStatus } from "../http";
+import { HOUSE_TYPE_DEFAULT_MODULES, type HouseType } from "@/lib/house-types";
 import { sendMail } from "../mail/mailer";
 import { buildJoinRequestEmail } from "../mail/templates";
 import { notificationsService } from "../notifications/notifications.service";
@@ -93,6 +94,8 @@ class OrganizationsService {
         handle: dto.handle,
         description,
         inviteCode,
+        type: dto.houseType,
+        enabledModules: HOUSE_TYPE_DEFAULT_MODULES[dto.houseType],
         roles: { create: DEFAULT_ROLES },
         conversations: { create: DEFAULT_CONVERSATIONS }
       },
@@ -133,6 +136,14 @@ class OrganizationsService {
       }
     }
 
+    if (dto.enabledModules !== undefined) {
+      await this.requireOwnerRole(
+        organizationId,
+        userId,
+        "change enabled modules"
+      );
+    }
+
     await this.prisma.organization.update({
       where: { id: organizationId },
       data: {
@@ -140,6 +151,9 @@ class OrganizationsService {
         ...(dto.handle !== undefined ? { handle: dto.handle } : {}),
         ...(dto.description !== undefined
           ? { description: dto.description.trim() }
+          : {}),
+        ...(dto.enabledModules !== undefined
+          ? { enabledModules: dto.enabledModules }
           : {})
       }
     });
@@ -858,6 +872,8 @@ function toHouseDto(
     handle: organization.handle,
     description: organization.description,
     inviteCode: organization.inviteCode,
+    type: organization.type as HouseType,
+    enabledModules: organization.enabledModules,
     members: organization.memberships.map((membership) => ({
       id: membership.user.id,
       name: membership.user.name,

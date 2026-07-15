@@ -1,4 +1,10 @@
-import { IsOptional, IsString, Matches, MinLength } from "class-validator";
+import {
+  IsArray,
+  IsOptional,
+  IsString,
+  Matches,
+  MinLength
+} from "class-validator";
 
 export class UpdateHouseDto {
   @IsOptional()
@@ -16,4 +22,9 @@ export class UpdateHouseDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  enabledModules?: string[];
 }

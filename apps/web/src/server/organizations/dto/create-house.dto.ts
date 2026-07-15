@@ -1,4 +1,11 @@
-import { IsOptional, IsString, Matches, MinLength } from "class-validator";
+import {
+  IsIn,
+  IsOptional,
+  IsString,
+  Matches,
+  MinLength
+} from "class-validator";
+import { HOUSE_TYPES, type HouseType } from "@/lib/house-types";
 
 export class CreateHouseDto {
   @IsString()
@@ -14,4 +21,7 @@ export class CreateHouseDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsIn(HOUSE_TYPES)
+  houseType!: HouseType;
 }
