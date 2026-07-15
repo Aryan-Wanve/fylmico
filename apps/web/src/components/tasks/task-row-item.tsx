@@ -2,34 +2,46 @@ import { MessageSquare } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   PRIORITY_META,
+  TASK_TYPE_LABELS,
   formatDueDate,
   getProjectColor,
-  toInitials,
-  type Task
+  toInitials
 } from "@/components/tasks/task-data";
+import { TaskIndicatorBadges } from "@/components/tasks/task-indicator-badges";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import { TaskCardMenu } from "@/components/tasks/task-card-menu";
+import type { ProductionTask } from "@/types/base";
 
 export function TaskRowItem({
   task,
+  selected,
+  onToggleSelect,
+  onOpen,
   onToggleComplete,
   onDuplicate,
-  onDelete,
-  onReassign
+  onDelete
 }: {
-  task: Task;
+  task: ProductionTask;
+  selected: boolean;
+  onToggleSelect: () => void;
+  onOpen: () => void;
   onToggleComplete: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
-  onReassign: () => void;
 }) {
-  const isDone = task.status === "done";
+  const isDone = task.status === "completed";
   const due = formatDueDate(task.dueDate);
-  const projectColor = getProjectColor(task.project);
+  const projectColor = getProjectColor(task.projectTitle);
   const priority = PRIORITY_META[task.priority];
+  const checklistDone = task.checklistItems.filter((item) => item.done).length;
 
   return (
-    <div className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03]">
+    <div className="flex items-center gap-3 border-b border-black/5 px-4 py-3 last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03]">
+      <Checkbox
+        aria-label={`Select ${task.title}`}
+        checked={selected}
+        onCheckedChange={onToggleSelect}
+      />
       <Checkbox
         aria-label={`Mark ${task.title} as ${isDone ? "not done" : "done"}`}
         checked={isDone}
@@ -37,41 +49,73 @@ export function TaskRowItem({
         onCheckedChange={onToggleComplete}
       />
 
-      <div className="min-w-0 flex-1">
-        <strong
-          className={`block truncate text-sm font-semibold ${
-            isDone
-              ? "text-[#8a90a3] line-through dark:text-[#7d8299]"
-              : "text-[#11142c] dark:text-[#f1f2f8]"
-          }`}
-        >
-          {task.title}
-        </strong>
-        {task.commentCount ? (
-          <div className="mt-0.5 flex items-center gap-3 text-xs text-[#8a90a3] dark:text-[#7d8299]">
+      <button
+        className="min-w-0 flex-1 text-left"
+        onClick={onOpen}
+        type="button"
+      >
+        <div className="flex flex-wrap items-center gap-1.5">
+          <strong
+            className={`truncate text-sm font-semibold ${
+              isDone
+                ? "text-[#8a90a3] line-through dark:text-[#7d8299]"
+                : "text-[#11142c] dark:text-[#f1f2f8]"
+            }`}
+          >
+            {task.title}
+          </strong>
+          <TaskIndicatorBadges task={task} />
+        </div>
+        <div className="mt-0.5 flex items-center gap-3 text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <span>{TASK_TYPE_LABELS[task.type]}</span>
+          {task.subtasks.length ? (
+            <span>
+              {task.subtasks.filter((s) => s.status === "completed").length}/
+              {task.subtasks.length} subtasks
+            </span>
+          ) : null}
+          {task.checklistItems.length ? (
+            <span>
+              {checklistDone}/{task.checklistItems.length} checklist
+            </span>
+          ) : null}
+          {task.commentCount ? (
             <span className="flex items-center gap-1">
               <MessageSquare className="h-3 w-3" />
               {task.commentCount}
             </span>
-          </div>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
+      </button>
 
-      <div className="hidden w-32 shrink-0 items-center gap-2 sm:flex">
-        <AvatarWithStatus
-          label={toInitials(task.assigneeName)}
-          size="sm"
-          userId={task.assigneeId}
-        />
-        <span className="truncate text-sm text-[#4b5268] dark:text-[#c7cad9]">
-          {task.assigneeName.split(" ")[0]}
-        </span>
+      <div className="hidden w-28 shrink-0 items-center -space-x-2 sm:flex">
+        {task.assignees.length === 0 ? (
+          <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+            Unassigned
+          </span>
+        ) : (
+          task.assignees
+            .slice(0, 3)
+            .map((assignee) => (
+              <AvatarWithStatus
+                key={assignee.userId}
+                label={toInitials(assignee.name)}
+                size="sm"
+                userId={assignee.userId}
+              />
+            ))
+        )}
+        {task.assignees.length > 3 ? (
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-black/[0.06] text-[0.6rem] font-bold text-[#4b5268] dark:bg-white/[0.08] dark:text-[#c7cad9]">
+            +{task.assignees.length - 3}
+          </span>
+        ) : null}
       </div>
 
       <span
         className={`hidden w-36 shrink-0 truncate rounded-md px-2.5 py-1 text-center text-xs font-bold md:inline-block ${projectColor.bg} ${projectColor.text}`}
       >
-        {task.project}
+        {task.projectTitle ?? "No Project"}
       </span>
 
       <span
@@ -90,11 +134,7 @@ export function TaskRowItem({
         {priority.label}
       </span>
 
-      <TaskCardMenu
-        onDelete={onDelete}
-        onDuplicate={onDuplicate}
-        onReassign={onReassign}
-      />
+      <TaskCardMenu onDelete={onDelete} onDuplicate={onDuplicate} />
     </div>
   );
 }

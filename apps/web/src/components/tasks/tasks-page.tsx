@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useWorkspace } from "@/lib/workspace-context";
-import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
   createTask as createTaskApi,
   deleteTask as deleteTaskApi,
+  duplicateTaskRequest,
   updateTask as updateTaskApi
 } from "@/services/base-workspace.service";
 import { TasksHeader } from "@/components/tasks/tasks-header";
@@ -19,29 +19,38 @@ import { TaskListColumnHeader } from "@/components/tasks/task-list-column-header
 import { TaskGroupHeader } from "@/components/tasks/task-group-header";
 import { TaskRowItem } from "@/components/tasks/task-row-item";
 import { TaskKanbanBoard } from "@/components/tasks/task-kanban-board";
+import { TaskTableView } from "@/components/tasks/task-table-view";
 import { TasksEmptyState } from "@/components/tasks/tasks-empty-state";
 import { TaskOverviewPanel } from "@/components/tasks/task-overview-panel";
 import { TaskPriorityPanel } from "@/components/tasks/task-priority-panel";
 import { UpcomingDeadlinesPanel } from "@/components/tasks/upcoming-deadlines-panel";
 import { MyTasksStatPanel } from "@/components/tasks/my-tasks-stat-panel";
+import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
+import { TaskDetailPanel } from "@/components/tasks/task-detail-panel";
 import {
   PRIORITY_META,
   PRIORITY_ORDER,
   STATUS_META,
   STATUS_ORDER,
-  getProjectColor,
-  type Task,
-  type TaskPriority
+  TASK_TYPES,
+  TASK_TYPE_LABELS,
+  getProjectColor
 } from "@/components/tasks/task-data";
+import type {
+  ProductionTask,
+  TaskPriority,
+  TaskStatus,
+  TaskType
+} from "@/types/base";
 
 type Group = {
   key: string;
   label: string;
   dotClassName: string;
-  tasks: Task[];
+  tasks: ProductionTask[];
 };
 
-function buildGroups(list: Task[], groupBy: GroupByOption): Group[] {
+function buildGroups(list: ProductionTask[], groupBy: GroupByOption): Group[] {
   if (groupBy === "status") {
     return STATUS_ORDER.map((status) => ({
       key: status,
@@ -60,36 +69,76 @@ function buildGroups(list: Task[], groupBy: GroupByOption): Group[] {
     })).filter((group) => group.tasks.length > 0);
   }
 
+  if (groupBy === "type") {
+    return TASK_TYPES.map((type) => ({
+      key: type,
+      label: TASK_TYPE_LABELS[type],
+      dotClassName: "bg-[#654cff]",
+      tasks: list.filter((task) => task.type === type)
+    })).filter((group) => group.tasks.length > 0);
+  }
+
   if (groupBy === "project") {
     const projectNames = Array.from(
-      new Set(list.map((task) => task.project))
+      new Set(list.map((task) => task.projectTitle ?? "No Project"))
     ).sort();
 
     return projectNames.map((project) => ({
       key: project,
       label: project,
-      dotClassName: getProjectColor(project).dot,
-      tasks: list.filter((task) => task.project === project)
+      dotClassName: getProjectColor(project === "No Project" ? null : project)
+        .dot,
+      tasks: list.filter(
+        (task) => (task.projectTitle ?? "No Project") === project
+      )
     }));
   }
 
-  const assigneeIds = Array.from(new Set(list.map((task) => task.assigneeId)));
+  if (groupBy === "client") {
+    const clientNames = Array.from(
+      new Set(list.map((task) => task.clientName ?? "No Client"))
+    ).sort();
+
+    return clientNames.map((client) => ({
+      key: client,
+      label: client,
+      dotClassName: "bg-[#654cff]",
+      tasks: list.filter((task) => (task.clientName ?? "No Client") === client)
+    }));
+  }
+
+  const assigneeIds = Array.from(
+    new Set(list.map((task) => task.assignees[0]?.userId ?? "unassigned"))
+  );
 
   return assigneeIds.map((assigneeId) => ({
     key: assigneeId,
     label:
-      list.find((task) => task.assigneeId === assigneeId)?.assigneeName ??
-      "Unassigned",
+      list.find(
+        (task) => (task.assignees[0]?.userId ?? "unassigned") === assigneeId
+      )?.assignees[0]?.name ?? "Unassigned",
     dotClassName: "bg-[#654cff]",
-    tasks: list.filter((task) => task.assigneeId === assigneeId)
+    tasks: list.filter(
+      (task) => (task.assignees[0]?.userId ?? "unassigned") === assigneeId
+    )
   }));
+}
+
+function toggleInSet<T>(set: Set<T>, value: T): Set<T> {
+  const next = new Set(set);
+  if (next.has(value)) {
+    next.delete(value);
+  } else {
+    next.add(value);
+  }
+  return next;
 }
 
 export function TasksPage() {
   const { workspace, activeHouse, refreshWorkspace } = useWorkspace();
-  const prompt = usePrompt();
   const currentUserId = workspace.user.id;
   const tasks = workspace.tasks;
+  const members = activeHouse?.members ?? [];
 
   const [activeTab, setActiveTab] = useState<TasksTab>("all");
   const [viewMode, setViewMode] = useState<TasksViewMode>("list");
@@ -100,61 +149,80 @@ export function TasksPage() {
   const [activePriorities, setActivePriorities] = useState<Set<TaskPriority>>(
     () => new Set(PRIORITY_ORDER)
   );
+  const [activeStatuses, setActiveStatuses] = useState<Set<TaskStatus>>(
+    () => new Set(STATUS_ORDER)
+  );
+  const [activeTypes, setActiveTypes] = useState<Set<TaskType>>(
+    () => new Set(TASK_TYPES)
+  );
+  const [activeAssigneeIds, setActiveAssigneeIds] = useState<Set<string>>(
+    () => new Set(members.map((member) => member.id))
+  );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [createOpen, setCreateOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const counts: Record<TasksTab, number> = useMemo(
     () => ({
       all: tasks.length,
-      "my-tasks": tasks.filter((task) => task.assigneeId === currentUserId)
-        .length,
-      "assigned-to-me": tasks.filter(
-        (task) => task.assigneeId === currentUserId && task.status !== "done"
+      "my-tasks": tasks.filter((task) =>
+        task.assignees.some((a) => a.userId === currentUserId)
       ).length,
-      completed: tasks.filter((task) => task.status === "done").length
+      "assigned-to-me": tasks.filter(
+        (task) =>
+          task.assignees.some((a) => a.userId === currentUserId) &&
+          task.status !== "completed" &&
+          task.status !== "archived"
+      ).length,
+      completed: tasks.filter((task) => task.status === "completed").length
     }),
     [tasks, currentUserId]
   );
 
   const tabFiltered = tasks.filter((task) => {
     if (activeTab === "my-tasks") {
-      return task.assigneeId === currentUserId;
+      return task.assignees.some((a) => a.userId === currentUserId);
     }
     if (activeTab === "assigned-to-me") {
-      return task.assigneeId === currentUserId && task.status !== "done";
+      return (
+        task.assignees.some((a) => a.userId === currentUserId) &&
+        task.status !== "completed" &&
+        task.status !== "archived"
+      );
     }
     if (activeTab === "completed") {
-      return task.status === "done";
+      return task.status === "completed";
     }
     return true;
   });
 
-  const filtered = tabFiltered.filter((task) =>
-    activePriorities.has(task.priority)
+  const assigneeFilterActive = activeAssigneeIds.size < members.length;
+
+  const filtered = tabFiltered.filter(
+    (task) =>
+      activePriorities.has(task.priority) &&
+      activeStatuses.has(task.status) &&
+      activeTypes.has(task.type) &&
+      (!assigneeFilterActive ||
+        task.assignees.some((a) => activeAssigneeIds.has(a.userId)))
   );
 
   const groups = buildGroups(filtered, groupBy);
 
   function toggleGroupCollapse(key: string) {
-    setCollapsedGroups((current) => {
-      const next = new Set(current);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
+    setCollapsedGroups((current) => toggleInSet(current, key));
   }
 
-  function toggleTogglePriority(priority: TaskPriority) {
-    setActivePriorities((current) => {
-      const next = new Set(current);
-      if (next.has(priority)) {
-        next.delete(priority);
-      } else {
-        next.add(priority);
-      }
-      return next;
-    });
+  function toggleSelect(taskId: string) {
+    setSelectedIds((current) => toggleInSet(current, taskId));
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((current) =>
+      current.size === filtered.length
+        ? new Set()
+        : new Set(filtered.map((task) => task.id))
+    );
   }
 
   async function toggleComplete(taskId: string) {
@@ -165,7 +233,7 @@ export function TasksPage() {
 
     try {
       await updateTaskApi(taskId, {
-        status: task.status === "done" ? "todo" : "done"
+        status: task.status === "completed" ? "todo" : "completed"
       });
       await refreshWorkspace();
     } catch (error) {
@@ -175,7 +243,7 @@ export function TasksPage() {
     }
   }
 
-  async function handleStatusChange(taskId: string, status: Task["status"]) {
+  async function handleStatusChange(taskId: string, status: TaskStatus) {
     const task = tasks.find((item) => item.id === taskId);
     if (!task || task.status === status) {
       return;
@@ -191,55 +259,9 @@ export function TasksPage() {
     }
   }
 
-  async function handleReassign(taskId: string) {
-    const task = tasks.find((item) => item.id === taskId);
-    const members = activeHouse?.members ?? [];
-    if (!task || members.length === 0) {
-      return;
-    }
-
-    const memberNames = members.map((member) => member.name).join(", ");
-    const input = await prompt(
-      `Reassign to (${memberNames})`,
-      task.assigneeName
-    );
-    if (input === null) {
-      return;
-    }
-
-    const matched = members.find(
-      (member) => member.name.toLowerCase() === input.trim().toLowerCase()
-    );
-    if (!matched) {
-      window.alert(`"${input}" isn't a member of this house.`);
-      return;
-    }
-
-    try {
-      await updateTaskApi(taskId, { assigneeId: matched.id });
-      await refreshWorkspace();
-    } catch (error) {
-      window.alert(
-        error instanceof Error ? error.message : "Could not reassign the task."
-      );
-    }
-  }
-
   async function handleDuplicate(taskId: string) {
-    const source = tasks.find((task) => task.id === taskId);
-    if (!source) {
-      return;
-    }
-
     try {
-      await createTaskApi({
-        title: `${source.title} (Copy)`,
-        project: source.project,
-        assigneeId: source.assigneeId,
-        dueDate: source.dueDate,
-        priority: source.priority,
-        status: source.status
-      });
+      await duplicateTaskRequest(taskId);
       await refreshWorkspace();
     } catch (error) {
       window.alert(
@@ -251,6 +273,11 @@ export function TasksPage() {
   async function handleDelete(taskId: string) {
     try {
       await deleteTaskApi(taskId);
+      setSelectedIds((current) => {
+        const next = new Set(current);
+        next.delete(taskId);
+        return next;
+      });
       await refreshWorkspace();
     } catch (error) {
       window.alert(
@@ -259,29 +286,45 @@ export function TasksPage() {
     }
   }
 
-  async function createTask(defaults: Partial<Task>) {
-    const title = await prompt("Task title");
-
-    if (!title || !title.trim()) {
-      return;
-    }
-
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 7);
-
+  async function bulkUpdateStatus(status: TaskStatus) {
     try {
-      await createTaskApi({
-        title: title.trim(),
-        project: defaults.project ?? "General",
-        assigneeId: defaults.assigneeId ?? currentUserId,
-        dueDate: defaults.dueDate ?? dueDate.toISOString().slice(0, 10),
-        priority: defaults.priority ?? "medium",
-        status: defaults.status ?? "todo"
-      });
+      await Promise.all(
+        Array.from(selectedIds).map((id) => updateTaskApi(id, { status }))
+      );
+      setSelectedIds(new Set());
       await refreshWorkspace();
     } catch (error) {
       window.alert(
-        error instanceof Error ? error.message : "Could not create the task."
+        error instanceof Error ? error.message : "Could not update tasks."
+      );
+    }
+  }
+
+  async function bulkUpdatePriority(priority: TaskPriority) {
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) => updateTaskApi(id, { priority }))
+      );
+      setSelectedIds(new Set());
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not update tasks."
+      );
+    }
+  }
+
+  async function bulkDelete() {
+    if (!window.confirm(`Delete ${selectedIds.size} task(s)?`)) {
+      return;
+    }
+    try {
+      await Promise.all(Array.from(selectedIds).map((id) => deleteTaskApi(id)));
+      setSelectedIds(new Set());
+      await refreshWorkspace();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not delete tasks."
       );
     }
   }
@@ -291,29 +334,111 @@ export function TasksPage() {
       <div className="grid min-w-0 grid-cols-1 gap-4">
         <TasksHeader />
         <TasksToolbar
+          activeAssigneeIds={activeAssigneeIds}
           activePriorities={activePriorities}
+          activeStatuses={activeStatuses}
           activeTab={activeTab}
+          activeTypes={activeTypes}
           counts={counts}
           groupBy={groupBy}
+          members={members}
           onGroupByChange={setGroupBy}
-          onNewTask={() => createTask({})}
+          onNewTask={() => setCreateOpen(true)}
           onTabChange={setActiveTab}
-          onTogglePriority={toggleTogglePriority}
+          onToggleAssignee={(userId) =>
+            setActiveAssigneeIds((current) => toggleInSet(current, userId))
+          }
+          onTogglePriority={(priority) =>
+            setActivePriorities((current) => toggleInSet(current, priority))
+          }
+          onToggleStatus={(status) =>
+            setActiveStatuses((current) => toggleInSet(current, status))
+          }
+          onToggleType={(type) =>
+            setActiveTypes((current) => toggleInSet(current, type))
+          }
           onViewModeChange={setViewMode}
           viewMode={viewMode}
         />
+
+        {selectedIds.size > 0 ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#654cff]/20 bg-[#654cff]/5 px-4 py-2.5">
+            <span className="text-sm font-bold text-[#654cff]">
+              {selectedIds.size} selected
+            </span>
+            <select
+              className="h-8 rounded-md border border-black/10 bg-white px-2 text-xs font-semibold dark:border-white/10 dark:bg-[#171a28]"
+              onChange={(event) =>
+                void bulkUpdateStatus(event.target.value as TaskStatus)
+              }
+              value=""
+            >
+              <option disabled value="">
+                Set status...
+              </option>
+              {STATUS_ORDER.map((status) => (
+                <option key={status} value={status}>
+                  {STATUS_META[status].label}
+                </option>
+              ))}
+            </select>
+            <select
+              className="h-8 rounded-md border border-black/10 bg-white px-2 text-xs font-semibold dark:border-white/10 dark:bg-[#171a28]"
+              onChange={(event) =>
+                void bulkUpdatePriority(event.target.value as TaskPriority)
+              }
+              value=""
+            >
+              <option disabled value="">
+                Set priority...
+              </option>
+              {PRIORITY_ORDER.map((priority) => (
+                <option key={priority} value={priority}>
+                  {PRIORITY_META[priority].label}
+                </option>
+              ))}
+            </select>
+            <button
+              className="text-xs font-bold text-red-600"
+              onClick={() => void bulkDelete()}
+              type="button"
+            >
+              Delete
+            </button>
+            <button
+              className="ml-auto text-xs font-bold text-[#8a90a3]"
+              onClick={() => setSelectedIds(new Set())}
+              type="button"
+            >
+              Clear
+            </button>
+          </div>
+        ) : null}
 
         {filtered.length === 0 ? (
           <TasksEmptyState />
         ) : viewMode === "board" ? (
           <TaskKanbanBoard
+            onOpenTask={setSelectedTaskId}
             onStatusChange={handleStatusChange}
+            tasks={filtered}
+          />
+        ) : viewMode === "table" ? (
+          <TaskTableView
+            onOpen={setSelectedTaskId}
+            onToggleSelect={toggleSelect}
+            selectedIds={selectedIds}
             tasks={filtered}
           />
         ) : (
           <div className="min-w-0 overflow-x-auto rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             <div className="min-w-[42rem]">
-              <TaskListColumnHeader />
+              <TaskListColumnHeader
+                allSelected={
+                  filtered.length > 0 && selectedIds.size === filtered.length
+                }
+                onToggleSelectAll={toggleSelectAll}
+              />
               {groups.map((group) => {
                 const collapsed = collapsedGroups.has(group.key);
 
@@ -324,14 +449,7 @@ export function TasksPage() {
                       count={group.tasks.length}
                       dotClassName={group.dotClassName}
                       label={group.label}
-                      onAddTask={
-                        groupBy === "status"
-                          ? () =>
-                              createTask({
-                                status: group.key as Task["status"]
-                              })
-                          : undefined
-                      }
+                      onAddTask={() => setCreateOpen(true)}
                       onToggle={() => toggleGroupCollapse(group.key)}
                     />
                     {!collapsed
@@ -340,8 +458,10 @@ export function TasksPage() {
                             key={task.id}
                             onDelete={() => handleDelete(task.id)}
                             onDuplicate={() => handleDuplicate(task.id)}
-                            onReassign={() => handleReassign(task.id)}
+                            onOpen={() => setSelectedTaskId(task.id)}
                             onToggleComplete={() => toggleComplete(task.id)}
+                            onToggleSelect={() => toggleSelect(task.id)}
+                            selected={selectedIds.has(task.id)}
                             task={task}
                           />
                         ))
@@ -362,18 +482,47 @@ export function TasksPage() {
           completed={
             tasks.filter(
               (task) =>
-                task.assigneeId === currentUserId && task.status === "done"
+                task.assignees.some((a) => a.userId === currentUserId) &&
+                task.status === "completed"
             ).length
           }
           onViewAll={() => setActiveTab("my-tasks")}
           pending={
             tasks.filter(
               (task) =>
-                task.assigneeId === currentUserId && task.status !== "done"
+                task.assignees.some((a) => a.userId === currentUserId) &&
+                task.status !== "completed" &&
+                task.status !== "archived"
             ).length
           }
         />
       </aside>
+
+      <TaskCreateDialog
+        members={members}
+        onCreate={async (request) => {
+          await createTaskApi(request);
+          await refreshWorkspace();
+        }}
+        onOpenChange={setCreateOpen}
+        open={createOpen}
+        tasks={tasks}
+      />
+
+      {selectedTaskId ? (
+        <TaskDetailPanel
+          currentUserId={currentUserId}
+          members={members}
+          onChanged={() => void refreshWorkspace()}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedTaskId(null);
+            }
+          }}
+          taskId={selectedTaskId}
+          tasks={tasks}
+        />
+      ) : null}
     </div>
   );
 }

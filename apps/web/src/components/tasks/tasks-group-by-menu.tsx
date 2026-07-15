@@ -9,13 +9,16 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
-export type GroupByOption = "status" | "priority" | "project" | "assignee";
+export type GroupByOption =
+  "status" | "priority" | "project" | "assignee" | "type" | "client";
 
 const OPTIONS: Array<{ value: GroupByOption; label: string }> = [
   { value: "status", label: "Status" },
   { value: "priority", label: "Priority" },
   { value: "project", label: "Project" },
-  { value: "assignee", label: "Assignee" }
+  { value: "assignee", label: "Assignee" },
+  { value: "type", label: "Type" },
+  { value: "client", label: "Client" }
 ];
 
 export function TasksGroupByMenu({

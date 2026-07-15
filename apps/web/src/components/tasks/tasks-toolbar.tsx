@@ -1,16 +1,21 @@
 "use client";
 
-import { LayoutGrid, List, Plus } from "lucide-react";
+import { LayoutGrid, List, Plus, Table2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TasksFiltersPopover } from "@/components/tasks/tasks-filters-popover";
 import {
   TasksGroupByMenu,
   type GroupByOption
 } from "@/components/tasks/tasks-group-by-menu";
-import type { TaskPriority } from "@/components/tasks/task-data";
+import type {
+  HouseMember,
+  TaskPriority,
+  TaskStatus,
+  TaskType
+} from "@/types/base";
 
 export type TasksTab = "all" | "my-tasks" | "assigned-to-me" | "completed";
-export type TasksViewMode = "list" | "board";
+export type TasksViewMode = "list" | "board" | "table";
 
 const TABS: Array<{ value: TasksTab; label: string }> = [
   { value: "all", label: "All Tasks" },
@@ -27,6 +32,13 @@ export function TasksToolbar({
   onGroupByChange,
   activePriorities,
   onTogglePriority,
+  activeStatuses,
+  onToggleStatus,
+  activeTypes,
+  onToggleType,
+  members,
+  activeAssigneeIds,
+  onToggleAssignee,
   onNewTask,
   viewMode,
   onViewModeChange
@@ -38,6 +50,13 @@ export function TasksToolbar({
   onGroupByChange: (value: GroupByOption) => void;
   activePriorities: Set<TaskPriority>;
   onTogglePriority: (priority: TaskPriority) => void;
+  activeStatuses: Set<TaskStatus>;
+  onToggleStatus: (status: TaskStatus) => void;
+  activeTypes: Set<TaskType>;
+  onToggleType: (type: TaskType) => void;
+  members: HouseMember[];
+  activeAssigneeIds: Set<string>;
+  onToggleAssignee: (userId: string) => void;
   onNewTask: () => void;
   viewMode: TasksViewMode;
   onViewModeChange: (mode: TasksViewMode) => void;
@@ -63,8 +82,15 @@ export function TasksToolbar({
 
       <div className="flex flex-wrap items-center gap-3">
         <TasksFiltersPopover
+          activeAssigneeIds={activeAssigneeIds}
           activePriorities={activePriorities}
+          activeStatuses={activeStatuses}
+          activeTypes={activeTypes}
+          members={members}
+          onToggleAssignee={onToggleAssignee}
           onTogglePriority={onTogglePriority}
+          onToggleStatus={onToggleStatus}
+          onToggleType={onToggleType}
         />
         {viewMode === "list" ? (
           <TasksGroupByMenu onChange={onGroupByChange} value={groupBy} />
@@ -93,6 +119,18 @@ export function TasksToolbar({
             type="button"
           >
             <LayoutGrid className="h-4 w-4" />
+          </button>
+          <button
+            aria-label="Table view"
+            className={`grid h-7 w-7 place-items-center rounded-md ${
+              viewMode === "table"
+                ? "bg-[#654cff]/10 text-[#654cff]"
+                : "text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            }`}
+            onClick={() => onViewModeChange("table")}
+            type="button"
+          >
+            <Table2 className="h-4 w-4" />
           </button>
         </div>
         <button

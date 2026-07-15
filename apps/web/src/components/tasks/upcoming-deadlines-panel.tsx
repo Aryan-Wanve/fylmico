@@ -3,18 +3,20 @@
 import { useRouter } from "next/navigation";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
-import {
-  formatDueDate,
-  toInitials,
-  type Task
-} from "@/components/tasks/task-data";
+import { formatDueDate, toInitials } from "@/components/tasks/task-data";
+import type { ProductionTask } from "@/types/base";
 
-export function UpcomingDeadlinesPanel({ tasks }: { tasks: Task[] }) {
+export function UpcomingDeadlinesPanel({ tasks }: { tasks: ProductionTask[] }) {
   const router = useRouter();
 
   const upcoming = tasks
-    .filter((task) => task.status !== "done")
-    .map((task) => ({ task, due: new Date(`${task.dueDate}T00:00:00`) }))
+    .filter(
+      (task) =>
+        task.dueDate &&
+        task.status !== "completed" &&
+        task.status !== "archived"
+    )
+    .map((task) => ({ task, due: new Date(task.dueDate as string) }))
     .sort((a, b) => a.due.getTime() - b.due.getTime())
     .slice(0, 4);
 
@@ -26,6 +28,7 @@ export function UpcomingDeadlinesPanel({ tasks }: { tasks: Task[] }) {
       <div className="grid grid-cols-1">
         {upcoming.map(({ task }) => {
           const due = formatDueDate(task.dueDate);
+          const firstAssignee = task.assignees[0];
 
           return (
             <div
@@ -33,15 +36,15 @@ export function UpcomingDeadlinesPanel({ tasks }: { tasks: Task[] }) {
               key={task.id}
             >
               <AvatarWithStatus
-                label={toInitials(task.assigneeName)}
-                userId={task.assigneeId}
+                label={toInitials(firstAssignee?.name ?? "?")}
+                userId={firstAssignee?.userId ?? ""}
               />
               <div className="min-w-0 flex-1">
                 <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                   {task.title}
                 </strong>
                 <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
-                  {task.project}
+                  {task.projectTitle ?? "No Project"}
                 </span>
               </div>
               <span

@@ -8,30 +8,35 @@ import {
   STATUS_META,
   STATUS_ORDER,
   formatDueDate,
-  toInitials,
-  type Task,
-  type TaskStatus
+  toInitials
 } from "@/components/tasks/task-data";
+import { TaskIndicatorBadges } from "@/components/tasks/task-indicator-badges";
+import type { ProductionTask, TaskStatus } from "@/types/base";
 
 function TaskKanbanCard({
   task,
-  onDragStart
+  onDragStart,
+  onOpen
 }: {
-  task: Task;
+  task: ProductionTask;
   onDragStart: (event: React.DragEvent, taskId: string) => void;
+  onOpen: () => void;
 }) {
   const due = formatDueDate(task.dueDate);
   const priority = PRIORITY_META[task.priority];
 
   return (
-    <div
-      className="grid cursor-grab gap-2 rounded-xl border border-black/[0.06] bg-white p-3 shadow-[0_0.5rem_1.5rem_rgba(53,45,124,0.05)] active:cursor-grabbing dark:border-white/[0.08] dark:bg-[#171a28]"
+    <button
+      className="grid cursor-grab gap-2 rounded-xl border border-black/[0.06] bg-white p-3 text-left shadow-[0_0.5rem_1.5rem_rgba(53,45,124,0.05)] active:cursor-grabbing dark:border-white/[0.08] dark:bg-[#171a28]"
       draggable
+      onClick={onOpen}
       onDragStart={(event) => onDragStart(event, task.id)}
+      type="button"
     >
       <strong className="text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
         {task.title}
       </strong>
+      <TaskIndicatorBadges task={task} />
       <div className="flex items-center justify-between">
         <span
           className={`rounded-md px-2 py-0.5 text-xs font-bold ${priority.badge}`}
@@ -40,7 +45,7 @@ function TaskKanbanCard({
         </span>
         <span
           className={`text-xs font-semibold ${
-            due.overdue && task.status !== "done"
+            due.overdue && task.status !== "completed"
               ? "text-red-600"
               : "text-[#8a90a3] dark:text-[#7d8299]"
           }`}
@@ -49,15 +54,23 @@ function TaskKanbanCard({
         </span>
       </div>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <AvatarWithStatus
-            label={toInitials(task.assigneeName)}
-            size="sm"
-            userId={task.assigneeId}
-          />
-          <span className="truncate text-xs text-[#4b5268] dark:text-[#c7cad9]">
-            {task.assigneeName.split(" ")[0]}
-          </span>
+        <div className="flex items-center -space-x-2">
+          {task.assignees.length === 0 ? (
+            <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+              Unassigned
+            </span>
+          ) : (
+            task.assignees
+              .slice(0, 3)
+              .map((assignee) => (
+                <AvatarWithStatus
+                  key={assignee.userId}
+                  label={toInitials(assignee.name)}
+                  size="sm"
+                  userId={assignee.userId}
+                />
+              ))
+          )}
         </div>
         {task.commentCount ? (
           <span className="flex items-center gap-1 text-xs text-[#8a90a3] dark:text-[#7d8299]">
@@ -66,16 +79,18 @@ function TaskKanbanCard({
           </span>
         ) : null}
       </div>
-    </div>
+    </button>
   );
 }
 
 export function TaskKanbanBoard({
   tasks,
-  onStatusChange
+  onStatusChange,
+  onOpenTask
 }: {
-  tasks: Task[];
+  tasks: ProductionTask[];
   onStatusChange: (taskId: string, status: TaskStatus) => void;
+  onOpenTask: (taskId: string) => void;
 }) {
   const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null);
 
@@ -94,7 +109,7 @@ export function TaskKanbanBoard({
   }
 
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
       {STATUS_ORDER.map((status) => {
         const meta = STATUS_META[status];
         const columnTasks = tasks.filter((task) => task.status === status);
@@ -129,6 +144,7 @@ export function TaskKanbanBoard({
                 <TaskKanbanCard
                   key={task.id}
                   onDragStart={handleDragStart}
+                  onOpen={() => onOpenTask(task.id)}
                   task={task}
                 />
               ))}
