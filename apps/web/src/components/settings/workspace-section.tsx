@@ -4,12 +4,22 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { SettingsCard } from "@/components/settings/settings-card";
+import { navItems } from "@/components/layout/nav-items";
+import { ALWAYS_ENABLED_MODULES } from "@/lib/house-types";
 import { useWorkspace } from "@/lib/workspace-context";
 import { updateHouse } from "@/services/base-workspace.service";
 
+const TOGGLEABLE_MODULES = navItems.filter(
+  (item) => !ALWAYS_ENABLED_MODULES.includes(item.id)
+);
+
 export function WorkspaceSection() {
-  const { activeHouse, refreshWorkspace } = useWorkspace();
+  const { workspace, activeHouse, refreshWorkspace } = useWorkspace();
+  const isOwner =
+    activeHouse?.members.find((member) => member.id === workspace.user.id)
+      ?.role === "Owner";
   const [form, setForm] = useState({
     name: activeHouse?.name ?? "",
     handle: activeHouse?.handle ?? "",
@@ -18,6 +28,31 @@ export function WorkspaceSection() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [savingModules, setSavingModules] = useState(false);
+
+  async function toggleModule(moduleId: string) {
+    if (!activeHouse || savingModules) {
+      return;
+    }
+    const current = activeHouse.enabledModules;
+    const next = current.includes(moduleId)
+      ? current.filter((id) => id !== moduleId)
+      : [...current, moduleId];
+
+    setSavingModules(true);
+    try {
+      await updateHouse({ enabledModules: next });
+      await refreshWorkspace();
+    } catch (moduleError) {
+      window.alert(
+        moduleError instanceof Error
+          ? moduleError.message
+          : "Could not update enabled modules."
+      );
+    } finally {
+      setSavingModules(false);
+    }
+  }
 
   async function handleSave() {
     setError("");
@@ -100,6 +135,31 @@ export function WorkspaceSection() {
           {saving ? "Saving..." : "Save Changes"}
         </Button>
       </SettingsCard>
+
+      {isOwner && activeHouse ? (
+        <SettingsCard
+          subtitle="Turn modules on or off for everyone in this house."
+          title="Modules"
+        >
+          <div className="grid gap-1">
+            {TOGGLEABLE_MODULES.map((item) => (
+              <div
+                className="flex items-center justify-between gap-4 rounded-xl px-1 py-3"
+                key={item.id}
+              >
+                <span className="text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
+                  {item.label}
+                </span>
+                <Switch
+                  checked={activeHouse.enabledModules.includes(item.id)}
+                  disabled={savingModules}
+                  onCheckedChange={() => toggleModule(item.id)}
+                />
+              </div>
+            ))}
+          </div>
+        </SettingsCard>
+      ) : null}
     </div>
   );
 }
