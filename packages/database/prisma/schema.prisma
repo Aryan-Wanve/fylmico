@@ -38,8 +38,7 @@ model User {
   houseJoinRequestsHandled HouseJoinRequest[]       @relation("JoinRequestsHandled")
   bookings                 Booking[]
   uploadedFiles            FileEntry[]
-  driveConnection          DriveConnection?
-  driveFolderLinks         DriveFolderLink[]
+  connectedDriveConnections DriveConnection[]
   scripts                  Script[]
   messageReactions         MessageReaction[]
   callSheets               CallSheet[]
@@ -76,9 +75,10 @@ model Organization {
   fileEntries    FileEntry[]
   characters     Character[]
   storyLocations StoryLocation[]
-  scripts        Script[]
-  callSheets     CallSheet[]
-  announcements  Announcement[]
+  scripts         Script[]
+  callSheets      CallSheet[]
+  announcements   Announcement[]
+  driveConnection DriveConnection?
 
   @@map("organizations")
 }
@@ -621,57 +621,43 @@ model FileEntry {
   name           String
   type           String
   storagePath    String?  @map("storage_path")
+  driveKey       String?  @map("drive_key")
+  sensitive      Boolean  @default(false)
   size           Int?
   mimeType       String?  @map("mime_type")
   uploadedById   String   @map("uploaded_by_id")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  parent           FileEntry?        @relation("FileEntryChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  children         FileEntry[]       @relation("FileEntryChildren")
-  uploadedBy       User              @relation(fields: [uploadedById], references: [id])
-  conversation     Conversation?     @relation(fields: [conversationId], references: [id], onDelete: SetNull)
-  driveFolderLinks DriveFolderLink[]
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent       FileEntry?    @relation("FileEntryChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children     FileEntry[]   @relation("FileEntryChildren")
+  uploadedBy   User          @relation(fields: [uploadedById], references: [id])
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
 
+  @@unique([organizationId, driveKey])
   @@index([organizationId])
   @@index([parentId])
   @@index([conversationId])
   @@map("file_entries")
 }
 
-// A shared app-level folder (FileEntry with type "folder") doesn't have a
-// single Drive folder id - each uploader's files live in their own Drive
-// (see ADR 0038), so the same shared folder needs its own mirrored folder
-// created lazily inside every uploader's Drive the first time they place
-// something in it. This table caches that per-(folder, user) mapping.
-model DriveFolderLink {
-  id            String   @id @default(cuid())
-  fileEntryId   String   @map("file_entry_id")
-  userId        String   @map("user_id")
-  driveFolderId String   @map("drive_folder_id")
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  fileEntry FileEntry @relation(fields: [fileEntryId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([fileEntryId, userId])
-  @@map("drive_folder_links")
-}
-
-// One personal Google Drive connection per user - files this user uploads
-// live in the "Fylmico" folder inside *their own* Drive, not in storage
-// Fylmico pays for. See ADR 0038.
+// One shared Google Drive connection per house, connected by the Owner -
+// see ADR 0045 (supersedes ADR 0038's per-user design). Fylmico auto-manages
+// the folder tree under the two root folders below.
 model DriveConnection {
-  id            String   @id @default(cuid())
-  userId        String   @unique @map("user_id")
-  refreshToken  String   @map("refresh_token")
-  driveFolderId String   @map("drive_folder_id")
-  googleEmail   String?  @map("google_email")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id                    String   @id @default(cuid())
+  organizationId        String   @unique @map("organization_id")
+  connectedById         String   @map("connected_by_id")
+  refreshToken          String   @map("refresh_token")
+  googleEmail           String?  @map("google_email")
+  visibleRootFolderId   String   @map("visible_root_folder_id")
+  sensitiveRootFolderId String   @map("sensitive_root_folder_id")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connectedBy  User         @relation(fields: [connectedById], references: [id])
 
   @@map("drive_connections")
 }
