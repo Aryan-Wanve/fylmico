@@ -81,7 +81,10 @@ export function CrewProfilePage() {
   }, [params.userId]);
 
   const memberTasks = useMemo(
-    () => workspace.tasks.filter((task) => task.assigneeId === params.userId),
+    () =>
+      workspace.tasks.filter((task) =>
+        task.assignees.some((assignee) => assignee.userId === params.userId)
+      ),
     [workspace.tasks, params.userId]
   );
 
@@ -334,7 +337,8 @@ export function CrewProfilePage() {
                     {task.title}
                   </strong>
                   <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
-                    {task.project} &bull; Due {task.dueDate}
+                    {task.projectTitle ?? "No Project"} &bull; Due{" "}
+                    {task.dueDate ?? "TBD"}
                   </span>
                 </div>
                 <span className="shrink-0 rounded-md bg-black/[0.04] px-2.5 py-1 text-xs font-bold text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]">

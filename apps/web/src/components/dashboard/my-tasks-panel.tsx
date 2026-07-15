@@ -18,7 +18,7 @@ export function MyTasksPanel() {
 
     try {
       await updateTask(taskId, {
-        status: task.status === "done" ? "todo" : "done"
+        status: task.status === "completed" ? "todo" : "completed"
       });
       await refreshWorkspace();
     } catch (error) {
@@ -36,7 +36,7 @@ export function MyTasksPanel() {
       <div className="grid grid-cols-1">
         {workspace.tasks.slice(0, 4).map((task) => (
           <TaskRow
-            completed={task.status === "done"}
+            completed={task.status === "completed"}
             key={task.id}
             onToggle={handleToggle}
             task={task}

@@ -105,7 +105,7 @@ export function ProjectDetailPage() {
   const tasks = useMemo(
     () =>
       project
-        ? workspace.tasks.filter((task) => task.project === project.title)
+        ? workspace.tasks.filter((task) => task.projectId === project.id)
         : [],
     [workspace.tasks, project]
   );
@@ -298,29 +298,34 @@ export function ProjectDetailPage() {
                 No tasks are tagged to this project yet.
               </p>
             ) : (
-              tasks.map((task) => (
-                <div
-                  className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 dark:border-white/[0.06]"
-                  key={task.id}
-                >
-                  <AvatarWithStatus
-                    label={toInitials(task.assigneeName)}
-                    size="sm"
-                    userId={task.assigneeId}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
-                      {task.title}
-                    </strong>
-                    <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
-                      {task.assigneeName} &bull; Due {task.dueDate}
+              tasks.map((task) => {
+                const firstAssignee = task.assignees[0];
+
+                return (
+                  <div
+                    className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 dark:border-white/[0.06]"
+                    key={task.id}
+                  >
+                    <AvatarWithStatus
+                      label={toInitials(firstAssignee?.name ?? "?")}
+                      size="sm"
+                      userId={firstAssignee?.userId ?? ""}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
+                        {task.title}
+                      </strong>
+                      <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                        {firstAssignee?.name ?? "Unassigned"} &bull; Due{" "}
+                        {task.dueDate ?? "TBD"}
+                      </span>
+                    </div>
+                    <span className="shrink-0 rounded-md bg-black/[0.04] px-2.5 py-1 text-xs font-bold text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]">
+                      {task.status}
                     </span>
                   </div>
-                  <span className="shrink-0 rounded-md bg-black/[0.04] px-2.5 py-1 text-xs font-bold text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]">
-                    {task.status}
-                  </span>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </TabsContent>

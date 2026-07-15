@@ -1,11 +1,6 @@
 import { Checkbox } from "@/components/ui/checkbox";
+import { PRIORITY_META, formatDueDate } from "@/components/tasks/task-data";
 import type { ProductionTask } from "@/types/base";
-
-const PRIORITY_STYLES: Record<ProductionTask["priority"], string> = {
-  high: "bg-red-50 text-red-600",
-  medium: "bg-orange-50 text-orange-600",
-  low: "bg-blue-50 text-blue-600"
-};
 
 export function TaskRow({
   task,
@@ -16,6 +11,8 @@ export function TaskRow({
   completed: boolean;
   onToggle: (taskId: string) => void;
 }) {
+  const due = formatDueDate(task.dueDate);
+
   return (
     <div className="flex items-center gap-3 border-b border-black/5 px-6 py-3.5 last:border-b-0 dark:border-white/[0.06]">
       <Checkbox
@@ -34,16 +31,16 @@ export function TaskRow({
           {task.title}
         </strong>
         <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
-          {task.project}
+          {task.projectTitle ?? "No Project"}
         </span>
       </div>
       <span
-        className={`rounded-md px-2 py-0.5 text-xs font-bold capitalize ${PRIORITY_STYLES[task.priority]}`}
+        className={`rounded-md px-2 py-0.5 text-xs font-bold capitalize ${PRIORITY_META[task.priority].badge}`}
       >
         {task.priority}
       </span>
       <time className="text-xs font-medium text-[#8a90a3] dark:text-[#7d8299]">
-        {task.dueDate}
+        {due.label}
       </time>
     </div>
   );

@@ -1,11 +1,11 @@
 import { Checkbox } from "@/components/ui/checkbox";
-import type { ProductionTask } from "@/types/base";
+import type { ChannelTaskItem } from "@/types/base";
 
 export function ChannelTasksList({
   tasks,
   onToggle
 }: {
-  tasks: ProductionTask[];
+  tasks: ChannelTaskItem[];
   onToggle: (taskId: string) => void;
 }) {
   if (tasks.length === 0) {
@@ -19,7 +19,11 @@ export function ChannelTasksList({
   return (
     <div className="grid gap-2">
       {tasks.map((task) => {
-        const done = task.status === "done";
+        const done = task.status === "completed";
+        const assigneeLabel =
+          task.assignees.length > 1
+            ? `${task.assignees[0].name} +${task.assignees.length - 1}`
+            : (task.assignees[0]?.name ?? "Unassigned");
 
         return (
           <div
@@ -37,7 +41,7 @@ export function ChannelTasksList({
               {task.title}
             </span>
             <span className="shrink-0 text-xs font-medium text-[#8a90a3] dark:text-[#7d8299]">
-              {task.assigneeName}
+              {assigneeLabel}
             </span>
           </div>
         );

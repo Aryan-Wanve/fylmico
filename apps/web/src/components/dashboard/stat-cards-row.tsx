@@ -47,7 +47,7 @@ export function StatCardsRow() {
   }, []);
 
   const dueToday = workspace.tasks.filter(
-    (task) => task.status !== "done"
+    (task) => task.status !== "completed" && task.status !== "archived"
   ).length;
 
   const members = activeHouse?.members ?? [];

@@ -49,9 +49,9 @@ import {
 } from "@/components/messages/message-data";
 import type {
   CalendarEvent,
+  ChannelTaskItem,
   ChatMessage,
-  FileEntryItem,
-  ProductionTask
+  FileEntryItem
 } from "@/types/base";
 
 const NEAR_BOTTOM_THRESHOLD_PX = 120;
@@ -181,7 +181,7 @@ export function MessagesPage() {
   );
 
   const [roomFiles, setRoomFiles] = useState<FileEntryItem[]>([]);
-  const [roomTasks, setRoomTasks] = useState<ProductionTask[]>([]);
+  const [roomTasks, setRoomTasks] = useState<ChannelTaskItem[]>([]);
   const [roomEvents, setRoomEvents] = useState<CalendarEvent[]>([]);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
 
@@ -458,7 +458,7 @@ export function MessagesPage() {
 
     try {
       await updateTask(taskId, {
-        status: task.status === "done" ? "todo" : "done"
+        status: task.status === "completed" ? "todo" : "completed"
       });
       const tasks = await listRoomTasks(activeChannelId);
       setRoomTasks(tasks);

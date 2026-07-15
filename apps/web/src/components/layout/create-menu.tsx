@@ -55,9 +55,8 @@ export function CreateMenu() {
     try {
       await createTask({
         title: title.trim(),
-        project: "General",
-        assigneeId: workspace.user.id,
-        dueDate: dueDate.toISOString().slice(0, 10),
+        assignees: [{ userId: workspace.user.id }],
+        dueDate: dueDate.toISOString(),
         priority: "medium",
         status: "todo"
       });
