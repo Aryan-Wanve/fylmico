@@ -3072,3 +3072,1715 @@ Next task:
   action). Otherwise: the same backlog as before - object storage, real
   RBAC, Files/Storyboard/Bookings, and a migration-on-deploy step for the
   new hosting shape.
+
+## 2026-07-12 New Domain Backends: Bookings, Storyboard, Files, Profile/Session/Workspace
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 95%
+
+Features completed:
+
+- Added `Resource`/`Booking`, `Board`/`Shot`, and `FileEntry` Prisma
+  models plus their migrations (`20260711224500_bookings`,
+  `20260711231500_storyboard`, `20260711234500_file_entries`).
+- Built `apps/web/src/server/bookings/bookings.service.ts` and
+  `POST/GET /api/v1/houses/:houseId/bookings`.
+- Built `apps/web/src/server/storyboard/storyboard.service.ts` and its
+  routes: `GET/POST /api/v1/houses/:houseId/boards`,
+  `GET/PATCH /api/v1/houses/:houseId/boards/:boardId`,
+  `GET/POST /api/v1/houses/:houseId/boards/:boardId/shots`,
+  `PATCH /api/v1/houses/:houseId/shots/:shotId`.
+- Added Supabase Storage integration (`server/storage/supabase-storage.ts`)
+  and `server/files/files.service.ts` backing
+  `GET/POST /api/v1/houses/:houseId/files`,
+  `GET/DELETE /api/v1/houses/:houseId/files/:entryId`,
+  `GET .../files/:entryId/download`, `GET .../files/summary`,
+  `POST .../files/upload`.
+- Added profile/password/session/workspace endpoints: `POST
+/api/v1/auth/change-password`, `GET /api/v1/auth/sessions`,
+  `DELETE /api/v1/auth/sessions/:sessionId`, `PATCH /api/v1/houses/:houseId`
+  (update house), and `GET /api/v1/houses/:houseId/dashboard-summary`
+  backed by a new `server/dashboard/dashboard.service.ts`. `auth.service.ts`
+  gained the matching methods and `auth/me` gained an update path.
+- Added shared frontend plumbing for all of the above:
+  `services/base-workspace.service.ts` and `types/base.ts` grew ~400 lines
+  of new methods/types, `lib/relative-time.ts` helper, and a
+  `components/settings/coming-soon-notice.tsx` for the settings sections
+  that still have no real backend.
+
+Files created:
+
+- `apps/web/src/server/bookings/*`, `apps/web/src/server/storyboard/*`,
+  `apps/web/src/server/files/*`, `apps/web/src/server/storage/supabase-storage.ts`,
+  `apps/web/src/server/dashboard/dashboard.service.ts`
+- `apps/web/src/app/api/v1/houses/[houseId]/bookings/route.ts`,
+  `.../boards/route.ts`, `.../boards/[boardId]/route.ts`,
+  `.../boards/[boardId]/shots/route.ts`, `.../shots/[shotId]/route.ts`,
+  `.../files/route.ts`, `.../files/[entryId]/route.ts`,
+  `.../files/[entryId]/download/route.ts`, `.../files/summary/route.ts`,
+  `.../files/upload/route.ts`, `.../dashboard-summary/route.ts`,
+  `apps/web/src/app/api/v1/auth/change-password/route.ts`,
+  `apps/web/src/app/api/v1/auth/sessions/route.ts`,
+  `apps/web/src/app/api/v1/auth/sessions/[sessionId]/route.ts`
+- `apps/web/src/lib/relative-time.ts`,
+  `apps/web/src/components/settings/coming-soon-notice.tsx`
+
+Database changes:
+
+- Added `resources`, `bookings`, `boards`, `shots`, `file_entries` tables
+  via the three migrations listed above.
+
+API changes:
+
+- Added all the endpoints listed under Features completed. `auth/login`,
+  `auth/signup`, `auth/me`, and the Google callback route were also
+  touched to keep response shapes consistent with the new profile fields.
+
+Technical debt:
+
+- Files still uses Supabase Storage at this point (replaced by Drive-backed
+  storage two commits later, same day - see the Drive-backed storage entry
+  below and ADR 0038).
+- Settings sections beyond profile/workspace/sessions still show
+  "coming soon" - no real backend yet for billing/integrations/advanced.
+
+Next task:
+
+- Rewire the actual page components (Dashboard, Projects, Crews, Settings,
+  Bookings, Storyboard, Files, Messages) off their mock data onto these new
+  endpoints - see the next entry.
+
+## 2026-07-12 Real Backend Wiring: Dashboard, Projects, Crews, Settings, Bookings, Storyboard, Files, Messages
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 95%
+
+Features completed:
+
+- Rewired Dashboard's stat cards, recent-activity panel, recent-projects
+  panel, and upcoming-schedule panel off hardcoded `*-data.ts` mock files
+  onto the new `dashboard-summary` endpoint and existing task/project
+  endpoints; deleted the now-dead `activity-data.ts`, `project-data.ts`,
+  `schedule-data.ts`.
+- Rewired Settings' profile/workspace/security/appearance/billing/
+  integrations/advanced sections onto real data where a backend exists,
+  and an honest "coming soon" notice where it doesn't (billing,
+  integrations, advanced) - deleted the 114-line `settings-data.ts` mock.
+- Rewired Bookings (calendar panel, by-type panel, stat cards, table,
+  upcoming panel) onto the real `bookings` endpoint, dropping the
+  289-line `bookings-data.ts` mock and a client-side pagination component
+  that's no longer needed against a real paginated API.
+- Rewired Storyboard (board toolbar, boards panel, shot card/list/detail,
+  toolbar) onto the real `boards`/`shots` endpoints, dropping the 537-line
+  `storyboard-data.ts` mock.
+- Rewired Files (card menu, grid/list rows, page, toolbar) onto the real
+  `files` endpoints and Supabase Storage, dropping the 380-line
+  `file-data.ts` mock, the folder-tree/folders-panel/quick-access-panel
+  components (no real folder hierarchy backend yet at this point), and
+  wiring storage-overview/storage-used panels to real usage numbers.
+- Persisted Dashboard's task checkbox toggles to the real tasks API
+  instead of only updating local component state.
+- Real channel rename (`PATCH /api/v1/chat/rooms/:roomId`) and an honest
+  Messages composer/toolbar (removed buttons that didn't do anything).
+- Wired Crews' "Message" action to actually create/open a real
+  conversation instead of being a no-op button.
+- Removed dead action buttons across analytics/calendar/crews panels that
+  called nothing.
+
+Files modified:
+
+- `apps/web/src/components/dashboard/*`, `apps/web/src/components/settings/*`,
+  `apps/web/src/components/bookings/*`, `apps/web/src/components/storyboard/*`,
+  `apps/web/src/components/files/*`, `apps/web/src/components/messages/*`,
+  `apps/web/src/components/crews/crews-page.tsx`,
+  `apps/web/src/components/crews/crew-card-menu.tsx`,
+  `apps/web/src/components/crews/crew-member-row.tsx`
+- `apps/web/src/server/chat/chat.service.ts`,
+  `apps/web/src/server/chat/dto/update-conversation.dto.ts`
+- `apps/web/src/app/api/v1/chat/rooms/[roomId]/route.ts` (created)
+
+Files removed:
+
+- `apps/web/src/components/dashboard/activity-data.ts`,
+  `project-data.ts`, `schedule-data.ts`
+- `apps/web/src/components/settings/settings-data.ts`
+- `apps/web/src/components/bookings/bookings-data.ts`,
+  `bookings-pagination.tsx`
+- `apps/web/src/components/storyboard/storyboard-data.ts`,
+  `shot-type-meta.ts`
+- `apps/web/src/components/files/file-data.ts`,
+  `folder-tree-item.tsx`, `folders-panel.tsx`, `quick-access-panel.tsx`
+- `apps/web/src/components/projects/timeline-schedule-data.ts`
+
+Bugs fixed:
+
+- Dashboard task checkboxes previously reset on refresh (local state
+  only, never persisted).
+- Crews "Message" button and several analytics/calendar/crews buttons did
+  nothing when clicked.
+
+Next task:
+
+- Continue rounding out honest UI: global search/Create menu/nav (next
+  entry), then dark mode and the remaining feature passes below.
+
+## 2026-07-12 Global Search, Create Menu, and Honest Navigation
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 95%
+
+Features completed:
+
+- Added a real global search (`components/layout/global-search.tsx`)
+  searching across the workspace's real data instead of being decorative.
+- Expanded the Create menu (`components/layout/create-menu.tsx`) to
+  actually create tasks/projects/bookings/etc. from one place rather than
+  being a static dropdown.
+- Cleaned up the sidebar nav (`nav-items.ts`) and topbar
+  (`app-topbar.tsx`) to only link to real, working destinations.
+
+Files created:
+
+- `apps/web/src/components/layout/global-search.tsx`
+
+Files modified:
+
+- `apps/web/src/components/layout/create-menu.tsx`,
+  `apps/web/src/components/layout/app-topbar.tsx`,
+  `apps/web/src/components/layout/nav-items.ts`,
+  `apps/web/src/components/layout/upgrade-card.tsx`,
+  `apps/web/src/components/layout/avatar-with-status.tsx`
+
+Next task:
+
+- Dark mode toggle for the whole app.
+
+## 2026-07-12 Dark Mode Toggle for the Whole App
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 95%
+
+Features completed:
+
+- Added a real dark mode toggle (`components/layout/theme-toggle.tsx`,
+  `lib/theme-context.tsx`) wired into root layout, replacing the
+  previously light-only app shell.
+- Touched essentially every page and panel component (156 files in this
+  commit alone) to use theme-aware Tailwind classes instead of
+  hardcoded light-mode colors - analytics, bookings, calendar, crews,
+  dashboard, files, houses, layout, login/signup, messages, projects,
+  settings, storyboard, tasks all got a pass.
+
+Files modified:
+
+- 156 files across nearly every `apps/web/src/components/**` and several
+  `apps/web/src/app/**` pages - see commit `32e7a89` for the full list;
+  too broad to enumerate individually here.
+
+Files created:
+
+- `apps/web/src/components/layout/theme-toggle.tsx`,
+  `apps/web/src/lib/theme-context.tsx`
+
+Architecture changes:
+
+- Established a `ThemeProvider`/`theme-context` pattern that later
+  Appearance-settings work (accent color, density, transition) built on
+  top of, on 2026-07-14.
+
+Next task:
+
+- Real email delivery for verification/password reset (next entry).
+
+## 2026-07-12 Real Email Delivery for Verification and Password Reset
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 96%
+
+Features completed:
+
+- Added `server/mail/mailer.ts` (a thin `sendMail` wrapper around the
+  Resend HTTP API) and `server/mail/templates.ts` (HTML/text templates).
+  Without a `RESEND_API_KEY` configured, `sendMail` logs the email to the
+  console instead of failing - the same env-optional fallback pattern
+  already used for Google OAuth and Supabase Storage.
+  `MAIL_FROM` defaults to `Fylmico <onboarding@resend.dev>`.
+  Added `POST /api/v1/auth/resend-verification`.
+- Added a dismissible `components/layout/verify-email-banner.tsx` shown
+  in the app shell for unverified accounts.
+- `.env.example` gained `RESEND_API_KEY`/`MAIL_FROM`.
+
+Files created:
+
+- `apps/web/src/server/mail/mailer.ts`, `templates.ts`
+- `apps/web/src/components/layout/verify-email-banner.tsx`
+- `apps/web/src/app/api/v1/auth/resend-verification/route.ts`
+
+Files modified:
+
+- `apps/web/src/server/auth/auth.service.ts`, `.env.example`,
+  `apps/web/src/app/layout.tsx`,
+  `apps/web/src/components/layout/app-shell-gate.tsx`,
+  `apps/web/src/server/workspace/workspace.service.ts`
+
+API changes:
+
+- Added `POST /api/v1/auth/resend-verification`.
+
+Technical debt:
+
+- At this point verification is still link-token based (reworked to
+  6-digit OTP codes two days later on 2026-07-14 - see that entry and
+  ADR 0039).
+
+Next task:
+
+- Shareable house join links.
+
+## 2026-07-12 Shareable House Join Links
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 96%
+
+Features completed:
+
+- Added `GET /api/v1/houses/join/:code/preview` and a public
+  `apps/web/src/app/houses/join/[code]/page.tsx` so a house's invite code
+  can be shared as a link (preview the house before joining) rather than
+  only usable by manually typing the code in.
+- `organizations.service.ts` gained the preview method; Settings'
+  workspace section reworked its invite UI around the new shareable-link
+  flow.
+
+Files created:
+
+- `apps/web/src/app/api/v1/houses/join/[code]/preview/route.ts`,
+  `apps/web/src/app/houses/join/[code]/page.tsx`
+
+Files modified:
+
+- `apps/web/src/server/organizations/organizations.service.ts`,
+  `apps/web/src/components/settings/workspace-section.tsx`,
+  `apps/web/src/components/crews/crews-page.tsx`
+
+API changes:
+
+- Added `GET /api/v1/houses/join/:code/preview`.
+
+Next task:
+
+- User profile username + avatar upload.
+
+## 2026-07-12 User Profile Username + Avatar Upload
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 96%
+
+Features completed:
+
+- Added `POST /api/v1/auth/me/avatar` (uploads to Supabase Storage at
+  this point) and extended `auth/me` PATCH to accept a username.
+  `auth.service.ts` gained matching upload/update logic;
+  `update-me.dto.ts` grew a username field.
+- Profile section, topbar, and sidebar footer now show the real uploaded
+  avatar and username instead of initials-only placeholders.
+- New migration adding the underlying username/avatar columns to `users`.
+
+Files created:
+
+- `apps/web/src/app/api/v1/auth/me/avatar/route.ts`
+
+Files modified:
+
+- `apps/web/src/server/auth/auth.service.ts`,
+  `apps/web/src/server/auth/dto/update-me.dto.ts`,
+  `apps/web/src/server/storage/supabase-storage.ts`,
+  `apps/web/src/components/settings/profile-section.tsx`,
+  `apps/web/src/components/layout/app-topbar.tsx`,
+  `apps/web/src/components/layout/sidebar-user-footer.tsx`
+
+Database changes:
+
+- Added username/avatar columns to `users` via a new migration.
+
+API changes:
+
+- Added `POST /api/v1/auth/me/avatar`; extended `PATCH /api/v1/auth/me`.
+
+Next task:
+
+- Crew role tags + task reassignment.
+
+## 2026-07-12 Crew Role Tags + Task Reassignment
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 96%
+
+Features completed:
+
+- Crews page gained real role-tag editing per member and a real
+  task-reassignment action from both the Crews and Tasks pages (task
+  card menu, task row item).
+
+Files modified:
+
+- `apps/web/src/components/crews/crew-card-menu.tsx`,
+  `crew-data.ts`, `crew-member-row.tsx`, `crews-page.tsx`
+- `apps/web/src/components/tasks/task-card-menu.tsx`,
+  `task-row-item.tsx`, `tasks-page.tsx`
+
+Next task:
+
+- Route transitions + dashboard entrance animations.
+
+## 2026-07-12 Route Transitions + Dashboard Entrance Animations
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 96%
+
+Features completed:
+
+- Added `components/layout/page-transition.tsx` and
+  `fade-in-section.tsx` for route-change transitions and staggered
+  dashboard entrance animations.
+
+Files created:
+
+- `apps/web/src/components/layout/page-transition.tsx`,
+  `apps/web/src/components/layout/fade-in-section.tsx`
+
+Files modified:
+
+- `apps/web/src/app/globals.css`,
+  `apps/web/src/components/dashboard/home-dashboard.tsx`,
+  `apps/web/src/components/layout/app-shell-gate.tsx`
+
+Next task:
+
+- Real Character/StoryLocation models for Storyboard.
+
+## 2026-07-12 Storyboard Character/StoryLocation Models
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 96%
+
+Features completed:
+
+- Added `Character` and `StoryLocation` Prisma models + migration, and
+  their CRUD routes: `GET/POST /api/v1/houses/:houseId/characters`,
+  `PATCH/DELETE .../characters/:characterId`,
+  `GET/POST /api/v1/houses/:houseId/locations`,
+  `PATCH/DELETE .../locations/:locationId`.
+- `storyboard.service.ts` gained character/location methods; Storyboard's
+  characters-grid and locations-grid components now read/write real data
+  instead of the leftover mock arrays in `storyboard-data.ts` (which
+  shrank from 537 to 56 lines, keeping only shot-type metadata).
+
+Files created:
+
+- `apps/web/src/app/api/v1/houses/[houseId]/characters/route.ts`,
+  `.../characters/[characterId]/route.ts`,
+  `.../locations/route.ts`, `.../locations/[locationId]/route.ts`
+- `apps/web/src/server/storyboard/dto/create-character.dto.ts`,
+  `create-location.dto.ts`
+
+Files modified:
+
+- `apps/web/src/server/storyboard/storyboard.service.ts`,
+  `apps/web/src/components/storyboard/characters-grid.tsx`,
+  `locations-grid.tsx`, `storyboard-data.ts`, `storyboard-page.tsx`,
+  `storyboard-toolbar.tsx`
+- `packages/database/prisma/schema.prisma`
+
+Database changes:
+
+- Added `characters`, `story_locations` tables.
+
+API changes:
+
+- Added the character/location CRUD routes listed above.
+
+Next task:
+
+- Real Files/Tasks/Events wiring for Messages channels.
+
+## 2026-07-12 Messages Files/Tasks/Events Tabs Real Wiring
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 96%
+
+Features completed:
+
+- Messages channels gained real Files/Tasks/Events tabs:
+  `GET /api/v1/chat/rooms/:roomId/files`,
+  `GET/POST /api/v1/chat/rooms/:roomId/tasks`,
+  `GET/POST /api/v1/chat/rooms/:roomId/events` - previously these tabs
+  showed hardcoded mock content unrelated to the channel.
+- `chat.service.ts` grew the matching room-scoped file/task/event
+  queries; `messages-page.tsx` grew substantially (+182 lines) to wire
+  the three tabs to real data and loading/empty states.
+- Room-scoped file uploads reuse the existing files-upload endpoint with
+  a room association.
+
+Files created:
+
+- `apps/web/src/app/api/v1/chat/rooms/[roomId]/files/route.ts`,
+  `.../tasks/route.ts`, `.../events/route.ts`
+- `apps/web/src/server/chat/dto/create-room-event.dto.ts`,
+  `create-room-task.dto.ts`
+
+Files modified:
+
+- `apps/web/src/server/chat/chat.service.ts`,
+  `apps/web/src/server/files/files.service.ts`,
+  `apps/web/src/components/messages/channel-events-list.tsx`,
+  `channel-files-list.tsx`, `channel-info-panel.tsx`,
+  `channel-tasks-list.tsx`, `chat-tabs.tsx`, `message-composer.tsx`,
+  `message-data.ts`, `messages-page.tsx`
+- `packages/database/prisma/schema.prisma` (room association columns)
+
+Database changes:
+
+- Extended chat-related tables with room/file/task/event associations
+  via a new migration.
+
+API changes:
+
+- Added the three room-scoped routes listed above.
+
+Next task:
+
+- Persist notification preferences + editable crew department.
+
+## 2026-07-12 Notification Preferences Persistence + Editable Crew Department
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 96%
+
+Features completed:
+
+- Added `PATCH /api/v1/auth/me/notification-preferences`, a new DTO, and
+  a `notificationPreferences` column/relation persisted on the user
+  (previously the notifications-settings UI didn't save anything).
+- Crews page gained an editable department field per member, backed by
+  the existing crew-profile update path.
+
+Files created:
+
+- `apps/web/src/app/api/v1/auth/me/notification-preferences/route.ts`,
+  `apps/web/src/server/auth/dto/update-notification-preferences.dto.ts`
+
+Files modified:
+
+- `apps/web/src/server/auth/auth.service.ts`,
+  `apps/web/src/server/workspace/workspace.service.ts`,
+  `apps/web/src/components/crews/crews-page.tsx`,
+  `apps/web/src/components/settings/notifications-section.tsx`
+- `packages/database/prisma/schema.prisma`
+
+Database changes:
+
+- Added notification-preferences storage via a new migration.
+
+API changes:
+
+- Added `PATCH /api/v1/auth/me/notification-preferences`.
+
+Technical debt:
+
+- Preferences were persisted but not yet enforced anywhere that actually
+  sends a notification - see the 2026-07-14 "notification preferences
+  actually gate sending" entry below for when that gap closed.
+
+Next task:
+
+- Drive-backed file storage (next entry, replaces Supabase Storage the
+  same day).
+
+## 2026-07-12 Drive-Backed File Storage (Per-User Google Drive)
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 96%
+
+Features completed:
+
+- Replaced Supabase Storage with per-user Google Drive as the Files
+  backend: `server/drive/drive.service.ts`, `google-drive.util.ts`,
+  `drive-token.util.ts`, new routes `drive/connect-url`, `drive/callback`,
+  `drive/disconnect`, `drive/status`, and a token-gated public download
+  proxy `files/download/[token]`.
+- Files page gained a `drive-connection-banner.tsx` prompting the user to
+  connect their Google Drive if not yet connected.
+- `files.service.ts` reworked to read/write through Drive instead of
+  Supabase Storage.
+- New `DriveConnection` Prisma model + migration
+  (`20260712150000_drive_connections`).
+- See ADR 0038 (already written same day this shipped).
+
+Files created:
+
+- `apps/web/src/app/api/v1/drive/callback/route.ts`, `connect-url/route.ts`,
+  `disconnect/route.ts`, `status/route.ts`
+- `apps/web/src/app/api/v1/files/download/[token]/route.ts`
+- `apps/web/src/server/drive/drive.service.ts`, `drive-token.util.ts`,
+  `google-drive.util.ts`
+- `apps/web/src/services/drive.service.ts`
+- `apps/web/src/components/files/drive-connection-banner.tsx`
+- `docs/adr/0038-drive-backed-file-storage.md`
+
+Files modified:
+
+- `apps/web/src/server/files/files.service.ts`,
+  `apps/web/src/components/files/files-page.tsx`
+
+Database changes:
+
+- Added `drive_connections` table.
+
+API changes:
+
+- Added the four `drive/*` routes and the token-gated download proxy.
+
+Architecture changes:
+
+- Files storage moved from a shared Supabase bucket to per-user Google
+  Drive (see ADR 0038 for the full rationale and alternatives considered).
+
+Next task:
+
+- Custom dialog components, a real New Booking form, and misc polish
+  (next entry).
+
+## 2026-07-12 Custom Dialogs, Real New Booking Form, and Misc Fixes
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 96%
+
+Features completed:
+
+- Added `components/ui/dialog.tsx` and `prompt-dialog.tsx` - a styled,
+  dark-mode-aware replacement for `window.prompt`/`window.confirm`, wired
+  into Crews, Files, the Create menu, Messages, Projects, Settings'
+  workspace section, Storyboard, and Tasks wherever they previously used
+  the browser's native prompt.
+- Replaced Bookings' placeholder "New Booking" action with a real
+  multi-field dialog (`new-booking-dialog.tsx`, ~232 lines) posting to
+  the real bookings endpoint.
+- Friendlier device labels for Account Sessions (parses user-agent into
+  something like "Chrome on Windows" instead of a raw UA string).
+- Performance: batched house-membership lookups in
+  `organizations.service.ts` instead of issuing one query per house.
+- Fixed the Google OAuth callback redirecting to a bogus host in
+  production (was building the redirect off the wrong base URL).
+
+Files created:
+
+- `apps/web/src/components/ui/dialog.tsx`, `prompt-dialog.tsx`
+- `apps/web/src/components/bookings/new-booking-dialog.tsx`
+
+Files modified:
+
+- `apps/web/src/app/(app)/layout.tsx`,
+  `apps/web/src/components/crews/crews-page.tsx`,
+  `apps/web/src/components/files/files-page.tsx`,
+  `apps/web/src/components/layout/create-menu.tsx`,
+  `apps/web/src/components/messages/messages-page.tsx`,
+  `apps/web/src/components/projects/projects-page.tsx`,
+  `apps/web/src/components/settings/workspace-section.tsx`,
+  `apps/web/src/components/storyboard/storyboard-page.tsx`,
+  `apps/web/src/components/tasks/tasks-page.tsx`,
+  `apps/web/src/components/bookings/bookings-page.tsx`,
+  `apps/web/src/components/settings/profile-section.tsx`,
+  `apps/web/src/server/organizations/organizations.service.ts`,
+  `apps/web/src/app/api/v1/auth/google/callback/route.ts`
+
+Bugs fixed:
+
+- Google OAuth callback redirect building an absolute URL from the wrong
+  host in production.
+
+Performance improvements:
+
+- House lookups batched instead of one query per house in
+  `organizations.service.ts`.
+
+Next task:
+
+- Mobile/tablet responsive overflow fixes (2026-07-13).
+
+## 2026-07-13 Mobile/Tablet Responsive Overflow Fixes
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 96%
+
+Features completed:
+
+- Fixed horizontal-overflow and cramped-layout issues across essentially
+  every page at mobile/tablet widths: analytics, bookings, calendar,
+  crews, dashboard, files, layout (sidebar/topbar), messages, projects,
+  scripts, settings, storyboard, tasks (41 files total).
+- Sidebar (`app-sidebar.tsx`) and topbar (`app-topbar.tsx`) got the
+  heaviest changes - collapsing/scrolling behavior at narrow widths.
+
+Files modified:
+
+- 41 files across `apps/web/src/components/**` - see commit `ebd8bea`
+  for the full list.
+
+Bugs fixed:
+
+- Multiple pages overflowed horizontally or clipped content on
+  mobile/tablet viewports.
+
+Next task:
+
+- Investigate an automatic-migration step for Hostinger deploys (next
+  entry - this attempt was reverted the same day).
+
+## 2026-07-13 Migrate-on-Boot: Attempt and Revert
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 96%
+
+Features completed:
+
+- Attempted to close the "no automatic migration step in production"
+  gap (flagged as technical debt in the 2026-07-11 merge-backend entry)
+  by running `prisma migrate deploy` automatically from `server.js` on
+  boot.
+- Found this crashed the whole server process when the migration step
+  itself failed (any migration error took the entire app down, not just
+  the request that needed the new schema), patched it to catch the
+  failure and continue booting instead of crashing.
+- Ultimately reverted the boot-time migration entirely (`server.js` no
+  longer runs migrations) in favor of a dedicated CI workflow that runs
+  migrations on every push to main instead of on every server start -
+  see the 2026-07-14 "migrate-CI-on-push" entry and ADR 0042.
+
+Files modified:
+
+- `server.js`, `docs/deployment.md`, `docs/hostinger-deployment.md`,
+  `packages/database/package.json`, `package-lock.json`
+  (across commits `2452c1c`, `65e26ae`, `f020455`, `80fdf78`)
+
+Known bugs:
+
+- None remaining - the boot-time approach was fully reverted rather than
+  left half-working.
+
+Technical debt:
+
+- Automatic production migrations were still an open gap after this
+  revert; closed the next day by the CI-based approach (ADR 0042).
+
+Next task:
+
+- Fix Drive folder mirroring and add upload-progress UI.
+
+## 2026-07-13 Drive Folder Mirroring Fix + Upload Progress UI
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 97%
+
+Features completed:
+
+- Fixed Drive-backed storage to mirror app-created folders into Google
+  Drive too, not just individual files (previously only file uploads were
+  mirrored, so folder structure created in-app didn't show up in Drive).
+  New migration for the underlying folder-mapping columns.
+- Added upload progress with live speed and a bottom-right toast
+  (`upload-progress-toast.tsx`) instead of uploads being silent until
+  they finished or failed.
+
+Files created:
+
+- `apps/web/src/components/files/upload-progress-toast.tsx`
+
+Files modified:
+
+- `apps/web/src/server/drive/drive.service.ts`, `google-drive.util.ts`,
+  `apps/web/src/server/files/files.service.ts`,
+  `apps/web/src/components/files/files-page.tsx`,
+  `apps/web/src/lib/api/client.ts`,
+  `apps/web/src/services/base-workspace.service.ts`
+- `packages/database/prisma/schema.prisma`
+
+Database changes:
+
+- Added folder-mapping columns for Drive mirroring via a new migration.
+
+Bugs fixed:
+
+- App-created folders weren't mirrored into Google Drive, only files
+  uploaded into them were.
+
+Next task:
+
+- Real Appearance settings (accent color, density, theme transition).
+
+## 2026-07-14 Real Appearance Settings
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 97%
+
+Features completed:
+
+- Appearance settings section became real: accent color picker, density
+  toggle (comfortable/compact), and an animated theme transition when
+  switching light/dark - previously this section was decorative
+  (`coming-soon-notice`).
+- `lib/theme-context.tsx` grew from a plain light/dark toggle into a
+  fuller theme provider carrying accent/density state, persisted and
+  applied via CSS custom properties in `globals.css`.
+- Fixed the Scripts page's two-column layout not fitting mobile widths
+  (same-day follow-up fix).
+
+Files modified:
+
+- `apps/web/src/app/(app)/layout.tsx`, `apps/web/src/app/globals.css`,
+  `apps/web/src/app/layout.tsx`,
+  `apps/web/src/components/settings/appearance-section.tsx`,
+  `apps/web/src/lib/theme-context.tsx`,
+  `apps/web/src/components/scripts/scripts-page.tsx`
+
+Next task:
+
+- House-membership polish: owner-only member removal, invite/join
+  redirect persistence, real Crews invite link.
+
+## 2026-07-14 House Membership Polish
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 97%
+
+Features completed:
+
+- Restricted removing a house member to Owners only (previously any
+  member could remove any other member, including the Owner - flagged as
+  a known gap back in the 2026-07-10 Crews Module entry).
+- Login/signup now redirect back to whatever invite/join link the user
+  arrived from, instead of always landing on `/home` regardless of
+  entry point (`lib/redirect.ts` gained the redirect-target logic).
+- Crews' "Invite" button now generates a real per-invite link instead of
+  just revealing the house's static invite code.
+
+Files modified:
+
+- `apps/web/src/server/organizations/organizations.service.ts`
+- `apps/web/src/app/houses/invite/[token]/page.tsx`,
+  `apps/web/src/app/houses/join/[code]/page.tsx`,
+  `apps/web/src/app/login/page.tsx`, `apps/web/src/app/signup/page.tsx`,
+  `apps/web/src/components/signup/signup-page.tsx`,
+  `apps/web/src/lib/redirect.ts`
+- `apps/web/src/components/crews/crews-page.tsx`,
+  `apps/web/src/components/settings/workspace-section.tsx`
+  (removed the now-redundant invite-link UI from Settings once Crews had
+  its own)
+
+Bugs fixed:
+
+- Any member (not just Owners) could remove any other house member.
+- Login/signup always redirected to `/home`, dropping the original
+  invite/join link the user had followed.
+
+Next task:
+
+- Notification triggers + bell redesign.
+
+## 2026-07-14 Notification Triggers + Bell Redesign
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 97%
+
+Features completed:
+
+- Notification preferences now actually gate sending
+  (`notifications.service.ts` checks the recipient's preferences before
+  sending, closing the gap flagged on 2026-07-12).
+- Added real notification triggers for task/project comments, house
+  invite acceptance, and booking status changes
+  (`comments.service.ts`, `bookings.service.ts`,
+  `organizations.service.ts` all gained notification-send calls).
+- Redesigned the notification bell
+  (`components/layout/notification-bell.tsx`, +135 lines): per-type
+  icons, an unread count badge, and polling for new notifications instead
+  of only refreshing on page load.
+
+Files modified:
+
+- `apps/web/src/server/notifications/notifications.service.ts`,
+  `apps/web/src/server/comments/comments.service.ts`,
+  `apps/web/src/server/bookings/bookings.service.ts`,
+  `apps/web/src/server/organizations/organizations.service.ts`,
+  `apps/web/src/components/layout/notification-bell.tsx`
+
+Bugs fixed:
+
+- Notification preferences were persisted (2026-07-12) but ignored -
+  every notification sent regardless of the recipient's settings.
+
+Next task:
+
+- Move the authenticated dashboard from `/` to `/home` and add a public
+  marketing landing page at `/`.
+
+## 2026-07-14 Dashboard Moved to /home
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 97%
+
+Features completed:
+
+- Moved the authenticated dashboard from `/` to `/home` to make room for
+  a public marketing page at the root path. Updated every internal
+  redirect target that assumed the dashboard lived at `/`
+  (auth callback, invite/join pages, app-shell-gate, sidebar nav,
+  verify-email page, `lib/redirect.ts`).
+
+Files modified:
+
+- `apps/web/src/app/(app)/{ => home}/page.tsx` (moved),
+  `apps/web/src/app/auth/callback/page.tsx`,
+  `apps/web/src/app/houses/invite/[token]/page.tsx`,
+  `apps/web/src/app/houses/join/[code]/page.tsx`,
+  `apps/web/src/components/layout/app-shell-gate.tsx`,
+  `apps/web/src/components/layout/app-sidebar.tsx`,
+  `apps/web/src/components/layout/nav-items.ts`,
+  `apps/web/src/components/login/verify-email-page.tsx`,
+  `apps/web/src/lib/redirect.ts`
+
+Architecture changes:
+
+- The authenticated app now lives under `/home` (and the rest of the
+  `(app)` route group), freeing up `/` for public marketing content.
+
+Next task:
+
+- Build the public marketing landing page at `/`.
+
+## 2026-07-14 Public Marketing Landing Page
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 97%
+
+Features completed:
+
+- Added a public marketing landing page at `/` (`apps/web/src/app/page.tsx`),
+  unauthenticated and separate from the app the dashboard move just
+  vacated.
+- Redesigned it same-day with a dark theme and scroll animations
+  (+428/-122 lines).
+- Rebuilt the hero as a real app mockup, added a "trusted by" logo row
+  and a multi-column footer (+318/-37 lines) - the largest single-file
+  commit of this pass.
+
+Files created:
+
+- `apps/web/src/app/page.tsx` (created, then two same-domain redesign
+  passes across commits `0de77a8`, `d6d7e2d`, `fe71a09`)
+
+Next task:
+
+- Project detail page.
+
+## 2026-07-14 Project Detail Page
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 97%
+
+Features completed:
+
+- Added a project detail page (`apps/web/src/app/(app)/projects/[projectId]/page.tsx`,
+  `components/projects/project-detail-page.tsx`, ~428 lines) with edit,
+  tasks, calendar, and comments - previously projects had no dedicated
+  detail view, only the grid/list card.
+- Added `project-edit-dialog.tsx` (~224 lines) for editing a project's
+  fields in place.
+
+Files created:
+
+- `apps/web/src/app/(app)/projects/[projectId]/page.tsx`,
+  `apps/web/src/components/projects/project-detail-page.tsx`,
+  `apps/web/src/components/projects/project-edit-dialog.tsx`
+
+Files modified:
+
+- `apps/web/src/components/projects/project-grid-card.tsx`,
+  `project-list-row.tsx`, `apps/web/src/services/base-workspace.service.ts`,
+  `apps/web/src/types/base.ts`
+
+Next task:
+
+- Real approval workflow for bookings.
+
+## 2026-07-14 Bookings Approval Workflow
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 97%
+
+Features completed:
+
+- Added `PATCH /api/v1/bookings/:bookingId` and a status-update DTO so
+  bookings can be approved/rejected, not just created - previously there
+  was no way to change a booking's status after creation.
+- Bookings table/page gained approve/reject actions; approving/rejecting
+  now also triggers a notification (see the Notification Triggers entry
+  above, same day).
+
+Files created:
+
+- `apps/web/src/app/api/v1/bookings/[bookingId]/route.ts`,
+  `apps/web/src/server/bookings/dto/update-booking-status.dto.ts`
+
+Files modified:
+
+- `apps/web/src/server/bookings/bookings.service.ts`,
+  `apps/web/src/components/bookings/bookings-page.tsx`,
+  `bookings-table.tsx`,
+  `apps/web/src/server/organizations/organizations.service.ts`,
+  `apps/web/src/services/base-workspace.service.ts`
+
+API changes:
+
+- Added `PATCH /api/v1/bookings/:bookingId`.
+
+Next task:
+
+- Real date-range filter and CSV export for analytics.
+
+## 2026-07-14 Analytics Date-Range Filter + CSV Export
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 97%
+
+Features completed:
+
+- Analytics gained a real date-range filter (the analytics endpoint now
+  accepts a range) and a CSV export button - previously analytics only
+  showed a fixed, non-exportable window of data.
+
+Files modified:
+
+- `apps/web/src/app/api/v1/houses/[houseId]/analytics/route.ts`,
+  `apps/web/src/server/analytics/analytics.service.ts`,
+  `apps/web/src/components/analytics/analytics-header.tsx`,
+  `analytics-page.tsx`, `apps/web/src/services/base-workspace.service.ts`
+
+API changes:
+
+- Extended `GET /api/v1/houses/:houseId/analytics` to accept a date range.
+
+Next task:
+
+- Crew member profile page.
+
+## 2026-07-14 Crew Member Profile Page
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 97%
+
+Features completed:
+
+- Added a crew member profile page
+  (`apps/web/src/app/(app)/crews/[userId]/page.tsx`,
+  `components/crews/crew-profile-page.tsx`, ~383 lines) - clicking a crew
+  member previously did nothing beyond the row's inline menu.
+
+Files created:
+
+- `apps/web/src/app/(app)/crews/[userId]/page.tsx`,
+  `apps/web/src/components/crews/crew-profile-page.tsx`
+
+Files modified:
+
+- `apps/web/src/components/crews/crew-member-row.tsx`
+
+Next task:
+
+- Drag-and-drop Kanban board view for tasks.
+
+## 2026-07-14 Tasks Kanban Board
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 97%
+
+Features completed:
+
+- Added a drag-and-drop Kanban board view for Tasks
+  (`components/tasks/task-kanban-board.tsx`, ~141 lines), toggleable from
+  the tasks toolbar alongside the existing list view. Dragging a card
+  between columns persists the new status to the real tasks API.
+
+Files created:
+
+- `apps/web/src/components/tasks/task-kanban-board.tsx`
+
+Files modified:
+
+- `apps/web/src/components/tasks/tasks-page.tsx`, `tasks-toolbar.tsx`
+
+Next task:
+
+- Real Calendar week and day views.
+
+## 2026-07-14 Calendar Week and Day Views
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 97%
+
+Features completed:
+
+- Added real week (`calendar-week-grid.tsx`) and day
+  (`calendar-day-grid.tsx`) calendar views, backed by the same real
+  events data as the existing month view - previously Calendar only had a
+  month grid and an "empty view" placeholder for week/day.
+  `lib/calendar-utils.ts` added for the shared date-bucketing logic.
+
+Files created:
+
+- `apps/web/src/components/calendar/calendar-day-grid.tsx`,
+  `calendar-week-grid.tsx`, `apps/web/src/lib/calendar-utils.ts`
+
+Files removed:
+
+- `apps/web/src/components/calendar/calendar-empty-view.tsx`
+
+Files modified:
+
+- `apps/web/src/components/calendar/calendar-page.tsx`
+
+Next task:
+
+- Real threaded replies and emoji reactions for Messages.
+
+## 2026-07-14 Messages Threaded Replies and Emoji Reactions
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 98%
+
+Features completed:
+
+- Added threaded replies to chat messages via a new `parent_message_id`
+  self-relation on `Message`, and emoji reactions via a new
+  `MessageReaction` model - `POST /api/v1/messages/:messageId/reactions`
+  (toggle) and an extended send-message DTO accepting a parent message
+  id for replies.
+- `message-bubble.tsx` (+92 lines) renders reaction chips and a
+  reply-thread affordance; `message-composer.tsx` and `messages-page.tsx`
+  wired up the reply-target and reaction-toggle UI.
+
+Files created:
+
+- `apps/web/src/app/api/v1/messages/[messageId]/reactions/route.ts`,
+  `apps/web/src/server/chat/dto/toggle-reaction.dto.ts`
+
+Files modified:
+
+- `apps/web/src/server/chat/chat.service.ts`,
+  `apps/web/src/server/chat/dto/send-message.dto.ts`,
+  `apps/web/src/server/workspace/workspace.service.ts`,
+  `apps/web/src/components/messages/message-bubble.tsx`,
+  `message-composer.tsx`, `messages-page.tsx`
+- `packages/database/prisma/schema.prisma`
+
+Database changes:
+
+- Added `message_reactions` table and a `parent_message_id` self-relation
+  on `messages`.
+
+API changes:
+
+- Added `POST /api/v1/messages/:messageId/reactions`; extended
+  `POST /api/v1/chat/rooms/:roomId/messages` to accept a parent message id.
+
+Next task:
+
+- Scripts formatting toolbar and a Files preview modal.
+
+## 2026-07-14 Scripts Formatting Toolbar + Files Preview Modal
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 98%
+
+Features completed:
+
+- Added a screenplay formatting toolbar to the Scripts editor
+  (`script-format-toolbar.tsx`) - scene heading/action/character/
+  dialogue/parenthetical/transition formatting shortcuts.
+- Added a file preview modal (`file-preview-modal.tsx`) supporting
+  images, PDFs, video, and audio directly from the Files page instead of
+  only offering a download link.
+
+Files created:
+
+- `apps/web/src/components/scripts/script-format-toolbar.tsx`,
+  `apps/web/src/components/files/file-preview-modal.tsx`
+
+Files modified:
+
+- `apps/web/src/components/scripts/script-editor.tsx`,
+  `apps/web/src/components/files/files-page.tsx`
+
+Next task:
+
+- Call Sheets module (new).
+
+## 2026-07-14 Call Sheets Module (New)
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 98%
+
+Features completed:
+
+- Added an entirely new Call Sheets module: `CallSheet` Prisma model +
+  migration (`20260713221000_call_sheets`), a
+  `server/call-sheets/call-sheets.service.ts`,
+  `GET/POST /api/v1/houses/:houseId/call-sheets` and
+  `GET/PATCH/DELETE /api/v1/call-sheets/:callSheetId`.
+- New page at `apps/web/src/app/(app)/call-sheets/page.tsx` with an
+  editor (`call-sheet-editor.tsx`, ~316 lines), a list page
+  (`call-sheets-page.tsx`, ~195 lines), and a creation dialog
+  (`new-call-sheet-dialog.tsx`, ~194 lines). Added to the sidebar nav.
+
+Files created:
+
+- `apps/web/src/app/(app)/call-sheets/page.tsx`
+- `apps/web/src/app/api/v1/call-sheets/[callSheetId]/route.ts`,
+  `apps/web/src/app/api/v1/houses/[houseId]/call-sheets/route.ts`
+- `apps/web/src/components/call-sheets/call-sheet-editor.tsx`,
+  `call-sheets-page.tsx`, `new-call-sheet-dialog.tsx`
+- `apps/web/src/server/call-sheets/call-sheets.service.ts`,
+  `dto/create-call-sheet.dto.ts`, `dto/update-call-sheet.dto.ts`
+
+Files modified:
+
+- `apps/web/src/components/layout/nav-items.ts`,
+  `apps/web/src/services/base-workspace.service.ts`,
+  `apps/web/src/types/base.ts`
+
+Database changes:
+
+- Added `call_sheets` table.
+
+API changes:
+
+- Added `GET/POST /api/v1/houses/:houseId/call-sheets` and
+  `GET/PATCH/DELETE /api/v1/call-sheets/:callSheetId`.
+
+Next task:
+
+- Announcements module (new).
+
+## 2026-07-14 Announcements Module (New)
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 98%
+
+Features completed:
+
+- Added an entirely new Announcements module: `Announcement` Prisma
+  model + migration (`20260713222000_announcements`), a
+  `server/announcements/announcements.service.ts`,
+  `GET/POST /api/v1/houses/:houseId/announcements` and
+  `GET/PATCH/DELETE /api/v1/announcements/:announcementId`.
+- New page at `apps/web/src/app/(app)/announcements/page.tsx` with
+  `announcements-page.tsx` (~232 lines) and a creation dialog
+  (`new-announcement-dialog.tsx`, ~142 lines).
+
+Files created:
+
+- `apps/web/src/app/(app)/announcements/page.tsx`
+- `apps/web/src/app/api/v1/announcements/[announcementId]/route.ts`,
+  `apps/web/src/app/api/v1/houses/[houseId]/announcements/route.ts`
+- `apps/web/src/components/announcements/announcements-page.tsx`,
+  `new-announcement-dialog.tsx`
+- `apps/web/src/server/announcements/announcements.service.ts`,
+  `dto/create-announcement.dto.ts`, `dto/update-announcement.dto.ts`
+
+Database changes:
+
+- Added `announcements` table.
+
+API changes:
+
+- Added `GET/POST /api/v1/houses/:houseId/announcements` and
+  `GET/PATCH/DELETE /api/v1/announcements/:announcementId`.
+
+Next task:
+
+- Remove the fake Upgrade to Pro sidebar card; add a migrate-on-push CI
+  workflow.
+
+## 2026-07-14 Upgrade Card Removal + Migrate-CI-on-Push Workflow
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 98%
+
+Features completed:
+
+- Removed the fake "Upgrade to Pro" sidebar card - it never linked
+  anywhere real and there's no billing/plans backend, so it was
+  dishonest UI.
+- Added `.github/workflows/migrate.yml`, a CI workflow that runs
+  `prisma migrate deploy` against production automatically on every push
+  to main - the actual fix for the automatic-migration gap the
+  migrate-on-boot attempt (2026-07-13) tried and reverted. See ADR 0042.
+
+Files removed:
+
+- `apps/web/src/components/layout/upgrade-card.tsx`
+
+Files modified:
+
+- `apps/web/src/components/layout/app-sidebar.tsx`
+
+Files created:
+
+- `.github/workflows/migrate.yml`
+
+Architecture changes:
+
+- Production schema migrations are now applied by CI on push to main,
+  not by the app process on boot or by hand. See ADR 0042.
+
+Next task:
+
+- OTP-based auth rework: signup verification and password reset move
+  from link-tokens to 6-digit codes, login blocked until verified.
+
+## 2026-07-14 OTP-Based Auth Rework
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 98%
+
+Features completed:
+
+- Reworked email verification and password reset from single-use
+  link-tokens to 6-digit OTP codes typed directly into the UI. Login is
+  now blocked entirely until the account's email is verified (previously
+  an unverified account could still log in).
+- `EmailVerificationToken`/`PasswordResetToken` gained an `attempts`
+  column (`20260714120000_otp_codes` migration); `auth.service.ts`
+  enforces a 10-minute TTL and a 5-attempt cap per code
+  (`MAX_OTP_ATTEMPTS`) before requiring a fresh code, and still hashes
+  the code at rest (`tokenHash`) rather than storing it in plaintext.
+- `verify-email-page.tsx` reworked into a 6-digit code input
+  (+211/-... lines); `forgot-password-page.tsx`/`reset-password-page.tsx`
+  similarly reworked around entering a code instead of following a link.
+- `docs/hostinger-deployment.md` updated same day to document the
+  `RESEND_API_KEY`/`MAIL_FROM` env vars required for OTP emails to
+  actually send in production (commit `e204214`).
+- See ADR 0039.
+
+Files modified:
+
+- `apps/web/src/server/auth/auth.service.ts`, `token.util.ts`,
+  `dto/resend-verification.dto.ts`, `dto/reset-password.dto.ts`,
+  `dto/verify-email.dto.ts`
+- `apps/web/src/app/api/v1/auth/resend-verification/route.ts`,
+  `reset-password/route.ts`, `signup/route.ts`, `verify-email/route.ts`
+- `apps/web/src/app/login/page.tsx`,
+  `apps/web/src/components/layout/app-shell-gate.tsx`,
+  `verify-email-banner.tsx`,
+  `apps/web/src/components/login/forgot-password-page.tsx`,
+  `reset-password-page.tsx`, `verify-email-page.tsx`,
+  `apps/web/src/components/signup/signup-page.tsx`,
+  `apps/web/src/server/mail/templates.ts`,
+  `apps/web/src/services/base-workspace.service.ts`,
+  `apps/web/src/types/base.ts`
+- `docs/hostinger-deployment.md`
+
+Database changes:
+
+- Added `attempts` column to `email_verification_tokens` and
+  `password_reset_tokens` via `20260714120000_otp_codes`.
+
+API changes:
+
+- `verify-email`, `resend-verification`, `request-password-reset`,
+  `reset-password` all now work in terms of a 6-digit code rather than an
+  opaque link token; `login` now rejects unverified accounts.
+
+Architecture changes:
+
+- See ADR 0039 for the full rationale (mobile UX, avoiding email-client
+  link-prefetch burning single-use tokens, blocking login pre-verification).
+
+Next task:
+
+- Session persistence fix; multi-house dashboard + join-request system
+  (2026-07-15).
+
+## 2026-07-15 Session Persistence Fix
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 98%
+
+Features completed:
+
+- Fixed session storage to persist in `localStorage` instead of
+  `sessionStorage`, so logging in survives a browser restart for the
+  full 30-day token lifetime instead of being cleared as soon as the tab
+  closed.
+
+Files modified:
+
+- `apps/web/src/lib/session.ts`, `apps/web/src/app/(app)/layout.tsx`
+
+Bugs fixed:
+
+- Login state was lost every time the tab/browser closed, even though
+  the issued token was valid for 30 days.
+
+Next task:
+
+- Multi-house dashboard + tag-based join-request system.
+
+## 2026-07-15 Multi-House Dashboard + Tag-Based Join-Request System
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 99%
+
+Features completed:
+
+- Added a new `HouseJoinRequest` Prisma model (`organizationId`,
+  `userId`, `status` defaulting to `"pending"`, `respondedById`/
+  `respondedAt`, unique on `[organizationId, userId]`) plus migration
+  (`20260714150000_house_join_requests`), letting someone request to
+  join a house by tag/handle instead of only via an exact invite code or
+  link - an Owner must approve or reject the request before membership is
+  granted.
+- `organizations.service.ts` gained `requestToJoinHouse`,
+  `respondToJoinRequest` (approve/reject), and `activateHouse` (switch a
+  user's active house among the ones they belong to), plus new DTOs
+  `request-join-house.dto.ts` and `update-join-request-status.dto.ts`.
+- New routes: `POST /api/v1/houses/join-requests` (create a request),
+  `GET /api/v1/houses/:houseId/join-requests` (Owner lists pending
+  requests for their house), `PATCH .../join-requests/:requestId`
+  (approve/reject), `POST /api/v1/houses/:houseId/activate` (switch
+  active house).
+- Added a multi-house `/dashboard` hub
+  (`components/houses/houses-dashboard-page.tsx`, ~193 lines) for
+  browsing/switching between houses and a
+  `join-requests-dialog.tsx` (~137 lines) for Owners to review pending
+  requests - this replaces the old single-path `houses/new` onboarding
+  page, which was deleted along with the now-redundant
+  `no-house-onboarding.tsx`.
+- Notification bell and mail templates gained a join-request
+  notification (approving/rejecting/receiving a request all notify).
+- See ADR 0040.
+
+Files created:
+
+- `apps/web/src/app/(app)/dashboard/page.tsx`
+- `apps/web/src/app/api/v1/houses/[houseId]/activate/route.ts`,
+  `.../join-requests/route.ts`, `.../join-requests/[requestId]/route.ts`
+- `apps/web/src/app/api/v1/houses/join-requests/route.ts`
+- `apps/web/src/components/houses/houses-dashboard-page.tsx`,
+  `join-requests-dialog.tsx`
+- `apps/web/src/server/organizations/dto/request-join-house.dto.ts`,
+  `dto/update-join-request-status.dto.ts`
+- `packages/database/prisma/migrations/20260714150000_house_join_requests/`
+
+Files modified:
+
+- `apps/web/src/server/organizations/organizations.service.ts`,
+  `apps/web/src/server/mail/templates.ts`,
+  `apps/web/src/components/houses/house-choice-card.tsx`,
+  `apps/web/src/components/houses/learn/houses-guide-cta.tsx`,
+  `houses-guide-header.tsx`,
+  `apps/web/src/components/layout/app-shell-gate.tsx`,
+  `notification-bell.tsx`, `sidebar-user-footer.tsx`,
+  `apps/web/src/lib/redirect.ts`,
+  `apps/web/src/services/base-workspace.service.ts`,
+  `apps/web/src/types/base.ts`
+- `packages/database/prisma/schema.prisma`
+
+Files removed:
+
+- `apps/web/src/app/(app)/houses/new/page.tsx`,
+  `apps/web/src/components/houses/no-house-onboarding.tsx`
+
+Database changes:
+
+- Added `house_join_requests` table
+  (`20260714150000_house_join_requests`).
+
+API changes:
+
+- Added `POST /api/v1/houses/join-requests`,
+  `GET /api/v1/houses/:houseId/join-requests`,
+  `PATCH /api/v1/houses/:houseId/join-requests/:requestId`,
+  `POST /api/v1/houses/:houseId/activate`.
+
+Architecture changes:
+
+- Joining a house by tag now goes through an owner-approval gate rather
+  than granting membership immediately; invite-code/link joining (ADR
+  0020, and the 2026-07-12 shareable-links entry) still works unchanged
+  alongside it. See ADR 0040.
+
+Next task:
+
+- In-memory rate limiting + security headers.
+
+## 2026-07-15 In-Memory Rate Limiting + Security Headers
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 99%
+
+Features completed:
+
+- Added `server/rate-limit.ts`: an in-memory fixed-window request
+  counter (no Redis - single Node process on Hostinger) applied to
+  `auth/login`, `auth/signup`, `auth/verify-email`,
+  `auth/resend-verification`, `auth/request-password-reset`,
+  `auth/reset-password`, and `houses/join-requests`. Throws a
+  `429 rate_limited` `AppException` once a caller's IP exceeds the
+  configured limit within the window; sweeps expired entries once the
+  in-memory map exceeds 5,000 keys instead of running a cleanup timer.
+- Added security headers in `next.config.ts` (21 lines).
+- See ADR 0043 for why in-memory was chosen over Redis and what it
+  doesn't protect against (resets on redeploy, doesn't hold across
+  multiple instances, no defense against distributed/many-IP abuse).
+
+Files created:
+
+- `apps/web/src/server/rate-limit.ts`
+
+Files modified:
+
+- `apps/web/next.config.ts`, `apps/web/src/server/http.ts`
+- `apps/web/src/app/api/v1/auth/login/route.ts`,
+  `auth/request-password-reset/route.ts`,
+  `auth/resend-verification/route.ts`, `auth/reset-password/route.ts`,
+  `auth/signup/route.ts`, `auth/verify-email/route.ts`
+- `apps/web/src/app/api/v1/houses/join-requests/route.ts`
+
+Architecture changes:
+
+- First rate-limiting layer in the app; see ADR 0043 for the tradeoffs
+  of the in-memory, single-process approach.
+
+Technical debt:
+
+- Rate-limit state resets on every redeploy/restart and is per-process,
+  so it does not hold a real limit if the app is ever run as more than
+  one instance (each instance enforces the configured limit
+  independently) - not a security boundary on its own, just a cost/spam
+  guard, per ADR 0043.
+
+Next task:
+
+- Real RBAC beyond Owner-only member removal remains the standing
+  backlog item across modules. A distributed rate-limit store (e.g.
+  Redis) would be needed before horizontally scaling beyond one
+  Hostinger instance.
+
+## 2026-07-15 Real-Time Chat (Supabase Realtime)
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 99%
+
+Features completed:
+
+- Rebuilt chat's realtime story on Supabase Realtime (Broadcast +
+  Presence) instead of a custom WebSocket server - the browser connects
+  directly to Supabase, sidestepping the unverified question of whether
+  Hostinger's managed reverse proxy passes through WebSocket upgrades at
+  all. See ADR 0044 for the full reasoning and alternatives considered.
+- Instant message delivery: sending/reacting/marking-read now broadcasts
+  a Realtime event instead of every client refetching the whole
+  workspace snapshot. `chat.service.ts`'s message include is capped to
+  the last 50 per conversation (was unbounded) and a new cursor-paginated
+  `GET /api/v1/chat/rooms/:roomId/messages` backs a "load earlier
+  messages" control - chat's first pagination.
+- Typing indicators: client-to-client ephemeral broadcast, no server
+  round trip, 3s auto-clear, throttled to one send per 2s per typist.
+- Presence: Supabase Presence per house (`use-presence.ts`) gives
+  instant, correct online/offline for connected clients; a new
+  `User.lastSeenAt` column + `POST /api/v1/auth/me/heartbeat` (polled
+  every 60s while the app is open, `AppShellGate`) backs the "last seen"
+  fallback for offline members, shown in the Messages page's member
+  list.
+- Real unread counts and live read receipts: new `ConversationRead`
+  model (was hardcoded `unreadCount: 0`); `POST
+/api/v1/chat/rooms/:roomId/read` upserts it and broadcasts a `read`
+  event so the sender's own client can show a read tick without
+  polling.
+- Message states: sending (optimistic, client-generated temp id) -> sent
+  (POST resolved) -> read (derived from the latest `read` event from any
+  other conversation member). A true `delivered` tick was scoped out -
+  documented as a Phase 2/future item in ADR 0044.
+- Live sidebar: a house-wide `house:<id>:chat` digest channel updates
+  conversation previews/unread counts/list ordering without subscribing
+  to every conversation, only the one currently open.
+- UX polish: consecutive-same-sender message grouping (5 min window),
+  auto-updating relative timestamps ("2 min ago", one shared 30s ticker
+  instead of one interval per message), scroll-to-bottom only when
+  already near the bottom with a "New messages" pill otherwise, a
+  reconnecting/connecting status badge.
+- Offline send-queue: messages that fail to send due to a genuine
+  network error (not a server rejection) are queued to `localStorage`
+  and auto-retried on the browser's `online` event and on next mount -
+  verified end-to-end with a simulated `fetch` failure.
+- Multi-tab/multi-device sync comes for free from the Broadcast
+  architecture - every open tab independently subscribes to the same
+  channels, no extra code needed.
+
+Features started:
+
+- None beyond the above within this pass; a true `delivered` state,
+  message-list virtualization, and Realtime "private channels" (RLS-
+  gated channel access, currently unguessable-cuid-topic trust only) are
+  explicitly deferred - see ADR 0044's Costs/Future Implications.
+
+Files created:
+
+- `apps/web/src/server/realtime/broadcast.ts`
+- `apps/web/src/lib/realtime/supabase-client.ts`,
+  `use-conversation-channel.ts`, `use-house-chat-digest.ts`,
+  `use-presence.ts`, `offline-queue.ts`
+- `apps/web/src/lib/use-ticker.ts`
+- `apps/web/src/app/api/v1/chat/rooms/[roomId]/read/route.ts`
+- `apps/web/src/app/api/v1/auth/me/heartbeat/route.ts`
+- `packages/database/prisma/migrations/20260714200000_conversation_reads_and_presence/`
+- `docs/adr/0044-realtime-chat-supabase.md`
+
+Files modified:
+
+- `packages/database/prisma/schema.prisma` (`ConversationRead` model,
+  `User.lastSeenAt`)
+- `apps/web/src/server/chat/chat.service.ts` (capped includes, delta
+  returns, pagination, `markRead`, broadcasts)
+- `apps/web/src/server/auth/auth.service.ts` (`heartbeat`)
+- `apps/web/src/server/organizations/organizations.service.ts`
+  (`lastSeenAt` on house member DTOs)
+- `apps/web/src/app/api/v1/chat/rooms/[roomId]/messages/route.ts` (added
+  paginated `GET`)
+- `apps/web/src/lib/api/client.ts` (`apiRequestPage` - paginated routes
+  return `{data, page}` at the top level, which `apiRequest`'s
+  single-level unwrap would otherwise silently drop `page` from)
+- `apps/web/src/services/base-workspace.service.ts`,
+  `apps/web/src/types/base.ts` (new chat/heartbeat client functions and
+  types)
+- `apps/web/src/components/messages/messages-page.tsx` (full realtime
+  rewire - this is most of the feature's frontend surface),
+  `message-bubble.tsx`, `message-composer.tsx`, `message-data.ts`,
+  `channel-info-panel.tsx`
+- `apps/web/src/components/layout/app-shell-gate.tsx` (heartbeat
+  interval)
+- `.env.example`, `docs/hostinger-deployment.md` (new
+  `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` vars)
+
+Database changes:
+
+- New `conversation_reads` table; `users.last_seen_at` column. Migration
+  `20260714200000_conversation_reads_and_presence`, applied to the local
+  dev database directly (see the same hand-migration pattern used since
+  the RLS-hardening migration broke `prisma migrate dev`'s shadow
+  database) - production picks it up via the `migrate.yml` CI workflow
+  (ADR 0042) on next push.
+
+API changes:
+
+- `POST /api/v1/chat/rooms/:roomId/messages` now returns a single
+  `Message`, not the whole room. New `GET` on the same path (paginated).
+  New `POST /api/v1/chat/rooms/:roomId/read`, `POST
+/api/v1/auth/me/heartbeat`. See `docs/api.md`'s "Realtime API" section
+  for the full Broadcast/Presence event catalog.
+
+Architecture changes:
+
+- First realtime layer in the app (ADR 0044) - Supabase Realtime chosen
+  over a custom WebSocket server specifically because this app runs as a
+  single managed Node process behind Hostinger's own reverse proxy,
+  whose WebSocket-upgrade passthrough behavior is undocumented and
+  unverified; connecting the browser directly to Supabase sidesteps that
+  risk entirely.
+
+Bugs fixed (caught during this session's own verification, not
+pre-existing):
+
+- Sidebar conversation previews only updated via the house digest
+  channel (i.e. only for peers, only when Realtime is configured) -
+  the sender's own client never updated its own preview text on send.
+  Fixed by recomputing `lastMessagePreview`/`lastMessageTime` from the
+  message list itself inside `patchChannelMessages`, so it's correct
+  regardless of which code path appended the message.
+
+Known bugs:
+
+- None currently tracked for this feature within its documented scope.
+
+Technical debt:
+
+- No local Supabase Realtime credentials were available during this
+  session, so true cross-client delivery (a second browser/tab actually
+  receiving a broadcast) could not be verified end-to-end locally -
+  everything reachable without those credentials was verified instead:
+  optimistic send/confirm, pagination, reactions, mark-read, the offline
+  queue (via a simulated `fetch` failure), and graceful degradation (a
+  "Reconnecting…" badge, not a crash) when Realtime is unconfigured. The
+  user needs to add `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Supabase project
+  dashboard -> Settings -> API) locally and in Hostinger to light up
+  live cross-client delivery for real; this could not be done in this
+  session since it requires the user's actual Supabase project
+  credentials.
+- Real presence is only wired into the Messages page's member list, not
+  app-wide (Crews, task assignees, bookings, etc. still show whatever
+  static status their own page already had) - flagged as a natural but
+  separate follow-up, out of scope for "the chat system."
+- Message-list virtualization was deliberately not added (judged
+  disproportionate given the 50-message cap + pagination already bounds
+  DOM size); revisit if that cap is ever raised significantly.
+- Channel names are unguessable-cuid capability tokens, not
+  access-controlled (no Realtime "private channels"/RLS) - see ADR
+  0044's Costs section for the upgrade path if stricter access control
+  is ever needed.
+
+Next task:
+
+- Add `NEXT_PUBLIC_SUPABASE_ANON_KEY` (and confirm `NEXT_PUBLIC_SUPABASE_URL`)
+  in both local `.env` and Hostinger, then verify live cross-client
+  delivery with two real browser sessions. Beyond that: real presence
+  app-wide, a true `delivered` tick, and the standing RBAC/distributed-
+  rate-limit backlog from the previous entry.

@@ -52,6 +52,12 @@ Use sequential numbers and a short slug:
 - `0032-continuous-deployment.md`
 - `0033-supabase-render-backend.md`
 - `0034-hostinger-native-web-app.md`
+- `0039-otp-based-auth.md`
+- `0040-multi-house-dashboard-and-join-requests.md`
+- `0041-storyboard-canvas-and-scripts-module.md`
+- `0042-migrate-on-push-ci.md`
+- `0043-in-memory-rate-limiting.md`
+- `0044-realtime-chat-supabase.md`
 
 ## Required Sections
 

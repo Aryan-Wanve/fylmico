@@ -87,6 +87,13 @@ Current ADRs:
 - [0035-google-oauth-login.md](docs/adr/0035-google-oauth-login.md)
 - [0036-house-invitations-and-leave.md](docs/adr/0036-house-invitations-and-leave.md)
 - [0037-merge-backend-into-nextjs.md](docs/adr/0037-merge-backend-into-nextjs.md)
+- [0038-drive-backed-file-storage.md](docs/adr/0038-drive-backed-file-storage.md)
+- [0039-otp-based-auth.md](docs/adr/0039-otp-based-auth.md)
+- [0040-multi-house-dashboard-and-join-requests.md](docs/adr/0040-multi-house-dashboard-and-join-requests.md)
+- [0041-storyboard-canvas-and-scripts-module.md](docs/adr/0041-storyboard-canvas-and-scripts-module.md)
+- [0042-migrate-on-push-ci.md](docs/adr/0042-migrate-on-push-ci.md)
+- [0043-in-memory-rate-limiting.md](docs/adr/0043-in-memory-rate-limiting.md)
+- [0044-realtime-chat-supabase.md](docs/adr/0044-realtime-chat-supabase.md)
 
 ## Current Sprint Gate
 
@@ -266,6 +273,99 @@ walkthrough of login/settings/invitations, and a real production
 standalone-server run hitting the real database) passed before cutover.
 Render is no longer part of this stack; the user decommissions it
 separately (an external account action, not a repo change).
+
+**Files now stores bytes in each user's own Google Drive, not Supabase
+Storage** (ADR 0038): a new per-user `DriveConnection` model holds one
+Google Drive OAuth grant (`drive.file` scope - only files/folders the app
+itself creates, never the user's whole Drive) via a second, separate OAuth
+flow from login. `FileEntry` stays the shared, house-scoped index
+unchanged - only its `storagePath` now holds a Drive file ID instead of a
+Supabase path, and downloads proxy through a short-lived signed server
+token rather than a Drive share link, keeping access control inside
+Fylmico's own house-membership checks instead of Drive's sharing model.
+Fylmico's own storage bill now only ever covers small profile avatars
+(still Supabase Storage), not production files.
+
+**Email verification and password reset moved from link-tokens to 6-digit
+OTP codes, and login is now blocked until verified** (ADR 0039): typed
+codes avoid the failure mode where mail-client link-prefetching silently
+burned single-use verification tokens before a real user ever clicked, and
+work identically across devices (verify on your phone while signing up on
+a laptop). Codes share the same `EmailVerificationToken`/
+`PasswordResetToken` tables (shape unchanged) with a new `attempts` column
+(5-try lockout) and a 10-minute expiry; `login` now hard-fails with
+`403 email_not_verified` for any unverified email/password account (Google
+OAuth accounts are unaffected, since Google's own `email_verified` claim
+sets it immediately).
+
+**Tag-based join requests with Owner approval, plus a multi-house
+`/dashboard` hub** (ADR 0040): a new `HouseJoinRequest` model lets a user
+request to join a house by its public handle (rather than needing the
+exact invite code), notifying the house's Owners; membership is only
+granted once an Owner approves via a new `activateHouse`-adjacent
+`respondToJoinRequest` endpoint - invite-code joining and targeted
+`HouseInvitation` links (ADR 0036) are untouched and coexist as separate
+paths onto the same `addMembership` helper. The old one-shot
+`houses/new` onboarding page was deleted outright in favor of
+`/dashboard`, which lists every house a user belongs to as a switchable
+card and gives Owners a "Join requests" inbox to approve/reject pending
+requests inline.
+
+**Storyboard gained a real drawing/editing canvas, and a new standalone
+Scripts module shipped alongside it** (ADR 0041): a plain HTML5
+`<canvas>` freehand-drawing dialog flattens strokes to a base64 PNG on
+save (no vector/undo history, matching how a shot's static reference
+image already worked) - no new drawing dependency was pulled in. A new
+`Script` model (house-scoped, optional `projectId`, one plain-text
+`content` field) backs an entirely separate Scripts module with its own
+list/detail pages and nav entry, cross-linked one-directionally and
+read-only from a Storyboard board via an optional `Board.scriptId`. A
+follow-up commit added a client-side screenplay formatting toolbar (Scene
+Heading/Action/Character/Dialogue/Parenthetical/Transition) that applies
+plain-text indentation/case conventions to the current line - the stored
+content stays a plain string, not a structured document.
+
+**Automatic Prisma migration on every push to `main`, after a same-day
+reverted attempt at migrating on server boot** (ADR 0042): a missed
+manual migration once broke production auth entirely
+(`users.username does not exist`), so boot-time `prisma migrate deploy`
+was tried first inside `server.js` - but this Hostinger plan restricts
+subprocess spawning, and Prisma's CLI internally spawns a native
+schema-engine binary that failed with `EAGAIN` no matter how it was
+invoked (`npx`, a resolved binary path, or otherwise). After confirming
+that dead end, the boot-time step was fully reverted the same day in
+favor of `.github/workflows/migrate.yml`, a GitHub Actions job (no
+subprocess restriction on its own runner) that runs `prisma migrate
+deploy` against production on every push to `main`, decoupled entirely
+from the running app process.
+
+**In-memory rate limiting and security headers added to auth and
+join-request endpoints** (ADR 0043): a single-process, in-memory
+fixed-window counter (`apps/web/src/server/rate-limit.ts`, no Redis, no
+database table - this app runs as one Node process on one Hostinger
+instance) keyed by client IP plus the specific identifier being protected
+(e.g. `login:${ip}:${email}`), now guards login, signup, and
+join-requests against brute-force/spam abuse. It does not protect against
+distributed sources or survive a process restart/redeploy - a future
+horizontal-scaling move would need a shared store instead. Four baseline
+security response headers (`X-Content-Type-Options`, `X-Frame-Options`,
+`Referrer-Policy`, `Strict-Transport-Security`) were added in the same
+pass.
+
+**Chat rebuilt on Supabase Realtime** (ADR 0044): instant message
+delivery, typing indicators, presence with a "last seen" fallback, live
+read receipts/unread counts, a live-reordering sidebar, message
+pagination, and an offline send-queue with auto-retry. Chosen over a
+custom WebSocket server specifically because this app runs as one managed
+Node process behind Hostinger's own reverse proxy, whose WebSocket-
+upgrade passthrough is undocumented and unverified - connecting the
+browser directly to Supabase (already hosting Postgres/file storage)
+sidesteps that risk entirely. New `ConversationRead` model and
+`User.lastSeenAt` column (migration
+`20260714200000_conversation_reads_and_presence`) back real unread counts
+and presence, both previously hardcoded/absent. Requires
+`NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` to actually go
+live - degrades to a "Reconnecting…" badge (no crash) without them.
 
 To run locally now: `docker compose up -d postgres`, then start the
 single `web` dev server (`.claude/launch.json` has just the one

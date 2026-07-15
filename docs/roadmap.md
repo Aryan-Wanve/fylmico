@@ -15,7 +15,7 @@
 
 ### Phase 2: Frontend Application Scaffold / Sprint 2
 
-Status: In progress
+Status: Complete
 
 Priority: Critical
 
@@ -53,10 +53,23 @@ Progress:
 - Projects, Tasks, Crews, Files, Storyboard, Messages, and Settings also
   now have real routes (built outside this session; see their own
   commits/docs for details). No non-navigating sidebar placeholders remain.
+- Dashboard, Projects, Crews, Settings, Bookings, Storyboard, Files, and
+  Messages are now wired to the real backend - no mock data or mock
+  services remain anywhere in the app, superseding the "add realistic mock
+  data and mock services" scope item above. See Phase 8 for the matching
+  backend domains.
+- Loading/empty/error/success states have now been audited across every
+  page as part of a real dark-mode pass covering the whole app (plus real
+  Appearance settings: accent color, density, theme transition).
+- Real global search, a working Create menu, and an honest sidebar nav
+  replace the earlier placeholders; route transitions and dashboard
+  entrance animations added; mobile/tablet responsive overflow fixed
+  across every page; `window.prompt`/`window.confirm` replaced with
+  styled, dark-mode-aware dialog/prompt components.
 
 ### Phase 3: Frontend Authentication and Organizations
 
-Status: In progress
+Status: Complete
 
 Priority: Critical
 
@@ -77,13 +90,28 @@ Progress:
   to design reference).
 - House creation/join onboarding UI (this product's equivalent of an
   "organization" is a House): complete (`/houses/new`).
-- Organization/house switcher (for users in multiple houses): not started.
+- Organization/house switcher (for users in multiple houses): complete -
+  a multi-house `/dashboard` hub now lists every house a user belongs to
+  and lets them switch between them, replacing the old single-house
+  `/houses/new` onboarding flow entirely.
 - Public API contracts for auth/houses beyond the base set already in
-  `docs/api.md`: not started.
+  `docs/api.md`: substantially built out alongside the OTP and
+  join-request work below; see `docs/api.md`.
+- Email verification reworked from link-tokens to 6-digit OTP codes,
+  backed by real email delivery (a new mailer abstraction); login is now
+  blocked until a signup is OTP-verified, and password reset also uses an
+  OTP code. See ADR 0039.
+- Shareable house join links, plus a tag-based join-request flow: a
+  prospective member requests to join by tag and a house Owner approves
+  or rejects the request (new `HouseJoinRequest` model, plus a
+  house-switch "activate" endpoint). See ADR 0040.
+- Session persistence fixed: sessions now persist in `localStorage`
+  (survive 30 days) instead of `sessionStorage` (previously cleared per
+  browser tab).
 
 ### Phase 4: Frontend Projects and Clients
 
-Status: Planned
+Status: In progress
 
 Priority: High
 
@@ -96,6 +124,17 @@ Scope:
 - Departments and teams UI.
 - Basic project dashboard.
 - Public API contracts and mock services for each area.
+
+Progress:
+
+- Project management screens: complete - added a project detail page
+  (edit, tasks, calendar, and comments tabs) on top of the existing
+  Projects list.
+- Departments and teams UI: partially done - crew department is now
+  editable per member, and a dedicated crew member profile page was
+  added (see Phase 6 for the rest of the Crew UI work).
+- Client management screens and a basic project dashboard beyond the
+  existing Projects list: not started.
 
 ### Phase 5: Frontend Collaboration Core
 
@@ -124,6 +163,22 @@ Progress:
   create flow. Week and Day tabs show a "coming soon" state; chat,
   notifications, and kanban have not started (Tasks got a real route
   outside this session - see its own docs).
+- Calendar UI: Week and Day tabs are no longer "coming soon" - real
+  week and day views were built alongside Month.
+- Chat UI: complete - Messages now has real threaded replies and emoji
+  reactions, real per-channel Files/Tasks/Events tab wiring, and real
+  channel rename.
+- Notification UI: complete - notification preferences now persist and
+  actually gate sending; notifications trigger on task/project comments,
+  invite acceptance, and bookings; the notification bell was redesigned
+  (per-type icons, unread count, polling).
+- Task UI and Kanban UI: complete - added a drag-and-drop Kanban board
+  view for Tasks.
+- Realtime: chat is now real (Supabase Realtime Broadcast/Presence, not
+  Socket.IO - see ADR 0044) - instant delivery, typing, presence, read
+  receipts, live unread counts/sidebar reordering, offline send-queue.
+  Notifications still remain poll-based (25s interval, ADR 0023) - not
+  yet migrated onto the same Realtime channels.
 
 ### Phase 6: Frontend Creative Production Modules
 
@@ -153,11 +208,20 @@ Progress:
   (resource, project, dates, status, booked-by), and a right rail with a
   "Bookings by Type" donut, an upcoming-bookings list, and a mini booking
   calendar (reusing the Calendar page's `MiniCalendar` and the Analytics
-  page's `DonutChart` primitives). "New Booking" and "Filters" are
-  decorative for now, matching the same not-yet-wired precedent as other
-  pages' secondary controls. Storyboard and Crew already have real routes
-  built outside this session - see their own docs. Moodboard, Script,
-  Shot list, and Call sheet UI have not started.
+  page's `DonutChart` primitives). "New Booking" is now a real multi-field
+  form, and Bookings gained a real approve/reject workflow (see Phase 7).
+  Storyboard and Crew already have real routes built outside this session
+  - see their own docs.
+- Script UI: complete - a new Scripts (screenplay) module was added with
+  a formatting toolbar (and a mobile two-column-layout fix). See ADR 0041.
+- Storyboard UI: further extended - real `Character`/`StoryLocation`
+  models and a real drawing/editing canvas were added on top of the
+  existing boards/shots wiring. See ADR 0041.
+- Call sheet UI: complete - new Call Sheets module.
+- Crew UI: further extended - role tags, task reassignment, a crew
+  member profile page, and an editable department field.
+- Location UI: backed by the new `StoryLocation` model above.
+- Moodboard UI and Shot list UI: still not started.
 
 ### Phase 7: Frontend Review, Delivery, and Analytics
 
@@ -186,9 +250,18 @@ Progress:
   time-logged mini chart, an activity heatmap, and top-projects/top-
   contributors/team-workload list panels. All hand-rolled inline SVG (no
   charting library), following the `sparkline.tsx` precedent. Read-only
-  reporting page - no mutating interactions, unlike Calendar. No other
-  review/delivery UI (asset management, video review, approvals, version
-  control, publishing) has started.
+  reporting page - no mutating interactions, unlike Calendar.
+- Analytics UI: further extended - a real date-range filter and CSV
+  export were added, and the page is no longer read-only-only in that
+  sense.
+- Approval UI: a real approve/reject workflow was added for Bookings -
+  the first concrete instance of this scope item.
+- Asset management UI: a file preview modal (images/PDF/video/audio) was
+  added to Files.
+- Comment UI: Messages gained real threaded replies and emoji reactions,
+  alongside the existing task/project comments (ADR 0024).
+- Video review UI, version-control UI, and publishing UI: still not
+  started.
 
 ### Phase 8: Backend Bootstrap
 
@@ -425,18 +498,60 @@ google` and `GET /api/v1/auth/google/callback`, a new
   before deleting `apps/api` and updating root `package.json`/
   `Dockerfile`/`docker-compose.yml`/`.claude/launch.json`/both
   `.env.example` files. See ADR 0037.
-- Next: the Google Cloud Console OAuth client's authorized redirect URI
-  needs updating for the new merged-app port (3000 locally; the live
-  Hostinger URL once redeployed) - it's still registered for the old
-  Render API URL. Object storage is still a named prerequisite for
-  project cover photos, message attachments, and the entire `/files`
-  page. Real RBAC (who can remove/edit what) is a concretely scoped gap
-  across every module now, worth solving broadly rather than per-
-  endpoint. A house ownership-transfer/role-editing flow would resolve
-  the "solo owner leaving a multi-member house" gap noted in ADR 0036.
-  Otherwise, pick up Files/Storyboard/Bookings (all still local mock
-  data, each needing its own backend domain), or the activity feed /
-  creative-production modules.
+- **Bookings, Storyboard, Files, and profile/session/workspace backend
+  domains added**: new `Resource`/`Booking`, `Board`/`Shot`, and
+  `FileEntry` Prisma models; bookings and storyboard boards/shots
+  services and routes; profile/password/session/workspace endpoints and
+  a dashboard-summary endpoint. `/bookings`, `/storyboard`, `/files`, and
+  Settings all now call the real API instead of local mock data, closing
+  out the last pages still on mocks from the note above.
+- **File storage**: Files was first wired to Supabase Storage, then
+  replaced the same day with per-user Google Drive-backed storage (ADR 0038) - object storage is no longer a named prerequisite blocking
+  project cover photos, message attachments, or `/files`. A later fix
+  made app folders (not just files) mirror into Drive, and an
+  upload-progress UI (speed + toast) was added. Storyboard was further
+  extended with `Character`/`StoryLocation` models and a real
+  drawing/editing canvas; Scripts (screenplay module, formatting
+  toolbar) shipped alongside it. See ADR 0041.
+- **Auth reworked to OTP** (ADR 0039): email verification moved from
+  link-tokens to 6-digit OTP codes, real email delivery (mailer
+  abstraction) backs signup verification and password reset, and login
+  is now blocked until a signup is OTP-verified.
+- **Tag-based house join requests** (ADR 0040): a new
+  `HouseJoinRequest` model, owner approve/reject endpoints, and a
+  house-switch activate endpoint, alongside the existing invite-code/
+  invite-link flows; a new multi-house `/dashboard` hub replaces the old
+  `/houses/new` onboarding.
+- **Migrate-on-boot saga, then a dedicated CI workflow** (ADR 0042):
+  automatic `prisma migrate deploy` on server boot was added, crashed
+  the server on a failed migration, was patched to not crash, and was
+  then fully reverted the same day in favor of
+  `.github/workflows/migrate.yml`, which now runs `prisma migrate
+deploy` automatically on every push to `main`.
+- **Rate limiting + security headers** (ADR 0043): in-memory rate
+  limiting (no Redis - single-process Hostinger deployment) and
+  security headers added to auth and join-request endpoints.
+- Also shipped in this period, layered on the above: dark mode across
+  the whole app, real global search/Create menu/honest nav, route
+  transitions and dashboard entrance animations, custom dialog/prompt
+  components (replacing `window.prompt`/`window.confirm`), mobile/
+  tablet responsive fixes across every page, new Call Sheets and
+  Announcements modules, a public marketing landing page at `/` (two
+  redesign passes) with the authenticated dashboard moved to `/home`, a
+  project detail page, a Kanban board for Tasks, real Calendar week/day
+  views, a notification bell redesign, crew role tags/reassignment, and
+  session persistence moved to `localStorage`. See Phases 2-7 above for
+  the frontend-facing detail on each.
+- Next: real RBAC (who can remove/edit what) is still a concretely
+  scoped gap across every module - only member-removal is Owner-gated
+  so far. A house ownership-transfer/role-editing flow still hasn't been
+  built (the "solo owner leaving a multi-member house" gap from ADR 0036
+  remains open). Client management screens (Phase 4), Moodboard/Shot
+  list UI (Phase 6), and video review/version-control/publishing UI
+  (Phase 7) are the largest unstarted frontend areas. The Google Cloud
+  Console OAuth client's authorized redirect URI still needs updating
+  for the merged-app deployment, and Render decommissioning is still
+  owed - both are external account actions outside this repo.
 
 ## Completed Milestones
 
