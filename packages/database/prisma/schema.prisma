@@ -20,33 +20,33 @@ model User {
   createdAt               DateTime  @default(now()) @map("created_at")
   updatedAt               DateTime  @updatedAt @map("updated_at")
 
-  authAccounts             AuthAccount[]
-  sessions                 Session[]
-  emailVerificationTokens  EmailVerificationToken[]
-  passwordResetTokens      PasswordResetToken[]
-  organizationMemberships  OrganizationMembership[]
-  createdTasks             Task[]                   @relation("TasksCreated")
-  taskAssignments          TaskAssignee[]
-  taskActivity             TaskActivity[]
-  taskTimeEntries          TaskTimeEntry[]
-  messages                 Message[]
-  notifications            Notification[]
-  comments                 Comment[]
-  crewProfiles             CrewProfile[]
-  calendarEvents           CalendarEvent[]
-  timeEntries              TimeEntry[]
-  sentInvitations          HouseInvitation[]        @relation("InvitationsSent")
-  acceptedInvitations      HouseInvitation[]        @relation("InvitationsAccepted")
-  houseJoinRequestsSent    HouseJoinRequest[]       @relation("JoinRequestsSent")
-  houseJoinRequestsHandled HouseJoinRequest[]       @relation("JoinRequestsHandled")
-  bookings                 Booking[]
-  uploadedFiles            FileEntry[]
+  authAccounts              AuthAccount[]
+  sessions                  Session[]
+  emailVerificationTokens   EmailVerificationToken[]
+  passwordResetTokens       PasswordResetToken[]
+  organizationMemberships   OrganizationMembership[]
+  createdTasks              Task[]                   @relation("TasksCreated")
+  taskAssignments           TaskAssignee[]
+  taskActivity              TaskActivity[]
+  taskTimeEntries           TaskTimeEntry[]
+  messages                  Message[]
+  notifications             Notification[]
+  comments                  Comment[]
+  crewProfiles              CrewProfile[]
+  calendarEvents            CalendarEvent[]
+  timeEntries               TimeEntry[]
+  sentInvitations           HouseInvitation[]        @relation("InvitationsSent")
+  acceptedInvitations       HouseInvitation[]        @relation("InvitationsAccepted")
+  houseJoinRequestsSent     HouseJoinRequest[]       @relation("JoinRequestsSent")
+  houseJoinRequestsHandled  HouseJoinRequest[]       @relation("JoinRequestsHandled")
+  bookings                  Booking[]
+  uploadedFiles             FileEntry[]
   connectedDriveConnections DriveConnection[]
-  scripts                  Script[]
-  messageReactions         MessageReaction[]
-  callSheets               CallSheet[]
-  announcements            Announcement[]
-  conversationReads        ConversationRead[]
+  scripts                   Script[]
+  messageReactions          MessageReaction[]
+  callSheets                CallSheet[]
+  announcements             Announcement[]
+  conversationReads         ConversationRead[]
 
   @@map("users")
 }
@@ -63,27 +63,28 @@ model Organization {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  roles          Role[]
-  memberships    OrganizationMembership[]
-  tasks          Task[]
-  conversations  Conversation[]
-  projects       Project[]
-  clients        Client[]
-  comments       Comment[]
-  crewProfiles   CrewProfile[]
-  calendarEvents CalendarEvent[]
-  timeEntries    TimeEntry[]
-  invitations    HouseInvitation[]
-  joinRequests   HouseJoinRequest[]
-  resources      Resource[]
-  bookings       Booking[]
-  boards         Board[]
-  fileEntries    FileEntry[]
-  characters     Character[]
-  storyLocations StoryLocation[]
+  roles           Role[]
+  memberships     OrganizationMembership[]
+  tasks           Task[]
+  conversations   Conversation[]
+  projects        Project[]
+  clients         Client[]
+  comments        Comment[]
+  crewProfiles    CrewProfile[]
+  calendarEvents  CalendarEvent[]
+  timeEntries     TimeEntry[]
+  invitations     HouseInvitation[]
+  joinRequests    HouseJoinRequest[]
+  resources       Resource[]
+  bookings        Booking[]
+  boards          Board[]
+  fileEntries     FileEntry[]
+  characters      Character[]
+  storyLocations  StoryLocation[]
   scripts         Script[]
   callSheets      CallSheet[]
   announcements   Announcement[]
+  notifications   Notification[]
   driveConnection DriveConnection?
 
   @@map("organizations")
@@ -107,11 +108,15 @@ model Role {
 }
 
 model OrganizationMembership {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  userId         String   @map("user_id")
-  roleId         String?  @map("role_id")
-  createdAt      DateTime @default(now()) @map("created_at")
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  userId         String    @map("user_id")
+  roleId         String?   @map("role_id")
+  order          Int       @default(0)
+  favoritedAt    DateTime? @map("favorited_at")
+  pinnedAt       DateTime? @map("pinned_at")
+  archivedAt     DateTime? @map("archived_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -251,25 +256,26 @@ model Task {
   deliverables      String[]
   tags              String[]
   progress          Int       @default(0)
+  isTemplate        Boolean   @default(false) @map("is_template")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  organization  Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  conversation  Conversation?   @relation(fields: [conversationId], references: [id], onDelete: SetNull)
-  parent        Task?           @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
-  subtasks      Task[]          @relation("TaskSubtasks")
-  project       Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  board         Board?          @relation(fields: [boardId], references: [id], onDelete: SetNull)
-  script        Script?         @relation(fields: [scriptId], references: [id], onDelete: SetNull)
-  shootDayEvent CalendarEvent?  @relation(fields: [shootDayEventId], references: [id], onDelete: SetNull)
-  createdBy     User            @relation("TasksCreated", fields: [createdById], references: [id])
-  assignees     TaskAssignee[]
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversation   Conversation?       @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  parent         Task?               @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subtasks       Task[]              @relation("TaskSubtasks")
+  project        Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  board          Board?              @relation(fields: [boardId], references: [id], onDelete: SetNull)
+  script         Script?             @relation(fields: [scriptId], references: [id], onDelete: SetNull)
+  shootDayEvent  CalendarEvent?      @relation(fields: [shootDayEventId], references: [id], onDelete: SetNull)
+  createdBy      User                @relation("TasksCreated", fields: [createdById], references: [id])
+  assignees      TaskAssignee[]
   checklistItems TaskChecklistItem[]
-  activity      TaskActivity[]
-  timeEntries   TaskTimeEntry[]
-  attachments   FileEntry[]
-  blockingOf    TaskDependency[] @relation("BlockingTask")
-  blockedBy     TaskDependency[] @relation("BlockedTask")
+  activity       TaskActivity[]
+  timeEntries    TaskTimeEntry[]
+  attachments    FileEntry[]
+  blockingOf     TaskDependency[]    @relation("BlockingTask")
+  blockedBy      TaskDependency[]    @relation("BlockedTask")
 
   @@index([organizationId])
   @@index([conversationId])
@@ -494,15 +500,17 @@ model ProjectClient {
 }
 
 model Notification {
-  id        String    @id @default(cuid())
-  userId    String    @map("user_id")
-  type      String
-  title     String
-  body      String
-  readAt    DateTime? @map("read_at")
-  createdAt DateTime  @default(now()) @map("created_at")
+  id             String    @id @default(cuid())
+  userId         String    @map("user_id")
+  organizationId String?   @map("organization_id")
+  type           String
+  title          String
+  body           String
+  readAt         DateTime? @map("read_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@map("notifications")
