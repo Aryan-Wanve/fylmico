@@ -438,7 +438,12 @@ Purpose: the tenant boundary (ADR 0011), product-facing as a "House."
 Ownership: none (top-level; owns `roles` and `organization_memberships`).
 
 Columns: `id`, `name`, `handle` (unique, lowercase URL-safe), `description`,
-`invite_code` (unique, format `{HANDLE_PREFIX}-{4 digits}`), `created_at`,
+`invite_code` (unique, format `{HANDLE_PREFIX}-{4 digits}`), `type`
+(default `"custom"` — one of `freelancer | agency | college | hobbyist |
+custom`, set once at creation, added per ADR 0046), `enabled_modules`
+(`String[]`, default `[]` — nav-item ids like `"crews"`/`"messages"`
+enabled for this house, defaulted per `type` at creation and independently
+toggleable afterward from House Settings, ADR 0046), `created_at`,
 `updated_at`.
 
 Relationships: has many `roles`, `organization_memberships`.
@@ -448,14 +453,21 @@ Indexes: unique indexes on `handle` and `invite_code`.
 Constraints: `handle` and `invite_code` unique.
 
 Permissions: created by any authenticated user
-(`POST /api/v1/houses`); joined via `invite_code`
-(`POST /api/v1/houses/join`). No update/delete endpoint exists yet.
+(`POST /api/v1/houses`, body now includes `houseType`); joined via
+`invite_code` (`POST /api/v1/houses/join`); updated via
+`PATCH /api/v1/houses/:houseId` (any member for name/handle/description,
+but `enabledModules` specifically requires the `"Owner"` role).
 
 Reasoning: `invite_code` is a single code per organization (not per role) in
 this pass — see ADR 0020 for why joining defaults to a generic `"Member"`
-role rather than a role the invite code itself specifies.
+role rather than a role the invite code itself specifies. `enabledModules`
+is a plain string array rather than a relational table since it's always
+exactly the fixed, well-known set of `nav-items.ts` ids with no per-module
+metadata beyond on/off (ADR 0046); disabling a module only hides its
+sidebar entry today, it doesn't block the underlying route/API.
 
-Migration history: `20260708164132_organizations_houses`.
+Migration history: `20260708164132_organizations_houses`; `type` and
+`enabled_modules` added in `20260715180000_house_type_modules` (ADR 0046).
 
 ### Table: `roles`
 

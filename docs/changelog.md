@@ -383,3 +383,29 @@ Migration notes:
   `drive_folder_links` dropped; new nullable `file_entries.drive_key`
   (unique per house) and `file_entries.sensitive` columns (migration
   `20260715150000_house_drive_connection`) - run `prisma migrate deploy`.
+
+## 0.12.0 - 2026-07-15
+
+Summary:
+
+- Added a "Choose House Type" step to house creation, before House
+  Information: Freelancer/Solo, Agency/Production House, College Club/
+  Group, Hobbyists, or Custom (ADR 0046).
+- The selected type sets default enabled modules for the house (e.g.
+  Freelancer excludes Crews/Messages/Call Sheets/Announcements) -
+  editable anytime afterward from House Settings.
+- Sidebar navigation now reflects a house's enabled modules; Home and
+  Settings are always visible and can't be turned off.
+- Added an Owner-only "Modules" toggle list to House Settings.
+
+Breaking changes:
+
+- None to existing endpoints; `POST /api/v1/houses` now requires a new
+  `houseType` field in the request body.
+
+Migration notes:
+
+- New `organizations.type` (default `"custom"`) and
+  `organizations.enabled_modules` (`String[]`, backfilled to every module
+  for existing houses) columns (migration
+  `20260715180000_house_type_modules`) - run `prisma migrate deploy`.

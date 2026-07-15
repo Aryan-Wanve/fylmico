@@ -376,7 +376,11 @@ was implemented.
 ### `POST /api/v1/houses`
 
 Authentication: required. Body:
-`{ "name": string, "handle": string (lowercase, url-safe, unique), "description"?: string }`.
+`{ "name": string, "handle": string (lowercase, url-safe, unique), "description"?: string, "houseType": "freelancer" | "agency" | "college" | "hobbyist" | "custom" }`.
+`houseType` (ADR 0046) sets `enabledModules` to that type's default set
+(`HOUSE_TYPE_DEFAULT_MODULES` in `apps/web/src/lib/house-types.ts`) —
+`"agency"`/`"custom"` enable every module, the others exclude a few (e.g.
+`"freelancer"` excludes Crews/Messages/Call Sheets/Announcements).
 Response:
 
 ```json
@@ -387,6 +391,8 @@ Response:
     "handle": "north-star",
     "description": "Commercial film and launch content studio.",
     "inviteCode": "NORT-2048",
+    "type": "agency",
+    "enabledModules": ["home", "projects", "calendar", "..."],
     "members": [
       {
         "id": "user_123",
@@ -431,11 +437,14 @@ creator an `"Owner"` member, and sets the creator's active house.
 
 ### `PATCH /api/v1/houses/:houseId`
 
-Authentication: required (caller must be a member of `houseId` — any
-member, not just the Owner). Body: any subset of
-`{ "name": string, "handle": string (lowercase, url-safe, unique), "description": string }`.
-Response: same `House` shape as create. Errors: `400 invalid_request`,
-`401 unauthenticated`, `403 forbidden` (not a member), `409 handle_unavailable`.
+Authentication: required (caller must be a member of `houseId` for
+`name`/`handle`/`description`; caller must additionally hold the
+`"Owner"` role if `enabledModules` is included). Body: any subset of
+`{ "name": string, "handle": string (lowercase, url-safe, unique), "description": string, "enabledModules": string[] }`
+(ADR 0046 for `enabledModules`). Response: same `House` shape as create.
+Errors: `400 invalid_request`, `401 unauthenticated`, `403 forbidden` (not
+a member, or not an Owner when setting `enabledModules`),
+`409 handle_unavailable`.
 
 ### `POST /api/v1/houses/join`
 

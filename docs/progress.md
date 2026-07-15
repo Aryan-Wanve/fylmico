@@ -4981,3 +4981,80 @@ Next task:
   verify the full flow end-to-end: root folders + skeleton appearing in
   Drive, Client/Project folder creation, the upload destination picker,
   the Portfolio prompt, and Employee Work mirroring for a second member.
+
+## 2026-07-15 House Type Step + Per-Type Default Modules
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 99%
+
+Features completed:
+
+- Added a "Choose House Type" step to house creation, before the existing
+  House Information step: Freelancer/Solo, Agency/Production House,
+  College Club/Group, Hobbyists, or Custom (All Features). See ADR 0046.
+- The selected type sets that house's default enabled modules
+  (`Organization.enabledModules`, a new column) - e.g. Freelancer excludes
+  Crews/Messages/Call Sheets/Announcements, Agency/Custom enable
+  everything - editable anytime afterward from House Settings, never
+  locked in.
+- Sidebar (`AppSidebar`) now filters `navItems` by the active house's
+  `enabledModules`, with Home and Settings always visible and never
+  toggleable (a house can't disable its own way back into Settings).
+- New Owner-only "Modules" card in House Settings (`workspace-section.tsx`)
+  reusing the existing `Switch` + row pattern from
+  `notifications-section.tsx` - hidden entirely for non-Owner members.
+- One shared, plain data file (`apps/web/src/lib/house-types.ts`) is the
+  single source of truth for the type list, labels/descriptions, and
+  default-module sets - imported by both the server (`createHouse`) and
+  the client (the type-picker step and the Settings toggle list), so the
+  three can never drift from each other.
+
+Features started:
+
+- None beyond the above; actually blocking a disabled module's route/API
+  (not just hiding its sidebar entry) is explicitly deferred - see ADR
+  0046's Future Implications.
+
+Files created:
+
+- `apps/web/src/lib/house-types.ts`
+- `docs/adr/0046-house-type-and-modules.md`
+- `packages/database/prisma/migrations/20260715180000_house_type_modules/`
+
+Files modified:
+
+- `packages/database/prisma/schema.prisma` (`Organization.type`,
+  `Organization.enabledModules`)
+- `apps/web/src/server/organizations/dto/create-house.dto.ts`
+  (`houseType`), `update-house.dto.ts` (`enabledModules`)
+- `apps/web/src/server/organizations/organizations.service.ts`
+  (`createHouse` seeds default modules, `updateHouse` Owner-gates
+  `enabledModules`, `toHouseDto` returns `type`/`enabledModules`)
+- `apps/web/src/components/houses/house-choice-card.tsx` (new
+  `"create-type"` mode), `houses-dashboard-page.tsx` (payload type)
+- `apps/web/src/components/layout/app-sidebar.tsx`,
+  `apps/web/src/components/layout/app-shell-gate.tsx` (module-filtered nav)
+- `apps/web/src/components/settings/workspace-section.tsx` (Modules card)
+- `apps/web/src/types/base.ts` (`House.type`/`enabledModules`,
+  `CreateHouseRequest.houseType`, `UpdateHouseRequest.enabledModules`)
+
+Known limitations / tradeoffs:
+
+- Default module sets per type are a product judgment call (not
+  individually specified in the request) - easy to retune later since
+  `HOUSE_TYPE_DEFAULT_MODULES` is one object literal, no migration needed.
+- A disabled module only hides its sidebar link today; the underlying
+  route and API endpoints stay reachable directly - acceptable for this
+  pass since the ask was a tailored workspace feel, not access control.
+- Found and fixed a real race during manual testing: toggling two modules
+  in quick succession from Settings could stomp each other, since each
+  toggle computed its "next" list from the same stale `activeHouse`
+  snapshot before the first request's `refreshWorkspace()` resolved.
+  Fixed by disabling all module switches while any toggle request is in
+  flight.
+
+Next task:
+
+- Revisit per-type default module sets once real usage patterns emerge
+  across the 5 house types.
