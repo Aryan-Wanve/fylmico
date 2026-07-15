@@ -29,6 +29,7 @@ import type {
   CreateTimeEntryRequest,
   CrewMember,
   DashboardSummary,
+  EditChatMessageRequest,
   FileEntryItem,
   FilesSummary,
   House,
@@ -554,6 +555,19 @@ export async function toggleMessageReaction(
   return apiRequest<ChatMessage>(`/messages/${messageId}/reactions`, {
     method: "POST",
     body: { emoji }
+  });
+}
+
+export async function editChatMessage(
+  request: EditChatMessageRequest
+): Promise<ChatMessage> {
+  if (!request.body.trim()) {
+    throw new Error("Write a message before saving.");
+  }
+
+  return apiRequest<ChatMessage>(`/messages/${request.messageId}`, {
+    method: "PATCH",
+    body: { body: request.body }
   });
 }
 

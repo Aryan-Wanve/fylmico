@@ -21,6 +21,8 @@ export function useConversationChannel(
     onMessage: (message: ChatMessage) => void;
     onReaction: (message: ChatMessage) => void;
     onRead: (userId: string, lastReadAt: string) => void;
+    onEdit: (message: ChatMessage) => void;
+    onDelivered: (messageId: string) => void;
   }
 ) {
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
@@ -54,10 +56,34 @@ export function useConversationChannel(
     const channel = supabase
       .channel(`conversation:${conversationId}`)
       .on("broadcast", { event: "message:new" }, ({ payload }) => {
-        handlersRef.current.onMessage(payload as ChatMessage);
+        const message = payload as ChatMessage;
+        handlersRef.current.onMessage(message);
+        // Ack receipt back to the sender so their tick can advance from
+        // sent -> delivered without waiting for a full read. Ephemeral,
+        // client-to-client, no server round-trip (same shape as typing).
+        if (message.authorId !== selfId) {
+          channel.send({
+            type: "broadcast",
+            event: "delivered",
+            payload: { messageId: message.id, userId: selfId }
+          });
+        }
       })
       .on("broadcast", { event: "reaction:update" }, ({ payload }) => {
         handlersRef.current.onReaction(payload as ChatMessage);
+      })
+      .on("broadcast", { event: "message:edit" }, ({ payload }) => {
+        handlersRef.current.onEdit(payload as ChatMessage);
+      })
+      .on("broadcast", { event: "delivered" }, ({ payload }) => {
+        const { messageId, userId } = payload as {
+          messageId: string;
+          userId: string;
+        };
+        if (userId === selfId) {
+          return;
+        }
+        handlersRef.current.onDelivered(messageId);
       })
       .on("broadcast", { event: "read" }, ({ payload }) => {
         const { userId, lastReadAt } = payload as {

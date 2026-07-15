@@ -16,6 +16,7 @@ import {
   createConversation,
   createRoomEvent,
   createRoomTask,
+  editChatMessage,
   getFileDownloadUrl,
   listOlderMessages,
   listRoomEvents,
@@ -78,6 +79,7 @@ export function MessagesPage() {
           authorName: workspace.user.name,
           sentAt: new Date().toISOString(),
           body: entry.body,
+          editedAt: null,
           parentMessageId: entry.parentMessageId ?? null,
           replyCount: 0,
           reactions: [],
@@ -264,6 +266,16 @@ export function MessagesPage() {
         }
       },
       onReaction: upsertMessage,
+      onEdit: upsertMessage,
+      onDelivered: (messageId) => {
+        patchChannelMessages(activeChannelId, (messages) =>
+          messages.map((message) =>
+            message.id === messageId && message.status === "sent"
+              ? { ...message, status: "delivered" }
+              : message
+          )
+        );
+      },
       onRead: (userId, lastReadAt) => {
         if (!activeChannelId) {
           return;
@@ -510,6 +522,7 @@ export function MessagesPage() {
       authorName: workspace.user.name,
       sentAt: new Date().toISOString(),
       body,
+      editedAt: null,
       parentMessageId: replyingToId,
       replyCount: 0,
       reactions: [],
@@ -567,6 +580,17 @@ export function MessagesPage() {
         error instanceof Error
           ? error.message
           : "Could not react to the message."
+      );
+    }
+  }
+
+  async function handleEditMessage(messageId: string, body: string) {
+    try {
+      const updated = await editChatMessage({ messageId, body });
+      upsertMessage(updated);
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not save the edit."
       );
     }
   }
@@ -705,6 +729,7 @@ export function MessagesPage() {
                           isOwn={message.authorId === selfId}
                           key={message.id}
                           message={message}
+                          onEdit={(body) => handleEditMessage(message.id, body)}
                           onReply={() => setReplyingToId(message.id)}
                           onToggleReaction={(emoji) =>
                             handleToggleReaction(message.id, emoji)

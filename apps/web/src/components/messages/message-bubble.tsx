@@ -14,12 +14,17 @@ import { useTicker } from "@/lib/use-ticker";
 const MENTION_PATTERN = /@[A-Z][a-z]+(?:\s[A-Z][a-z]+)?/g;
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🎉", "😮", "👀"];
 const RELATIVE_TIME_WINDOW_MS = 60 * 60_000;
+const EDIT_WINDOW_MS = 10 * 60_000;
 
 function getDisplayTime(sentAt: string): string {
   const age = Date.now() - new Date(sentAt).getTime();
   return age < RELATIVE_TIME_WINDOW_MS
     ? formatRelativeTime(sentAt)
     : formatMessageTime(sentAt);
+}
+
+function canStillEdit(sentAt: string): boolean {
+  return Date.now() - new Date(sentAt).getTime() < EDIT_WINDOW_MS;
 }
 
 function renderBody(body: string) {
@@ -62,6 +67,7 @@ export function MessageBubble({
   parentAuthorName,
   onReply,
   onToggleReaction,
+  onEdit,
   grouped = false,
   isOwn = false,
   readStatus
@@ -70,15 +76,32 @@ export function MessageBubble({
   parentAuthorName?: string;
   onReply: () => void;
   onToggleReaction: (emoji: string) => void;
+  onEdit?: (body: string) => void;
   grouped?: boolean;
   isOwn?: boolean;
   readStatus?: "sending" | "sent" | "delivered" | "read";
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(message.body);
   const isReply = Boolean(message.parentMessageId);
   useTicker();
 
   const displayTime = getDisplayTime(message.sentAt);
+  const canEdit = isOwn && Boolean(onEdit) && canStillEdit(message.sentAt);
+
+  function startEditing() {
+    setDraft(message.body);
+    setIsEditing(true);
+  }
+
+  function saveEdit() {
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== message.body) {
+      onEdit?.(trimmed);
+    }
+    setIsEditing(false);
+  }
 
   return (
     <div
@@ -105,19 +128,61 @@ export function MessageBubble({
             </strong>
             <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
               {displayTime}
+              {message.editedAt ? " (edited)" : ""}
             </span>
           </div>
         )}
-        <div className="flex items-center gap-1.5">
-          <p className="mt-0.5 text-sm leading-relaxed text-[#3a3f57] dark:text-[#b4b8cc]">
-            {renderBody(message.body)}
-          </p>
-          {grouped ? (
-            <span className="mt-0.5 text-xs whitespace-nowrap text-[#8a90a3] opacity-0 group-hover:opacity-100 dark:text-[#7d8299]">
-              {displayTime}
-            </span>
-          ) : null}
-        </div>
+        {isEditing ? (
+          <div className="mt-0.5 grid gap-1.5">
+            <textarea
+              autoFocus
+              className="w-full resize-none rounded-lg border border-[#654cff]/40 bg-transparent p-2 text-sm text-[#3a3f57] outline-none dark:text-[#b4b8cc]"
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  saveEdit();
+                } else if (event.key === "Escape") {
+                  setIsEditing(false);
+                }
+              }}
+              rows={2}
+              value={draft}
+            />
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <button
+                className="text-[#654cff] hover:underline"
+                onClick={saveEdit}
+                type="button"
+              >
+                Save
+              </button>
+              <button
+                className="text-[#8a90a3] hover:underline dark:text-[#7d8299]"
+                onClick={() => setIsEditing(false)}
+                type="button"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <p className="mt-0.5 text-sm leading-relaxed text-[#3a3f57] dark:text-[#b4b8cc]">
+              {renderBody(message.body)}
+              {message.editedAt && grouped ? (
+                <span className="ml-1 text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                  (edited)
+                </span>
+              ) : null}
+            </p>
+            {grouped ? (
+              <span className="mt-0.5 text-xs whitespace-nowrap text-[#8a90a3] opacity-0 group-hover:opacity-100 dark:text-[#7d8299]">
+                {displayTime}
+              </span>
+            ) : null}
+          </div>
+        )}
 
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           {message.reactions.map((reaction) => (
@@ -172,6 +237,16 @@ export function MessageBubble({
             <CornerUpLeft className="h-3 w-3" />
             Reply
           </button>
+
+          {canEdit && !isEditing ? (
+            <button
+              className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3] opacity-0 group-hover:opacity-100 hover:text-[#654cff] dark:text-[#7d8299]"
+              onClick={startEditing}
+              type="button"
+            >
+              Edit
+            </button>
+          ) : null}
 
           {message.replyCount > 0 ? (
             <span className="text-xs font-semibold text-[#654cff]">

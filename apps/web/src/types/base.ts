@@ -265,6 +265,7 @@ export type ChatMessage = {
   authorName: string;
   sentAt: string;
   body: string;
+  editedAt: string | null;
   parentMessageId: string | null;
   replyCount: number;
   reactions: MessageReactionSummary[];
@@ -375,6 +376,11 @@ export type SendChatMessageRequest = {
   roomId: string;
   body: string;
   parentMessageId?: string;
+};
+
+export type EditChatMessageRequest = {
+  messageId: string;
+  body: string;
 };
 
 export type CreateConversationRequest = {
