@@ -277,12 +277,13 @@ model ConversationRead {
 }
 
 model Message {
-  id              String   @id @default(cuid())
-  conversationId  String   @map("conversation_id")
-  authorId        String   @map("author_id")
-  parentMessageId String?  @map("parent_message_id")
+  id              String    @id @default(cuid())
+  conversationId  String    @map("conversation_id")
+  authorId        String    @map("author_id")
+  parentMessageId String?   @map("parent_message_id")
   body            String
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  editedAt        DateTime? @map("edited_at")
 
   conversation Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   author       User              @relation(fields: [authorId], references: [id])
