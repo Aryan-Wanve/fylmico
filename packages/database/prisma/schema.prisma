@@ -25,7 +25,10 @@ model User {
   emailVerificationTokens  EmailVerificationToken[]
   passwordResetTokens      PasswordResetToken[]
   organizationMemberships  OrganizationMembership[]
-  assignedTasks            Task[]
+  createdTasks             Task[]                   @relation("TasksCreated")
+  taskAssignments          TaskAssignee[]
+  taskActivity             TaskActivity[]
+  taskTimeEntries          TaskTimeEntry[]
   messages                 Message[]
   notifications            Notification[]
   comments                 Comment[]
@@ -221,27 +224,137 @@ model PasswordResetToken {
 }
 
 model Task {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  conversationId String?  @map("conversation_id")
-  title          String
-  project        String
-  assigneeId     String   @map("assignee_id")
-  role           String
-  dueDate        String   @map("due_date")
-  status         String   @default("todo")
-  priority       String   @default("medium")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id                String    @id @default(cuid())
+  organizationId    String    @map("organization_id")
+  conversationId    String?   @map("conversation_id")
+  parentTaskId      String?   @map("parent_task_id")
+  projectId         String?   @map("project_id")
+  boardId           String?   @map("board_id")
+  scriptId          String?   @map("script_id")
+  shootDayEventId   String?   @map("shoot_day_event_id")
+  createdById       String    @map("created_by_id")
+  title             String
+  description       String?
+  type              String    @default("custom")
+  status            String    @default("todo")
+  priority          String    @default("medium")
+  dueDate           DateTime? @map("due_date")
+  startDate         DateTime? @map("start_date")
+  estimatedMinutes  Int?      @map("estimated_minutes")
+  recurrenceRule    String?   @map("recurrence_rule")
+  recurrenceEndDate DateTime? @map("recurrence_end_date")
+  equipment         String[]
+  location          String?
+  callTime          String?   @map("call_time")
+  deliverables      String[]
+  tags              String[]
+  progress          Int       @default(0)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  assignee     User          @relation(fields: [assigneeId], references: [id])
-  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  organization  Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversation  Conversation?   @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  parent        Task?           @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subtasks      Task[]          @relation("TaskSubtasks")
+  project       Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  board         Board?          @relation(fields: [boardId], references: [id], onDelete: SetNull)
+  script        Script?         @relation(fields: [scriptId], references: [id], onDelete: SetNull)
+  shootDayEvent CalendarEvent?  @relation(fields: [shootDayEventId], references: [id], onDelete: SetNull)
+  createdBy     User            @relation("TasksCreated", fields: [createdById], references: [id])
+  assignees     TaskAssignee[]
+  checklistItems TaskChecklistItem[]
+  activity      TaskActivity[]
+  timeEntries   TaskTimeEntry[]
+  attachments   FileEntry[]
+  blockingOf    TaskDependency[] @relation("BlockingTask")
+  blockedBy     TaskDependency[] @relation("BlockedTask")
 
   @@index([organizationId])
-  @@index([assigneeId])
   @@index([conversationId])
+  @@index([parentTaskId])
+  @@index([projectId])
+  @@index([boardId])
+  @@index([scriptId])
+  @@index([shootDayEventId])
+  @@index([createdById])
   @@map("tasks")
+}
+
+model TaskAssignee {
+  id             String   @id @default(cuid())
+  taskId         String   @map("task_id")
+  userId         String   @map("user_id")
+  responsibility String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([userId])
+  @@map("task_assignees")
+}
+
+model TaskChecklistItem {
+  id        String   @id @default(cuid())
+  taskId    String   @map("task_id")
+  text      String
+  done      Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_checklist_items")
+}
+
+model TaskDependency {
+  id             String   @id @default(cuid())
+  blockingTaskId String   @map("blocking_task_id")
+  blockedTaskId  String   @map("blocked_task_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  blockingTask Task @relation("BlockingTask", fields: [blockingTaskId], references: [id], onDelete: Cascade)
+  blockedTask  Task @relation("BlockedTask", fields: [blockedTaskId], references: [id], onDelete: Cascade)
+
+  @@unique([blockingTaskId, blockedTaskId])
+  @@index([blockedTaskId])
+  @@map("task_dependencies")
+}
+
+model TaskActivity {
+  id        String   @id @default(cuid())
+  taskId    String   @map("task_id")
+  actorId   String   @map("actor_id")
+  type      String
+  fromValue String?  @map("from_value")
+  toValue   String?  @map("to_value")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task  Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@index([taskId])
+  @@map("task_activity")
+}
+
+model TaskTimeEntry {
+  id              String    @id @default(cuid())
+  taskId          String    @map("task_id")
+  userId          String    @map("user_id")
+  startedAt       DateTime  @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+  durationMinutes Int?      @map("duration_minutes")
+  note            String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@map("task_time_entries")
 }
 
 model Conversation {
@@ -341,6 +454,7 @@ model Project {
   storyLocations StoryLocation[]
   scripts        Script[]
   callSheets     CallSheet[]
+  tasks          Task[]
 
   @@index([organizationId])
   @@map("projects")
@@ -451,6 +565,7 @@ model CalendarEvent {
   project      Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
   conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
   createdBy    User          @relation(fields: [createdById], references: [id])
+  tasks        Task[]
 
   @@index([organizationId])
   @@index([projectId])
@@ -535,6 +650,7 @@ model Board {
   project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
   script       Script?      @relation(fields: [scriptId], references: [id], onDelete: SetNull)
   shots        Shot[]
+  tasks        Task[]
 
   @@index([organizationId])
   @@index([projectId])
@@ -609,6 +725,7 @@ model Script {
   project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
   createdBy    User         @relation(fields: [createdById], references: [id])
   boards       Board[]
+  tasks        Task[]
 
   @@index([organizationId])
   @@index([projectId])
@@ -620,6 +737,7 @@ model FileEntry {
   organizationId String   @map("organization_id")
   parentId       String?  @map("parent_id")
   conversationId String?  @map("conversation_id")
+  taskId         String?  @map("task_id")
   name           String
   type           String
   storagePath    String?  @map("storage_path")
@@ -636,11 +754,13 @@ model FileEntry {
   children     FileEntry[]   @relation("FileEntryChildren")
   uploadedBy   User          @relation(fields: [uploadedById], references: [id])
   conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  task         Task?         @relation(fields: [taskId], references: [id], onDelete: SetNull)
 
   @@unique([organizationId, driveKey])
   @@index([organizationId])
   @@index([parentId])
   @@index([conversationId])
+  @@index([taskId])
   @@map("file_entries")
 }
 
