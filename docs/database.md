@@ -530,6 +530,10 @@ meaning the user has joined but is awaiting an admin's role assignment.
 Ownership: belongs to one `organization` and one `user`.
 
 Columns: `id`, `organization_id`, `user_id`, `role_id` (nullable),
+`order` (default `0`, added per ADR 0049 - drag-reorder position on the
+Dashboard house grid), `favorited_at` / `pinned_at` / `archived_at`
+(nullable, added per ADR 0049 - each flips null↔`now()` via a toggle
+endpoint; presence sorts the house above/below others on the Dashboard),
 `created_at`.
 
 Relationships: belongs to `organizations` and `users` (both cascade delete);
@@ -569,7 +573,8 @@ system (ADR 0005), not this table. `organizationsService.requireMembership`
 
 Migration history: `20260708164132_organizations_houses`; `role_id`
 relaxed to nullable in `20260716090000_pending_members_permissions`
-(ADR 0048).
+(ADR 0048); `order`/`favorited_at`/`pinned_at`/`archived_at` added in
+`20260716120000_dashboard_favorites_notifications_org` (ADR 0049).
 
 ### Table: `house_invitations`
 
@@ -690,6 +695,11 @@ points at a `CalendarEvent` with `category = "shoot"`), `parent_task_id`
 `equipment`/`deliverables`/`tags` (`String[]`), `location`/`call_time`
 (nullable strings), `progress` (default `0` - auto-recomputed from
 checklist completion ratio, see `tasks.service.ts#recomputeProgress`),
+`is_template` (default `false`, added per ADR 0049 - a template is a
+regular task row with this flag set; `Save as Template`/`Use` clone
+between template and real task via a shared `cloneTask` helper, and every
+task-listing query filters `is_template: false` so templates never appear
+as real work),
 `created_at`, `updated_at`. "Linked Client" is derived at read time from
 `task.project.clients[0].client` - no redundant direct `client_id` column,
 since `Project` already owns that relation.
@@ -726,7 +736,8 @@ Migration history: `20260708165828_tasks_chat`,
 `20260715200000_tasks_production_workflow` (ADR 0047) - full rework:
 dropped `assignee_id`/`role`/freeform `project`, added every column above,
 remapped `status` (`done`→`completed`, `on-hold`→`todo`), backfilled
-`task_assignees` from the old `assignee_id`/`role`.
+`task_assignees` from the old `assignee_id`/`role`; `is_template` added in
+`20260716140000_task_templates` (ADR 0049).
 
 ### Table: `task_assignees`
 
@@ -1130,9 +1141,14 @@ client must poll `GET /api/v1/notifications` to see new ones.
 Ownership: belongs to one `user` (the recipient).
 
 Columns: `id`, `user_id`, `type` (plain string, e.g. `"task_assigned"`,
-`"house_joined"`), `title`, `body`, `read_at` (nullable), `created_at`.
+`"house_joined"`), `title`, `body`, `read_at` (nullable), `organization_id`
+(nullable, added per ADR 0049 - which house this notification belongs to,
+so clicking it from the bell dropdown can switch the active house before
+navigating), `created_at`.
 
-Relationships: belongs to `users` (cascade delete).
+Relationships: belongs to `users` (cascade delete); belongs to
+`organizations` (nullable, `onDelete: SetNull` - a notification outlives
+its house being deleted, it just loses the deep-link).
 
 Indexes: index on `user_id`.
 
@@ -1148,9 +1164,12 @@ member(s)). Read/marked-read only by the owning user
 Reasoning: no polymorphic "related entity" reference (no `relatedType`/
 `relatedId`) - notifications don't need `comments`' `commentableType`/
 `commentableId` pattern (below) since nothing yet needs to deep-link a
-notification back to its source record, just show a message (ADR 0023).
+notification back to its specific source record, just to its house and a
+type-derived destination page (a flat `TYPE_DESTINATION` lookup table
+client-side, ADR 0049), not a full polymorphic reference.
 
-Migration history: `20260708173903_notifications`.
+Migration history: `20260708173903_notifications`; `organization_id` added
+in `20260716120000_dashboard_favorites_notifications_org` (ADR 0049).
 
 ### Table: `comments`
 

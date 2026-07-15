@@ -499,3 +499,40 @@ Migration notes:
   `organizations.banned_user_ids` (`text[]`), and drops the `NOT NULL`
   constraint on `organization_memberships.role_id` - run
   `prisma migrate deploy`.
+
+## 0.15.0 - 2026-07-16
+
+Summary:
+
+- Dashboard: Favorite/Pin/Archive toggles on each house card, drag-reorder,
+  a live search box, and Storage/Last Activity badges (batched aggregates,
+  no new per-house queries). Pinned houses sort first, then favorites,
+  then custom order (ADR 0049).
+- Dashboard: clicking a notification from a house other than the active
+  one now switches houses automatically before navigating to the relevant
+  page (`Notification.organizationId` + a type→destination lookup table).
+- Dashboard: each house now remembers the last page you were on and
+  returns you there instead of always landing on Home.
+- Tasks: Calendar now shows a "Task Deadlines" source with every task's
+  due date as an event.
+- Tasks: Save any task as a reusable Template and create new tasks from
+  it via a new "Templates" popover on the Tasks page.
+- Tasks: press `n` anywhere on the Tasks page to open the New Task dialog.
+- Analytics: new "Estimate vs Actual" panel comparing `estimatedMinutes`
+  against logged `TaskTimeEntry` duration.
+- Fixed a bug where Analytics' "Tasks Completed" stat was always 0 -
+  it still checked the old `status === "done"` value from before the
+  Tasks rework (ADR 0047) instead of `"completed"`.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- Migration `20260716120000_dashboard_favorites_notifications_org` - adds
+  `organization_memberships.order`/`favorited_at`/`pinned_at`/
+  `archived_at` and `notifications.organization_id` (FK, `SetNull`).
+- Migration `20260716140000_task_templates` - adds `tasks.is_template`
+  (default `false`).
+- Run `prisma migrate deploy` for both.

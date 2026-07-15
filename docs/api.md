@@ -400,6 +400,12 @@ Response:
     "type": "agency",
     "enabledModules": ["home", "projects", "calendar", "..."],
     "myRole": "Owner",
+    "isFavorite": false,
+    "isPinned": false,
+    "isArchived": false,
+    "order": 0,
+    "storageBytes": 10485760,
+    "lastActivityAt": "2026-07-15T18:00:00.000Z",
     "members": [
       {
         "id": "user_123",
@@ -436,7 +442,12 @@ only when the requester holds `approve_members` (or is Owner) — see the
 Pending Members endpoints below. A member's `status` is currently just
 `"online"` for the requesting caller themselves and `"offline"` for
 everyone else — not yet derived from `lastSeenAt`'s recency, see
-`POST /api/v1/auth/me/heartbeat` below.)
+`POST /api/v1/auth/me/heartbeat` below. `isFavorite`/`isPinned`/
+`isArchived`/`order` (ADR 0049) reflect the requesting caller's own
+membership flags, toggled via the favorite/pin/archive/reorder endpoints
+below; `storageBytes` (sum of `file_entries.size`) and `lastActivityAt`
+(max `tasks.updated_at`) are batched aggregates computed per house, shown
+as Dashboard card badges.)
 
 Errors: `400 invalid_request`, `401 unauthenticated`, `409 handle_unavailable`.
 Expected behavior: creates the organization, seeds default roles, makes the
@@ -560,6 +571,32 @@ pending membership and appends the user's id to
 user into this house (`403 banned_from_house` on
 `POST /api/v1/houses/join`). Response: the updated `House`. Errors:
 `401 unauthenticated`, `403 forbidden`, `404 pending_member_not_found`.
+
+### `POST /api/v1/houses/:houseId/favorite`
+
+Added per ADR 0049. Authentication: required, caller must be an active
+member of `houseId`. Toggles the caller's own `favoritedAt` on their
+membership row (null↔`now()`). Response: `{ "data": { "success": true } }`.
+Errors: `401 unauthenticated`, `403 forbidden`.
+
+### `POST /api/v1/houses/:houseId/pin`
+
+Same shape as `.../favorite`, toggling `pinnedAt` instead. Pinned houses
+sort above favorited/regular houses on the Dashboard.
+
+### `POST /api/v1/houses/:houseId/archive`
+
+Same shape as `.../favorite`, toggling `archivedAt` instead. Archived
+houses are hidden from the main Dashboard grid behind a collapsible
+"Archived" section.
+
+### `POST /api/v1/houses/reorder`
+
+Added per ADR 0049. Authentication: required. Body:
+`{ "organizationIds": string[] }` — the caller's houses in their new
+display order. Sets each membership's `order` to its index in the array
+(transaction). Response: `{ "data": { "success": true } }`. Errors:
+`401 unauthenticated`.
 
 ### `POST /api/v1/houses/:houseId/activate`
 
@@ -780,6 +817,27 @@ Authentication: required. No body. Copies the task (title, type, priority,
 assignees, production fields, links) but not its id, dates, checklist
 completion state, time entries, or activity log. Response: the new `Task`.
 Errors: `401 unauthenticated`, `403 forbidden`, `404 task_not_found`.
+
+### `POST /api/v1/tasks/:taskId/save-as-template`
+
+Added per ADR 0049. Authentication: required. No body. Clones the task
+(same fields as `duplicate` above) into a new row with `isTemplate: true`;
+templates are excluded from every normal task listing. Response: the new
+`Task`. Errors: `401 unauthenticated`, `403 forbidden`, `404 task_not_found`.
+
+### `POST /api/v1/tasks/:taskId/create-from-template`
+
+Added per ADR 0049. Authentication: required. No body. Clones the
+template (`:taskId` must have `isTemplate: true`) into a new real task
+(`isTemplate: false`) and logs a `created` activity entry. Response: the
+new `Task`. Errors: `401 unauthenticated`, `403 forbidden`,
+`404 task_not_found`.
+
+### `GET /api/v1/houses/:houseId/task-templates`
+
+Added per ADR 0049. Authentication: required, caller must be an active
+member of `houseId`. Lists this house's templates (`isTemplate: true`),
+newest first. Response: `{ "data": Task[] }`.
 
 ### `POST /api/v1/tasks/:taskId/checklist`
 
@@ -1405,6 +1463,7 @@ Authentication: required. Response: `{ "data": Analytics }`. Errors:
         "percentage": 24
       }
     ],
+    "taskEstimateVsActual": { "estimatedMinutes": 90, "actualMinutes": 0 },
     "activityHeatmap": {
       "dayLabels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       "timeLabels": ["12 AM", "4 AM", "8 AM", "12 PM", "4 PM", "8 PM"],
@@ -1420,7 +1479,10 @@ excludes projects staged `Completed` or `On Hold`; `teamEfficiency` is
 logged in the last 7 days divided by a flat 40-hour weekly capacity,
 capped at 100; `activityHeatmap` buckets `Task`/`Message`/`Comment`/
 `TimeEntry` timestamps by weekday and 4-hour window, normalized 0-4
-relative to that house's busiest bucket.
+relative to that house's busiest bucket; `taskEstimateVsActual` (ADR 0049)
+sums `Task.estimatedMinutes` against `TaskTimeEntry.durationMinutes`
+across the house's non-template tasks. All task queries feeding this
+endpoint exclude `isTemplate: true` rows (ADR 0049).
 
 ## Dashboard Summary (Implemented)
 

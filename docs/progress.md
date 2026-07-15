@@ -5274,3 +5274,125 @@ Next task:
   archive, search, storage/activity badges), cross-house notification
   aggregation, instant per-house last-page memory, and retrofitting
   `requirePermission` into the remaining domain services.
+
+## 2026-07-16 Dashboard Phase 2 + Tasks Phase 2
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 99%
+
+Features completed:
+
+- Dashboard: Favorite/Pin/Archive toggles per house (new
+  `favoritedAt`/`pinnedAt`/`archivedAt` columns on
+  `OrganizationMembership`), drag-reorder (native HTML5 DnD, new `order`
+  column), a client-side search box, and Storage/Last Activity badges
+  (batched `groupBy` aggregates, no per-house N+1 queries). Houses sort
+  pinned > favorite > custom order > name.
+- Dashboard: notifications gained a nullable `organizationId` -
+  clicking one from a non-active house now switches houses
+  (`activateHouse`) before routing to a type-derived destination page
+  (a flat `TYPE_DESTINATION` lookup, not a routing framework). All 13
+  `notificationsService.create` call sites updated to pass it.
+- Dashboard: per-house "last page" is remembered in `localStorage`
+  (`house-last-page.ts`) and used when entering a house instead of
+  always landing on `/home`.
+- Tasks: Calendar page now shows a "Task Deadlines" source built from
+  already-loaded `workspace.tasks` (no new API call).
+- Tasks: Save as Template / Create from Template, via a new
+  `Task.isTemplate` flag and a shared `cloneTask` helper (refactored out
+  of the existing `duplicateTask`); new Templates popover on the Tasks
+  page.
+- Tasks: `n` keyboard shortcut opens the New Task dialog (ignored while
+  typing in a field).
+- Analytics: new "Estimate vs Actual" panel (`estimatedMinutes` vs
+  summed `TaskTimeEntry.durationMinutes`).
+- Fixed a real bug found while touching `analytics.service.ts`: the
+  `TASK_STATUS_DISPLAY` map and `tasksCompleted` filter still used the
+  pre-ADR-0047 4-status vocabulary (`done`/`on-hold`), so
+  `tasksCompleted` was silently always 0 in production. Corrected to the
+  current 6-status vocabulary; also added `isTemplate: false` filters to
+  every analytics task query.
+
+Features started:
+
+- None beyond the above.
+
+Explicitly skipped this pass (see ADR 0049 for why):
+
+- Custom Fields, Pomodoro Mode, Gantt/Timeline view, advanced/saved
+  filter builder - all judged genuinely open-ended, need their own
+  scoping.
+- Proactive due/overdue push notifications - hard platform constraint
+  (no scheduled-job infra on Hostinger, ADR 0042), not a scope choice.
+- Retrofitting `requirePermission` into the remaining domain services
+  (still deferred from ADR 0048).
+
+Files created:
+
+- `docs/adr/0049-dashboard-and-tasks-phase-2.md`
+- `packages/database/prisma/migrations/20260716120000_dashboard_favorites_notifications_org/`
+- `packages/database/prisma/migrations/20260716140000_task_templates/`
+- `apps/web/src/lib/house-last-page.ts`
+- `apps/web/src/app/api/v1/houses/[houseId]/{favorite,pin,archive}/route.ts`
+- `apps/web/src/app/api/v1/houses/reorder/route.ts`
+- `apps/web/src/app/api/v1/houses/[houseId]/task-templates/route.ts`
+- `apps/web/src/app/api/v1/tasks/[taskId]/{save-as-template,create-from-template}/route.ts`
+- `apps/web/src/components/tasks/task-templates-popover.tsx`
+- `apps/web/src/components/analytics/task-estimate-panel.tsx`
+
+Files modified:
+
+- `packages/database/prisma/schema.prisma` (`OrganizationMembership`
+  order/favoritedAt/pinnedAt/archivedAt, `Notification.organizationId`,
+  `Task.isTemplate`)
+- `apps/web/src/server/organizations/organizations.service.ts`
+  (toggle/reorder methods, batched storage/activity aggregation,
+  `compareHouses` sort)
+- `apps/web/src/server/notifications/notifications.service.ts`
+  (`organizationId` param/column)
+- `apps/web/src/server/announcements/announcements.service.ts`,
+  `bookings/bookings.service.ts`, `comments/comments.service.ts`
+  (pass `organizationId` into `notificationsService.create`)
+- `apps/web/src/server/tasks/tasks.service.ts` (`cloneTask` helper,
+  `listTemplates`/`saveAsTemplate`/`createFromTemplate`, `isTemplate`
+  filters, notification call sites)
+- `apps/web/src/server/analytics/analytics.service.ts` (status
+  vocabulary fix, `isTemplate` filters, `taskEstimateVsActual`)
+- `apps/web/src/types/base.ts` (`House` favorite/pin/archive/order/
+  storage/activity fields, `NotificationItem.organizationId`,
+  `Analytics.taskEstimateVsActual`)
+- `apps/web/src/services/base-workspace.service.ts` (new client
+  functions for all of the above)
+- `apps/web/src/components/houses/houses-dashboard-page.tsx` (full
+  rewrite: search, pinned/archived sections, `HouseCard` drag-and-drop
+  and favorite/pin/archive buttons)
+- `apps/web/src/components/layout/app-shell-gate.tsx` (writes last-page
+  on route change), `notification-bell.tsx` (deep-link handling)
+- `apps/web/src/components/calendar/calendar-data.ts`,
+  `calendar-page.tsx` (Task Deadlines source)
+- `apps/web/src/components/tasks/task-card-menu.tsx`,
+  `task-row-item.tsx` (Save as Template action), `tasks-page.tsx` (`n`
+  shortcut, Templates popover wiring)
+- `apps/web/src/components/analytics/analytics-page.tsx`
+  (`TaskEstimatePanel` row)
+
+Known limitations / tradeoffs:
+
+- `TYPE_DESTINATION` falls back to `/home` for any notification type not
+  in the lookup table, rather than erroring - fails safe, but a newly
+  added notification type needs an entry added here too.
+- Per-house last-page memory is `localStorage`-only, not synced across
+  devices/browsers.
+- Verified live in-browser: Dashboard search/favorite (network + DB
+  query), Calendar Task Deadlines event render, full Save-as-Template ->
+  Templates popover -> Create-from-Template flow (network requests
+  confirmed 200, test rows cleaned up after), the `n` shortcut, and the
+  Analytics Estimate vs Actual panel rendering real data.
+
+Next task:
+
+- Custom Fields, Pomodoro Mode, Gantt/Timeline view, and an
+  advanced/saved filter builder remain open for a future phase.
+- Retrofit `requirePermission` into the remaining domain services
+  (ADR 0048's deferred item, still outstanding).
