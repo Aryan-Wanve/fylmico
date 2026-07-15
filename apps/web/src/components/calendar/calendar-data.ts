@@ -1,4 +1,8 @@
-import type { CalendarEvent as ApiCalendarEvent, Project } from "@/types/base";
+import type {
+  CalendarEvent as ApiCalendarEvent,
+  ProductionTask,
+  Project
+} from "@/types/base";
 
 export type EventCategory =
   | "shoot"
@@ -48,6 +52,7 @@ export const CATEGORY_STYLES: Record<
 };
 
 export const MY_SCHEDULE_ID = "my-schedule";
+export const TASK_DEADLINES_ID = "task-deadlines";
 
 export type CalendarSource = {
   id: string;
@@ -77,6 +82,7 @@ function hashString(value: string): number {
 export function buildCalendarSources(projects: Project[]): CalendarSource[] {
   return [
     { id: MY_SCHEDULE_ID, name: "My Schedule", color: "bg-[#654cff]" },
+    { id: TASK_DEADLINES_ID, name: "Task Deadlines", color: "bg-[#ef4444]" },
     ...projects.map((project) => ({
       id: project.id,
       name: project.title,
@@ -104,5 +110,20 @@ export function toCalendarEvent(event: ApiCalendarEvent): CalendarEvent {
     location: event.location ?? undefined,
     category: event.category,
     calendarId: event.projectId ?? MY_SCHEDULE_ID
+  };
+}
+
+export function toTaskCalendarEvent(task: ProductionTask): CalendarEvent {
+  const due = new Date(task.dueDate as string);
+  return {
+    id: `task-${task.id}`,
+    title: task.title,
+    date: due.toISOString().slice(0, 10),
+    time: due.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit"
+    }),
+    category: "other",
+    calendarId: TASK_DEADLINES_ID
   };
 }

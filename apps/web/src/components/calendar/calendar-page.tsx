@@ -18,10 +18,12 @@ import {
   buildCalendarSources,
   MY_SCHEDULE_ID,
   toCalendarEvent,
+  toTaskCalendarEvent,
   type CalendarEvent,
   type EventCategory
 } from "@/components/calendar/calendar-data";
 import { addDays, addMonths, isSameMonth } from "@/lib/calendar-utils";
+import { useWorkspace } from "@/lib/workspace-context";
 import {
   createCalendarEvent,
   listCalendarEvents,
@@ -53,6 +55,7 @@ function toggleSetValue<T>(current: Set<T>, value: T): Set<T> {
 }
 
 export function CalendarPage() {
+  const { workspace } = useWorkspace();
   const today = new Date();
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [visibleMonth, setVisibleMonth] = useState(
@@ -168,7 +171,11 @@ export function CalendarPage() {
     handleSelectDate(addDays(selectedDate, 1));
   }
 
-  const filteredEvents = events.filter(
+  const taskEvents = workspace.tasks
+    .filter((task) => task.dueDate)
+    .map(toTaskCalendarEvent);
+
+  const filteredEvents = [...events, ...taskEvents].filter(
     (event) =>
       activeCalendarIds.has(event.calendarId) &&
       activeCategories.has(event.category)
