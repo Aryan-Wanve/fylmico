@@ -60,7 +60,7 @@ export function AppSidebar({
             className={
               compact ? "grid place-items-center" : "flex items-center gap-2.5"
             }
-            href="/home"
+            href="/dashboard"
           >
             <Image
               alt=""
