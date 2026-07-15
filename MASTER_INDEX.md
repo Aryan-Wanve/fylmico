@@ -94,6 +94,7 @@ Current ADRs:
 - [0042-migrate-on-push-ci.md](docs/adr/0042-migrate-on-push-ci.md)
 - [0043-in-memory-rate-limiting.md](docs/adr/0043-in-memory-rate-limiting.md)
 - [0044-realtime-chat-supabase.md](docs/adr/0044-realtime-chat-supabase.md)
+- [0045-house-drive-connection.md](docs/adr/0045-house-drive-connection.md)
 
 ## Current Sprint Gate
 
