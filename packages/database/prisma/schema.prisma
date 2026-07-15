@@ -59,6 +59,7 @@ model Organization {
   inviteCode     String   @unique @map("invite_code")
   type           String   @default("custom")
   enabledModules String[] @default([]) @map("enabled_modules")
+  bannedUserIds  String[] @default([]) @map("banned_user_ids")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -94,6 +95,7 @@ model Role {
   name           String
   color          String
   description    String
+  permissions    String[] @default([])
   createdAt      DateTime @default(now()) @map("created_at")
 
   organization Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -108,12 +110,12 @@ model OrganizationMembership {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
   userId         String   @map("user_id")
-  roleId         String   @map("role_id")
+  roleId         String?  @map("role_id")
   createdAt      DateTime @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role         Role         @relation(fields: [roleId], references: [id])
+  role         Role?        @relation(fields: [roleId], references: [id])
 
   @@unique([organizationId, userId])
   @@index([organizationId])
