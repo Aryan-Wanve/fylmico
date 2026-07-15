@@ -10,6 +10,7 @@ import type {
   CallSheet,
   ChangePasswordRequest,
   BookingStatus,
+  ChannelTaskItem,
   ChatMessage,
   ChatRoom,
   ClientItem,
@@ -47,6 +48,9 @@ import type {
   RequestJoinHouseRequest,
   RequestPasswordResetRequest,
   ResetPasswordRequest,
+  TaskActivityItem,
+  TaskChecklistItemDto,
+  TaskTimeEntryItem,
   Script,
   ScriptSummary,
   SendChatMessageRequest,
@@ -328,8 +332,8 @@ export async function getInviteCodePreview(
 export async function createTask(
   request: CreateTaskRequest
 ): Promise<ProductionTask> {
-  if (!request.title.trim() || !request.project.trim() || !request.dueDate) {
-    throw new Error("Task title, project, and due date are required.");
+  if (!request.title.trim()) {
+    throw new Error("Give the task a title.");
   }
 
   if (!activeHouseId) {
@@ -340,6 +344,10 @@ export async function createTask(
     method: "POST",
     body: { houseId: activeHouseId, ...request }
   });
+}
+
+export async function getTask(taskId: string): Promise<ProductionTask> {
+  return apiRequest<ProductionTask>(`/tasks/${taskId}`);
 }
 
 export async function updateTask(
@@ -355,6 +363,154 @@ export async function updateTask(
 export async function deleteTask(taskId: string): Promise<void> {
   await apiRequest<{ success: boolean }>(`/tasks/${taskId}`, {
     method: "DELETE"
+  });
+}
+
+export async function duplicateTaskRequest(
+  taskId: string
+): Promise<ProductionTask> {
+  return apiRequest<ProductionTask>(`/tasks/${taskId}/duplicate`, {
+    method: "POST"
+  });
+}
+
+export async function addChecklistItem(
+  taskId: string,
+  text: string
+): Promise<TaskChecklistItemDto> {
+  return apiRequest<TaskChecklistItemDto>(`/tasks/${taskId}/checklist`, {
+    method: "POST",
+    body: { text }
+  });
+}
+
+export async function updateChecklistItem(
+  taskId: string,
+  itemId: string,
+  updates: Partial<{ text: string; done: boolean; order: number }>
+): Promise<TaskChecklistItemDto> {
+  return apiRequest<TaskChecklistItemDto>(
+    `/tasks/${taskId}/checklist/${itemId}`,
+    { method: "PATCH", body: updates }
+  );
+}
+
+export async function removeChecklistItem(
+  taskId: string,
+  itemId: string
+): Promise<void> {
+  await apiRequest<{ success: boolean }>(
+    `/tasks/${taskId}/checklist/${itemId}`,
+    { method: "DELETE" }
+  );
+}
+
+export async function addTaskDependency(
+  taskId: string,
+  blockingTaskId: string
+): Promise<ProductionTask> {
+  return apiRequest<ProductionTask>(`/tasks/${taskId}/dependencies`, {
+    method: "POST",
+    body: { blockingTaskId }
+  });
+}
+
+export async function removeTaskDependency(
+  taskId: string,
+  blockingTaskId: string
+): Promise<ProductionTask> {
+  return apiRequest<ProductionTask>(
+    `/tasks/${taskId}/dependencies/${blockingTaskId}`,
+    { method: "DELETE" }
+  );
+}
+
+export async function startTaskTimer(
+  taskId: string
+): Promise<TaskTimeEntryItem> {
+  return apiRequest<TaskTimeEntryItem>(`/tasks/${taskId}/time-entries/start`, {
+    method: "POST"
+  });
+}
+
+export async function stopTaskTimer(
+  taskId: string,
+  note?: string
+): Promise<TaskTimeEntryItem> {
+  return apiRequest<TaskTimeEntryItem>(`/tasks/${taskId}/time-entries/stop`, {
+    method: "POST",
+    body: { note }
+  });
+}
+
+export async function addTaskWorkLog(
+  taskId: string,
+  entry: {
+    startedAt: string;
+    endedAt: string;
+    durationMinutes: number;
+    note?: string;
+  }
+): Promise<TaskTimeEntryItem> {
+  return apiRequest<TaskTimeEntryItem>(`/tasks/${taskId}/time-entries`, {
+    method: "POST",
+    body: entry
+  });
+}
+
+export async function listTaskTimeEntries(
+  taskId: string
+): Promise<TaskTimeEntryItem[]> {
+  return apiRequest<TaskTimeEntryItem[]>(`/tasks/${taskId}/time-entries`);
+}
+
+export async function listTaskActivity(
+  taskId: string
+): Promise<TaskActivityItem[]> {
+  return apiRequest<TaskActivityItem[]>(`/tasks/${taskId}/activity`);
+}
+
+export async function listTaskAttachments(
+  taskId: string
+): Promise<FileEntryItem[]> {
+  return apiRequest<FileEntryItem[]>(`/tasks/${taskId}/attachments`);
+}
+
+export async function linkTaskAttachment(
+  taskId: string,
+  entryId: string
+): Promise<FileEntryItem> {
+  return apiRequest<FileEntryItem>(`/tasks/${taskId}/attachments`, {
+    method: "POST",
+    body: { entryId }
+  });
+}
+
+export async function unlinkTaskAttachment(
+  taskId: string,
+  entryId: string
+): Promise<void> {
+  await apiRequest<{ success: boolean }>(
+    `/tasks/${taskId}/attachments/${entryId}`,
+    { method: "DELETE" }
+  );
+}
+
+export async function uploadTaskAttachment(
+  taskId: string,
+  file: File
+): Promise<FileEntryItem> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before uploading files.");
+  }
+
+  const formData = new FormData();
+  formData.set("file", file);
+  formData.set("taskId", taskId);
+
+  return apiRequest<FileEntryItem>(`/houses/${activeHouseId}/files/upload`, {
+    method: "POST",
+    body: formData
   });
 }
 
@@ -428,6 +584,22 @@ export async function createProjectComment(
   body: string
 ): Promise<Comment> {
   return apiRequest<Comment>(`/projects/${projectId}/comments`, {
+    method: "POST",
+    body: { body }
+  });
+}
+
+export async function listTaskComments(taskId: string): Promise<Comment[]> {
+  return apiRequest<Comment[]>(`/tasks/${taskId}/comments`, {
+    query: { limit: 50 }
+  });
+}
+
+export async function createTaskComment(
+  taskId: string,
+  body: string
+): Promise<Comment> {
+  return apiRequest<Comment>(`/tasks/${taskId}/comments`, {
     method: "POST",
     body: { body }
   });
@@ -618,19 +790,21 @@ export async function listRoomFiles(roomId: string): Promise<FileEntryItem[]> {
   return apiRequest<FileEntryItem[]>(`/chat/rooms/${roomId}/files`);
 }
 
-export async function listRoomTasks(roomId: string): Promise<ProductionTask[]> {
-  return apiRequest<ProductionTask[]>(`/chat/rooms/${roomId}/tasks`);
+export async function listRoomTasks(
+  roomId: string
+): Promise<ChannelTaskItem[]> {
+  return apiRequest<ChannelTaskItem[]>(`/chat/rooms/${roomId}/tasks`);
 }
 
 export async function createRoomTask(
   roomId: string,
   title: string
-): Promise<ProductionTask[]> {
+): Promise<ChannelTaskItem[]> {
   if (!title.trim()) {
     throw new Error("Enter a task title.");
   }
 
-  return apiRequest<ProductionTask[]>(`/chat/rooms/${roomId}/tasks`, {
+  return apiRequest<ChannelTaskItem[]>(`/chat/rooms/${roomId}/tasks`, {
     method: "POST",
     body: { title }
   });

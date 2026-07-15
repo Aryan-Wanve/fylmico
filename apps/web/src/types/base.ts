@@ -10,7 +10,85 @@ export type RoleName =
   | "Client"
   | "Member";
 
-export type TaskStatus = "todo" | "in-progress" | "on-hold" | "done";
+export type TaskType =
+  | "shoot"
+  | "edit"
+  | "color-grade"
+  | "sound-design"
+  | "vfx"
+  | "motion-graphics"
+  | "storyboarding"
+  | "script-writing"
+  | "thumbnail"
+  | "photography"
+  | "reels"
+  | "social-media"
+  | "client-review"
+  | "asset-collection"
+  | "equipment"
+  | "location-scouting"
+  | "casting"
+  | "meeting"
+  | "admin"
+  | "custom";
+
+export type TaskStatus =
+  | "todo"
+  | "in-progress"
+  | "review"
+  | "changes-requested"
+  | "completed"
+  | "archived";
+
+export type TaskPriority = "low" | "medium" | "high" | "urgent";
+
+export type TaskRecurrenceRule = "daily" | "weekly" | "monthly";
+
+export type TaskAssigneeItem = {
+  userId: string;
+  name: string;
+  responsibility: string | null;
+};
+
+export type TaskAssigneeInput = { userId: string; responsibility?: string };
+
+export type TaskChecklistItemDto = {
+  id: string;
+  text: string;
+  done: boolean;
+  order: number;
+};
+
+export type TaskRef = { id: string; title: string; status: TaskStatus };
+
+export type TaskActivityItem = {
+  id: string;
+  type: string;
+  fromValue: string | null;
+  toValue: string | null;
+  actorId: string;
+  actorName: string;
+  createdAt: string;
+};
+
+export type ChannelTaskItem = {
+  id: string;
+  title: string;
+  assignees: TaskAssigneeItem[];
+  dueDate: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+};
+
+export type TaskTimeEntryItem = {
+  id: string;
+  userId: string;
+  userName: string | null;
+  startedAt: string;
+  endedAt: string | null;
+  durationMinutes: number | null;
+  note: string | null;
+};
 
 export type ProjectStage =
   | "Development"
@@ -104,13 +182,43 @@ export type House = {
 export type ProductionTask = {
   id: string;
   title: string;
-  project: string;
-  assigneeId: string;
-  assigneeName: string;
-  role: RoleName;
-  dueDate: string;
+  description: string | null;
+  type: TaskType;
   status: TaskStatus;
-  priority: "low" | "medium" | "high";
+  priority: TaskPriority;
+  dueDate: string | null;
+  startDate: string | null;
+  estimatedMinutes: number | null;
+  recurrenceRule: TaskRecurrenceRule | null;
+  recurrenceEndDate: string | null;
+  equipment: string[];
+  location: string | null;
+  callTime: string | null;
+  deliverables: string[];
+  tags: string[];
+  progress: number;
+  createdById: string;
+  createdByName: string;
+  projectId: string | null;
+  projectTitle: string | null;
+  clientId: string | null;
+  clientName: string | null;
+  boardId: string | null;
+  boardName: string | null;
+  scriptId: string | null;
+  scriptTitle: string | null;
+  shootDayEventId: string | null;
+  shootDayEventTitle: string | null;
+  parentTaskId: string | null;
+  assignees: TaskAssigneeItem[];
+  checklistItems: TaskChecklistItemDto[];
+  subtasks: TaskRef[];
+  blockedByTasks: TaskRef[];
+  blockingTasks: TaskRef[];
+  isBlocked: boolean;
+  attachmentIds: string[];
+  createdAt: string;
+  updatedAt: string;
   commentCount?: number;
 };
 
@@ -373,20 +481,50 @@ export type InviteCodePreview = {
 
 export type CreateTaskRequest = {
   title: string;
-  project: string;
-  assigneeId: string;
-  dueDate: string;
-  priority?: "low" | "medium" | "high";
+  description?: string;
+  type?: TaskType;
   status?: TaskStatus;
+  priority?: TaskPriority;
+  assignees?: TaskAssigneeInput[];
+  dueDate?: string;
+  startDate?: string;
+  estimatedMinutes?: number;
+  recurrenceRule?: TaskRecurrenceRule;
+  recurrenceEndDate?: string;
+  projectId?: string;
+  boardId?: string;
+  scriptId?: string;
+  shootDayEventId?: string;
+  parentTaskId?: string;
+  equipment?: string[];
+  location?: string;
+  callTime?: string;
+  deliverables?: string[];
+  tags?: string[];
 };
 
 export type UpdateTaskRequest = Partial<{
   title: string;
-  project: string;
-  assigneeId: string;
-  dueDate: string;
-  priority: "low" | "medium" | "high";
+  description: string;
+  type: TaskType;
   status: TaskStatus;
+  priority: TaskPriority;
+  assignees: TaskAssigneeInput[];
+  dueDate: string;
+  startDate: string;
+  estimatedMinutes: number;
+  recurrenceRule: TaskRecurrenceRule;
+  recurrenceEndDate: string;
+  projectId: string;
+  boardId: string;
+  scriptId: string;
+  shootDayEventId: string;
+  equipment: string[];
+  location: string;
+  callTime: string;
+  deliverables: string[];
+  tags: string[];
+  progress: number;
 }>;
 
 export type SendChatMessageRequest = {
@@ -642,6 +780,7 @@ export type FileEntryType = "folder" | "file";
 export type FileEntryItem = {
   id: string;
   parentId: string | null;
+  taskId: string | null;
   name: string;
   type: FileEntryType;
   size: number | null;
