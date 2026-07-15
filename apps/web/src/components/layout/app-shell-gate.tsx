@@ -8,6 +8,7 @@ import { AppTopbar } from "@/components/layout/app-topbar";
 import { PageTransition } from "@/components/layout/page-transition";
 import { VerifyEmailBanner } from "@/components/layout/verify-email-banner";
 import { WaitingForApprovalPage } from "@/components/houses/waiting-for-approval-page";
+import { setLastPage } from "@/lib/house-last-page";
 import { sendHeartbeat } from "@/services/base-workspace.service";
 
 const DASHBOARD_PATH = "/dashboard";
@@ -70,6 +71,15 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing open state to the current route, not deriving render output
     setMobileNavOpen(false);
   }, [pathname]);
+
+  // Remembers the last non-dashboard route visited per house, so switching
+  // back to a house later (houses-dashboard-page.tsx) can restore it
+  // instead of always landing on /home.
+  useEffect(() => {
+    if (activeHouse && activeHouse.myRole !== null && !isDashboard) {
+      setLastPage(activeHouse.id, pathname);
+    }
+  }, [activeHouse, pathname, isDashboard]);
 
   // Keeps `User.lastSeenAt` fresh while the app is open, so presence's
   // "last seen" fallback (used once a user has no live Realtime

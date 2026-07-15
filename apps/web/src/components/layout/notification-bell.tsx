@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { Route } from "next";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   Calendar,
@@ -15,7 +17,9 @@ import {
   PopoverTrigger
 } from "@/components/ui/popover";
 import { formatRelativeTime } from "@/lib/relative-time";
+import { useWorkspace } from "@/lib/workspace-context";
 import {
+  activateHouse,
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead
@@ -23,6 +27,24 @@ import {
 import type { NotificationItem } from "@/types/base";
 
 const POLL_INTERVAL_MS = 25_000;
+
+// Where each notification type's "relevant page" is, once its house is
+// active - a plain lookup, not a routing framework, since it's just 10-ish
+// known notification types.
+const TYPE_DESTINATION: Record<string, string> = {
+  task_assigned: "/tasks",
+  task_comment: "/tasks",
+  task_mentioned: "/tasks",
+  task_status_changed: "/tasks",
+  task_review_requested: "/tasks",
+  task_completed: "/tasks",
+  project_comment: "/projects",
+  booking_status_changed: "/bookings",
+  booking_created: "/bookings",
+  announcement_posted: "/announcements",
+  house_join_request: "/crews",
+  member_role_assigned: "/home"
+};
 
 const TYPE_STYLES: Record<
   string,
@@ -82,6 +104,8 @@ const DEFAULT_TYPE_STYLE = {
 };
 
 export function NotificationBell() {
+  const router = useRouter();
+  const { workspace, refreshWorkspace } = useWorkspace();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const isOpenRef = useRef(false);
@@ -140,18 +164,29 @@ export function NotificationBell() {
   }
 
   async function handleSelect(notification: NotificationItem) {
-    if (notification.readAt) {
-      return;
+    if (!notification.readAt) {
+      try {
+        const updated = await markNotificationRead(notification.id);
+        setNotifications((current) =>
+          current.map((item) => (item.id === updated.id ? updated : item))
+        );
+      } catch {
+        // Ignore - the item just stays unread visually.
+      }
     }
 
-    try {
-      const updated = await markNotificationRead(notification.id);
-      setNotifications((current) =>
-        current.map((item) => (item.id === updated.id ? updated : item))
-      );
-    } catch {
-      // Ignore - the item just stays unread visually.
+    if (
+      notification.organizationId &&
+      notification.organizationId !== workspace.activeHouseId
+    ) {
+      try {
+        await activateHouse(notification.organizationId);
+        await refreshWorkspace();
+      } catch {
+        return;
+      }
     }
+    router.push((TYPE_DESTINATION[notification.type] ?? "/home") as Route);
   }
 
   async function handleMarkAllRead() {
