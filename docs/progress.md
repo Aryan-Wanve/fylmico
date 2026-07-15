@@ -4866,3 +4866,118 @@ Next task:
   absence) resolves the live-delivery question, then live-test the
   `delivered` tick and message editing with two real accounts once
   Supabase is fully configured.
+
+## 2026-07-15 House-Owned Google Drive with Automatic Folder Structure
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 99%
+
+Features completed:
+
+- Redesigned Google Drive from a per-user connection (ADR 0038) to one
+  shared connection per house, connected only by the Owner
+  (`requireOwnerRole`, the same guard `removeMember`/join-request review
+  already use). See ADR 0045 for the full reasoning and the explicit scope
+  cuts (Owner-only rather than a new "Admin" tier; multi-client projects
+  fold under whichever client was linked first; Scripts/Storyboards get no
+  new prompt since they have no Drive bytes of their own).
+- Fylmico now automatically creates and maintains the entire folder tree
+  on connect: two Drive-side roots ("FYLMICO House" /
+  "FYLMICO House (Sensitive)"), Clients/Resources/Portfolio + their fixed
+  subfolders, Misc, and an Owner-only Sensitive tree (Finance, Quotations,
+  Contracts, HR, Internal, Employee Work) - no manual folder management
+  required.
+- Creating a Client or a Project (optionally with a `clientId`)
+  auto-creates its Drive folder (a project also gets its 6 fixed
+  subfolders: Scripts, Storyboards, Raw Data, Project Files, Deliveries,
+  Assets); linking a client later moves the project's folder out of Misc
+  the first time one is linked.
+- File uploads get a "which client/project?" destination picker (new
+  `POST .../files/resolve-destination`) with a Raw Footage/Asset/
+  Deliverable/Project File category - Raw Footage lazily creates a dated
+  subfolder per upload day. Uploading while already browsing inside a
+  folder skips the prompt, unchanged from before.
+- A "Deliverable" upload offers "Add this to the House Portfolio?" (new
+  `POST .../files/:entryId/add-to-portfolio`) - copies a reference into
+  the chosen Portfolio category, reusing the same Drive file id rather
+  than re-uploading.
+- Every house member gets an Employee Work folder automatically (on join,
+  and backfilled for existing members when Drive connects); every upload
+  best-effort mirrors into the uploader's own Employee Work subfolder
+  (Videos/Images/Documents by mime type) for management visibility.
+- `FileEntry` gained `driveKey` (a stable, race-safe identifier for
+  system-managed folders - `@@unique([organizationId, driveKey])`) and
+  `sensitive` (gates the Owner-only tree, checked both on `list()` and
+  per-entry in `requireEntry`). Since there's now one Drive per house,
+  every entry maps to exactly one Drive object - `DriveFolderLink` (ADR
+  0038's per-uploader mirror cache) and its recursive resolution logic in
+  `files.service.ts` are deleted outright.
+- System-managed folders (`driveKey` non-null) can't be deleted through
+  the app - `deleteEntry` refuses them, protecting the tree from
+  accidental deletion.
+
+Features started:
+
+- None beyond the above; a formal Admin permission tier and a "which
+  client/project" prompt for Script/Storyboard creation (they carry no
+  Drive bytes today, only an existing optional `projectId`) are explicitly
+  out of scope this pass - see ADR 0045's Alternatives.
+
+Files created:
+
+- `apps/web/src/server/drive/drive-structure.service.ts`
+- `apps/web/src/server/files/dto/resolve-destination.dto.ts`,
+  `add-to-portfolio.dto.ts`
+- `apps/web/src/app/api/v1/houses/[houseId]/drive/{connect-url,disconnect,status}/route.ts`
+- `apps/web/src/app/api/v1/houses/[houseId]/files/resolve-destination/route.ts`,
+  `[entryId]/add-to-portfolio/route.ts`
+- `apps/web/src/components/files/upload-destination-dialog.tsx`
+- `packages/database/prisma/migrations/20260715150000_house_drive_connection/`
+- `docs/adr/0045-house-drive-connection.md`
+
+Files modified:
+
+- `packages/database/prisma/schema.prisma` (`DriveConnection` per-house
+  reshape, `FileEntry.driveKey`/`sensitive`, `DriveFolderLink` dropped)
+- `apps/web/src/server/drive/{drive.service,drive-token.util,google-drive.util}.ts`
+  (org-scoped, `moveDriveFile` added, `createFylmicoFolder` removed)
+- `apps/web/src/server/files/files.service.ts` (dropped per-uploader
+  mirroring, added destination/portfolio/sensitive-gating)
+- `apps/web/src/server/clients/clients.service.ts`,
+  `apps/web/src/server/projects/projects.service.ts` (Drive folder hooks)
+- `apps/web/src/server/organizations/organizations.service.ts`
+  (Employee Work folder on `addMembership`)
+- `apps/web/src/components/files/{files-page,files-header,drive-connection-banner}.tsx`
+  (Sensitive toggle, Owner-gating, destination dialog wiring, updated copy)
+- `apps/web/src/services/{drive.service,base-workspace.service}.ts`,
+  `apps/web/src/types/base.ts` (house-scoped Drive client, new
+  `resolveFileDestination`/`addFileToPortfolio`/`listClients`)
+- Deleted the old flat `apps/web/src/app/api/v1/drive/{connect-url,disconnect,status}`
+  routes (moved under `houses/:houseId/drive/*`); `callback` stays flat
+  (registered Google redirect URI).
+
+Known limitations / tradeoffs:
+
+- **Breaking change**: existing per-user `DriveConnection` rows had no
+  valid mapping to the new per-house shape and were truncated in the
+  migration - every house must reconnect Drive fresh; files uploaded
+  under the old model become unreachable through the app.
+- Full end-to-end verification (an actual Google OAuth consent + real
+  folders appearing in Drive) needs a real Google account to click through
+  - not something this session could do on the user's behalf. Verified
+    instead via: a live request confirming `connect-url` builds the correct
+    OAuth URL/signed state for the Owner; client/project creation gracefully
+    degrading (caught, logged, no crash) with Drive disconnected; the
+    Sensitive toggle and its server-side gating; and a full
+    typecheck/lint/clean-build pass.
+- A single shared Drive connection reintroduces the single-point-of-failure
+  risk ADR 0038 originally rejected - accepted here as the explicit
+  product requirement (see ADR 0045's Costs).
+
+Next task:
+
+- Have a house Owner click "Connect Drive" with a real Google account to
+  verify the full flow end-to-end: root folders + skeleton appearing in
+  Drive, Client/Project folder creation, the upload destination picker,
+  the Portfolio prompt, and Employee Work mirroring for a second member.

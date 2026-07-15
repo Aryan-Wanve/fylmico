@@ -512,7 +512,9 @@ google` and `GET /api/v1/auth/google/callback`, a new
   upload-progress UI (speed + toast) was added. Storyboard was further
   extended with `Character`/`StoryLocation` models and a real
   drawing/editing canvas; Scripts (screenplay module, formatting
-  toolbar) shipped alongside it. See ADR 0041.
+  toolbar) shipped alongside it. See ADR 0041. Redesigned again on
+  2026-07-15 (ADR 0045) into one Drive per house, connected only by the
+  Owner, with Fylmico auto-managing the whole folder tree.
 - **Auth reworked to OTP** (ADR 0039): email verification moved from
   link-tokens to 6-digit OTP codes, real email delivery (mailer
   abstraction) backs signup verification and password reset, and login

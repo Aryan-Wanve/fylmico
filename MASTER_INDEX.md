@@ -274,17 +274,22 @@ standalone-server run hitting the real database) passed before cutover.
 Render is no longer part of this stack; the user decommissions it
 separately (an external account action, not a repo change).
 
-**Files now stores bytes in each user's own Google Drive, not Supabase
-Storage** (ADR 0038): a new per-user `DriveConnection` model holds one
-Google Drive OAuth grant (`drive.file` scope - only files/folders the app
-itself creates, never the user's whole Drive) via a second, separate OAuth
-flow from login. `FileEntry` stays the shared, house-scoped index
-unchanged - only its `storagePath` now holds a Drive file ID instead of a
-Supabase path, and downloads proxy through a short-lived signed server
-token rather than a Drive share link, keeping access control inside
-Fylmico's own house-membership checks instead of Drive's sharing model.
-Fylmico's own storage bill now only ever covers small profile avatars
-(still Supabase Storage), not production files.
+**Files stores bytes in one Google Drive per house, not Supabase Storage**
+(ADR 0038, redesigned per-house by ADR 0045): a `DriveConnection` model
+holds one Google Drive OAuth grant per house (`drive.file` scope - only
+files/folders the app itself creates, never the whole Drive), authorized
+only by the Owner, via a second, separate OAuth flow from login. Fylmico
+automatically creates and maintains the entire folder structure inside it
+
+- Clients/Resources/Portfolio, an Owner-only Sensitive tree, per-client and
+  per-project folders, and a per-member Employee Work folder - no manual
+  folder management required. `FileEntry` stays the shared, house-scoped
+  index; its `storagePath` holds a Drive object id (one per entry now that
+  there's a single house Drive), and downloads proxy through a short-lived
+  signed server token rather than a Drive share link, keeping access control
+  inside Fylmico's own house-membership checks instead of Drive's sharing
+  model. Fylmico's own storage bill still only ever covers small profile
+  avatars (Supabase Storage), not production files.
 
 **Email verification and password reset moved from link-tokens to 6-digit
 OTP codes, and login is now blocked until verified** (ADR 0039): typed

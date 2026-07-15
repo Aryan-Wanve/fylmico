@@ -791,7 +791,7 @@ Authentication: required (caller must be a member of the room's house).
 Response: `{ "data": FileEntry[] }` (not paginated), sorted
 `createdAt desc` — files uploaded via `POST /api/v1/houses/:houseId/files/upload`
 with this room's id passed as `conversationId`:
-`{ "id", "parentId", "name", "type", "size", "mimeType", "uploadedById", "uploadedByName", "createdAt", "updatedAt" }`.
+`{ "id", "parentId", "name", "type", "size", "mimeType", "sensitive", "uploadedById", "uploadedByName", "createdAt", "updatedAt" }`.
 Errors: `401 unauthenticated`, `403 forbidden`, `404 room_not_found`.
 
 ### `GET`/`POST /api/v1/chat/rooms/:roomId/tasks`
@@ -829,14 +829,16 @@ matching the designed Projects page UI).
 ### `POST /api/v1/houses/:houseId/projects`
 
 Authentication: required. Body:
-`{ "name": string, "description"?: string, "type"?: string, "genre"?: string, "stage"?: string, "progress"?: number, "coverGradient"?: string, "coverIcon"?: string, "dueDate"?: string, "teamIds"?: string[] }`.
+`{ "name": string, "description"?: string, "type"?: string, "genre"?: string, "stage"?: string, "progress"?: number, "coverGradient"?: string, "coverIcon"?: string, "dueDate"?: string, "teamIds"?: string[], "clientId"?: string }`.
 `type` must be one of a fixed production-type list (`"Short Film"`,
 `"Documentary"`, `"Commercial"`, `"Music Video"`, `"Feature Film"`,
 `"Corporate Video"`, `"Web Series"`, `"Wedding Film"`); `stage` one of
 `"Development" | "Pre-Production" | "In Production" | "In Progress" |
 "Post-Production" | "On Hold" | "Completed"` (default `"Development"`);
 `coverIcon` one of `"camera" | "clapperboard" | "heart" | "megaphone" |
-"mic" | "music"`; `teamIds` must all be current members of `houseId`.
+"mic" | "music"`; `teamIds` must all be current members of `houseId`;
+`clientId` (added per ADR 0045) links the client immediately and files the
+project's Drive folder under it — omit to file under Clients/Misc instead.
 Response:
 
 ```json
@@ -903,10 +905,13 @@ status flag (matches `logout`/`logout-all`'s precedent). Errors:
 ### `POST /api/v1/projects/:projectId/clients`
 
 Authentication: required. Body: `{ "clientId": string }`. Response: updated
-`Project` with the client now included in `clients`. Errors:
-`400 invalid_request` (`clientId` belongs to a different house),
-`401 unauthenticated`, `403 forbidden`, `404 project_not_found`,
-`409 already_linked`. Link-only — no unlink endpoint yet.
+`Project` with the client now included in `clients`. If this is the
+project's first linked client, its Drive folder physically moves from
+Clients/Misc to this client's folder (ADR 0045); later clients linked to
+the same project don't move it again. Errors: `400 invalid_request`
+(`clientId` belongs to a different house), `401 unauthenticated`,
+`403 forbidden`, `404 project_not_found`, `409 already_linked`. Link-only
+— no unlink endpoint yet.
 
 ### `POST /api/v1/houses/:houseId/clients`
 
@@ -927,8 +932,11 @@ Response:
 }
 ```
 
-Errors: `400 invalid_request` (missing `name`, or `contactEmail` isn't a
-valid email), `401 unauthenticated`, `403 forbidden`.
+Best-effort creates a matching Drive folder under Clients if the house's
+Google Drive is connected (ADR 0045) - never fails client creation if
+Drive isn't connected or the call fails. Errors: `400 invalid_request`
+(missing `name`, or `contactEmail` isn't a valid email),
+`401 unauthenticated`, `403 forbidden`.
 
 ### `GET /api/v1/houses/:houseId/clients`
 
@@ -1444,39 +1452,51 @@ updated `Announcement`. `DELETE` response:
 
 ## Google Drive (Implemented)
 
-Implemented per ADR 0038 (`apps/web/src/server/drive/*`). Each user
-connects their own Google Drive account (OAuth, offline access); uploaded
-house files are stored in the uploader's own Drive under a "Fylmico" root
-folder, not in a shared bucket — see the Files section below for how a
-shared team file tree is built on top of that.
+Implemented per ADR 0045 (`apps/web/src/server/drive/*`, supersedes ADR
+0038's per-user design). One Google Drive connection per **house**,
+authorized only by the Owner (OAuth, offline access) — Fylmico
+automatically creates and maintains the whole folder structure inside it
+(two roots: a visible "FYLMICO House" tree and an Owner-only "FYLMICO
+House (Sensitive)" tree). See the Files section below for how uploads land
+in the right folder automatically.
 
-### `GET /api/v1/drive/connect-url`
+### `GET /api/v1/houses/:houseId/drive/connect-url`
 
-Authentication: required. Response: `{ "data": { "url": string } }` — the
-Google OAuth consent URL to redirect the browser to (`state` is a signed
-token binding the OAuth flow back to the caller's user id). Errors:
-`401 unauthenticated`, `503 google_oauth_not_configured`.
+Authentication: required, caller must hold the `"Owner"` role. Response:
+`{ "data": { "url": string } }` — the Google OAuth consent URL to redirect
+the browser to (`state` is a signed token binding the OAuth flow back to
+the house and the connecting user). Errors: `401 unauthenticated`,
+`403 forbidden` (not an Owner), `503 google_oauth_not_configured`.
 
 ### `GET /api/v1/drive/callback`
 
 Authentication: public (Google redirects here with `code`/`state` query
-params after consent). Not a JSON endpoint — verifies `state`, exchanges
+params after consent) — stays a flat, unparameterized path since it's the
+registered Google OAuth redirect URI; the house id travels inside the
+signed `state` instead. Not a JSON endpoint — verifies `state`, exchanges
 `code` for tokens, requires Google to have granted an offline refresh
-token, creates the user's "Fylmico" root Drive folder, and upserts a
-`DriveConnection` row. 302-redirects to `${APP_URL}/files?driveConnected=1`
-on success, or `${APP_URL}/files?driveError=1` on any failure (missing
-`code`/`state`, denied consent, no refresh token granted, exchange error).
+token, creates the house's two root Drive folders, upserts the house's
+`DriveConnection`, then builds the fixed folder skeleton (Clients,
+Resources + subfolders, Portfolio + subfolders, Misc, the 6 Sensitive
+folders) and an Employee Work folder for every existing house member.
+302-redirects to `${APP_URL}/files?driveConnected=1` on success, or
+`${APP_URL}/files?driveError=1` on any failure (missing `code`/`state`,
+denied consent, no refresh token granted, exchange error).
 
-### `GET /api/v1/drive/status`
+### `GET /api/v1/houses/:houseId/drive/status`
 
-Authentication: required. Response:
+Authentication: required (member). Response:
 `{ "data": { "connected": boolean, "email": string | null } }`. Errors:
-`401 unauthenticated`.
+`401 unauthenticated`, `403 forbidden`.
 
-### `DELETE /api/v1/drive/disconnect`
+### `DELETE /api/v1/houses/:houseId/drive/disconnect`
 
-Authentication: required. Deletes the caller's `DriveConnection`. Response:
-`{ "data": { "success": true } }`. Errors: `401 unauthenticated`.
+Authentication: required, caller must hold the `"Owner"` role. Deletes the
+house's `DriveConnection` and every `FileEntry` row with a non-null
+`driveKey` (wipes Fylmico's index of the managed folder tree; the actual
+files/folders are untouched in Google Drive itself). Response:
+`{ "data": { "success": true } }`. Errors: `401 unauthenticated`,
+`403 forbidden`.
 
 ### `GET /api/v1/files/download/:token`
 
@@ -1484,41 +1504,56 @@ Authentication: public by design — the short-lived signed `token` (minted
 only after a membership check inside `GET .../files/:entryId/download`
 below) _is_ the credential, the same trust model a Supabase signed URL
 used previously. Not a JSON success response — streams the file's bytes
-from the uploader's Google Drive with `Content-Type`/`Content-Disposition`
-headers set. Error responses are still JSON but use a minimal
-`{ "error": { "code", "message" } }` envelope (no `requestId`):
+from the house's connected Google Drive with `Content-Type`/
+`Content-Disposition` headers set. Error responses are still JSON but use
+a minimal `{ "error": { "code", "message" } }` envelope (no `requestId`):
 `400 invalid_or_expired_token`, `404 file_not_found`,
 `502 download_failed` (Drive download itself failed).
 
 ## Files (Implemented)
 
-Implemented per ADR 0038 (`apps/web/src/server/files/*`). A `FileEntry` is
-either a `"file"` or a `"folder"` in a house's shared file tree; the
-actual bytes of a file live in its uploader's own connected Google Drive
-(mirrored into the matching folder structure there) — deleting an entry
-also deletes the underlying Drive file(s) for every uploader with files
-nested under it.
+Implemented per ADR 0045 (`apps/web/src/server/files/*`, reworked from ADR
+0038). A `FileEntry` is either a `"file"` or a `"folder"` in a house's
+shared file tree; bytes live in the house's single connected Google
+Drive. System-managed folders (Clients, a client's folder, a project and
+its fixed subfolders, Resources/Portfolio subfolders, the Sensitive tree,
+Employee Work folders) carry a non-null `driveKey` and can't be deleted
+through the app.
 
 ### `GET`/`POST /api/v1/houses/:houseId/files`
 
-Authentication: required (member). `GET` query: `parentId?` (omit for the
-house's root). Response: `{ "data": FileEntry[] }` (not paginated), sorted
-`type asc, name asc`:
-`{ "id", "parentId", "name", "type", "size", "mimeType", "uploadedById", "uploadedByName", "createdAt", "updatedAt" }`
+Authentication: required (member for the visible tree; caller must hold
+the `"Owner"` role when `sensitive=true`). `GET` query: `parentId?` (omit
+for the tree's root), `sensitive?` (`"true"` switches to the Owner-only
+Sensitive tree, default `false`). Response: `{ "data": FileEntry[] }` (not
+paginated), sorted `type asc, name asc`:
+`{ "id", "parentId", "name", "type", "size", "mimeType", "sensitive", "uploadedById", "uploadedByName", "createdAt", "updatedAt" }`
 (`type` is `"file"` or `"folder"`; `size`/`mimeType` are `null` for
 folders). `POST` body: `{ "name": string, "parentId"?: string }` — creates
-a folder, mirrored into the caller's own connected Drive immediately.
-Response: created `FileEntry` (`type: "folder"`). Errors:
-`400 invalid_request`, `400 drive_not_connected` (`POST` only — caller
-hasn't connected Google Drive), `401 unauthenticated`, `403 forbidden`,
-`404 file_not_found` (bad `parentId`).
+an ad-hoc folder (inherits its parent's `sensitive` value). Response:
+created `FileEntry` (`type: "folder"`). Errors: `400 invalid_request`,
+`400 drive_not_connected` (`POST` only — house hasn't connected Google
+Drive), `401 unauthenticated`, `403 forbidden` (not a member, or not an
+Owner for the Sensitive tree), `404 file_not_found` (bad `parentId`).
+
+### `POST /api/v1/houses/:houseId/files/resolve-destination`
+
+Authentication: required (member). Body:
+`{ "clientId": string (or "misc"), "projectId"?: string, "category"?: "raw" | "assets" | "deliverables" | "project-files" }`.
+Resolves which folder an upload should land in — `"misc"` files flat under
+Clients/Misc regardless of category; a project + `"raw"` lazily creates
+today's dated Raw Data subfolder. Response: `{ "data": { "parentId": string } }`
+(a `FileEntry` id, pass straight to the upload endpoint below). Errors:
+`400 invalid_request`, `401 unauthenticated`, `403 forbidden`,
+`404` (unknown client/project - the underlying `FileEntry` lookup throws).
 
 ### `DELETE /api/v1/houses/:houseId/files/:entryId`
 
-Authentication: required (member). Recursively deletes a file or folder,
-including every nested Drive file across every uploader who has files
-under it. Response: `{ "data": { "success": true } }`. Errors:
-`401 unauthenticated`, `403 forbidden`, `404 file_not_found`.
+Authentication: required (member). Recursively deletes a file or folder
+and its underlying Drive file(s). Refuses system-managed folders (non-null
+`driveKey`). Response: `{ "data": { "success": true } }`. Errors:
+`400 protected_folder`, `401 unauthenticated`, `403 forbidden`,
+`404 file_not_found`.
 
 ### `GET /api/v1/houses/:houseId/files/:entryId/download`
 
@@ -1527,17 +1562,28 @@ Authentication: required (member). Response: `{ "data": { "url": string } }`
 file bytes directly). Errors: `400 invalid_request` (`entryId` is a
 folder), `401 unauthenticated`, `403 forbidden`, `404 file_not_found`.
 
+### `POST /api/v1/houses/:houseId/files/:entryId/add-to-portfolio`
+
+Authentication: required (member). Body: `{ "category"?: string }`
+(defaults `"Misc"` — one of Commercials/Reels/Films/Photography/Misc by
+convention, not enforced). Creates a second `FileEntry` under the chosen
+Portfolio category pointing at the same Drive file (no re-upload).
+Response: the new `FileEntry` (`type: "file"`). Errors:
+`400 invalid_request` (not a file), `401 unauthenticated`,
+`403 forbidden`, `404 file_not_found`.
+
 ### `POST /api/v1/houses/:houseId/files/upload`
 
 Authentication: required (member). Body: `multipart/form-data` with
 `file` (required), `parentId?`, `conversationId?` (tags the upload as
 belonging to a chat room, surfaced via `GET /api/v1/chat/rooms/:roomId/files`).
-Uploads the file's bytes to the caller's own connected Google Drive
-(mirrored into the right folder), then creates a `FileEntry` row pointing
-at it. Response: created `FileEntry` (`type: "file"`). Errors:
-`400 invalid_request` (missing file), `400 drive_not_connected`,
-`401 unauthenticated`, `403 forbidden`, `404 file_not_found` (bad
-`parentId`).
+Uploads the file's bytes to the house's connected Google Drive, creates a
+`FileEntry` row pointing at it, then best-effort mirrors it into the
+uploader's Employee Work subfolder (Videos/Images/Documents by mime type)
+under the Sensitive tree for management visibility. Response: created
+`FileEntry` (`type: "file"`). Errors: `400 invalid_request` (missing
+file), `400 drive_not_connected`, `401 unauthenticated`, `403 forbidden`,
+`404 file_not_found` (bad `parentId`).
 
 ### `GET /api/v1/houses/:houseId/files/summary`
 

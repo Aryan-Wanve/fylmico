@@ -253,8 +253,9 @@ across every later feature table that records a per-user actor (`tasks`
 assignees, `messages`/`message_reactions` authors, `comments`,
 `crew_profiles`, `calendar_events`/`time_entries`/`bookings` creators,
 `house_invitations`/`house_join_requests` sent and handled, `file_entries`
-uploads, a `drive_connections` row, `drive_folder_links`, `scripts`,
-`call_sheets`, `announcements`) — see each of those tables' own sections.
+uploads, `drive_connections` rows connected on a house's behalf
+(`connected_by_id`), `scripts`, `call_sheets`, `announcements`) — see each
+of those tables' own sections.
 
 Indexes: unique indexes on `email` and `username`.
 
@@ -272,9 +273,9 @@ table since only one "currently active" house per user is meaningful right
 now (no concept of per-device or per-session active house). `avatar_url`
 stores a plain public URL rather than a `file_entries` reference — avatars
 use a small always-public Fylmico-owned Supabase Storage bucket, not the
-per-uploader Drive-backed model `file_entries`/`drive_connections` use for
-house files (ADR 0038), since an avatar has no house/folder context and
-must render inline without a signed-URL round trip.
+house's Drive-backed `file_entries`/`drive_connections` model (ADR 0045),
+since an avatar has no house/folder context and must render inline without
+a signed-URL round trip.
 `notification_preferences` is a single `Json` column (an array of per-type
 toggles) rather than a separate preferences table, since the type list is
 small and fixed client-side.
@@ -1389,7 +1390,7 @@ Migration history: `20260712160000_scripts`.
 
 Purpose: the house-wide file/folder tree (files and folders), the data
 behind the Files page - a shared index/tree over files whose actual bytes
-live in each uploader's own Google Drive (ADR 0038).
+live in the house's single connected Google Drive (ADR 0045).
 
 Ownership: belongs to one `organization`; optionally belongs to a parent
 `file_entries` row (folder nesting) and/or a `conversation` (a file
@@ -1398,104 +1399,106 @@ attached from within a chat room); records who uploaded/created it via
 
 Columns: `id`, `organization_id`, `parent_id` (nullable, self-referencing),
 `conversation_id` (nullable), `name`, `type` (`"file"` | `"folder"`),
-`storage_path` (nullable - the Google Drive file id for a `"file"` row,
-`null` for folders), `size` (nullable `Int`, bytes), `mime_type`
-(nullable), `uploaded_by_id`, `created_at`, `updated_at`.
+`storage_path` (nullable - the Google Drive object id, for both `"file"`
+and `"folder"` rows now that there's one house Drive), `drive_key`
+(nullable, unique per `organization_id` - a stable identifier for
+system-managed folders, e.g. `"clients"`, `"client:<id>"`,
+`"project:<id>:Raw Data"`; `null` for ad-hoc user-created folders/files),
+`sensitive` (`Boolean`, default `false` - gates visibility to Owners only),
+`size` (nullable `Int`, bytes), `mime_type` (nullable), `uploaded_by_id`,
+`created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); self-relation
 via `parent_id`/`children` (`"FileEntryChildren"`, cascade delete -
 deleting a folder deletes its contents); belongs to `users` via
 `uploaded_by_id` (no cascade, same reasoning as `tasks.assignee_id`);
 belongs to `conversations` (`onDelete: SetNull` - a file outlives the chat
-room it was attached from); has many `drive_folder_links`.
+room it was attached from).
 
-Indexes: indexes on `organization_id`, `parent_id`, and `conversation_id`.
+Indexes: indexes on `organization_id`, `parent_id`, and `conversation_id`;
+unique compound index on `(organization_id, drive_key)`.
 
-Constraints: none beyond required foreign keys.
+Constraints: `(organization_id, drive_key)` unique (`NULL` values don't
+constrain each other, so ad-hoc folders/files are unaffected).
 
-Permissions: listed/created (folders and file uploads) via `GET`/`POST
-/api/v1/houses/:houseId/files` and `POST
-/api/v1/houses/:houseId/files/upload`; deleted via `DELETE
-/api/v1/houses/:houseId/files/:entryId` (recursively removes the
-corresponding Drive files/folders across every uploader whose Drive holds a
-copy); usage summary via `GET /api/v1/houses/:houseId/files/summary` - all
-by any house member. Chat rooms can also list/attach files scoped to their
-`conversation_id` via `GET`/`POST /api/v1/chat/rooms/:roomId/files`.
-Downloads are served via a short-lived signed token (`GET
-/api/v1/files/download/:token`), not a direct Drive URL.
+Permissions: listed via `GET /api/v1/houses/:houseId/files` (a `sensitive`
+query param switches to the Owner-only Sensitive tree, enforced
+server-side); created (folders and file uploads) via `POST` on the same
+path and `POST /api/v1/houses/:houseId/files/upload`; a destination for an
+upload can be resolved first via `POST
+/api/v1/houses/:houseId/files/resolve-destination` (client/project or
+Misc, plus a category); deleted via `DELETE
+/api/v1/houses/:houseId/files/:entryId` (refuses entries with a non-null
+`drive_key` - system-managed folders can't be deleted through the app);
+copied into the Portfolio via `POST
+/api/v1/houses/:houseId/files/:entryId/add-to-portfolio` (a second row
+pointing at the same `storage_path`, no re-upload); usage summary via `GET
+/api/v1/houses/:houseId/files/summary` - all by any house member except
+the Sensitive-tree paths, which require the Owner role. Chat rooms can
+also list/attach files scoped to their `conversation_id` via `GET`/`POST
+/api/v1/chat/rooms/:roomId/files`. Downloads are served via a short-lived
+signed token (`GET /api/v1/files/download/:token`), not a direct Drive
+URL.
 
 Reasoning: no object storage of its own - `storage_path` is a Google Drive
-file id, not a bucket key, per ADR 0038's "each uploader's files live in
-their own Drive, not storage Fylmico pays for" decision (distinct from
-`users.avatar_url`, which uses a small Fylmico-owned Supabase Storage
-bucket for avatars specifically). A shared folder therefore doesn't have
-one Drive folder id - see `drive_folder_links` below for how a folder's
-per-uploader Drive mirror is resolved.
+object id, not a bucket key (distinct from `users.avatar_url`, which uses
+a small Fylmico-owned Supabase Storage bucket for avatars specifically).
+Since ADR 0045 moved to one Drive per house, every entry now maps 1:1 to
+one Drive object - the per-uploader mirror cache ADR 0038 needed
+(`drive_folder_links`) no longer exists.
 
 Migration history: `20260711234500_file_entries` (initial columns);
-`conversation_id` added in `20260712080000_conversation_links`.
+`conversation_id` added in `20260712080000_conversation_links`; `drive_key`
+and `sensitive` added in `20260715150000_house_drive_connection` (ADR
+0045), which also dropped `drive_folder_links`.
 
 ### Table: `drive_connections`
 
-Purpose: one user's personal Google Drive OAuth connection - files that
-user uploads live in a `"Fylmico"` folder inside _their own_ Drive, not in
-storage Fylmico pays for (ADR 0038).
+Purpose: a house's single Google Drive OAuth connection, authorized by
+the Owner - Fylmico automatically creates and maintains the entire folder
+structure inside it (ADR 0045).
 
-Ownership: belongs to one `user` (1:1).
+Ownership: belongs to one `organization` (1:1); records who authorized it
+via `connected_by_id`.
 
-Columns: `id`, `user_id` (unique), `refresh_token`, `drive_folder_id` (the
-Drive id of that user's root `"Fylmico"` folder), `google_email`
-(nullable), `created_at`, `updated_at`.
+Columns: `id`, `organization_id` (unique), `connected_by_id`,
+`refresh_token`, `google_email` (nullable), `visible_root_folder_id` (Drive
+id of the "FYLMICO House" root), `sensitive_root_folder_id` (Drive id of
+the "FYLMICO House (Sensitive)" root), `created_at`, `updated_at`.
 
-Relationships: belongs to `users` (cascade delete).
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`users` via `connected_by_id` (restrict delete - a connection can't be
+orphaned by deleting its connecting user, matching `assignee_id`-style FKs
+elsewhere).
 
-Indexes: unique index on `user_id`.
+Indexes: unique index on `organization_id`.
 
-Constraints: `user_id` unique - one Drive connection per user.
+Constraints: `organization_id` unique - one Drive connection per house.
 
-Permissions: created via the OAuth flow (`GET /api/v1/drive/connect-url` to
-start it, `GET /api/v1/drive/callback` to complete it - both self-service,
-scoped to the requesting user via a signed state token, see
-`drive-token.util.ts`); checked via `GET /api/v1/drive/status`; removed via
-`DELETE /api/v1/drive/disconnect`.
+Permissions: created via the OAuth flow (`GET
+/api/v1/houses/:houseId/drive/connect-url` to start it, `GET
+/api/v1/drive/callback` to complete it - the callback path itself stays
+flat/unparameterized since it's the registered Google redirect URI;
+`organizationId` travels inside the signed state token instead, see
+`drive-token.util.ts`) - both Owner-only (`requireOwnerRole`); checked via
+`GET /api/v1/houses/:houseId/drive/status` (any member); removed via
+`DELETE /api/v1/houses/:houseId/drive/disconnect` (Owner-only - also wipes
+every `file_entries` row with a non-null `drive_key` for that house).
 
 Reasoning: `refresh_token` is stored in plaintext in this pass (no
 encryption-at-rest layer exists yet anywhere in this schema) - a known gap
 consistent with this codebase's general "no encryption beyond password/
 token hashing" posture; access tokens themselves are never stored, only
 refreshed on demand from `refresh_token` (`DriveService.getValidAccessToken`).
+Per-user `DriveConnection` (ADR 0038) was deliberately reversed here - see
+ADR 0045 for the tradeoff (a single shared connection is now a single
+point of failure for the whole house, accepted as the explicit product
+requirement).
 
-Migration history: `20260712150000_drive_connections`.
-
-### Table: `drive_folder_links`
-
-Purpose: caches which Drive folder id a shared `file_entries` folder maps
-to inside one specific user's Drive - since a shared app-level folder has
-no single Drive folder id of its own (each uploader's mirror is created
-lazily the first time they place something in it), per ADR 0038.
-
-Ownership: belongs to one `file_entries` row and one `user`.
-
-Columns: `id`, `file_entry_id`, `user_id`, `drive_folder_id`, `created_at`.
-
-Relationships: belongs to `file_entries` (cascade delete); belongs to
-`users` (cascade delete).
-
-Indexes: unique compound index on `(file_entry_id, user_id)`.
-
-Constraints: `(file_entry_id, user_id)` unique - one cached mapping per
-(folder, user) pair.
-
-Permissions: no direct endpoint - created/read only as a side effect of
-`FilesService.resolveDriveFolderId` when a user uploads into or creates a
-subfolder of a shared folder for the first time.
-
-Reasoning: a cache table rather than deriving the mapping on every request
-
-- mirroring a folder into a user's Drive is a real (rate-limited) Drive API
-  call, so the mapping is created once and reused afterward.
-
-Migration history: `20260712170000_drive_folder_links`.
+Migration history: `20260712150000_drive_connections` (original per-user
+shape); reshaped to per-house in `20260715150000_house_drive_connection`
+(ADR 0045) - existing per-user rows were truncated as a breaking change,
+see that ADR's Costs section.
 
 ### Table: `call_sheets`
 
@@ -1601,10 +1604,10 @@ Migration history:
   description), not yet tied to `resource.action` grants.
 - Audit log payload shape.
 - Asset storage provider metadata — resolved for house files via
-  `file_entries`/`drive_connections`/`drive_folder_links` (ADR 0038,
-  Google-Drive-backed, one connection per uploader); avatars separately use
-  a small Fylmico-owned Supabase Storage bucket. No equivalent exists yet
-  for a dedicated, versioned "assets" module (see the Creative production
-  group above — `assets`/`asset_versions` remain planning only).
+  `file_entries`/`drive_connections` (ADR 0045, Google-Drive-backed, one
+  connection per house); avatars separately use a small Fylmico-owned
+  Supabase Storage bucket. No equivalent exists yet for a dedicated,
+  versioned "assets" module (see the Creative production group above —
+  `assets`/`asset_versions` remain planning only).
 - Search indexing strategy.
 - Billing and subscription tables.

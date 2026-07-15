@@ -2,7 +2,11 @@
 
 Date: 2026-07-12
 
-Status: Accepted
+Status: Superseded by ADR 0045 (2026-07-15) - Drive is now one shared
+connection per House, connected only by the Owner, not one connection per
+user. The reasoning below (Drive over Supabase Storage, `drive.file` scope,
+signed-state connect flow, proxied downloads) still holds; only the
+per-user vs. per-house decision changed.
 
 ## Problem
 

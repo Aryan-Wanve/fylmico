@@ -340,3 +340,46 @@ Migration notes:
 
 - New nullable `messages.edited_at` column (migration
   `20260715120000_message_edited_at`) - run `prisma migrate deploy`.
+
+## 0.11.0 - 2026-07-15
+
+Summary:
+
+- Redesigned Google Drive integration for Houses (ADR 0045, supersedes
+  ADR 0038): one shared Drive connection per house, connected only by the
+  Owner, instead of one connection per uploader.
+- Fylmico now automatically creates and maintains the entire folder
+  structure: Clients/Resources/Portfolio (+ fixed subfolders), an
+  Owner-only Sensitive tree (Finance, Quotations, Contracts, HR, Internal,
+  Employee Work), per-client and per-project folders (with the project's
+  6 fixed subfolders), and a per-member Employee Work folder.
+- Uploads get a "which client/project?" destination picker with a Raw
+  Footage/Asset/Deliverable/Project File category; Raw Footage lazily
+  creates a dated subfolder per upload day.
+- A Deliverable upload can be added to the House Portfolio in one step
+  (copies a reference, not a re-upload).
+- Every upload best-effort mirrors into the uploader's Employee Work
+  subfolder for management visibility.
+- `DriveFolderLink` (the old per-uploader folder-mirroring cache) is
+  removed - a single house Drive means every `FileEntry` maps to exactly
+  one Drive object.
+
+Breaking changes:
+
+- Existing per-user `DriveConnection` rows were truncated in the
+  migration (no valid mapping to the new per-house shape) - every house
+  must reconnect Google Drive. Files uploaded under the old per-user model
+  become unreachable through the app (bytes still exist in whichever
+  user's Drive they were uploaded to).
+- `GET /api/v1/drive/connect-url`, `GET /api/v1/drive/status`,
+  `DELETE /api/v1/drive/disconnect` moved to
+  `/api/v1/houses/:houseId/drive/*` and are now Owner-only for
+  connect/disconnect. `GET /api/v1/drive/callback` is unchanged (the
+  registered Google OAuth redirect URI).
+
+Migration notes:
+
+- `drive_connections` reshaped from per-user to per-house;
+  `drive_folder_links` dropped; new nullable `file_entries.drive_key`
+  (unique per house) and `file_entries.sensitive` columns (migration
+  `20260715150000_house_drive_connection`) - run `prisma migrate deploy`.
