@@ -95,7 +95,8 @@ class TasksService {
           `New task: ${task.title}`,
           `You were assigned "${task.title}"${
             task.dueDate ? `, due ${task.dueDate.toLocaleDateString()}` : ""
-          }.`
+          }.`,
+          task.organizationId
         );
       }
     }
@@ -139,7 +140,8 @@ class TasksService {
           existing.createdById,
           "task_review_requested",
           `Review requested: "${existing.title}"`,
-          `"${existing.title}" is ready for review.`
+          `"${existing.title}" is ready for review.`,
+          existing.organizationId
         );
       }
       if (dto.status === "completed") {
@@ -147,7 +149,8 @@ class TasksService {
           existing.createdById,
           "task_completed",
           `Task completed: "${existing.title}"`,
-          `"${existing.title}" was marked completed.`
+          `"${existing.title}" was marked completed.`,
+          existing.organizationId
         );
       }
     }
@@ -203,7 +206,8 @@ class TasksService {
             a.userId,
             "task_assigned",
             `New task: ${existing.title}`,
-            `You were assigned "${existing.title}".`
+            `You were assigned "${existing.title}".`,
+            existing.organizationId
           );
         }
       }
@@ -265,16 +269,62 @@ class TasksService {
   async duplicateTask(userId: string, taskId: string) {
     const task = await this.findTaskOrThrow(taskId);
     await organizationsService.requireMembership(task.organizationId, userId);
+    const copy = await this.cloneTask(userId, task, {
+      title: `${task.title} (copy)`,
+      isTemplate: false
+    });
+    return toTaskDto(copy);
+  }
 
-    const copy = await this.prisma.task.create({
+  async listTemplates(userId: string, organizationId: string) {
+    await organizationsService.requireMembership(organizationId, userId);
+    const templates = await this.prisma.task.findMany({
+      where: { organizationId, isTemplate: true },
+      include: taskInclude,
+      orderBy: { createdAt: "desc" }
+    });
+    return templates.map(toTaskDto);
+  }
+
+  async saveAsTemplate(userId: string, taskId: string) {
+    const task = await this.findTaskOrThrow(taskId);
+    await organizationsService.requireMembership(task.organizationId, userId);
+    const template = await this.cloneTask(userId, task, {
+      title: task.title,
+      isTemplate: true
+    });
+    return toTaskDto(template);
+  }
+
+  async createFromTemplate(userId: string, templateId: string) {
+    const template = await this.findTaskOrThrow(templateId);
+    await organizationsService.requireMembership(
+      template.organizationId,
+      userId
+    );
+    const task = await this.cloneTask(userId, template, {
+      title: template.title,
+      isTemplate: false
+    });
+    await this.logActivity(task.id, userId, "created");
+    return toTaskDto(task);
+  }
+
+  private async cloneTask(
+    userId: string,
+    task: TaskWithRelations,
+    options: { title: string; isTemplate: boolean }
+  ) {
+    return this.prisma.task.create({
       data: {
         organizationId: task.organizationId,
         createdById: userId,
-        title: `${task.title} (copy)`,
+        title: options.title,
         description: task.description,
         type: task.type,
         status: "todo",
         priority: task.priority,
+        isTemplate: options.isTemplate,
         projectId: task.projectId,
         boardId: task.boardId,
         scriptId: task.scriptId,
@@ -299,8 +349,6 @@ class TasksService {
       },
       include: taskInclude
     });
-
-    return toTaskDto(copy);
   }
 
   async remove(userId: string, taskId: string): Promise<void> {
@@ -312,7 +360,7 @@ class TasksService {
 
   async getTasksForOrganization(organizationId: string) {
     const tasks = await this.prisma.task.findMany({
-      where: { organizationId },
+      where: { organizationId, isTemplate: false },
       include: taskInclude,
       orderBy: { createdAt: "desc" }
     });
