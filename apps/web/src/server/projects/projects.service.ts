@@ -1,4 +1,5 @@
 import type { Prisma } from "@fylmico/database";
+import { driveStructureService } from "../drive/drive-structure.service";
 import { AppException, HttpStatus } from "../http";
 import { organizationsService } from "../organizations/organizations.service";
 import {
@@ -46,6 +47,10 @@ class ProjectsService {
       await this.requireHouseMembers(houseId, dto.teamIds);
     }
 
+    if (dto.clientId) {
+      await this.requireClientInHouse(houseId, dto.clientId);
+    }
+
     const project = await this.prisma.project.create({
       data: {
         organizationId: houseId,
@@ -58,10 +63,27 @@ class ProjectsService {
         coverGradient: dto.coverGradient,
         coverIcon: dto.coverIcon,
         dueDate: dto.dueDate,
-        teamIds: dto.teamIds ?? []
+        teamIds: dto.teamIds ?? [],
+        ...(dto.clientId
+          ? { clients: { create: { clientId: dto.clientId } } }
+          : {})
       },
       include: projectInclude
     });
+
+    try {
+      await driveStructureService.ensureProjectFolder(
+        houseId,
+        project.id,
+        project.name,
+        dto.clientId ?? null
+      );
+    } catch (error) {
+      console.error(
+        "[projects] could not create Drive folder for project",
+        error
+      );
+    }
 
     return toProjectDto(project);
   }
@@ -155,16 +177,7 @@ class ProjectsService {
       userId
     );
 
-    const client = await this.prisma.client.findUnique({
-      where: { id: dto.clientId }
-    });
-    if (!client || client.organizationId !== project.organizationId) {
-      throw new AppException(
-        HttpStatus.BAD_REQUEST,
-        "invalid_request",
-        "clientId must belong to the same house as the project."
-      );
-    }
+    await this.requireClientInHouse(project.organizationId, dto.clientId);
 
     const existingLink = await this.prisma.projectClient.findUnique({
       where: { projectId_clientId: { projectId, clientId: dto.clientId } }
@@ -177,15 +190,48 @@ class ProjectsService {
       );
     }
 
+    const isFirstClient = project.clients.length === 0;
+
     await this.prisma.projectClient.create({
       data: { projectId, clientId: dto.clientId }
     });
+
+    if (isFirstClient) {
+      try {
+        await driveStructureService.moveProjectFolderToClient(
+          project.organizationId,
+          projectId,
+          dto.clientId
+        );
+      } catch (error) {
+        console.error(
+          "[projects] could not move Drive folder to client",
+          error
+        );
+      }
+    }
 
     const updated = await this.prisma.project.findUniqueOrThrow({
       where: { id: projectId },
       include: projectInclude
     });
     return toProjectDto(updated);
+  }
+
+  private async requireClientInHouse(
+    organizationId: string,
+    clientId: string
+  ): Promise<void> {
+    const client = await this.prisma.client.findUnique({
+      where: { id: clientId }
+    });
+    if (!client || client.organizationId !== organizationId) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_request",
+        "clientId must belong to the same house as the project."
+      );
+    }
   }
 
   private async requireHouseMembers(

@@ -1,4 +1,5 @@
 import type { Client } from "@fylmico/database";
+import { driveStructureService } from "../drive/drive-structure.service";
 import { AppException, HttpStatus } from "../http";
 import { organizationsService } from "../organizations/organizations.service";
 import {
@@ -25,6 +26,19 @@ class ClientsService {
         contactEmail: dto.contactEmail?.trim() || null
       }
     });
+
+    try {
+      await driveStructureService.ensureClientFolder(
+        houseId,
+        client.id,
+        client.name
+      );
+    } catch (error) {
+      console.error(
+        "[clients] could not create Drive folder for client",
+        error
+      );
+    }
 
     return toClientDto(client);
   }

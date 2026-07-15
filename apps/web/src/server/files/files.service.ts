@@ -1,5 +1,9 @@
 import { signDownloadToken } from "../drive/drive-token.util";
 import { driveService } from "../drive/drive.service";
+import {
+  driveStructureService,
+  type UploadCategory
+} from "../drive/drive-structure.service";
 import { AppException, HttpStatus } from "../http";
 import { getAppUrl } from "../mail/mailer";
 import { organizationsService } from "../organizations/organizations.service";
@@ -9,15 +13,28 @@ import type { CreateFolderDto } from "./dto/create-folder.dto";
 class FilesService {
   private readonly prisma = prisma;
 
-  async list(userId: string, houseId: string, parentId: string | null) {
-    await organizationsService.requireMembership(houseId, userId);
+  async list(
+    userId: string,
+    houseId: string,
+    parentId: string | null,
+    sensitive = false
+  ) {
+    if (sensitive) {
+      await organizationsService.requireOwnerRole(
+        houseId,
+        userId,
+        "view the Sensitive folder"
+      );
+    } else {
+      await organizationsService.requireMembership(houseId, userId);
+    }
 
     if (parentId) {
-      await this.requireEntry(houseId, parentId);
+      await this.requireEntry(houseId, parentId, userId);
     }
 
     const entries = await this.prisma.fileEntry.findMany({
-      where: { organizationId: houseId, parentId },
+      where: { organizationId: houseId, parentId, sensitive },
       include: { uploadedBy: true },
       orderBy: [{ type: "asc" }, { name: "asc" }]
     });
@@ -29,21 +46,13 @@ class FilesService {
     await organizationsService.requireMembership(houseId, userId);
 
     const parentEntry = dto.parentId
-      ? await this.requireEntry(houseId, dto.parentId)
+      ? await this.requireEntry(houseId, dto.parentId, userId)
       : null;
-    const parentDriveFolderId = await this.resolveDriveFolderId(
-      userId,
-      parentEntry
-    );
+    const parentDriveFolderId = await this.rootFolderId(houseId, parentEntry);
     const name = dto.name.trim();
 
-    // Mirror this folder into the creator's own Drive right away (rather
-    // than waiting for a lazy resolveDriveFolderId call on first upload)
-    // so an empty folder shows up in Drive immediately, matching what a
-    // user sees in the app. Created before the FileEntry row so a failed
-    // Drive call never leaves a dangling app-only folder behind.
     const driveFolderId = await driveService.createFolder(
-      userId,
+      houseId,
       name,
       parentDriveFolderId
     );
@@ -54,58 +63,14 @@ class FilesService {
         parentId: dto.parentId ?? null,
         name,
         type: "folder",
+        storagePath: driveFolderId,
+        sensitive: parentEntry?.sensitive ?? false,
         uploadedById: userId
       },
       include: { uploadedBy: true }
     });
-    await this.prisma.driveFolderLink.create({
-      data: { fileEntryId: folder.id, userId, driveFolderId }
-    });
 
     return toFileEntryDto(folder);
-  }
-
-  // A shared app-level folder doesn't have one Drive folder id - each
-  // uploader's files live in their own Drive (ADR 0038), so the same
-  // folder needs its own mirrored folder inside every uploader's Drive.
-  // Resolves (creating and caching in DriveFolderLink if necessary) the
-  // Drive folder id that `entry` maps to for this specific user; `null`
-  // means the user's Drive root ("Fylmico") folder.
-  private async resolveDriveFolderId(
-    userId: string,
-    entry: { id: string; parentId: string | null; name: string } | null
-  ): Promise<string> {
-    if (!entry) {
-      return driveService.getRootFolderId(userId);
-    }
-
-    const existingLink = await this.prisma.driveFolderLink.findUnique({
-      where: { fileEntryId_userId: { fileEntryId: entry.id, userId } }
-    });
-    if (existingLink) {
-      return existingLink.driveFolderId;
-    }
-
-    const parentEntry = entry.parentId
-      ? await this.prisma.fileEntry.findUnique({
-          where: { id: entry.parentId }
-        })
-      : null;
-    const parentDriveFolderId = await this.resolveDriveFolderId(
-      userId,
-      parentEntry
-    );
-
-    const driveFolderId = await driveService.createFolder(
-      userId,
-      entry.name,
-      parentDriveFolderId
-    );
-    await this.prisma.driveFolderLink.create({
-      data: { fileEntryId: entry.id, userId, driveFolderId }
-    });
-
-    return driveFolderId;
   }
 
   async uploadFile(
@@ -118,23 +83,13 @@ class FilesService {
     await organizationsService.requireMembership(houseId, userId);
 
     const parentEntry = parentId
-      ? await this.requireEntry(houseId, parentId)
+      ? await this.requireEntry(houseId, parentId, userId)
       : null;
-    const parentDriveFolderId = await this.resolveDriveFolderId(
-      userId,
-      parentEntry
-    );
+    const parentDriveFolderId = await this.rootFolderId(houseId, parentEntry);
 
-    // The file's bytes live in the uploader's own Google Drive (mirrored
-    // into the same folder structure they see in the app) - this row is
-    // just the shared team index/tree pointing at it. See ADR 0038.
     const storagePath = await driveService.upload(
-      userId,
-      {
-        name: file.name,
-        buffer: file.buffer,
-        mimeType: file.mimeType
-      },
+      houseId,
+      { name: file.name, buffer: file.buffer, mimeType: file.mimeType },
       parentDriveFolderId
     );
 
@@ -148,12 +103,77 @@ class FilesService {
         storagePath,
         size: file.size,
         mimeType: file.mimeType,
+        sensitive: parentEntry?.sensitive ?? false,
         uploadedById: userId
       },
       include: { uploadedBy: true }
     });
 
+    await this.mirrorIntoEmployeeWork(
+      houseId,
+      userId,
+      entry.name,
+      file.mimeType,
+      storagePath,
+      file.size
+    );
+
     return toFileEntryDto(entry);
+  }
+
+  async resolveDestination(
+    userId: string,
+    houseId: string,
+    params: {
+      clientId: string | "misc";
+      projectId?: string;
+      category?: UploadCategory;
+    }
+  ): Promise<{ parentId: string }> {
+    await organizationsService.requireMembership(houseId, userId);
+    const folder = await driveStructureService.resolveDestination(
+      houseId,
+      params
+    );
+    return { parentId: folder.id };
+  }
+
+  async addToPortfolio(
+    userId: string,
+    houseId: string,
+    entryId: string,
+    category: string
+  ) {
+    await organizationsService.requireMembership(houseId, userId);
+    const entry = await this.requireEntry(houseId, entryId, userId);
+    if (entry.type !== "file" || !entry.storagePath) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_request",
+        "Only files can be added to the Portfolio."
+      );
+    }
+
+    const portfolioFolder = await driveStructureService.getFolderByKey(
+      houseId,
+      `portfolio:${category}`
+    );
+
+    const copy = await this.prisma.fileEntry.create({
+      data: {
+        organizationId: houseId,
+        parentId: portfolioFolder.id,
+        name: entry.name,
+        type: "file",
+        storagePath: entry.storagePath,
+        size: entry.size,
+        mimeType: entry.mimeType,
+        uploadedById: userId
+      },
+      include: { uploadedBy: true }
+    });
+
+    return toFileEntryDto(copy);
   }
 
   async deleteEntry(
@@ -162,13 +182,19 @@ class FilesService {
     entryId: string
   ): Promise<void> {
     await organizationsService.requireMembership(houseId, userId);
-    const entry = await this.requireEntry(houseId, entryId);
+    const entry = await this.requireEntry(houseId, entryId, userId);
 
-    const driveTargets = await this.collectDriveTargets(entry.id);
+    if (entry.driveKey) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "protected_folder",
+        "This folder is managed automatically and can't be deleted."
+      );
+    }
+
+    const fileIds = await this.collectDriveFileIds(entry.id);
     await Promise.all(
-      driveTargets.map((target) =>
-        driveService.remove(target.uploaderId, target.fileId)
-      )
+      fileIds.map((fileId) => driveService.remove(houseId, fileId))
     );
     await this.prisma.fileEntry.delete({ where: { id: entryId } });
   }
@@ -179,7 +205,7 @@ class FilesService {
     entryId: string
   ): Promise<string> {
     await organizationsService.requireMembership(houseId, userId);
-    const entry = await this.requireEntry(houseId, entryId);
+    const entry = await this.requireEntry(houseId, entryId, userId);
 
     if (entry.type !== "file" || !entry.storagePath) {
       throw new AppException(
@@ -192,27 +218,73 @@ class FilesService {
     return `${getAppUrl()}/api/v1/files/download/${signDownloadToken(entry.id)}`;
   }
 
-  private async collectDriveTargets(
-    entryId: string
-  ): Promise<{ fileId: string; uploaderId: string }[]> {
+  private async collectDriveFileIds(entryId: string): Promise<string[]> {
     const entry = await this.prisma.fileEntry.findUniqueOrThrow({
       where: { id: entryId }
     });
 
     if (entry.type === "file") {
-      return entry.storagePath
-        ? [{ fileId: entry.storagePath, uploaderId: entry.uploadedById }]
-        : [];
+      return entry.storagePath ? [entry.storagePath] : [];
     }
 
     const children = await this.prisma.fileEntry.findMany({
       where: { parentId: entryId }
     });
-
     const nested = await Promise.all(
-      children.map((child) => this.collectDriveTargets(child.id))
+      children.map((child) => this.collectDriveFileIds(child.id))
     );
     return nested.flat();
+  }
+
+  private async mirrorIntoEmployeeWork(
+    houseId: string,
+    uploaderId: string,
+    name: string,
+    mimeType: string,
+    storagePath: string,
+    size: number
+  ): Promise<void> {
+    try {
+      const subfolder = mimeType.startsWith("video/")
+        ? "Videos"
+        : mimeType.startsWith("image/")
+          ? "Images"
+          : "Documents";
+      const employeeSubfolder = await driveStructureService.getFolderByKey(
+        houseId,
+        `employee:${uploaderId}:${subfolder}`
+      );
+      await this.prisma.fileEntry.create({
+        data: {
+          organizationId: houseId,
+          parentId: employeeSubfolder.id,
+          name,
+          type: "file",
+          storagePath,
+          size,
+          mimeType,
+          sensitive: true,
+          uploadedById: uploaderId
+        }
+      });
+    } catch (error) {
+      console.error(
+        "[files] could not mirror upload into Employee Work",
+        error
+      );
+    }
+  }
+
+  private async rootFolderId(
+    houseId: string,
+    parentEntry: { storagePath: string | null } | null
+  ): Promise<string> {
+    if (parentEntry) {
+      return parentEntry.storagePath!;
+    }
+    const { visibleRootFolderId } =
+      await driveService.getRootFolderIds(houseId);
+    return visibleRootFolderId;
   }
 
   async getSummary(userId: string, houseId: string) {
@@ -261,7 +333,7 @@ class FilesService {
     };
   }
 
-  private async requireEntry(houseId: string, entryId: string) {
+  private async requireEntry(houseId: string, entryId: string, userId: string) {
     const entry = await this.prisma.fileEntry.findUnique({
       where: { id: entryId }
     });
@@ -270,6 +342,13 @@ class FilesService {
         HttpStatus.NOT_FOUND,
         "file_not_found",
         "This file or folder does not exist in this house."
+      );
+    }
+    if (entry.sensitive) {
+      await organizationsService.requireOwnerRole(
+        houseId,
+        userId,
+        "access the Sensitive folder"
       );
     }
     return entry;
@@ -320,6 +399,7 @@ function toFileEntryDto(entry: {
   storagePath: string | null;
   size: number | null;
   mimeType: string | null;
+  sensitive: boolean;
   uploadedBy: { id: string; name: string };
   createdAt: Date;
   updatedAt: Date;
@@ -331,6 +411,7 @@ function toFileEntryDto(entry: {
     type: entry.type,
     size: entry.size,
     mimeType: entry.mimeType,
+    sensitive: entry.sensitive,
     uploadedById: entry.uploadedBy.id,
     uploadedByName: entry.uploadedBy.name,
     createdAt: entry.createdAt,

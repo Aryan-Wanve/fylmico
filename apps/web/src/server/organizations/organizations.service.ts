@@ -10,6 +10,7 @@ import {
   hashOpaqueToken
 } from "../auth/token.util";
 import { getEnv } from "../env";
+import { driveStructureService } from "../drive/drive-structure.service";
 import { AppException, HttpStatus } from "../http";
 import { sendMail } from "../mail/mailer";
 import { buildJoinRequestEmail } from "../mail/templates";
@@ -583,6 +584,22 @@ class OrganizationsService {
       organizationName,
       userId
     );
+
+    try {
+      const user = await this.prisma.user.findUniqueOrThrow({
+        where: { id: userId }
+      });
+      await driveStructureService.ensureEmployeeFolder(
+        organizationId,
+        userId,
+        user.name
+      );
+    } catch (error) {
+      console.error(
+        "[organizations] could not create Drive Employee Work folder",
+        error
+      );
+    }
   }
 
   private get appUrl(): string {
