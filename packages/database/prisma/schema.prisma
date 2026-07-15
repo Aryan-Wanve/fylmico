@@ -49,13 +49,15 @@ model User {
 }
 
 model Organization {
-  id          String   @id @default(cuid())
-  name        String
-  handle      String   @unique
-  description String
-  inviteCode  String   @unique @map("invite_code")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(cuid())
+  name           String
+  handle         String   @unique
+  description    String
+  inviteCode     String   @unique @map("invite_code")
+  type           String   @default("custom")
+  enabledModules String[] @default([]) @map("enabled_modules")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   roles          Role[]
   memberships    OrganizationMembership[]
