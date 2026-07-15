@@ -2,10 +2,12 @@ import { organizationsService } from "../organizations/organizations.service";
 import { prisma } from "../prisma";
 
 const TASK_STATUS_DISPLAY: Record<string, { label: string; color: string }> = {
-  done: { label: "Completed", color: "#16c784" },
+  todo: { label: "To Do", color: "#94a3b8" },
   "in-progress": { label: "In Progress", color: "#3b82f6" },
-  todo: { label: "To Do", color: "#f97316" },
-  "on-hold": { label: "Blocked", color: "#ef4444" }
+  review: { label: "Review", color: "#a855f7" },
+  "changes-requested": { label: "Changes Requested", color: "#f59e0b" },
+  completed: { label: "Completed", color: "#16c784" },
+  archived: { label: "Archived", color: "#64748b" }
 };
 
 const PHASE_ORDER = [
@@ -51,12 +53,15 @@ class AnalyticsService {
       crewProfiles,
       taskTimestamps,
       messageTimestamps,
-      commentTimestamps
+      commentTimestamps,
+      taskTimeEntries
     ] = await Promise.all([
       this.prisma.project.findMany({
         where: { organizationId: houseId, status: { not: "archived" } }
       }),
-      this.prisma.task.findMany({ where: { organizationId: houseId } }),
+      this.prisma.task.findMany({
+        where: { organizationId: houseId, isTemplate: false }
+      }),
       this.prisma.timeEntry.findMany({ where: { organizationId: houseId } }),
       this.prisma.organizationMembership.findMany({
         where: { organizationId: houseId },
@@ -64,7 +69,7 @@ class AnalyticsService {
       }),
       this.prisma.crewProfile.findMany({ where: { organizationId: houseId } }),
       this.prisma.task.findMany({
-        where: { organizationId: houseId },
+        where: { organizationId: houseId, isTemplate: false },
         select: { createdAt: true }
       }),
       this.prisma.message.findMany({
@@ -74,6 +79,10 @@ class AnalyticsService {
       this.prisma.comment.findMany({
         where: { organizationId: houseId },
         select: { createdAt: true }
+      }),
+      this.prisma.taskTimeEntry.findMany({
+        where: { task: { organizationId: houseId } },
+        select: { durationMinutes: true }
       })
     ]);
 
@@ -84,7 +93,7 @@ class AnalyticsService {
 
     const tasksTotal = tasks.length;
     const tasksCompleted = tasks.filter(
-      (task) => task.status === "done"
+      (task) => task.status === "completed"
     ).length;
     const teamEfficiency =
       tasksTotal > 0 ? Math.round((tasksCompleted / tasksTotal) * 100) : 0;
@@ -195,6 +204,17 @@ class AnalyticsService {
       .sort((a, b) => b.percentage - a.percentage)
       .slice(0, 5);
 
+    const taskEstimateVsActual = {
+      estimatedMinutes: tasks.reduce(
+        (sum, task) => sum + (task.estimatedMinutes ?? 0),
+        0
+      ),
+      actualMinutes: taskTimeEntries.reduce(
+        (sum, entry) => sum + (entry.durationMinutes ?? 0),
+        0
+      )
+    };
+
     const activityHeatmap = buildActivityHeatmap([
       ...taskTimestamps.map((row) => row.createdAt),
       ...messageTimestamps.map((row) => row.createdAt),
@@ -216,6 +236,7 @@ class AnalyticsService {
       projectHoursSeries,
       topContributors,
       teamWorkload,
+      taskEstimateVsActual,
       activityHeatmap
     };
   }
