@@ -21,6 +21,7 @@ import { CrewsEmptyState } from "@/components/crews/crews-empty-state";
 import { DepartmentOverviewPanel } from "@/components/crews/department-overview-panel";
 import { CrewByRolePanel } from "@/components/crews/crew-by-role-panel";
 import { UpcomingBirthdaysPanel } from "@/components/crews/upcoming-birthdays-panel";
+import { PendingMembersPanel } from "@/components/crews/pending-members-panel";
 import { PaginationFooter } from "@/components/layout/pagination-footer";
 import {
   DEPARTMENT_META,
@@ -31,7 +32,7 @@ import {
 } from "@/components/crews/crew-data";
 
 export function CrewsPage() {
-  const { refreshWorkspace } = useWorkspace();
+  const { activeHouse, refreshWorkspace } = useWorkspace();
   const prompt = usePrompt();
   const router = useRouter();
 
@@ -369,6 +370,13 @@ export function CrewsPage() {
         </div>
 
         <aside className="grid min-w-0 grid-cols-1 content-start gap-6">
+          {activeHouse ? (
+            <PendingMembersPanel
+              houseId={activeHouse.id}
+              members={activeHouse.pendingMembers}
+              onChanged={refreshWorkspace}
+            />
+          ) : null}
           <DepartmentOverviewPanel members={members} />
           <CrewByRolePanel members={members} />
           <UpcomingBirthdaysPanel members={members} />

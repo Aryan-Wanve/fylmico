@@ -3,8 +3,11 @@ import {
   Camera,
   Film,
   Headphones,
+  Lightbulb,
+  Megaphone,
   Palette,
   Shirt,
+  Users,
   Zap,
   type LucideIcon
 } from "lucide-react";
@@ -27,7 +30,10 @@ export const DEPARTMENT_ORDER: Department[] = [
   "Electric",
   "Sound",
   "Costume",
-  "Post-Production"
+  "Post-Production",
+  "Creative",
+  "Marketing",
+  "Management"
 ];
 
 export const DEPARTMENT_META: Record<
@@ -48,7 +54,10 @@ export const DEPARTMENT_META: Record<
     icon: Film,
     color: "text-indigo-600",
     bg: "bg-indigo-50"
-  }
+  },
+  Creative: { icon: Lightbulb, color: "text-fuchsia-600", bg: "bg-fuchsia-50" },
+  Marketing: { icon: Megaphone, color: "text-orange-600", bg: "bg-orange-50" },
+  Management: { icon: Users, color: "text-slate-600", bg: "bg-slate-50" }
 };
 
 export const STATUS_ORDER: MemberStatus[] = [
