@@ -183,6 +183,12 @@ export type House = {
   type: HouseType;
   enabledModules: string[];
   myRole: RoleName | null;
+  isFavorite: boolean;
+  isPinned: boolean;
+  isArchived: boolean;
+  order: number;
+  storageBytes: number;
+  lastActivityAt: string | null;
   members: HouseMember[];
   pendingMembers: PendingMember[];
   roles: HouseRole[];
@@ -382,6 +388,7 @@ export type Analytics = {
   projectHoursSeries: AnalyticsProjectHoursSeries[];
   topContributors: AnalyticsContributor[];
   teamWorkload: AnalyticsWorkloadEntry[];
+  taskEstimateVsActual: { estimatedMinutes: number; actualMinutes: number };
   activityHeatmap: ActivityHeatmap;
 };
 
@@ -823,6 +830,7 @@ export type NotificationItem = {
   type: string;
   title: string;
   body: string;
+  organizationId: string | null;
   readAt: string | null;
   createdAt: string;
 };

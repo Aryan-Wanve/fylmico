@@ -302,6 +302,25 @@ export async function banPendingMember(
   );
 }
 
+export async function toggleFavoriteHouse(houseId: string): Promise<House> {
+  return apiRequest<House>(`/houses/${houseId}/favorite`, { method: "POST" });
+}
+
+export async function togglePinHouse(houseId: string): Promise<House> {
+  return apiRequest<House>(`/houses/${houseId}/pin`, { method: "POST" });
+}
+
+export async function toggleArchiveHouse(houseId: string): Promise<House> {
+  return apiRequest<House>(`/houses/${houseId}/archive`, { method: "POST" });
+}
+
+export async function reorderHouses(organizationIds: string[]): Promise<void> {
+  await apiRequest<{ success: boolean }>("/houses/reorder", {
+    method: "POST",
+    body: { organizationIds }
+  });
+}
+
 export async function inviteMember(email: string): Promise<HouseInvitation> {
   if (!email.trim()) {
     throw new Error("Enter an email address to invite.");
@@ -414,6 +433,29 @@ export async function duplicateTaskRequest(
   return apiRequest<ProductionTask>(`/tasks/${taskId}/duplicate`, {
     method: "POST"
   });
+}
+
+export async function listTaskTemplates(
+  houseId: string
+): Promise<ProductionTask[]> {
+  return apiRequest<ProductionTask[]>(`/houses/${houseId}/task-templates`);
+}
+
+export async function saveTaskAsTemplate(
+  taskId: string
+): Promise<ProductionTask> {
+  return apiRequest<ProductionTask>(`/tasks/${taskId}/save-as-template`, {
+    method: "POST"
+  });
+}
+
+export async function createTaskFromTemplate(
+  templateId: string
+): Promise<ProductionTask> {
+  return apiRequest<ProductionTask>(
+    `/tasks/${templateId}/create-from-template`,
+    { method: "POST" }
+  );
 }
 
 export async function addChecklistItem(
