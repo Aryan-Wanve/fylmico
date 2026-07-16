@@ -2,6 +2,14 @@
 
 import { useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import type {
   CallSheet,
   CrewCallTime,
@@ -145,35 +153,44 @@ export function CallSheetEditor({
           <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
             Project
           </span>
-          <select
-            className="h-9 rounded-lg border border-black/10 bg-transparent px-2 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
-            onChange={(event) => {
-              setProjectId(event.target.value);
-              flushSave({ projectId: event.target.value || undefined });
+          <Select
+            items={{
+              none: "No project",
+              ...Object.fromEntries(
+                projects.map((project) => [project.id, project.title])
+              )
             }}
-            value={projectId}
+            onValueChange={(next) => {
+              const nextId = next && next !== "none" ? next : "";
+              setProjectId(nextId);
+              flushSave({ projectId: nextId || undefined });
+            }}
+            value={projectId || "none"}
           >
-            <option value="">No project</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.title}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="h-9 w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No project</SelectItem>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
 
         <label className="grid gap-1.5">
           <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
             Shoot date
           </span>
-          <input
-            className="h-9 rounded-lg border border-black/10 bg-transparent px-2 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:text-[#f1f2f8]"
-            onBlur={() => flushSave({ shootDate })}
-            onChange={(event) => {
-              setShootDate(event.target.value);
-              scheduleSave({ shootDate: event.target.value });
+          <DatePicker
+            className="h-9"
+            onChange={(next) => {
+              setShootDate(next);
+              flushSave({ shootDate: next });
             }}
-            type="date"
             value={shootDate}
           />
         </label>
@@ -248,18 +265,21 @@ export function CallSheetEditor({
           </strong>
           {availableCrew.length > 0 ? (
             <div className="flex items-center gap-2">
-              <select
-                className="h-8 rounded-lg border border-black/10 bg-transparent px-2 text-xs text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
-                onChange={(event) => setAddingCrewId(event.target.value)}
+              <Select
+                onValueChange={(next) => setAddingCrewId(next ?? "")}
                 value={addingCrewId}
               >
-                <option value="">Add crew member...</option>
-                {availableCrew.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-8" size="sm">
+                  <SelectValue placeholder="Add crew member..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCrew.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <button
                 className="grid h-8 w-8 place-items-center rounded-lg bg-[#654cff]/10 text-[#654cff] hover:bg-[#654cff]/20 disabled:opacity-40"
                 disabled={!addingCrewId}
