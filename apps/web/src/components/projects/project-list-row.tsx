@@ -1,9 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { formatFileSize } from "@/components/files/file-data";
 import {
   COVER_ICONS,
   STAGE_BADGE_STYLES,
+  formatDueIn,
   isProjectOverdue,
   type Project
 } from "@/components/projects/project-data";
@@ -25,6 +27,7 @@ export function ProjectListRow({
   const router = useRouter();
   const Icon = project.coverIcon ? COVER_ICONS[project.coverIcon] : null;
   const overdue = isProjectOverdue(project);
+  const clientName = project.clients[0]?.name;
 
   return (
     <div
@@ -40,11 +43,17 @@ export function ProjectListRow({
       </div>
 
       <div className="min-w-0 flex-1">
+        {clientName ? (
+          <span className="block truncate text-xs font-bold text-[#654cff]">
+            {clientName}
+          </span>
+        ) : null}
         <strong className="block truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
           {project.title}
         </strong>
         <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
-          {project.type} &bull; {project.genre}
+          {project.completedTaskCount ?? 0}/{project.taskCount ?? 0} tasks
+          &bull; {formatFileSize(project.storageBytes ?? 0)}
         </span>
       </div>
 
@@ -71,9 +80,9 @@ export function ProjectListRow({
       </div>
 
       <span
-        className={`hidden w-24 shrink-0 text-xs font-semibold sm:block ${overdue ? "text-red-600" : "text-[#8a90a3] dark:text-[#7d8299]"}`}
+        className={`hidden w-28 shrink-0 text-xs font-semibold sm:block ${overdue ? "text-red-600" : "text-[#8a90a3] dark:text-[#7d8299]"}`}
       >
-        {project.dueDate ?? "TBD"}
+        {formatDueIn(project.dueDate)}
       </span>
 
       <div onClick={(event) => event.stopPropagation()}>

@@ -61,6 +61,36 @@ export const COVER_ICONS: Record<ProjectCoverIcon, LucideIcon> = {
   music: Music
 };
 
+export function formatDueIn(dueDate: string | null): string {
+  if (!dueDate) {
+    return "No due date";
+  }
+
+  const due = new Date(dueDate);
+  if (Number.isNaN(due.getTime())) {
+    return "No due date";
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.round(
+    (due.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)
+  );
+
+  if (diffDays < 0) {
+    return "Overdue";
+  }
+  if (diffDays === 0) {
+    return "Due today";
+  }
+  if (diffDays === 1) {
+    return "Due tomorrow";
+  }
+  return `Due in ${diffDays} days`;
+}
+
 export function isProjectOverdue(project: Project): boolean {
   if (project.status === "completed" || !project.dueDate) {
     return false;

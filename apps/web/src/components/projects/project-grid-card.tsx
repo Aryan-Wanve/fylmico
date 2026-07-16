@@ -1,12 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { CheckSquare, HardDrive, Users } from "lucide-react";
+import { formatFileSize } from "@/components/files/file-data";
 import {
   COVER_ICONS,
   STAGE_BADGE_STYLES,
+  formatDueIn,
   isProjectOverdue,
   type Project
 } from "@/components/projects/project-data";
+import { PRIORITY_META } from "@/components/tasks/task-data";
 import { TeamAvatarStack } from "@/components/projects/team-avatar-stack";
 import { ProjectCardMenu } from "@/components/projects/project-card-menu";
 import type { HouseMember } from "@/types/base";
@@ -14,17 +18,23 @@ import type { HouseMember } from "@/types/base";
 export function ProjectGridCard({
   project,
   members,
+  onlineUserIds,
   onDuplicate,
   onArchive
 }: {
   project: Project;
   members: HouseMember[];
+  onlineUserIds: Set<string>;
   onDuplicate: () => void;
   onArchive: () => void;
 }) {
   const router = useRouter();
   const Icon = project.coverIcon ? COVER_ICONS[project.coverIcon] : null;
   const overdue = isProjectOverdue(project);
+  const clientName = project.clients[0]?.name;
+  const onlineCount = project.teamIds.filter((id) =>
+    onlineUserIds.has(id)
+  ).length;
 
   return (
     <article
@@ -42,22 +52,28 @@ export function ProjectGridCard({
         >
           {project.stage}
         </span>
+        <span
+          className={`absolute top-2.5 left-2.5 rounded-full px-2.5 py-1 text-xs font-bold ${PRIORITY_META[project.priority].badge}`}
+        >
+          {PRIORITY_META[project.priority].label}
+        </span>
       </div>
 
       <div className="flex items-start justify-between gap-2 pt-3">
-        <strong className="truncate text-[0.95rem] font-bold text-[#11142c] dark:text-[#f1f2f8]">
-          {project.title}
-        </strong>
+        <div className="min-w-0">
+          {clientName ? (
+            <span className="block truncate text-xs font-bold text-[#654cff]">
+              {clientName}
+            </span>
+          ) : null}
+          <strong className="truncate text-[0.95rem] font-bold text-[#11142c] dark:text-[#f1f2f8]">
+            {project.title}
+          </strong>
+        </div>
         <div onClick={(event) => event.stopPropagation()}>
           <ProjectCardMenu onArchive={onArchive} onDuplicate={onDuplicate} />
         </div>
       </div>
-      <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
-        {project.type} &bull; {project.genre}
-      </span>
-      <p className="mt-1.5 line-clamp-2 text-sm text-[#5f667d] dark:text-[#a8acbf]">
-        {project.description}
-      </p>
 
       <div className="mt-3 flex items-center gap-2">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
@@ -67,7 +83,22 @@ export function ProjectGridCard({
           />
         </div>
         <span className="text-xs font-semibold text-[#5f667d] dark:text-[#a8acbf]">
-          {project.progress}%
+          {project.progress}% Complete
+        </span>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-1.5 text-xs font-semibold text-[#5f667d] dark:text-[#a8acbf]">
+        <span className="flex items-center gap-1">
+          <CheckSquare className="h-3.5 w-3.5 text-[#654cff]" />
+          {project.completedTaskCount ?? 0}/{project.taskCount ?? 0} Tasks
+        </span>
+        <span className="flex items-center gap-1">
+          <HardDrive className="h-3.5 w-3.5 text-[#654cff]" />
+          {formatFileSize(project.storageBytes ?? 0)}
+        </span>
+        <span className="flex items-center gap-1">
+          <Users className="h-3.5 w-3.5 text-[#654cff]" />
+          {onlineCount} Online
         </span>
       </div>
 
@@ -76,8 +107,7 @@ export function ProjectGridCard({
         <span
           className={`text-xs font-semibold ${overdue ? "text-red-600" : "text-[#8a90a3] dark:text-[#7d8299]"}`}
         >
-          {overdue ? "Overdue · " : ""}
-          {project.dueDate ?? "TBD"}
+          {formatDueIn(project.dueDate)}
         </span>
       </div>
     </article>

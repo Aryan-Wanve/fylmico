@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePresence } from "@/lib/realtime/use-presence";
 import { useWorkspace } from "@/lib/workspace-context";
 import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
@@ -25,8 +26,13 @@ import {
 } from "@/components/projects/project-data";
 
 export function ProjectsPage() {
-  const { activeHouse } = useWorkspace();
+  const { workspace, activeHouse } = useWorkspace();
   const members = useMemo(() => activeHouse?.members ?? [], [activeHouse]);
+  const onlineUserIds = usePresence(
+    activeHouse?.id ?? null,
+    workspace.user.id,
+    workspace.user.name
+  );
   const prompt = usePrompt();
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -111,6 +117,7 @@ export function ProjectsPage() {
         type: source.type ?? undefined,
         genre: source.genre ?? undefined,
         stage: source.stage,
+        priority: source.priority,
         progress: source.progress,
         coverGradient: source.coverGradient ?? undefined,
         coverIcon: source.coverIcon ?? undefined,
@@ -193,6 +200,7 @@ export function ProjectsPage() {
               members={members}
               onArchive={() => handleArchive(project.id)}
               onDuplicate={() => handleDuplicate(project.id)}
+              onlineUserIds={onlineUserIds}
               project={project}
             />
           ))}
