@@ -10,6 +10,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import {
   PRIORITY_META,
   PRIORITY_ORDER,
   STATUS_META,
@@ -49,9 +56,6 @@ import type {
   TaskAssigneeInput,
   TaskTimeEntryItem
 } from "@/types/base";
-
-const selectClassName =
-  "h-8 rounded-md border border-black/10 bg-transparent px-2 text-xs font-semibold outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c]";
 
 function activityText(activity: TaskActivityItem): string {
   switch (activity.type) {
@@ -228,51 +232,67 @@ export function TaskDetailPanel({
           </DialogHeader>
 
           <div className="flex flex-wrap items-center gap-2">
-            <select
-              className={selectClassName}
-              onChange={(event) =>
-                void patch({
-                  type: event.target.value as ProductionTask["type"]
-                })
+            <Select
+              items={TASK_TYPE_LABELS}
+              onValueChange={(next) =>
+                void patch({ type: next as ProductionTask["type"] })
               }
               value={task.type}
             >
-              {TASK_TYPES.map((value) => (
-                <option key={value} value={value}>
-                  {TASK_TYPE_LABELS[value]}
-                </option>
-              ))}
-            </select>
-            <select
-              className={selectClassName}
-              onChange={(event) =>
-                void patch({
-                  status: event.target.value as ProductionTask["status"]
-                })
+              <SelectTrigger size="sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TASK_TYPES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {TASK_TYPE_LABELS[value]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              items={Object.fromEntries(
+                STATUS_ORDER.map((value) => [value, STATUS_META[value].label])
+              )}
+              onValueChange={(next) =>
+                void patch({ status: next as ProductionTask["status"] })
               }
               value={task.status}
             >
-              {STATUS_ORDER.map((value) => (
-                <option key={value} value={value}>
-                  {STATUS_META[value].label}
-                </option>
-              ))}
-            </select>
-            <select
-              className={selectClassName}
-              onChange={(event) =>
-                void patch({
-                  priority: event.target.value as ProductionTask["priority"]
-                })
+              <SelectTrigger size="sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_ORDER.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {STATUS_META[value].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              items={Object.fromEntries(
+                PRIORITY_ORDER.map((value) => [
+                  value,
+                  PRIORITY_META[value].label
+                ])
+              )}
+              onValueChange={(next) =>
+                void patch({ priority: next as ProductionTask["priority"] })
               }
               value={task.priority}
             >
-              {PRIORITY_ORDER.map((value) => (
-                <option key={value} value={value}>
-                  {PRIORITY_META[value].label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger size="sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITY_ORDER.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {PRIORITY_META[value].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {task.isBlocked ? (
               <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600">
                 Blocked
@@ -479,20 +499,34 @@ export function TaskDetailPanel({
               ))}
             </div>
             <div className="flex gap-1.5">
-              <select
-                className={selectClassName}
-                onChange={(event) => setDependencyPickerId(event.target.value)}
-                value={dependencyPickerId}
+              <Select
+                items={{
+                  none: "Select a task...",
+                  ...Object.fromEntries(
+                    tasks
+                      .filter((t) => t.id !== taskId)
+                      .map((t) => [t.id, t.title])
+                  )
+                }}
+                onValueChange={(next) =>
+                  setDependencyPickerId(next && next !== "none" ? next : "")
+                }
+                value={dependencyPickerId || "none"}
               >
-                <option value="">Select a task...</option>
-                {tasks
-                  .filter((t) => t.id !== taskId)
-                  .map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.title}
-                    </option>
-                  ))}
-              </select>
+                <SelectTrigger size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Select a task...</SelectItem>
+                  {tasks
+                    .filter((t) => t.id !== taskId)
+                    .map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.title}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
               <button
                 className="text-xs font-bold text-[#654cff]"
                 onClick={async () => {
