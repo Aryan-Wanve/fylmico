@@ -10,10 +10,14 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import type { ClientItem, Project, UploadCategory } from "@/types/base";
-
-const selectClassName =
-  "h-10 w-full rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]";
 
 const CATEGORIES: { value: UploadCategory; label: string }[] = [
   { value: "raw", label: "Raw Footage" },
@@ -88,21 +92,31 @@ export function UploadDestinationDialog({
               <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                 Client
               </Label>
-              <select
-                className={selectClassName}
-                onChange={(event) => {
-                  setClientId(event.target.value);
+              <Select
+                items={{
+                  misc: "Misc",
+                  ...Object.fromEntries(
+                    clients.map((client) => [client.id, client.name])
+                  )
+                }}
+                onValueChange={(next) => {
+                  setClientId(next ?? "misc");
                   setProjectId("");
                 }}
                 value={clientId}
               >
-                <option value="misc">Misc</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-10 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="misc">Misc</SelectItem>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </label>
 
             {clientId !== "misc" ? (
@@ -110,18 +124,33 @@ export function UploadDestinationDialog({
                 <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                   Project (optional)
                 </Label>
-                <select
-                  className={selectClassName}
-                  onChange={(event) => setProjectId(event.target.value)}
-                  value={projectId}
+                <Select
+                  items={{
+                    none: "None",
+                    ...Object.fromEntries(
+                      projectsForClient.map((project) => [
+                        project.id,
+                        project.title
+                      ])
+                    )
+                  }}
+                  onValueChange={(next) =>
+                    setProjectId(next && next !== "none" ? next : "")
+                  }
+                  value={projectId || "none"}
                 >
-                  <option value="">None</option>
-                  {projectsForClient.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.title}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {projectsForClient.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </label>
             ) : null}
 
@@ -130,19 +159,24 @@ export function UploadDestinationDialog({
                 <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                   Type
                 </Label>
-                <select
-                  className={selectClassName}
-                  onChange={(event) =>
-                    setCategory(event.target.value as UploadCategory)
-                  }
+                <Select
+                  items={Object.fromEntries(
+                    CATEGORIES.map((option) => [option.value, option.label])
+                  )}
+                  onValueChange={(next) => setCategory(next as UploadCategory)}
                   value={category}
                 >
-                  {CATEGORIES.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </label>
             ) : null}
           </div>
