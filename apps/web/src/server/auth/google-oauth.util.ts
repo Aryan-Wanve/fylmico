@@ -42,8 +42,9 @@ export async function exchangeGoogleCode(params: {
   });
 
   if (!response.ok) {
+    const body = await response.text();
     throw new Error(
-      `Google token exchange failed with status ${response.status}`
+      `Google token exchange failed with status ${response.status}: ${body}`
     );
   }
 
