@@ -29,6 +29,7 @@ import type {
   CreateLocationRequest,
   CreateProjectRequest,
   CreateScriptRequest,
+  CreateShootRequest,
   CreateShotRequest,
   CreateTaskRequest,
   CreateTimeEntryRequest,
@@ -59,6 +60,7 @@ import type {
   Script,
   ScriptSummary,
   SendChatMessageRequest,
+  Shoot,
   Shot,
   SignupRequest,
   StoryCharacter,
@@ -660,6 +662,75 @@ export async function getProjectStats(
   projectId: string
 ): Promise<ProjectStats> {
   return apiRequest<ProjectStats>(`/projects/${projectId}/stats`);
+}
+
+export async function listShoots(projectId: string): Promise<Shoot[]> {
+  return apiRequest<Shoot[]>(`/projects/${projectId}/shoots`);
+}
+
+export async function getShoot(shootId: string): Promise<Shoot> {
+  return apiRequest<Shoot>(`/shoots/${shootId}`);
+}
+
+export async function createShoot(
+  projectId: string,
+  request: CreateShootRequest
+): Promise<Shoot> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before scheduling a shoot.");
+  }
+
+  return apiRequest<Shoot>(
+    `/houses/${activeHouseId}/projects/${projectId}/shoots`,
+    { method: "POST", body: request }
+  );
+}
+
+export async function markShootReached(shootId: string): Promise<Shoot> {
+  return apiRequest<Shoot>(`/shoots/${shootId}/reached`, { method: "POST" });
+}
+
+export async function startShoot(shootId: string): Promise<Shoot> {
+  return apiRequest<Shoot>(`/shoots/${shootId}/start`, { method: "POST" });
+}
+
+export async function finishShoot(shootId: string): Promise<Shoot> {
+  return apiRequest<Shoot>(`/shoots/${shootId}/finish`, { method: "POST" });
+}
+
+export async function finishAndUploadShoot(shootId: string): Promise<Shoot> {
+  return apiRequest<Shoot>(`/shoots/${shootId}/finish-upload`, {
+    method: "POST"
+  });
+}
+
+export async function markShootUploaded(shootId: string): Promise<Shoot> {
+  return apiRequest<Shoot>(`/shoots/${shootId}/mark-uploaded`, {
+    method: "POST"
+  });
+}
+
+export async function markShootReadyForEditing(
+  shootId: string
+): Promise<Shoot> {
+  return apiRequest<Shoot>(`/shoots/${shootId}/ready-for-editing`, {
+    method: "POST"
+  });
+}
+
+export async function archiveShoot(shootId: string): Promise<Shoot> {
+  return apiRequest<Shoot>(`/shoots/${shootId}/archive`, { method: "POST" });
+}
+
+export async function cancelShoot(
+  shootId: string,
+  reason: string,
+  notes?: string
+): Promise<Shoot> {
+  return apiRequest<Shoot>(`/shoots/${shootId}/cancel`, {
+    method: "POST",
+    body: { reason, notes }
+  });
 }
 
 export async function listProjects(): Promise<Project[]> {

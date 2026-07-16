@@ -224,6 +224,7 @@ export type ProductionTask = {
   scriptTitle: string | null;
   shootDayEventId: string | null;
   shootDayEventTitle: string | null;
+  shootId: string | null;
   parentTaskId: string | null;
   assignees: TaskAssigneeItem[];
   checklistItems: TaskChecklistItemDto[];
@@ -292,6 +293,50 @@ export type ClientStats = {
   totalShoots: number;
   videosDelivered: number;
   storageBytes: number;
+};
+
+export type ShootStatus =
+  | "scheduled"
+  | "crew-reached"
+  | "started"
+  | "finished"
+  | "uploading"
+  | "uploaded"
+  | "ready-for-editing"
+  | "archived"
+  | "cancelled";
+
+export type Shoot = {
+  id: string;
+  projectId: string;
+  taskId: string | null;
+  name: string;
+  scheduledDate: string;
+  callTime: string | null;
+  location: string | null;
+  equipment: string[];
+  notes: string | null;
+  status: ShootStatus;
+  cancelReason: string | null;
+  cancelNotes: string | null;
+  reachedAt: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  uploadedAt: string | null;
+  cancelledAt: string | null;
+  crew: { userId: string; name: string }[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateShootRequest = {
+  name: string;
+  scheduledDate: string;
+  callTime?: string;
+  location?: string;
+  equipment?: string[];
+  crewIds?: string[];
+  notes?: string;
 };
 
 export type Comment = {
