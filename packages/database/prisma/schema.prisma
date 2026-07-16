@@ -448,6 +448,7 @@ model Project {
   coverIcon      String?  @map("cover_icon")
   dueDate        String?  @map("due_date")
   teamIds        String[] @map("team_ids")
+  priority       String   @default("medium")
   status         String   @default("active")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
@@ -472,8 +473,14 @@ model Client {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
   name           String
+  logoUrl        String?  @map("logo_url")
   contactName    String?  @map("contact_name")
   contactEmail   String?  @map("contact_email")
+  phone          String?
+  address        String?
+  gst            String?
+  notes          String?
+  status         String   @default("active")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
