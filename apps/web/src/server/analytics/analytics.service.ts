@@ -1,3 +1,4 @@
+import { AppException, HttpStatus } from "../http";
 import { organizationsService } from "../organizations/organizations.service";
 import { prisma } from "../prisma";
 
@@ -331,6 +332,118 @@ class AnalyticsService {
         total: round1(totalMinutes / 60)
       },
       workStreak: computeStreak(activeDays)
+    };
+  }
+
+  async getProjectAnalytics(userId: string, projectId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId }
+    });
+    if (!project) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "project_not_found",
+        "This project does not exist."
+      );
+    }
+    await organizationsService.requireMembership(
+      project.organizationId,
+      userId
+    );
+
+    const today = toDateKey(new Date());
+
+    const [shoots, timeEntries, taskTimeEntries, folders, deliverables] =
+      await Promise.all([
+        this.prisma.shoot.findMany({
+          where: { projectId },
+          select: { status: true, scheduledDate: true }
+        }),
+        this.prisma.timeEntry.findMany({
+          where: { projectId },
+          select: { hours: true }
+        }),
+        this.prisma.taskTimeEntry.findMany({
+          where: { task: { projectId, isTemplate: false } },
+          select: { durationMinutes: true, task: { select: { type: true } } }
+        }),
+        this.prisma.fileEntry.findMany({
+          where: {
+            organizationId: project.organizationId,
+            driveKey: { startsWith: `project:${projectId}` }
+          },
+          select: { id: true }
+        }),
+        this.prisma.deliverable.findMany({
+          where: { projectId },
+          select: {
+            status: true,
+            version: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        })
+      ]);
+
+    const shootsCompleted = shoots.filter(
+      (shoot) => shoot.status === "archived"
+    ).length;
+    const shootsUpcoming = shoots.filter(
+      (shoot) =>
+        shoot.status === "scheduled" &&
+        shoot.scheduledDate.slice(0, 10) >= today
+    ).length;
+
+    const editingMinutes = taskTimeEntries
+      .filter((entry) => entry.task.type === "edit")
+      .reduce((sum, entry) => sum + (entry.durationMinutes ?? 0), 0);
+    const teamMinutes = taskTimeEntries.reduce(
+      (sum, entry) => sum + (entry.durationMinutes ?? 0),
+      0
+    );
+    const teamHours =
+      round1(teamMinutes / 60) +
+      round1(timeEntries.reduce((sum, entry) => sum + entry.hours, 0));
+
+    const fileAgg = await this.prisma.fileEntry.aggregate({
+      where: { parentId: { in: folders.map((folder) => folder.id) } },
+      _sum: { size: true },
+      _count: true
+    });
+
+    const reviewedDeliverables = deliverables.filter(
+      (deliverable) =>
+        deliverable.status !== "review" &&
+        deliverable.updatedAt.getTime() !== deliverable.createdAt.getTime()
+    );
+    const avgReviewHours =
+      reviewedDeliverables.length > 0
+        ? round1(
+            reviewedDeliverables.reduce(
+              (sum, deliverable) =>
+                sum +
+                (deliverable.updatedAt.getTime() -
+                  deliverable.createdAt.getTime()) /
+                  3600000,
+              0
+            ) / reviewedDeliverables.length
+          )
+        : 0;
+    const revisionCount = deliverables.filter(
+      (deliverable) => deliverable.status === "revision"
+    ).length;
+
+    return {
+      shootsCompleted,
+      shootsUpcoming,
+      editingHours: round1(editingMinutes / 60),
+      teamHours,
+      storageBytes: fileAgg._sum.size ?? 0,
+      filesUploaded: fileAgg._count,
+      deliverableCount: deliverables.length,
+      avgReviewHours,
+      revisionCount,
+      completionPercent: project.progress
     };
   }
 }
