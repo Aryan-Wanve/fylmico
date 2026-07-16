@@ -8,7 +8,11 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import { uploadTaskAttachment } from "@/services/base-workspace.service";
+import {
+  stopTaskTimer,
+  updateTask,
+  uploadTaskAttachment
+} from "@/services/base-workspace.service";
 
 export function SubmitDraftDialog({
   taskId,
@@ -31,6 +35,12 @@ export function SubmitDraftDialog({
     setUploading(true);
     try {
       await uploadTaskAttachment(taskId, file);
+      try {
+        await stopTaskTimer(taskId);
+      } catch {
+        // No running timer - fine.
+      }
+      await updateTask(taskId, { status: "review" });
       onUploaded();
       onOpenChange(false);
     } finally {

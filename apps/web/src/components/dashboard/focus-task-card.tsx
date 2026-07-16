@@ -126,6 +126,10 @@ export function FocusTaskCard({
         await stopTaskTimer(task.id);
       } else {
         await startTaskTimer(task.id);
+        if (task.status === "todo") {
+          await updateTask(task.id, { status: "in-progress" });
+          onChanged();
+        }
       }
       await refresh();
     } finally {
@@ -133,15 +137,11 @@ export function FocusTaskCard({
     }
   }
 
-  async function handleMarkComplete() {
-    setBusy(true);
-    try {
-      await updateTask(task.id, { status: "completed" });
-      onChanged();
-    } finally {
-      setBusy(false);
-    }
-  }
+  const timerLabel = runningEntry
+    ? "Pause"
+    : task.status === "todo"
+      ? "Start Editing"
+      : "Resume";
 
   const due = task.dueDate ? formatDueDate(task.dueDate) : null;
   const priority = PRIORITY_META[task.priority];
@@ -289,15 +289,7 @@ export function FocusTaskCard({
             ) : (
               <Play className="h-4 w-4" />
             )}
-            {runningEntry ? "Pause" : "Continue Editing"}
-          </button>
-          <button
-            className="rounded-xl border border-black/10 px-4 py-2.5 text-sm font-bold text-[#4b5268] disabled:opacity-50 dark:border-white/10 dark:text-[#c7cad9]"
-            disabled={busy}
-            onClick={() => void handleMarkComplete()}
-            type="button"
-          >
-            Mark as Complete
+            {timerLabel}
           </button>
         </div>
       </div>

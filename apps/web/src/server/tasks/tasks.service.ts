@@ -153,6 +153,19 @@ class TasksService {
           existing.organizationId
         );
       }
+      if (dto.status === "changes-requested") {
+        for (const assignee of existing.assignees) {
+          if (assignee.userId !== userId) {
+            await notificationsService.create(
+              assignee.userId,
+              "task_status_changed",
+              `Changes requested: "${existing.title}"`,
+              `"${existing.title}" needs changes before it can be approved.`,
+              existing.organizationId
+            );
+          }
+        }
+      }
     }
     if (dto.priority !== undefined && dto.priority !== existing.priority) {
       await this.logActivity(
