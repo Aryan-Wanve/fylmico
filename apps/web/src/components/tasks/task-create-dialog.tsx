@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { TaskAssigneePicker } from "@/components/tasks/task-assignee-picker";
 import {
   PRIORITY_META,
@@ -37,9 +45,6 @@ import type {
   TaskPriority,
   TaskType
 } from "@/types/base";
-
-const selectClassName =
-  "h-10 w-full rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]";
 
 const COMMON_TASK_TYPES: TaskType[] = [
   "shoot",
@@ -310,65 +315,98 @@ export function TaskCreateDialog({
 
           <label className="grid gap-1.5">
             <Label>Deadline</Label>
-            <Input
-              className="dark:[color-scheme:dark]"
-              onChange={(event) => setDueDate(event.target.value)}
-              type="datetime-local"
-              value={dueDate}
-            />
+            <DatePicker onChange={setDueDate} value={dueDate} withTime />
           </label>
 
           {type === "edit" ? (
             <div className="grid gap-1.5">
               <Label>Assign raw footage</Label>
               <div className="grid grid-cols-3 gap-3">
-                <select
-                  className={selectClassName}
-                  onChange={(event) => {
-                    setClientId(event.target.value);
+                <Select
+                  items={{
+                    none: "No client",
+                    ...Object.fromEntries(
+                      clients.map((client) => [client.id, client.name])
+                    )
+                  }}
+                  onValueChange={(next) => {
+                    const nextId = next && next !== "none" ? next : "";
+                    setClientId(nextId);
                     setProjectId("");
                     setShootId("");
                   }}
-                  value={clientId}
+                  value={clientId || "none"}
                 >
-                  <option value="">No client</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className={selectClassName}
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No client</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
                   disabled={!clientId}
-                  onChange={(event) => {
-                    setProjectId(event.target.value);
+                  items={{
+                    none: "Select folder",
+                    ...Object.fromEntries(
+                      projectsForClient.map((project) => [
+                        project.id,
+                        project.title
+                      ])
+                    )
+                  }}
+                  onValueChange={(next) => {
+                    const nextId = next && next !== "none" ? next : "";
+                    setProjectId(nextId);
                     setShootId("");
                   }}
-                  value={projectId}
+                  value={projectId || "none"}
                 >
-                  <option value="">Select folder</option>
-                  {projectsForClient.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.title}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className={selectClassName}
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Select folder</SelectItem>
+                    {projectsForClient.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
                   disabled={!projectId || shoots.length === 0}
-                  onChange={(event) => setShootId(event.target.value)}
-                  value={shootId}
+                  items={{
+                    none:
+                      shoots.length === 0 ? "No shoots ready" : "Whole folder",
+                    ...Object.fromEntries(
+                      shoots.map((shoot) => [shoot.id, shoot.name])
+                    )
+                  }}
+                  onValueChange={(next) =>
+                    setShootId(next && next !== "none" ? next : "")
+                  }
+                  value={shootId || "none"}
                 >
-                  <option value="">
-                    {shoots.length === 0 ? "No shoots ready" : "Whole folder"}
-                  </option>
-                  {shoots.map((shoot) => (
-                    <option key={shoot.id} value={shoot.id}>
-                      {shoot.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      {shoots.length === 0 ? "No shoots ready" : "Whole folder"}
+                    </SelectItem>
+                    {shoots.map((shoot) => (
+                      <SelectItem key={shoot.id} value={shoot.id}>
+                        {shoot.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           ) : null}
