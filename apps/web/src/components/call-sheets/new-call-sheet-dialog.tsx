@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -11,11 +12,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { toISODate } from "@/lib/calendar-utils";
 import type { CreateCallSheetRequest, Project } from "@/types/base";
-
-const selectClassName =
-  "h-10 w-full rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]";
 
 export function NewCallSheetDialog({
   onCreate,
@@ -112,18 +117,30 @@ export function NewCallSheetDialog({
               <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                 Project (optional)
               </Label>
-              <select
-                className={selectClassName}
-                onChange={(event) => setProjectId(event.target.value)}
-                value={projectId}
+              <Select
+                items={{
+                  none: "None",
+                  ...Object.fromEntries(
+                    projects.map((project) => [project.id, project.title])
+                  )
+                }}
+                onValueChange={(next) =>
+                  setProjectId(next && next !== "none" ? next : "")
+                }
+                value={projectId || "none"}
               >
-                <option value="">None</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.title}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-10 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </label>
 
             <div className="grid grid-cols-2 gap-4">
@@ -131,12 +148,7 @@ export function NewCallSheetDialog({
                 <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                   Shoot date
                 </Label>
-                <Input
-                  className="h-10 rounded-lg border-black/10 px-3 text-sm dark:border-white/10 dark:bg-[#11142c]"
-                  onChange={(event) => setShootDate(event.target.value)}
-                  type="date"
-                  value={shootDate}
-                />
+                <DatePicker onChange={setShootDate} value={shootDate} />
               </label>
               <label className="grid gap-1.5">
                 <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
