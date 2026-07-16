@@ -9,8 +9,16 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import {
   PROJECT_TYPES,
   STAGE_BADGE_STYLES
@@ -25,9 +33,6 @@ import type {
 } from "@/types/base";
 
 const PROJECT_STAGES = Object.keys(STAGE_BADGE_STYLES) as ProjectStage[];
-
-const selectClassName =
-  "h-10 w-full rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]";
 
 export function ProjectEditDialog({
   project,
@@ -122,20 +127,25 @@ export function ProjectEditDialog({
                 <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                   Type
                 </Label>
-                <select
-                  className={selectClassName}
-                  onChange={(event) =>
-                    setType(event.target.value as ProjectType | "")
+                <Select
+                  items={{ none: "None" }}
+                  onValueChange={(next) =>
+                    setType(next === "none" ? "" : (next as ProjectType))
                   }
-                  value={type}
+                  value={type || "none"}
                 >
-                  <option value="">None</option>
-                  {PROJECT_TYPES.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {PROJECT_TYPES.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </label>
 
               <label className="grid gap-1.5">
@@ -155,19 +165,21 @@ export function ProjectEditDialog({
                 <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                   Stage
                 </Label>
-                <select
-                  className={selectClassName}
-                  onChange={(event) =>
-                    setStage(event.target.value as ProjectStage)
-                  }
+                <Select
+                  onValueChange={(next) => setStage(next as ProjectStage)}
                   value={stage}
                 >
-                  {PROJECT_STAGES.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROJECT_STAGES.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </label>
 
               <label className="grid gap-1.5">
@@ -211,12 +223,7 @@ export function ProjectEditDialog({
               <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                 Due date
               </Label>
-              <Input
-                className="h-10 rounded-lg border-black/10 px-3 text-sm dark:border-white/10 dark:bg-[#11142c]"
-                onChange={(event) => setDueDate(event.target.value)}
-                type="date"
-                value={dueDate}
-              />
+              <DatePicker onChange={setDueDate} value={dueDate} />
             </label>
           </div>
 
