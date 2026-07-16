@@ -12,7 +12,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TaskAssigneePicker } from "@/components/tasks/task-assignee-picker";
-import { TaskDescriptionEditor } from "@/components/tasks/task-description-editor";
 import {
   PRIORITY_META,
   PRIORITY_ORDER,
@@ -20,19 +19,17 @@ import {
   TASK_TYPES
 } from "@/components/tasks/task-data";
 import {
-  listBoards,
-  listCalendarEvents,
+  linkTaskAttachment,
+  listClients,
   listProjects,
-  listScripts
+  resolveFileDestination
 } from "@/services/base-workspace.service";
 import type {
-  Board,
-  CalendarEvent,
+  ClientItem,
   CreateTaskRequest,
   HouseMember,
   ProductionTask,
   Project,
-  ScriptSummary,
   TaskAssigneeInput,
   TaskPriority,
   TaskType
@@ -40,13 +37,6 @@ import type {
 
 const selectClassName =
   "h-10 w-full rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]";
-
-function splitTags(value: string): string[] {
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
 
 export function TaskCreateDialog({
   open,
@@ -61,35 +51,21 @@ export function TaskCreateDialog({
   members: HouseMember[];
   tasks: ProductionTask[];
   defaultAssigneeId?: string;
-  onCreate: (request: CreateTaskRequest) => Promise<void>;
+  onCreate: (request: CreateTaskRequest) => Promise<ProductionTask>;
 }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [type, setType] = useState<TaskType>("custom");
+  const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [assignees, setAssignees] = useState<TaskAssigneeInput[]>([]);
   const [dueDate, setDueDate] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [estimatedMinutes, setEstimatedMinutes] = useState("");
-  const [recurrenceRule, setRecurrenceRule] = useState<
-    "" | "daily" | "weekly" | "monthly"
-  >("");
-  const [projectId, setProjectId] = useState("");
-  const [boardId, setBoardId] = useState("");
-  const [scriptId, setScriptId] = useState("");
-  const [shootDayEventId, setShootDayEventId] = useState("");
-  const [equipment, setEquipment] = useState("");
   const [location, setLocation] = useState("");
-  const [callTime, setCallTime] = useState("");
-  const [deliverables, setDeliverables] = useState("");
-  const [tags, setTags] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [projectId, setProjectId] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [clients, setClients] = useState<ClientItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [boards, setBoards] = useState<Board[]>([]);
-  const [scripts, setScripts] = useState<ScriptSummary[]>([]);
-  const [shootEvents, setShootEvents] = useState<CalendarEvent[]>([]);
 
   useEffect(() => {
     if (!open) {
@@ -97,78 +73,68 @@ export function TaskCreateDialog({
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting form state each time the dialog re-opens, not deriving render output
     setAssignees(defaultAssigneeId ? [{ userId: defaultAssigneeId }] : []);
-    Promise.all([
-      listProjects(),
-      listBoards(),
-      listScripts(),
-      listCalendarEvents()
-    ])
-      .then(([projectList, boardList, scriptList, eventList]) => {
+    Promise.all([listClients(), listProjects()])
+      .then(([clientList, projectList]) => {
+        setClients(clientList);
         setProjects(projectList);
-        setBoards(boardList);
-        setScripts(scriptList);
-        setShootEvents(eventList.filter((event) => event.category === "shoot"));
       })
       .catch(() => {
-        // Link pickers just show fewer options if this fails.
+        // Raw-footage picker just shows fewer options if this fails.
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  const projectsForClient = clientId
+    ? projects.filter((project) =>
+        project.clients.some((client) => client.id === clientId)
+      )
+    : [];
+
   function reset() {
-    setTitle("");
-    setDescription("");
     setType("custom");
+    setTitle("");
     setPriority("medium");
     setAssignees([]);
     setDueDate("");
-    setStartDate("");
-    setEstimatedMinutes("");
-    setRecurrenceRule("");
-    setProjectId("");
-    setBoardId("");
-    setScriptId("");
-    setShootDayEventId("");
-    setEquipment("");
     setLocation("");
-    setCallTime("");
-    setDeliverables("");
-    setTags("");
+    setClientId("");
+    setProjectId("");
     setError("");
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!title.trim()) {
-      setError("Give the task a title.");
+      setError("Give the task a name.");
       return;
     }
 
     setError("");
     setSaving(true);
     try {
-      await onCreate({
+      const created = await onCreate({
         title: title.trim(),
-        description: description.trim() || undefined,
         type,
         priority,
         assignees: assignees.length ? assignees : undefined,
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-        startDate: startDate ? new Date(startDate).toISOString() : undefined,
-        estimatedMinutes: estimatedMinutes
-          ? Number(estimatedMinutes)
-          : undefined,
-        recurrenceRule: recurrenceRule || undefined,
-        projectId: projectId || undefined,
-        boardId: boardId || undefined,
-        scriptId: scriptId || undefined,
-        shootDayEventId: shootDayEventId || undefined,
-        equipment: equipment ? splitTags(equipment) : undefined,
-        location: location.trim() || undefined,
-        callTime: callTime.trim() || undefined,
-        deliverables: deliverables ? splitTags(deliverables) : undefined,
-        tags: tags ? splitTags(tags) : undefined
+        location: type === "shoot" ? location.trim() || undefined : undefined,
+        projectId: type === "edit" ? projectId || undefined : undefined
       });
+
+      if (type === "edit" && clientId && projectId) {
+        try {
+          const { parentId } = await resolveFileDestination({
+            clientId,
+            projectId,
+            category: "raw"
+          });
+          await linkTaskAttachment(created.id, parentId);
+        } catch {
+          // Task itself was created fine - the raw-footage link is best-effort.
+        }
+      }
+
       reset();
       onOpenChange(false);
     } catch (submitError) {
@@ -192,17 +158,34 @@ export function TaskCreateDialog({
       }}
       open={open}
     >
-      <DialogContent className="max-w-2xl">
-        <form
-          className="grid max-h-[80vh] gap-5 overflow-y-auto pr-1"
-          onSubmit={handleSubmit}
-        >
+      <DialogContent className="max-w-lg">
+        <form className="grid gap-5" onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>New Task</DialogTitle>
           </DialogHeader>
 
+          <div className="grid gap-1.5">
+            <Label>Type</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {TASK_TYPES.map((value) => (
+                <button
+                  className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+                    type === value
+                      ? "bg-[#654cff] text-white"
+                      : "bg-black/[0.04] text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]"
+                  }`}
+                  key={value}
+                  onClick={() => setType(value)}
+                  type="button"
+                >
+                  {TASK_TYPE_LABELS[value]}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <label className="grid gap-1.5">
-            <Label>Title</Label>
+            <Label>{type === "custom" ? "Custom name" : "Task name"}</Label>
             <Input
               autoFocus
               onChange={(event) => setTitle(event.target.value)}
@@ -211,45 +194,24 @@ export function TaskCreateDialog({
             />
           </label>
 
-          <label className="grid gap-1.5">
-            <Label>Description</Label>
-            <TaskDescriptionEditor
-              onChange={setDescription}
-              value={description}
-            />
-          </label>
-
-          <div className="grid grid-cols-2 gap-4">
-            <label className="grid gap-1.5">
-              <Label>Type</Label>
-              <select
-                className={selectClassName}
-                onChange={(event) => setType(event.target.value as TaskType)}
-                value={type}
-              >
-                {TASK_TYPES.map((value) => (
-                  <option key={value} value={value}>
-                    {TASK_TYPE_LABELS[value]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-1.5">
-              <Label>Priority</Label>
-              <select
-                className={selectClassName}
-                onChange={(event) =>
-                  setPriority(event.target.value as TaskPriority)
-                }
-                value={priority}
-              >
-                {PRIORITY_ORDER.map((value) => (
-                  <option key={value} value={value}>
-                    {PRIORITY_META[value].label}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <div className="grid gap-1.5">
+            <Label>Priority</Label>
+            <div className="flex gap-1.5">
+              {PRIORITY_ORDER.map((value) => (
+                <button
+                  className={`flex-1 rounded-lg py-2 text-xs font-bold ${
+                    priority === value
+                      ? PRIORITY_META[value].bar + " text-white"
+                      : "bg-black/[0.04] text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]"
+                  }`}
+                  key={value}
+                  onClick={() => setPriority(value)}
+                  type="button"
+                >
+                  {PRIORITY_META[value].label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid gap-1.5">
@@ -262,152 +224,61 @@ export function TaskCreateDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <label className="grid gap-1.5">
-              <Label>Due date &amp; time</Label>
-              <Input
-                onChange={(event) => setDueDate(event.target.value)}
-                type="datetime-local"
-                value={dueDate}
-              />
-            </label>
-            <label className="grid gap-1.5">
-              <Label>Start date</Label>
-              <Input
-                onChange={(event) => setStartDate(event.target.value)}
-                type="date"
-                value={startDate}
-              />
-            </label>
-            <label className="grid gap-1.5">
-              <Label>Estimated duration (minutes)</Label>
-              <Input
-                onChange={(event) => setEstimatedMinutes(event.target.value)}
-                type="number"
-                value={estimatedMinutes}
-              />
-            </label>
-            <label className="grid gap-1.5">
-              <Label>Repeats</Label>
-              <select
-                className={selectClassName}
-                onChange={(event) =>
-                  setRecurrenceRule(
-                    event.target.value as "" | "daily" | "weekly" | "monthly"
-                  )
-                }
-                value={recurrenceRule}
-              >
-                <option value="">Doesn&apos;t repeat</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-            </label>
-          </div>
+          <label className="grid gap-1.5">
+            <Label>Deadline</Label>
+            <Input
+              onChange={(event) => setDueDate(event.target.value)}
+              type="datetime-local"
+              value={dueDate}
+            />
+          </label>
 
-          <div className="grid grid-cols-2 gap-4">
+          {type === "edit" ? (
+            <div className="grid gap-1.5">
+              <Label>Assign raw footage</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  className={selectClassName}
+                  onChange={(event) => {
+                    setClientId(event.target.value);
+                    setProjectId("");
+                  }}
+                  value={clientId}
+                >
+                  <option value="">No client</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className={selectClassName}
+                  disabled={!clientId}
+                  onChange={(event) => setProjectId(event.target.value)}
+                  value={projectId}
+                >
+                  <option value="">Select folder</option>
+                  {projectsForClient.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ) : null}
+
+          {type === "shoot" ? (
             <label className="grid gap-1.5">
-              <Label>Location</Label>
+              <Label>Location (Google Maps link)</Label>
               <Input
                 onChange={(event) => setLocation(event.target.value)}
+                placeholder="https://maps.app.goo.gl/..."
                 value={location}
               />
             </label>
-            <label className="grid gap-1.5">
-              <Label>Call time</Label>
-              <Input
-                onChange={(event) => setCallTime(event.target.value)}
-                placeholder="7:00 AM"
-                value={callTime}
-              />
-            </label>
-            <label className="col-span-2 grid gap-1.5">
-              <Label>Equipment (comma-separated)</Label>
-              <Input
-                onChange={(event) => setEquipment(event.target.value)}
-                value={equipment}
-              />
-            </label>
-            <label className="col-span-2 grid gap-1.5">
-              <Label>Deliverables (comma-separated)</Label>
-              <Input
-                onChange={(event) => setDeliverables(event.target.value)}
-                value={deliverables}
-              />
-            </label>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <label className="grid gap-1.5">
-              <Label>Project</Label>
-              <select
-                className={selectClassName}
-                onChange={(event) => setProjectId(event.target.value)}
-                value={projectId}
-              >
-                <option value="">None</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-1.5">
-              <Label>Storyboard</Label>
-              <select
-                className={selectClassName}
-                onChange={(event) => setBoardId(event.target.value)}
-                value={boardId}
-              >
-                <option value="">None</option>
-                {boards.map((board) => (
-                  <option key={board.id} value={board.id}>
-                    {board.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-1.5">
-              <Label>Script</Label>
-              <select
-                className={selectClassName}
-                onChange={(event) => setScriptId(event.target.value)}
-                value={scriptId}
-              >
-                <option value="">None</option>
-                {scripts.map((script) => (
-                  <option key={script.id} value={script.id}>
-                    {script.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-1.5">
-              <Label>Shoot day</Label>
-              <select
-                className={selectClassName}
-                onChange={(event) => setShootDayEventId(event.target.value)}
-                value={shootDayEventId}
-              >
-                <option value="">None</option>
-                {shootEvents.map((event) => (
-                  <option key={event.id} value={event.id}>
-                    {event.title} — {event.date}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <label className="grid gap-1.5">
-            <Label>Tags (comma-separated)</Label>
-            <Input
-              onChange={(event) => setTags(event.target.value)}
-              value={tags}
-            />
-          </label>
+          ) : null}
 
           {error ? (
             <p className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600">

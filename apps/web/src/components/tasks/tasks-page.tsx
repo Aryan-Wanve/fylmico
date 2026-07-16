@@ -556,8 +556,9 @@ export function TasksPage() {
       <TaskCreateDialog
         members={members}
         onCreate={async (request) => {
-          await createTaskApi(request);
+          const created = await createTaskApi(request);
           await refreshWorkspace();
+          return created;
         }}
         onOpenChange={setCreateOpen}
         open={createOpen}
