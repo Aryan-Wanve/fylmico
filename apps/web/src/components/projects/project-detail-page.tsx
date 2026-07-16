@@ -13,13 +13,17 @@ import {
 import { useWorkspace } from "@/lib/workspace-context";
 import { formatRelativeTime } from "@/lib/relative-time";
 import {
+  approveDeliverable,
   archiveProject,
   createProjectComment,
   createShoot,
   getProject,
   listCalendarEvents,
+  listDeliverables,
   listProjectComments,
   listShoots,
+  markDeliverableFinal,
+  requestDeliverableRevision,
   updateProject
 } from "@/services/base-workspace.service";
 import {
@@ -35,10 +39,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ProjectEditDialog } from "@/components/projects/project-edit-dialog";
 import { ShootCreateDialog } from "@/components/projects/shoot-create-dialog";
+import { DeliverableRow } from "@/components/projects/deliverable-row";
 import type {
   CalendarEvent,
   Comment,
   CreateShootRequest,
+  Deliverable,
   Project,
   Shoot,
   UpdateProjectRequest
@@ -75,6 +81,7 @@ export function ProjectDetailPage() {
   const [postingComment, setPostingComment] = useState(false);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [shootCreateOpen, setShootCreateOpen] = useState(false);
+  const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,10 +132,23 @@ export function ProjectDetailPage() {
       })
       .catch(() => undefined);
 
+    listDeliverables(params.projectId)
+      .then((data) => {
+        if (!cancelled) {
+          setDeliverables(data);
+        }
+      })
+      .catch(() => undefined);
+
     return () => {
       cancelled = true;
     };
   }, [params.projectId]);
+
+  async function refreshDeliverables() {
+    const data = await listDeliverables(params.projectId);
+    setDeliverables(data);
+  }
 
   const tasks = useMemo(
     () =>
@@ -328,6 +348,9 @@ export function ProjectDetailPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="tasks">Tasks ({tasks.length})</TabsTrigger>
           <TabsTrigger value="shoots">Shoots ({shoots.length})</TabsTrigger>
+          <TabsTrigger value="deliverables">
+            Deliverables ({deliverables.length})
+          </TabsTrigger>
           <TabsTrigger value="calendar">
             Calendar ({projectEvents.length})
           </TabsTrigger>
@@ -422,6 +445,36 @@ export function ProjectDetailPage() {
                 ))
               )}
             </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent className="mt-4" value="deliverables">
+          <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+            {deliverables.length === 0 ? (
+              <p className="p-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+                No deliverables submitted yet. Submit a draft from an editing
+                task to create the first version.
+              </p>
+            ) : (
+              [...deliverables].reverse().map((deliverable) => (
+                <DeliverableRow
+                  deliverable={deliverable}
+                  key={deliverable.id}
+                  onApprove={async () => {
+                    await approveDeliverable(deliverable.id);
+                    await refreshDeliverables();
+                  }}
+                  onMarkFinal={async () => {
+                    await markDeliverableFinal(deliverable.id);
+                    await refreshDeliverables();
+                  }}
+                  onRequestRevision={async () => {
+                    await requestDeliverableRevision(deliverable.id);
+                    await refreshDeliverables();
+                  }}
+                />
+              ))
+            )}
           </div>
         </TabsContent>
 
