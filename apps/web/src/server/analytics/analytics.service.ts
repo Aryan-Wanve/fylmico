@@ -240,6 +240,99 @@ class AnalyticsService {
       activityHeatmap
     };
   }
+
+  async getMyStats(userId: string, houseId: string) {
+    await organizationsService.requireMembership(houseId, userId);
+
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - 6);
+    const today = toDateKey(new Date());
+
+    const [myTasks, taskTimeEntries, timeEntries] = await Promise.all([
+      this.prisma.task.findMany({
+        where: {
+          organizationId: houseId,
+          isTemplate: false,
+          assignees: { some: { userId } }
+        },
+        select: { status: true, dueDate: true, updatedAt: true }
+      }),
+      this.prisma.taskTimeEntry.findMany({
+        where: { userId, task: { organizationId: houseId } },
+        select: { startedAt: true, durationMinutes: true }
+      }),
+      this.prisma.timeEntry.findMany({
+        where: { userId, organizationId: houseId },
+        select: { date: true, hours: true }
+      })
+    ]);
+
+    const completedTasks = myTasks.filter(
+      (task) => task.status === "completed"
+    );
+    const tasksCompleted = completedTasks.length;
+    const tasksPending = myTasks.filter(
+      (task) => task.status !== "completed" && task.status !== "archived"
+    ).length;
+    const completionRate =
+      myTasks.length > 0
+        ? Math.round((tasksCompleted / myTasks.length) * 100)
+        : 0;
+
+    const completedWithDueDate = completedTasks.filter(
+      (task) => task.dueDate !== null
+    );
+    const onTimeCount = completedWithDueDate.filter(
+      (task) => task.dueDate !== null && task.updatedAt <= task.dueDate
+    ).length;
+    const onTimePercentage =
+      completedWithDueDate.length > 0
+        ? Math.round((onTimeCount / completedWithDueDate.length) * 100)
+        : 100;
+
+    let todayMinutes = 0;
+    let weekMinutes = 0;
+    let monthMinutes = 0;
+    let totalMinutes = 0;
+    const activeDays = new Set<string>();
+
+    for (const entry of taskTimeEntries) {
+      const minutes = entry.durationMinutes ?? 0;
+      const dayKey = toDateKey(entry.startedAt);
+      activeDays.add(dayKey);
+      totalMinutes += minutes;
+      if (entry.startedAt >= startOfMonth) monthMinutes += minutes;
+      if (entry.startedAt >= startOfWeek) weekMinutes += minutes;
+      if (dayKey === today) todayMinutes += minutes;
+    }
+
+    for (const entry of timeEntries) {
+      const minutes = entry.hours * 60;
+      const entryDate = new Date(entry.date);
+      activeDays.add(entry.date);
+      totalMinutes += minutes;
+      if (entryDate >= startOfMonth) monthMinutes += minutes;
+      if (entryDate >= startOfWeek) weekMinutes += minutes;
+      if (entry.date === today) todayMinutes += minutes;
+    }
+
+    return {
+      tasksCompleted,
+      tasksPending,
+      completionRate,
+      onTimePercentage,
+      workingHours: {
+        today: round1(todayMinutes / 60),
+        week: round1(weekMinutes / 60),
+        month: round1(monthMinutes / 60),
+        total: round1(totalMinutes / 60)
+      },
+      workStreak: computeStreak(activeDays)
+    };
+  }
 }
 
 export const analyticsService = new AnalyticsService();
@@ -257,6 +350,45 @@ function buildLastNDays(count: number): { key: string; date: Date }[] {
     days.push({ key: toDateKey(date), date });
   }
   return days;
+}
+
+function computeStreak(dateKeys: Set<string>): {
+  current: number;
+  best: number;
+} {
+  if (dateKeys.size === 0) {
+    return { current: 0, best: 0 };
+  }
+
+  const sorted = [...dateKeys].sort();
+  let best = 1;
+  let run = 1;
+  for (let index = 1; index < sorted.length; index += 1) {
+    const diffDays = Math.round(
+      (new Date(sorted[index]).getTime() -
+        new Date(sorted[index - 1]).getTime()) /
+        86400000
+    );
+    run = diffDays === 1 ? run + 1 : 1;
+    best = Math.max(best, run);
+  }
+
+  const today = toDateKey(new Date());
+  const yesterday = toDateKey(new Date(Date.now() - 86400000));
+  const anchor = dateKeys.has(today)
+    ? today
+    : dateKeys.has(yesterday)
+      ? yesterday
+      : null;
+
+  let current = 0;
+  let cursor = anchor ? new Date(anchor) : null;
+  while (cursor && dateKeys.has(toDateKey(cursor))) {
+    current += 1;
+    cursor = new Date(cursor.getTime() - 86400000);
+  }
+
+  return { current, best };
 }
 
 function buildActivityHeatmap(timestamps: Date[]) {

@@ -392,6 +392,15 @@ export type Analytics = {
   activityHeatmap: ActivityHeatmap;
 };
 
+export type PersonalStats = {
+  tasksCompleted: number;
+  tasksPending: number;
+  completionRate: number;
+  onTimePercentage: number;
+  workingHours: { today: number; week: number; month: number; total: number };
+  workStreak: { current: number; best: number };
+};
+
 export type MessageReactionSummary = {
   emoji: string;
   count: number;

@@ -44,6 +44,7 @@ import type {
   LoginRequest,
   NotificationItem,
   NotificationPreferenceSetting,
+  PersonalStats,
   ProductionTask,
   Project,
   RequestJoinHouseRequest,
@@ -782,6 +783,14 @@ export async function getAnalytics(days = 7): Promise<Analytics> {
   return apiRequest<Analytics>(`/houses/${activeHouseId}/analytics`, {
     query: { days }
   });
+}
+
+export async function getMyStats(): Promise<PersonalStats> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing your stats.");
+  }
+
+  return apiRequest<PersonalStats>(`/houses/${activeHouseId}/analytics/me`);
 }
 
 export async function sendChatMessage(
