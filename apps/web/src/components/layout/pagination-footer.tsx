@@ -1,6 +1,13 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 export function PaginationFooter({
   page,
@@ -23,17 +30,21 @@ export function PaginationFooter({
     <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 px-1">
       <div className="flex items-center gap-2 text-sm text-[#5f667d] dark:text-[#a8acbf]">
         Show
-        <select
-          className="h-8 rounded-lg border border-black/10 bg-white px-2 text-sm font-semibold text-[#4b5268] outline-none dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9]"
-          onChange={(event) => onPerPageChange(Number(event.target.value))}
-          value={perPage}
+        <Select
+          onValueChange={(next) => onPerPageChange(Number(next))}
+          value={String(perPage)}
         >
-          {perPageOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="h-8 bg-white dark:bg-[#171a28]" size="sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {perPageOptions.map((option) => (
+              <SelectItem key={option} value={String(option)}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         per page
       </div>
 
