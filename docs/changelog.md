@@ -592,3 +592,27 @@ Migration notes:
 - Adds six columns to `clients` (`logo_url`, `phone`, `address`, `gst`,
   `notes`, `status`) and one to `projects` (`priority`) - all with
   defaults, no backfill required. Run `prisma migrate deploy`.
+
+## 0.18.0 - 2026-07-16
+
+Summary:
+
+- Projects Module Overhaul, Phase 2 of 5: new `Shoot` entity (a
+  scheduled production day, distinct from Storyboard's frame-level
+  `Board`/`Shot`) with a 9-status crew workflow.
+- Scheduling a shoot auto-creates a calendar event and a task, with the
+  crew as its assignees.
+- Home's Focus Card now switches into a "videographer HUD" for shoot
+  tasks: Location (map link), Call Time, Equipment, Crew, Notes, and
+  status buttons (Reached Location, Start Shoot, Finish, Finish +
+  Upload, Mark Data Uploaded, Mark Ready For Editing, Archive, Cancel).
+- New "Shoots" tab + "Schedule Shoot" dialog on the project detail page.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- Adds a new `shoots` table and a `shoot_id` column on `tasks`. Run
+  `prisma migrate deploy`.

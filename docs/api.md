@@ -1292,6 +1292,96 @@ endpoint). `totalShoots`/`videosDelivered` are placeholders (`0`) until
 Phases 2/4 of the Projects Overhaul add those entities. Errors:
 `401 unauthenticated`, `403 forbidden`, `404 client_not_found`.
 
+## Shoots (Implemented)
+
+Implemented per ADR 0052 (`apps/web/src/server/shoots/*`) - Projects
+Module Overhaul Phase 2. A `Shoot` is a scheduled production day, distinct
+from Storyboard's `Board`/`Shot` (frame-level references). Creating one
+also creates a `CalendarEvent` (`category: "shoot"`) and a `Task`
+(`type: "shoot"`) in the same transaction, with the crew as that task's
+assignees - the crew member's Home Focus Card automatically switches to a
+shoot-mode HUD once that task becomes their focus task (`FocusTaskCard`,
+`task.shootId` set).
+
+### `POST /api/v1/houses/:houseId/projects/:projectId/shoots`
+
+Authentication: required. Body:
+`{ "name": string, "scheduledDate": string (ISO), "callTime"?: string, "location"?: string, "equipment"?: string[], "crewIds"?: string[], "notes"?: string }`.
+`crewIds` must all be current members of `houseId`. Response: the created
+`Shoot`:
+
+```json
+{
+  "data": {
+    "id": "shoot_123",
+    "projectId": "project_123",
+    "taskId": "task_123",
+    "name": "Rooftop Interview Shoot",
+    "scheduledDate": "2026-07-20T00:00:00.000Z",
+    "callTime": "8:00 AM",
+    "location": "Downtown Rooftop, City Center",
+    "equipment": ["Camera", "Tripod", "Drone"],
+    "notes": null,
+    "status": "scheduled",
+    "cancelReason": null,
+    "cancelNotes": null,
+    "reachedAt": null,
+    "startedAt": null,
+    "finishedAt": null,
+    "uploadedAt": null,
+    "cancelledAt": null,
+    "crew": [{ "userId": "user_123", "name": "Rehan Patel" }],
+    "createdAt": "2026-07-16T10:00:00.000Z",
+    "updatedAt": "2026-07-16T10:00:00.000Z"
+  }
+}
+```
+
+Errors: `400 invalid_request` (missing `name`/`scheduledDate`, or a
+`crewIds` entry that isn't a house member), `401 unauthenticated`,
+`403 forbidden`, `404 project_not_found`.
+
+### `GET /api/v1/projects/:projectId/shoots`
+
+Authentication: required. Response: `{ "data": Shoot[] }` (not paginated -
+a project's shoot list is expected to stay small), ordered by
+`scheduledDate` ascending. Errors: `401 unauthenticated`,
+`403 forbidden`, `404 project_not_found`.
+
+### `GET /api/v1/shoots/:shootId`
+
+Authentication: required. Response: single `Shoot`. Errors:
+`401 unauthenticated`, `403 forbidden`, `404 shoot_not_found`.
+
+### Shoot status transitions
+
+Each is a dedicated action endpoint (matches the `archive`-endpoint
+precedent elsewhere) rather than a generic `PATCH status`, since most of
+them also stamp a specific timestamp column. All: authentication
+required, no body (except `cancel`), response is the updated `Shoot`,
+errors `401 unauthenticated` / `403 forbidden` / `404 shoot_not_found`.
+
+- `POST /api/v1/shoots/:shootId/reached` → `status: "crew-reached"`,
+  sets `reachedAt`.
+- `POST /api/v1/shoots/:shootId/start` → `status: "started"`, sets
+  `startedAt`.
+- `POST /api/v1/shoots/:shootId/finish` → `status: "finished"`, sets
+  `finishedAt`.
+- `POST /api/v1/shoots/:shootId/finish-upload` → `status: "uploading"`,
+  sets `finishedAt`. Does not yet perform a real file upload - Phase 3
+  ("Upload Automation") wires the actual multi-file upload behind this
+  transition; for now advancing past `uploading` is a separate manual
+  step.
+- `POST /api/v1/shoots/:shootId/mark-uploaded` → `status: "uploaded"`,
+  sets `uploadedAt`.
+- `POST /api/v1/shoots/:shootId/ready-for-editing` → `status:
+"ready-for-editing"`.
+- `POST /api/v1/shoots/:shootId/archive` → `status: "archived"`.
+- `POST /api/v1/shoots/:shootId/cancel` - Body:
+  `{ "reason": string, "notes"?: string }`. → `status: "cancelled"`,
+  sets `cancelReason`/`cancelNotes`/`cancelledAt`. Errors additionally
+  include `400 invalid_request` (missing `reason`).
+
 ## Notifications (Implemented)
 
 Implemented per ADR 0023 (`apps/web/src/server/notifications/*`). No public

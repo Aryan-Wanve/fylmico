@@ -688,9 +688,12 @@ minutes` (nullable), `recurrence_rule` (nullable; `"daily" | "weekly" |
 "monthly"`), `recurrence_end_date` (nullable), `created_by_id` ("assigned
 by" - the user who created the task, backfilled from the old `assignee_id`
 during the ADR 0047 migration), `project_id`/`board_id`/`script_id`/
-`shoot_day_event_id` (nullable FKs - `board_id` covers both storyboard and
-shot-list since `Board` contains ordered `Shot`s; `shoot_day_event_id`
-points at a `CalendarEvent` with `category = "shoot"`), `parent_task_id`
+`shoot_day_event_id`/`shoot_id` (nullable FKs - `board_id` covers both
+storyboard and shot-list since `Board` contains ordered `Shot`s;
+`shoot_day_event_id` points at a `CalendarEvent` with `category = "shoot"`;
+`shoot_id` points at the new `Shoot` row this task drives - added per ADR
+0052, lets `FocusTaskCard` detect a shoot-type task and switch to the
+videographer HUD), `parent_task_id`
 (nullable self-relation - subtasks, cascade delete like `FileEntry.parentId`),
 `equipment`/`deliverables`/`tags` (`String[]`), `location`/`call_time`
 (nullable strings), `progress` (default `0` - auto-recomputed from
@@ -706,16 +709,16 @@ since `Project` already owns that relation.
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
 `users` via `created_by_id`; belongs to `conversations` (`onDelete:
-SetNull`); belongs to `projects`/`boards`/`scripts`/`calendar_events`
-(all nullable, `onDelete: SetNull`); self-relation via `parent_task_id`
-(cascade delete - deleting a parent deletes its subtasks); has many
-`task_assignees`, `task_checklist_items`, `task_activity`,
-`task_time_entries`, `file_entries` (via `FileEntry.task_id`), and
-`task_dependencies` (both directions - `blocking_task_id` and
-`blocked_task_id`).
+SetNull`); belongs to `projects`/`boards`/`scripts`/`calendar_events`/
+`shoots` (all nullable, `onDelete: SetNull`); self-relation via
+`parent_task_id` (cascade delete - deleting a parent deletes its
+subtasks); has many `task_assignees`, `task_checklist_items`,
+`task_activity`, `task_time_entries`, `file_entries` (via
+`FileEntry.task_id`), and `task_dependencies` (both directions -
+`blocking_task_id` and `blocked_task_id`).
 
 Indexes: indexes on `organization_id`, `conversation_id`, `created_by_id`,
-`project_id`, `board_id`, `script_id`, `shoot_day_event_id`,
+`project_id`, `board_id`, `script_id`, `shoot_day_event_id`, `shoot_id`,
 `parent_task_id`.
 
 Constraints: none beyond required foreign keys.
@@ -737,7 +740,8 @@ Migration history: `20260708165828_tasks_chat`,
 dropped `assignee_id`/`role`/freeform `project`, added every column above,
 remapped `status` (`done`→`completed`, `on-hold`→`todo`), backfilled
 `task_assignees` from the old `assignee_id`/`role`; `is_template` added in
-`20260716140000_task_templates` (ADR 0049).
+`20260716140000_task_templates` (ADR 0049); `shoot_id` added in
+`20260716180000_shoots` (ADR 0052).
 
 ### Table: `task_assignees`
 
@@ -1146,6 +1150,54 @@ Reasoning: a plain join table with no extra columns - there's no "role of
 this client on this project" concept yet, just presence/absence of a link.
 
 Migration history: `20260708172602_projects_clients`.
+
+### Table: `shoots`
+
+Purpose: a scheduled production day (Projects Module Overhaul Phase 2,
+ADR 0052) - distinct from `Board`/`Shot` (ADR 0041), which are frame-level
+storyboard references, not a schedule/crew/status entity.
+
+Ownership: belongs to one `organization` and one `project`.
+
+Columns: `id`, `organization_id`, `project_id`, `calendar_event_id`
+(nullable FK - the auto-created `CalendarEvent` for this shoot),
+`created_by_id`, `name`, `scheduled_date`, `call_time` (nullable),
+`location` (nullable), `equipment` (`String[]`), `notes` (nullable),
+`status` (default `"scheduled"`; 9-value vocab - `scheduled |
+crew-reached | started | finished | uploading | uploaded |
+ready-for-editing | archived | cancelled` - validated in the DTO/service
+only, not a DB enum, matching every other workflow vocabulary in this
+codebase), `cancel_reason`/`cancel_notes` (nullable, set only on
+cancellation), `reached_at`/`started_at`/`finished_at`/`uploaded_at`/
+`cancelled_at` (nullable `TIMESTAMP`s stamped by their matching status
+transition), `created_at`, `updated_at`. There is no `crew` column - the
+crew is whoever is assigned (`TaskAssignee`) to the `Task` this shoot
+creates (`Task.shoot_id`).
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`projects` (cascade delete); belongs to `calendar_events` (nullable,
+`onDelete: SetNull`); belongs to `users` via `created_by_id`; has many
+`tasks` (via `Task.shoot_id`, in practice exactly one - the shoot's
+linked task).
+
+Indexes: indexes on `organization_id`, `project_id`, `calendar_event_id`.
+
+Constraints: none beyond required foreign keys.
+
+Permissions: create via `POST
+/api/v1/houses/:houseId/projects/:projectId/shoots` by any member of the
+project's house; list via `GET /api/v1/projects/:projectId/shoots`;
+status transitions via dedicated `POST /api/v1/shoots/:shootId/<action>`
+endpoints (`reached`, `start`, `finish`, `finish-upload`,
+`mark-uploaded`, `ready-for-editing`, `archive`, `cancel`) by any house
+member - no finer-grained role check yet, matching Tasks' own
+permission model.
+
+Reasoning: see ADR 0052. Status transitions use dedicated action
+endpoints (not a generic `PATCH status`) because several of them need to
+atomically stamp a specific timestamp column alongside the status change.
+
+Migration history: `20260716180000_shoots`.
 
 ### Table: `notifications`
 

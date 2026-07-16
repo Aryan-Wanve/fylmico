@@ -5608,3 +5608,101 @@ Next task:
 
 - Phase 2: Shoots entity + Videographer Workflow HUD (extends
   `FocusTaskCard` with a shoot-mode branch).
+
+## 2026-07-16 Projects Module Overhaul — Phase 2: Shoots + Videographer Workflow HUD
+
+Current milestone: Projects Module Overhaul (5-phase effort), Phase 2 of 5
+
+Completion percentage: 100% of Phase 2
+
+Features completed:
+
+- New `Shoot` model (scheduled production day - distinct from
+  Storyboard's `Board`/`Shot`, which are frame-level references): name,
+  scheduled date, call time, location, equipment, notes, a 9-value
+  status (`scheduled|crew-reached|started|finished|uploading|uploaded|
+ready-for-editing|archived|cancelled`), and per-transition timestamps
+  plus cancel reason/notes.
+- Creating a Shoot creates a `CalendarEvent` (`category: "shoot"`) and a
+  `Task` (`type: "shoot"`, already a valid type per ADR 0047) in one
+  transaction, crew as that task's `TaskAssignee` rows - no separate
+  crew table. New `Task.shootId` FK links the two.
+- `shootsService` + 8 dedicated status-transition endpoints (`reached`,
+  `start`, `finish`, `finish-upload`, `mark-uploaded`,
+  `ready-for-editing`, `archive`, `cancel`), matching this codebase's
+  `archive`-endpoint precedent since several transitions also stamp a
+  specific timestamp column.
+- `FocusTaskCard` gains a shoot-mode branch: when the focus task has
+  `shootId` set, it renders Location (Google Maps link), Call Time,
+  Equipment, Crew, Notes, and status-specific buttons (Reached Location /
+  Start Shoot / Pause-Resume + Finish + Finish & Upload / Mark Data
+  Uploaded / Mark Ready For Editing / Archive Shoot / Cancel) instead of
+  the generic "Start Editing" button - reuses the exact same
+  `startTaskTimer`/`stopTaskTimer` machinery already built for editing
+  tasks.
+- New `ShootCancelDialog` (reason required, notes optional).
+- New "Shoots" tab + "Schedule Shoot" dialog (`ShootCreateDialog`,
+  reusing `TaskAssigneePicker` for crew) on the project detail page.
+
+Features started:
+
+- None beyond the above - Phase 2 is complete per the approved plan.
+
+Explicitly skipped this pass (deferred to Phase 3, see ADR 0052 for why):
+
+- "Finish + Upload" only transitions status to `uploading` - it does not
+  perform a real multi-file upload or auto-attach footage to a follow-on
+  editing task yet. A manual "Mark Data Uploaded" button closes the loop
+  for now; Phase 3 ("Upload Automation + Editing Auto-Attach") owns the
+  real upload pipeline.
+- No shoot-count wiring into Client/Project stats yet (still `0`
+  placeholders from Phase 1) - deferred to keep this phase scoped to the
+  entity + HUD.
+
+Files created:
+
+- `packages/database/prisma/migrations/20260716180000_shoots/migration.sql`
+- `docs/adr/0052-projects-overhaul-phase-2-shoots.md`
+- `apps/web/src/server/shoots/shoots.service.ts`,
+  `dto/create-shoot.dto.ts`, `dto/cancel-shoot.dto.ts`
+- `apps/web/src/app/api/v1/houses/[houseId]/projects/[projectId]/shoots/route.ts`,
+  `.../projects/[projectId]/shoots/route.ts`,
+  `.../shoots/[shootId]/route.ts` + 8 action sub-routes (`reached`,
+  `start`, `finish`, `finish-upload`, `mark-uploaded`,
+  `ready-for-editing`, `archive`, `cancel`)
+- `apps/web/src/components/dashboard/shoot-cancel-dialog.tsx`
+- `apps/web/src/components/projects/shoot-create-dialog.tsx`
+
+Files modified:
+
+- `packages/database/prisma/schema.prisma` (`Shoot` model, `Task.shootId`)
+- `apps/web/src/server/tasks/tasks.service.ts` (`shootId` in `toTaskDto`)
+- `apps/web/src/types/base.ts` (`Shoot`, `ShootStatus`,
+  `CreateShootRequest`, `ProductionTask.shootId`)
+- `apps/web/src/services/base-workspace.service.ts` (shoot client
+  functions)
+- `apps/web/src/components/dashboard/focus-task-card.tsx` (shoot-mode
+  branch)
+- `apps/web/src/components/projects/project-detail-page.tsx` (Shoots
+  tab)
+- `docs/database.md`, `docs/api.md`
+
+Known limitations / tradeoffs:
+
+- Verified live in-browser: scheduled a shoot with crew from the
+  project detail page, confirmed it appeared in the Shoots tab;
+  temporarily bumped its priority so it became the focus task, then
+  clicked through the entire status chain on the Home HUD (Reached
+  Location → Start Shoot → Finish + Upload → Mark Data Uploaded → Mark
+  Ready For Editing → Archive Shoot), confirming the timer captured
+  session time and the status pill/buttons updated correctly at every
+  step. Verified `cancel` separately via a direct API call (reason/notes/
+  timestamp all persisted). Typecheck/lint/build all clean. All
+  synthetic data (test project, shoots, tasks, calendar events) removed
+  via direct SQL afterward.
+
+Next task:
+
+- Phase 3: Upload Automation + Editing Auto-Attach (multi-file upload,
+  per-shoot Drive folder, auto-created Editing task pre-attached to
+  footage/references).

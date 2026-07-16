@@ -101,6 +101,7 @@ Current ADRs:
 - [0049-dashboard-and-tasks-phase-2.md](docs/adr/0049-dashboard-and-tasks-phase-2.md)
 - [0050-hud-personal-workspace.md](docs/adr/0050-hud-personal-workspace.md)
 - [0051-projects-overhaul-phase-1-foundation.md](docs/adr/0051-projects-overhaul-phase-1-foundation.md)
+- [0052-projects-overhaul-phase-2-shoots.md](docs/adr/0052-projects-overhaul-phase-2-shoots.md)
 
 ## Current Sprint Gate
 
