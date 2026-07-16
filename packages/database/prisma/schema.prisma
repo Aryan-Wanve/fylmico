@@ -48,6 +48,7 @@ model User {
   announcements             Announcement[]
   conversationReads         ConversationRead[]
   createdShoots             Shoot[]
+  createdDeliverables       Deliverable[]
 
   @@map("users")
 }
@@ -88,6 +89,7 @@ model Organization {
   notifications   Notification[]
   driveConnection DriveConnection?
   shoots          Shoot[]
+  deliverables    Deliverable[]
 
   @@map("organizations")
 }
@@ -263,23 +265,24 @@ model Task {
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  conversation   Conversation?       @relation(fields: [conversationId], references: [id], onDelete: SetNull)
-  parent         Task?               @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
-  subtasks       Task[]              @relation("TaskSubtasks")
-  project        Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  board          Board?              @relation(fields: [boardId], references: [id], onDelete: SetNull)
-  script         Script?             @relation(fields: [scriptId], references: [id], onDelete: SetNull)
-  shootDayEvent  CalendarEvent?      @relation(fields: [shootDayEventId], references: [id], onDelete: SetNull)
-  shoot          Shoot?              @relation(fields: [shootId], references: [id], onDelete: SetNull)
-  createdBy      User                @relation("TasksCreated", fields: [createdById], references: [id])
-  assignees      TaskAssignee[]
-  checklistItems TaskChecklistItem[]
-  activity       TaskActivity[]
-  timeEntries    TaskTimeEntry[]
-  attachments    FileEntry[]
-  blockingOf     TaskDependency[]    @relation("BlockingTask")
-  blockedBy      TaskDependency[]    @relation("BlockedTask")
+  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversation        Conversation?       @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  parent              Task?               @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subtasks            Task[]              @relation("TaskSubtasks")
+  project             Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  board               Board?              @relation(fields: [boardId], references: [id], onDelete: SetNull)
+  script              Script?             @relation(fields: [scriptId], references: [id], onDelete: SetNull)
+  shootDayEvent       CalendarEvent?      @relation(fields: [shootDayEventId], references: [id], onDelete: SetNull)
+  shoot               Shoot?              @relation(fields: [shootId], references: [id], onDelete: SetNull)
+  createdBy           User                @relation("TasksCreated", fields: [createdById], references: [id])
+  assignees           TaskAssignee[]
+  checklistItems      TaskChecklistItem[]
+  activity            TaskActivity[]
+  timeEntries         TaskTimeEntry[]
+  attachments         FileEntry[]
+  blockingOf          TaskDependency[]    @relation("BlockingTask")
+  blockedBy           TaskDependency[]    @relation("BlockedTask")
+  deliverableVersions Deliverable[]
 
   @@index([organizationId])
   @@index([conversationId])
@@ -470,6 +473,7 @@ model Project {
   callSheets     CallSheet[]
   tasks          Task[]
   shoots         Shoot[]
+  deliverables   Deliverable[]
 
   @@index([organizationId])
   @@map("projects")
@@ -580,6 +584,33 @@ model Comment {
   @@index([organizationId])
   @@index([commentableType, commentableId])
   @@map("comments")
+}
+
+model Deliverable {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  projectId      String   @map("project_id")
+  taskId         String?  @map("task_id")
+  fileEntryId    String   @map("file_entry_id")
+  createdById    String   @map("created_by_id")
+  version        Int
+  status         String   @default("review")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task         Task?        @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  fileEntry    FileEntry    @relation(fields: [fileEntryId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation(fields: [createdById], references: [id])
+
+  @@unique([projectId, version])
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([taskId])
+  @@index([fileEntryId])
+  @@map("deliverables")
 }
 
 model CrewProfile {
@@ -814,6 +845,7 @@ model FileEntry {
   uploadedBy   User          @relation(fields: [uploadedById], references: [id])
   conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
   task         Task?         @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  deliverables Deliverable[]
 
   @@unique([organizationId, driveKey])
   @@index([organizationId])

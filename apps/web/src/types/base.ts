@@ -18,6 +18,7 @@ export type TaskType =
   | "reels"
   | "social-media"
   | "client-review"
+  | "delivery"
   | "asset-collection"
   | "equipment"
   | "location-scouting"
@@ -336,6 +337,34 @@ export type CreateShootRequest = {
   location?: string;
   equipment?: string[];
   crewIds?: string[];
+  notes?: string;
+};
+
+export type DeliverableStatus =
+  "draft" | "review" | "revision" | "approved" | "final";
+
+export type Deliverable = {
+  id: string;
+  projectId: string;
+  taskId: string | null;
+  version: number;
+  status: DeliverableStatus;
+  notes: string | null;
+  file: {
+    id: string;
+    name: string;
+    size: number | null;
+    mimeType: string | null;
+  };
+  createdById: string;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateDeliverableRequest = {
+  fileEntryId: string;
+  taskId?: string;
   notes?: string;
 };
 

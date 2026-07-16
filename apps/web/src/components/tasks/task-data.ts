@@ -86,6 +86,7 @@ export const TASK_TYPE_LABELS: Record<TaskType, string> = {
   reels: "Reels",
   "social-media": "Social Media",
   "client-review": "Client Review",
+  delivery: "Delivery",
   "asset-collection": "Asset Collection",
   equipment: "Equipment",
   "location-scouting": "Location Scouting",

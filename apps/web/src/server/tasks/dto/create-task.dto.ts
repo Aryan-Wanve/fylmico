@@ -25,6 +25,7 @@ export const TASK_TYPES = [
   "reels",
   "social-media",
   "client-review",
+  "delivery",
   "asset-collection",
   "equipment",
   "location-scouting",
