@@ -40,6 +40,9 @@ import { Button } from "@/components/ui/button";
 import { ProjectEditDialog } from "@/components/projects/project-edit-dialog";
 import { ShootCreateDialog } from "@/components/projects/shoot-create-dialog";
 import { DeliverableRow } from "@/components/projects/deliverable-row";
+import { ProjectActivityTimeline } from "@/components/projects/project-activity-timeline";
+import { ProjectAnalyticsPanel } from "@/components/projects/project-analytics-panel";
+import { ProjectChatPanel } from "@/components/projects/project-chat-panel";
 import type {
   CalendarEvent,
   Comment,
@@ -357,6 +360,9 @@ export function ProjectDetailPage() {
           <TabsTrigger value="comments">
             Comments ({comments.length})
           </TabsTrigger>
+          <TabsTrigger value="chat">Chat</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
         <TabsContent className="mt-4" value="overview">
@@ -565,6 +571,20 @@ export function ProjectDetailPage() {
               </Button>
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent className="mt-4" value="chat">
+          <ProjectChatPanel projectId={params.projectId} />
+        </TabsContent>
+
+        <TabsContent className="mt-4" value="timeline">
+          <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+            <ProjectActivityTimeline projectId={params.projectId} />
+          </div>
+        </TabsContent>
+
+        <TabsContent className="mt-4" value="analytics">
+          <ProjectAnalyticsPanel projectId={params.projectId} />
         </TabsContent>
       </Tabs>
 
