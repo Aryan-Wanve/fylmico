@@ -38,6 +38,8 @@ export const PROJECT_COVER_ICONS = [
   "music"
 ] as const;
 
+export const PROJECT_PRIORITIES = ["low", "medium", "high", "urgent"] as const;
+
 export class CreateProjectDto {
   @IsString()
   @MinLength(1)
@@ -58,6 +60,10 @@ export class CreateProjectDto {
   @IsOptional()
   @IsIn(PROJECT_STAGES)
   stage?: (typeof PROJECT_STAGES)[number];
+
+  @IsOptional()
+  @IsIn(PROJECT_PRIORITIES)
+  priority?: (typeof PROJECT_PRIORITIES)[number];
 
   @IsOptional()
   @IsInt()

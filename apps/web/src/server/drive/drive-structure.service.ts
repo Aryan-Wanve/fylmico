@@ -25,6 +25,7 @@ const PROJECT_SUBFOLDERS = [
   "Scripts",
   "Storyboards",
   "Raw Data",
+  "Shoots",
   "Project Files",
   "Deliveries",
   "Assets"

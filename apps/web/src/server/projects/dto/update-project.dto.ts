@@ -9,6 +9,7 @@ import {
 } from "class-validator";
 import {
   PROJECT_COVER_ICONS,
+  PROJECT_PRIORITIES,
   PROJECT_STAGES,
   PROJECT_TYPES
 } from "./create-project.dto";
@@ -34,6 +35,10 @@ export class UpdateProjectDto {
   @IsOptional()
   @IsIn(PROJECT_STAGES)
   stage?: (typeof PROJECT_STAGES)[number];
+
+  @IsOptional()
+  @IsIn(PROJECT_PRIORITIES)
+  priority?: (typeof PROJECT_PRIORITIES)[number];
 
   @IsOptional()
   @IsInt()
