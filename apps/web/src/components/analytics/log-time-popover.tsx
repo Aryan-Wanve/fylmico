@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from "@/components/ui/popover";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toISODate } from "@/lib/calendar-utils";
@@ -114,13 +115,8 @@ export function LogTimePopover({
         <div className="grid gap-3 p-1">
           <div className="grid grid-cols-2 gap-2">
             <div className="grid gap-1">
-              <Label htmlFor="log-time-date">Date</Label>
-              <Input
-                id="log-time-date"
-                onChange={(event) => setDate(event.target.value)}
-                type="date"
-                value={date}
-              />
+              <Label>Date</Label>
+              <DatePicker className="h-8" onChange={setDate} value={date} />
             </div>
             <div className="grid gap-1">
               <Label htmlFor="log-time-hours">Hours</Label>
