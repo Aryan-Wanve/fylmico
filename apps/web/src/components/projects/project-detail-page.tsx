@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
+  Camera,
   Loader2,
   Pencil,
   Send
@@ -14,9 +15,11 @@ import { formatRelativeTime } from "@/lib/relative-time";
 import {
   archiveProject,
   createProjectComment,
+  createShoot,
   getProject,
   listCalendarEvents,
   listProjectComments,
+  listShoots,
   updateProject
 } from "@/services/base-workspace.service";
 import {
@@ -31,12 +34,27 @@ import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ProjectEditDialog } from "@/components/projects/project-edit-dialog";
+import { ShootCreateDialog } from "@/components/projects/shoot-create-dialog";
 import type {
   CalendarEvent,
   Comment,
+  CreateShootRequest,
   Project,
+  Shoot,
   UpdateProjectRequest
 } from "@/types/base";
+
+const SHOOT_STATUS_LABELS: Record<Shoot["status"], string> = {
+  scheduled: "Scheduled",
+  "crew-reached": "Crew Reached",
+  started: "In Progress",
+  finished: "Finished",
+  uploading: "Uploading Data",
+  uploaded: "Data Uploaded",
+  "ready-for-editing": "Ready For Editing",
+  archived: "Archived",
+  cancelled: "Cancelled"
+};
 
 export function ProjectDetailPage() {
   const params = useParams<{ projectId: string }>();
@@ -55,6 +73,8 @@ export function ProjectDetailPage() {
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [commentDraft, setCommentDraft] = useState("");
   const [postingComment, setPostingComment] = useState(false);
+  const [shoots, setShoots] = useState<Shoot[]>([]);
+  const [shootCreateOpen, setShootCreateOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -96,6 +116,14 @@ export function ProjectDetailPage() {
           setCommentsLoading(false);
         }
       });
+
+    listShoots(params.projectId)
+      .then((data) => {
+        if (!cancelled) {
+          setShoots(data);
+        }
+      })
+      .catch(() => undefined);
 
     return () => {
       cancelled = true;
@@ -172,6 +200,11 @@ export function ProjectDetailPage() {
     } finally {
       setPostingComment(false);
     }
+  }
+
+  async function handleCreateShoot(request: CreateShootRequest) {
+    const shoot = await createShoot(params.projectId, request);
+    setShoots((current) => [...current, shoot]);
   }
 
   if (loading) {
@@ -294,6 +327,7 @@ export function ProjectDetailPage() {
         <TabsList variant="line">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="tasks">Tasks ({tasks.length})</TabsTrigger>
+          <TabsTrigger value="shoots">Shoots ({shoots.length})</TabsTrigger>
           <TabsTrigger value="calendar">
             Calendar ({projectEvents.length})
           </TabsTrigger>
@@ -345,6 +379,49 @@ export function ProjectDetailPage() {
                 );
               })
             )}
+          </div>
+        </TabsContent>
+
+        <TabsContent className="mt-4" value="shoots">
+          <div className="grid gap-3">
+            <div className="flex justify-end">
+              <Button
+                className="h-9 rounded-lg bg-[#654cff] px-3.5 text-sm font-bold text-white hover:bg-[#5a41ea]"
+                onClick={() => setShootCreateOpen(true)}
+              >
+                <Camera className="h-3.5 w-3.5" />
+                Schedule Shoot
+              </Button>
+            </div>
+            <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+              {shoots.length === 0 ? (
+                <p className="p-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+                  No shoots scheduled yet.
+                </p>
+              ) : (
+                shoots.map((shoot) => (
+                  <div
+                    className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 dark:border-white/[0.06]"
+                    key={shoot.id}
+                  >
+                    <Camera className="h-4 w-4 shrink-0 text-[#654cff]" />
+                    <div className="min-w-0 flex-1">
+                      <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
+                        {shoot.name}
+                      </strong>
+                      <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                        {new Date(shoot.scheduledDate).toLocaleDateString()}
+                        {shoot.callTime ? ` at ${shoot.callTime}` : ""}
+                        {shoot.location ? ` • ${shoot.location}` : ""}
+                      </span>
+                    </div>
+                    <span className="shrink-0 rounded-md bg-black/[0.04] px-2.5 py-1 text-xs font-bold text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]">
+                      {SHOOT_STATUS_LABELS[shoot.status]}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </TabsContent>
 
@@ -444,6 +521,16 @@ export function ProjectDetailPage() {
           onSave={handleSave}
           open={editOpen}
           project={project}
+        />
+      ) : null}
+
+      {shootCreateOpen ? (
+        <ShootCreateDialog
+          members={members}
+          onOpenChange={setShootCreateOpen}
+          onSave={handleCreateShoot}
+          open={shootCreateOpen}
+          tasks={workspace.tasks}
         />
       ) : null}
     </div>
