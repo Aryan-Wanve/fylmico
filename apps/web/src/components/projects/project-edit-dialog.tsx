@@ -15,10 +15,12 @@ import {
   PROJECT_TYPES,
   STAGE_BADGE_STYLES
 } from "@/components/projects/project-data";
+import { PRIORITY_META, PRIORITY_ORDER } from "@/components/tasks/task-data";
 import type {
   Project,
   ProjectStage,
   ProjectType,
+  TaskPriority,
   UpdateProjectRequest
 } from "@/types/base";
 
@@ -43,6 +45,7 @@ export function ProjectEditDialog({
   const [type, setType] = useState<ProjectType | "">(project.type ?? "");
   const [genre, setGenre] = useState(project.genre ?? "");
   const [stage, setStage] = useState<ProjectStage>(project.stage);
+  const [priority, setPriority] = useState<TaskPriority>(project.priority);
   const [progress, setProgress] = useState(project.progress);
   const [dueDate, setDueDate] = useState(project.dueDate ?? "");
   const [error, setError] = useState("");
@@ -66,6 +69,7 @@ export function ProjectEditDialog({
         type: type || undefined,
         genre: genre.trim(),
         stage,
+        priority,
         progress,
         dueDate: dueDate || undefined
       });
@@ -179,6 +183,28 @@ export function ProjectEditDialog({
                   value={progress}
                 />
               </label>
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
+                Priority
+              </Label>
+              <div className="flex gap-1.5">
+                {PRIORITY_ORDER.map((value) => (
+                  <button
+                    className={`flex-1 rounded-lg py-2 text-xs font-bold ${
+                      priority === value
+                        ? PRIORITY_META[value].bar + " text-white"
+                        : "bg-black/[0.04] text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]"
+                    }`}
+                    key={value}
+                    onClick={() => setPriority(value)}
+                    type="button"
+                  >
+                    {PRIORITY_META[value].label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <label className="grid gap-1.5">

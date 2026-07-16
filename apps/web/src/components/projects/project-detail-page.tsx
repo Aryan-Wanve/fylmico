@@ -25,7 +25,7 @@ import {
   STATUS_LABELS,
   isProjectOverdue
 } from "@/components/projects/project-data";
-import { toInitials } from "@/components/tasks/task-data";
+import { PRIORITY_META, toInitials } from "@/components/tasks/task-data";
 import { TeamAvatarStack } from "@/components/projects/team-avatar-stack";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -109,6 +109,19 @@ export function ProjectDetailPage() {
         : [],
     [workspace.tasks, project]
   );
+
+  // Team is the union of manually-added teamIds and everyone assigned
+  // through the project's tasks - assigning someone via a task is enough
+  // for them to show up here, no separate step needed.
+  const teamMemberIds = useMemo(() => {
+    const ids = new Set(project?.teamIds ?? []);
+    for (const task of tasks) {
+      for (const assignee of task.assignees) {
+        ids.add(assignee.userId);
+      }
+    }
+    return [...ids];
+  }, [project, tasks]);
 
   const projectEvents = useMemo(
     () => events.filter((event) => event.projectId === params.projectId),
@@ -202,6 +215,11 @@ export function ProjectDetailPage() {
         >
           {Icon ? <Icon className="h-14 w-14 text-white/30" /> : null}
           <span
+            className={`absolute top-4 left-4 rounded-full px-3 py-1 text-xs font-bold ${PRIORITY_META[project.priority].badge}`}
+          >
+            {PRIORITY_META[project.priority].label} Priority
+          </span>
+          <span
             className={`absolute top-4 right-4 rounded-full px-3 py-1 text-xs font-bold text-white ${STAGE_BADGE_STYLES[project.stage]}`}
           >
             {project.stage}
@@ -261,7 +279,7 @@ export function ProjectDetailPage() {
             >
               Due {project.dueDate ?? "TBD"}
             </span>
-            <TeamAvatarStack members={members} teamIds={project.teamIds} />
+            <TeamAvatarStack members={members} teamIds={teamMemberIds} />
             {project.clients.length > 0 ? (
               <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
                 Clients:{" "}
