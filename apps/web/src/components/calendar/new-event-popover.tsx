@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from "@/components/ui/popover";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -130,13 +131,8 @@ export function NewEventPopover({
 
           <div className="grid grid-cols-2 gap-2">
             <div className="grid gap-1">
-              <Label htmlFor="new-event-date">Date</Label>
-              <Input
-                id="new-event-date"
-                onChange={(event) => setDate(event.target.value)}
-                type="date"
-                value={date}
-              />
+              <Label>Date</Label>
+              <DatePicker className="h-8" onChange={setDate} value={date} />
             </div>
             <div className="grid gap-1">
               <Label htmlFor="new-event-time">Time</Label>
