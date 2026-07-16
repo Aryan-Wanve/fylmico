@@ -146,6 +146,72 @@ class CommentsService {
     );
   }
 
+  async createForDeliverable(
+    userId: string,
+    deliverableId: string,
+    body: string
+  ): Promise<CommentDto> {
+    const deliverable = await this.prisma.deliverable.findUnique({
+      where: { id: deliverableId },
+      include: { project: true }
+    });
+    if (!deliverable) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "deliverable_not_found",
+        "This deliverable does not exist."
+      );
+    }
+    const comment = await this.create(
+      userId,
+      deliverable.organizationId,
+      "deliverable",
+      deliverableId,
+      body
+    );
+
+    const recipientIds = deliverable.project.teamIds.filter(
+      (id) => id !== userId
+    );
+    await Promise.all(
+      recipientIds.map((recipientId) =>
+        notificationsService.create(
+          recipientId,
+          "project_comment",
+          `New comment on "${deliverable.project.name}" v${deliverable.version}`,
+          `${comment.authorName} commented: ${excerpt(body)}`,
+          deliverable.organizationId
+        )
+      )
+    );
+
+    return comment;
+  }
+
+  async listForDeliverable(
+    userId: string,
+    deliverableId: string,
+    pagination: CursorPaginationDto
+  ): Promise<Page<CommentDto>> {
+    const deliverable = await this.prisma.deliverable.findUnique({
+      where: { id: deliverableId }
+    });
+    if (!deliverable) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "deliverable_not_found",
+        "This deliverable does not exist."
+      );
+    }
+    return this.list(
+      userId,
+      deliverable.organizationId,
+      "deliverable",
+      deliverableId,
+      pagination
+    );
+  }
+
   private async notifyMentions(
     organizationId: string,
     taskId: string,
