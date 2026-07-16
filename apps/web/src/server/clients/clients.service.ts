@@ -22,8 +22,13 @@ class ClientsService {
       data: {
         organizationId: houseId,
         name: dto.name.trim(),
+        logoUrl: dto.logoUrl?.trim() || null,
         contactName: dto.contactName?.trim() || null,
-        contactEmail: dto.contactEmail?.trim() || null
+        contactEmail: dto.contactEmail?.trim() || null,
+        phone: dto.phone?.trim() || null,
+        address: dto.address?.trim() || null,
+        gst: dto.gst?.trim() || null,
+        notes: dto.notes?.trim() || null
       }
     });
 
@@ -52,7 +57,7 @@ class ClientsService {
 
     const limit = resolveLimit(pagination);
     const clients = await this.prisma.client.findMany({
-      where: { organizationId: houseId },
+      where: { organizationId: houseId, status: { not: "archived" } },
       orderBy: { createdAt: "asc" },
       take: limit + 1,
       ...(pagination.cursor
@@ -78,16 +83,100 @@ class ClientsService {
       where: { id: clientId },
       data: {
         ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
+        ...(dto.logoUrl !== undefined
+          ? { logoUrl: dto.logoUrl.trim() || null }
+          : {}),
         ...(dto.contactName !== undefined
           ? { contactName: dto.contactName.trim() || null }
           : {}),
         ...(dto.contactEmail !== undefined
           ? { contactEmail: dto.contactEmail.trim() || null }
-          : {})
+          : {}),
+        ...(dto.phone !== undefined ? { phone: dto.phone.trim() || null } : {}),
+        ...(dto.address !== undefined
+          ? { address: dto.address.trim() || null }
+          : {}),
+        ...(dto.gst !== undefined ? { gst: dto.gst.trim() || null } : {}),
+        ...(dto.notes !== undefined ? { notes: dto.notes.trim() || null } : {})
       }
     });
 
     return toClientDto(updated);
+  }
+
+  async archive(userId: string, clientId: string) {
+    const client = await this.findClientOrThrow(clientId);
+    await organizationsService.requireMembership(client.organizationId, userId);
+
+    const archived = await this.prisma.client.update({
+      where: { id: clientId },
+      data: { status: "archived" }
+    });
+
+    return toClientDto(archived);
+  }
+
+  async delete(userId: string, clientId: string) {
+    const client = await this.findClientOrThrow(clientId);
+    await organizationsService.requireMembership(client.organizationId, userId);
+
+    const projectCount = await this.prisma.projectClient.count({
+      where: { clientId }
+    });
+    if (projectCount > 0) {
+      throw new AppException(
+        HttpStatus.CONFLICT,
+        "client_has_projects",
+        "Archive or unlink this client's projects before deleting it."
+      );
+    }
+
+    await this.prisma.client.delete({ where: { id: clientId } });
+    return { success: true };
+  }
+
+  async getClientStats(userId: string, clientId: string) {
+    const client = await this.findClientOrThrow(clientId);
+    await organizationsService.requireMembership(client.organizationId, userId);
+
+    const links = await this.prisma.projectClient.findMany({
+      where: { clientId },
+      include: { project: { select: { status: true, stage: true } } }
+    });
+    const projects = links.map((link) => link.project);
+    const activeProjects = projects.filter(
+      (project) =>
+        project.status !== "archived" && project.stage !== "Completed"
+    ).length;
+    const completedProjects = projects.filter(
+      (project) => project.stage === "Completed"
+    ).length;
+
+    const driveKeyPrefixes = [
+      `client:${clientId}`,
+      ...links.map((l) => `project:${l.projectId}`)
+    ];
+    const folders = await this.prisma.fileEntry.findMany({
+      where: {
+        organizationId: client.organizationId,
+        OR: driveKeyPrefixes.map((prefix) => ({
+          driveKey: { startsWith: prefix }
+        }))
+      },
+      select: { id: true }
+    });
+    const storage = await this.prisma.fileEntry.aggregate({
+      where: { parentId: { in: folders.map((folder) => folder.id) } },
+      _sum: { size: true }
+    });
+
+    return {
+      activeProjects,
+      completedProjects,
+      totalShoots: 0,
+      videosDelivered: 0,
+      storageBytes: storage._sum.size ?? 0
+    };
   }
 
   private async findClientOrThrow(clientId: string): Promise<Client> {
@@ -111,8 +200,14 @@ function toClientDto(client: Client) {
   return {
     id: client.id,
     name: client.name,
+    logoUrl: client.logoUrl,
     contactName: client.contactName,
     contactEmail: client.contactEmail,
+    phone: client.phone,
+    address: client.address,
+    gst: client.gst,
+    notes: client.notes,
+    status: client.status,
     createdAt: client.createdAt,
     updatedAt: client.updatedAt
   };

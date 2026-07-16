@@ -18,3 +18,10 @@ export const PATCH = withParamsRoute<{ clientId: string }>(
     return clientsService.update(user.id, clientId, dto);
   }
 );
+
+export const DELETE = withParamsRoute<{ clientId: string }>(
+  async (request: NextRequest, { clientId }) => {
+    const user = requireUser(request);
+    return clientsService.delete(user.id, clientId);
+  }
+);
