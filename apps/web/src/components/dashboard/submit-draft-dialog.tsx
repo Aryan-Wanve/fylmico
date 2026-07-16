@@ -9,6 +9,7 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import {
+  createDeliverable,
   stopTaskTimer,
   updateTask,
   uploadTaskAttachment
@@ -16,11 +17,13 @@ import {
 
 export function SubmitDraftDialog({
   taskId,
+  projectId,
   nextVersion,
   onOpenChange,
   onUploaded
 }: {
   taskId: string;
+  projectId: string | null;
   nextVersion: number;
   onOpenChange: (open: boolean) => void;
   onUploaded: () => void;
@@ -34,7 +37,18 @@ export function SubmitDraftDialog({
     }
     setUploading(true);
     try {
-      await uploadTaskAttachment(taskId, file);
+      const uploaded = await uploadTaskAttachment(taskId, file);
+      if (projectId) {
+        try {
+          await createDeliverable(projectId, {
+            fileEntryId: uploaded.id,
+            taskId
+          });
+        } catch {
+          // Attachment itself succeeded - the versioned Deliverable row
+          // is best-effort on top of it.
+        }
+      }
       try {
         await stopTaskTimer(taskId);
       } catch {

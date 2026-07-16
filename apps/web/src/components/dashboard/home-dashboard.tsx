@@ -126,6 +126,7 @@ export function HomeDashboard() {
           nextVersion={focusTask.attachmentIds.length + 1}
           onOpenChange={setSubmitDraftOpen}
           onUploaded={() => void refreshWorkspace()}
+          projectId={focusTask.projectId}
           taskId={focusTask.id}
         />
       ) : null}

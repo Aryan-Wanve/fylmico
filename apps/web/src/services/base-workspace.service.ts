@@ -25,6 +25,7 @@ import type {
   CreateCharacterRequest,
   CreateClientRequest,
   CreateConversationRequest,
+  CreateDeliverableRequest,
   CreateHouseRequest,
   CreateLocationRequest,
   CreateProjectRequest,
@@ -35,6 +36,7 @@ import type {
   CreateTimeEntryRequest,
   CrewMember,
   DashboardSummary,
+  Deliverable,
   EditChatMessageRequest,
   FileEntryItem,
   FilesSummary,
@@ -748,6 +750,65 @@ export async function cancelShoot(
   return apiRequest<Shoot>(`/shoots/${shootId}/cancel`, {
     method: "POST",
     body: { reason, notes }
+  });
+}
+
+export async function createDeliverable(
+  projectId: string,
+  request: CreateDeliverableRequest
+): Promise<Deliverable> {
+  return apiRequest<Deliverable>(`/projects/${projectId}/deliverables`, {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function listDeliverables(
+  projectId: string
+): Promise<Deliverable[]> {
+  return apiRequest<Deliverable[]>(`/projects/${projectId}/deliverables`);
+}
+
+export async function approveDeliverable(
+  deliverableId: string
+): Promise<Deliverable> {
+  return apiRequest<Deliverable>(`/deliverables/${deliverableId}/approve`, {
+    method: "POST"
+  });
+}
+
+export async function requestDeliverableRevision(
+  deliverableId: string
+): Promise<Deliverable> {
+  return apiRequest<Deliverable>(
+    `/deliverables/${deliverableId}/request-revision`,
+    { method: "POST" }
+  );
+}
+
+export async function markDeliverableFinal(
+  deliverableId: string
+): Promise<Deliverable> {
+  return apiRequest<Deliverable>(`/deliverables/${deliverableId}/mark-final`, {
+    method: "POST"
+  });
+}
+
+export async function listDeliverableComments(
+  deliverableId: string
+): Promise<Comment[]> {
+  return apiRequest<Comment[]>(`/deliverables/${deliverableId}/comments`, {
+    query: { limit: 50 }
+  });
+}
+
+export async function createDeliverableComment(
+  deliverableId: string,
+  body: string
+): Promise<Comment> {
+  return apiRequest<Comment>(`/deliverables/${deliverableId}/comments`, {
+    method: "POST",
+    body: { body }
   });
 }
 
