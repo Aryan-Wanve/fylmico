@@ -12,6 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { DEPARTMENT_ORDER } from "@/components/crews/crew-data";
 import {
   PERMISSIONS,
@@ -23,9 +30,6 @@ import { assignRole } from "@/services/base-workspace.service";
 import type { PendingMember } from "@/types/base";
 
 type Step = "position" | "team" | "permissions";
-
-const selectClassName =
-  "h-10 w-full rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]";
 
 export function AssignRoleDialog({
   houseId,
@@ -102,18 +106,22 @@ export function AssignRoleDialog({
         {step === "position" ? (
           <div className="grid gap-4">
             <Label>Position</Label>
-            <select
-              className={selectClassName}
-              onChange={(event) => setPosition(event.target.value)}
+            <Select
+              onValueChange={(next) => setPosition(next ?? position)}
               value={position}
             >
-              {POSITION_SUGGESTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-              <option value="Custom">Custom</option>
-            </select>
+              <SelectTrigger className="h-10 w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {POSITION_SUGGESTIONS.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+                <SelectItem value="Custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
             {position === "Custom" ? (
               <Input
                 autoFocus
@@ -128,18 +136,22 @@ export function AssignRoleDialog({
         {step === "team" ? (
           <div className="grid gap-4">
             <Label>Team</Label>
-            <select
-              className={selectClassName}
-              onChange={(event) => setTeam(event.target.value)}
+            <Select
+              onValueChange={(next) => setTeam(next ?? team)}
               value={team}
             >
-              {DEPARTMENT_ORDER.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-              <option value="Custom">Custom</option>
-            </select>
+              <SelectTrigger className="h-10 w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DEPARTMENT_ORDER.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+                <SelectItem value="Custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
             {team === "Custom" ? (
               <Input
                 autoFocus
