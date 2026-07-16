@@ -9,8 +9,7 @@ import {
 } from "@/components/dashboard/focus-task-card";
 import { SubmitDraftDialog } from "@/components/dashboard/submit-draft-dialog";
 import { MyTasksGroupsPanel } from "@/components/dashboard/my-tasks-groups-panel";
-import { TodayTimelinePanel } from "@/components/dashboard/today-timeline-panel";
-import { UpcomingDeadlinesPanel } from "@/components/dashboard/upcoming-deadlines-panel";
+import { TodayPanel } from "@/components/dashboard/today-panel";
 import { NotificationsPreviewPanel } from "@/components/dashboard/notifications-preview-panel";
 import { TeamOnlinePanel } from "@/components/dashboard/team-online-panel";
 import { PersonalStatsPanel } from "@/components/dashboard/personal-stats-panel";
@@ -84,25 +83,25 @@ export function HomeDashboard() {
       </FadeInSection>
 
       <FadeInSection delay={0.1}>
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_1fr]">
-          <div className="grid gap-6">
-            <MyTasksGroupsPanel />
-            <QuickActionsPanel />
-          </div>
-          <div className="grid gap-6">
-            <UpcomingDeadlinesPanel excludeTaskId={focusTask?.id} />
-            <TodayTimelinePanel />
-            <NotificationsPreviewPanel />
-            <TeamOnlinePanel />
-          </div>
-        </div>
-      </FadeInSection>
-
-      <FadeInSection delay={0.15}>
         <PersonalStatsPanel />
       </FadeInSection>
 
+      <FadeInSection delay={0.15}>
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.6fr_1fr]">
+          <MyTasksGroupsPanel />
+          <TodayPanel excludeTaskId={focusTask?.id} />
+        </div>
+      </FadeInSection>
+
       <FadeInSection delay={0.2}>
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+          <NotificationsPreviewPanel />
+          <TeamOnlinePanel />
+          <QuickActionsPanel />
+        </div>
+      </FadeInSection>
+
+      <FadeInSection delay={0.25}>
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_1fr]">
           <RecentProjectsPanel />
           <RecentActivityPanel />

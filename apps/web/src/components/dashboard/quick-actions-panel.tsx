@@ -8,31 +8,38 @@ import {
   MessageSquare,
   Paperclip
 } from "lucide-react";
+import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 
 const ACTIONS = [
-  { label: "Open Storyboard", href: "/storyboard", icon: Clapperboard },
-  { label: "Open Files", href: "/files", icon: Paperclip },
+  { label: "Storyboard", href: "/storyboard", icon: Clapperboard },
+  { label: "Files", href: "/files", icon: Paperclip },
   { label: "Messages", href: "/messages", icon: MessageSquare },
   { label: "Calendar", href: "/calendar", icon: Calendar },
-  { label: "My Projects", href: "/projects", icon: FolderKanban }
+  { label: "Projects", href: "/projects", icon: FolderKanban }
 ] as const;
 
 export function QuickActionsPanel() {
   const router = useRouter();
 
   return (
-    <div className="flex flex-wrap gap-3">
-      {ACTIONS.map((action) => (
-        <button
-          className="flex items-center gap-2 rounded-xl border border-black/[0.06] bg-white px-4 py-2.5 text-sm font-bold text-[#4b5268] shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28] dark:text-[#c7cad9]"
-          key={action.href}
-          onClick={() => router.push(action.href)}
-          type="button"
-        >
-          <action.icon className="h-4 w-4 text-[#654cff]" />
-          {action.label}
-        </button>
-      ))}
-    </div>
+    <DashboardPanel title="Quick Actions">
+      <div className="grid grid-cols-3 gap-2 p-4">
+        {ACTIONS.map((action) => (
+          <button
+            className="grid place-items-center gap-1.5 rounded-xl p-3 text-center hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
+            key={action.href}
+            onClick={() => router.push(action.href)}
+            type="button"
+          >
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-[#654cff]/10 text-[#654cff]">
+              <action.icon className="h-4 w-4" />
+            </span>
+            <span className="text-xs font-bold text-[#4b5268] dark:text-[#c7cad9]">
+              {action.label}
+            </span>
+          </button>
+        ))}
+      </div>
+    </DashboardPanel>
   );
 }
