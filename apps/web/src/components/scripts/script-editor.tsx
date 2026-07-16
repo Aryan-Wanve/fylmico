@@ -2,6 +2,13 @@
 
 import { useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import type { Project, Script } from "@/types/base";
 import {
   formatScriptLine,
@@ -135,21 +142,32 @@ export function ScriptEditor({
         <span className="font-semibold text-[#8a90a3] dark:text-[#7d8299]">
           Project
         </span>
-        <select
-          className="h-8 rounded-lg border border-black/10 bg-transparent px-2 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
-          onChange={(event) => {
-            setProjectId(event.target.value);
-            flushSave({ projectId: event.target.value });
+        <Select
+          items={{
+            none: "No project",
+            ...Object.fromEntries(
+              projects.map((project) => [project.id, project.title])
+            )
           }}
-          value={projectId}
+          onValueChange={(next) => {
+            const nextId = next && next !== "none" ? next : "";
+            setProjectId(nextId);
+            flushSave({ projectId: nextId });
+          }}
+          value={projectId || "none"}
         >
-          <option value="">No project</option>
-          {projects.map((project) => (
-            <option key={project.id} value={project.id}>
-              {project.title}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="h-8" size="sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No project</SelectItem>
+            {projects.map((project) => (
+              <SelectItem key={project.id} value={project.id}>
+                {project.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </label>
 
       <ScriptFormatToolbar onApply={handleApplyFormat} />
