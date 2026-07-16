@@ -376,11 +376,13 @@ model TaskTimeEntry {
 model Conversation {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
+  projectId      String?  @unique @map("project_id")
   name           String
   topic          String
   createdAt      DateTime @default(now()) @map("created_at")
 
   organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   messages       Message[]
   tasks          Task[]
   calendarEvents CalendarEvent[]
@@ -413,6 +415,7 @@ model Message {
   authorId        String    @map("author_id")
   parentMessageId String?   @map("parent_message_id")
   body            String
+  pinned          Boolean   @default(false)
   createdAt       DateTime  @default(now()) @map("created_at")
   editedAt        DateTime? @map("edited_at")
 
@@ -474,6 +477,7 @@ model Project {
   tasks          Task[]
   shoots         Shoot[]
   deliverables   Deliverable[]
+  conversation   Conversation?
 
   @@index([organizationId])
   @@map("projects")
