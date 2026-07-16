@@ -1,4 +1,5 @@
 import type { Prisma } from "@fylmico/database";
+import { chatService } from "../chat/chat.service";
 import { driveStructureService } from "../drive/drive-structure.service";
 import { AppException, HttpStatus } from "../http";
 import { organizationsService } from "../organizations/organizations.service";
@@ -82,6 +83,19 @@ class ProjectsService {
     } catch (error) {
       console.error(
         "[projects] could not create Drive folder for project",
+        error
+      );
+    }
+
+    try {
+      await chatService.ensureProjectConversation(
+        houseId,
+        project.id,
+        project.name
+      );
+    } catch (error) {
+      console.error(
+        "[projects] could not create project chat conversation",
         error
       );
     }
@@ -381,6 +395,144 @@ class ProjectsService {
         ) / 10,
       completionPercent: project.progress
     };
+  }
+
+  async getProjectTimeline(userId: string, projectId: string) {
+    const project = await this.findProjectOrThrow(projectId);
+    await organizationsService.requireMembership(
+      project.organizationId,
+      userId
+    );
+
+    const [tasks, taskActivity, shoots, deliverables] = await Promise.all([
+      this.prisma.task.findMany({
+        where: { projectId, isTemplate: false },
+        select: { id: true, title: true, createdAt: true, createdBy: true }
+      }),
+      this.prisma.taskActivity.findMany({
+        where: { task: { projectId, isTemplate: false } },
+        select: {
+          id: true,
+          type: true,
+          fromValue: true,
+          toValue: true,
+          createdAt: true,
+          actor: true,
+          task: { select: { title: true } }
+        }
+      }),
+      this.prisma.shoot.findMany({ where: { projectId } }),
+      this.prisma.deliverable.findMany({
+        where: { projectId },
+        include: { createdBy: true }
+      })
+    ]);
+
+    const entries: {
+      id: string;
+      actorName: string;
+      text: string;
+      occurredAt: Date;
+    }[] = [
+      {
+        id: `project-${project.id}`,
+        actorName: "",
+        text: `Project "${project.name}" was created`,
+        occurredAt: project.createdAt
+      },
+      ...tasks.map((task) => ({
+        id: `task-${task.id}`,
+        actorName: task.createdBy.name,
+        text: `added a new task "${task.title}"`,
+        occurredAt: task.createdAt
+      })),
+      ...taskActivity.map((activity) => ({
+        id: `task-activity-${activity.id}`,
+        actorName: activity.actor.name,
+        text: `changed "${activity.task.title}" ${activity.type}${
+          activity.toValue ? ` to ${activity.toValue}` : ""
+        }`,
+        occurredAt: activity.createdAt
+      }))
+    ];
+
+    for (const shoot of shoots) {
+      entries.push({
+        id: `shoot-${shoot.id}-scheduled`,
+        actorName: "",
+        text: `Shoot "${shoot.name}" was scheduled`,
+        occurredAt: shoot.createdAt
+      });
+      if (shoot.reachedAt) {
+        entries.push({
+          id: `shoot-${shoot.id}-reached`,
+          actorName: "",
+          text: `Crew reached the location for "${shoot.name}"`,
+          occurredAt: shoot.reachedAt
+        });
+      }
+      if (shoot.startedAt) {
+        entries.push({
+          id: `shoot-${shoot.id}-started`,
+          actorName: "",
+          text: `Shoot "${shoot.name}" started`,
+          occurredAt: shoot.startedAt
+        });
+      }
+      if (shoot.finishedAt) {
+        entries.push({
+          id: `shoot-${shoot.id}-finished`,
+          actorName: "",
+          text: `Shoot "${shoot.name}" finished`,
+          occurredAt: shoot.finishedAt
+        });
+      }
+      if (shoot.uploadedAt) {
+        entries.push({
+          id: `shoot-${shoot.id}-uploaded`,
+          actorName: "",
+          text: `Footage from "${shoot.name}" was uploaded`,
+          occurredAt: shoot.uploadedAt
+        });
+      }
+      if (shoot.cancelledAt) {
+        entries.push({
+          id: `shoot-${shoot.id}-cancelled`,
+          actorName: "",
+          text: `Shoot "${shoot.name}" was cancelled`,
+          occurredAt: shoot.cancelledAt
+        });
+      }
+    }
+
+    for (const deliverable of deliverables) {
+      entries.push({
+        id: `deliverable-${deliverable.id}-submitted`,
+        actorName: deliverable.createdBy.name,
+        text: `submitted deliverable v${deliverable.version}`,
+        occurredAt: deliverable.createdAt
+      });
+      if (
+        deliverable.status !== "review" &&
+        deliverable.updatedAt.getTime() !== deliverable.createdAt.getTime()
+      ) {
+        entries.push({
+          id: `deliverable-${deliverable.id}-status`,
+          actorName: "",
+          text: `deliverable v${deliverable.version} is now ${deliverable.status}`,
+          occurredAt: deliverable.updatedAt
+        });
+      }
+    }
+
+    return entries
+      .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
+      .map((entry) => ({
+        id: entry.id,
+        actorName: entry.actorName,
+        text: entry.text,
+        occurredAt: entry.occurredAt.toISOString()
+      }));
   }
 
   private async requireClientInHouse(

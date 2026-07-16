@@ -302,6 +302,92 @@ class ChatService {
     return this.getRoomDto(conversation.id, userId);
   }
 
+  async ensureProjectConversation(
+    organizationId: string,
+    projectId: string,
+    projectName: string
+  ) {
+    const existing = await this.prisma.conversation.findUnique({
+      where: { projectId }
+    });
+    if (existing) {
+      return existing;
+    }
+
+    const name = `${projectName} (Project Chat)`;
+    const nameTaken = await this.prisma.conversation.findUnique({
+      where: { organizationId_name: { organizationId, name } }
+    });
+
+    return this.prisma.conversation.create({
+      data: {
+        organizationId,
+        projectId,
+        name: nameTaken ? `${name} ${projectId.slice(-6)}` : name,
+        topic: "Project chat"
+      }
+    });
+  }
+
+  async getRoomIdForProject(userId: string, projectId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId }
+    });
+    if (!project) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "project_not_found",
+        "This project does not exist."
+      );
+    }
+    await organizationsService.requireMembership(
+      project.organizationId,
+      userId
+    );
+
+    const conversation = await this.ensureProjectConversation(
+      project.organizationId,
+      project.id,
+      project.name
+    );
+    return { roomId: conversation.id };
+  }
+
+  async pinMessage(userId: string, messageId: string) {
+    const message = await this.prisma.message.findUnique({
+      where: { id: messageId },
+      include: { conversation: true }
+    });
+    if (!message) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "message_not_found",
+        "This message does not exist."
+      );
+    }
+    await organizationsService.requireMembership(
+      message.conversation.organizationId,
+      userId
+    );
+
+    const updated = await this.prisma.message.update({
+      where: { id: messageId },
+      data: { pinned: !message.pinned },
+      include: messageInclude
+    });
+
+    const replyCount = message.parentMessageId
+      ? 0
+      : ((await this.countReplies([messageId])).get(messageId) ?? 0);
+    const dto = toMessageDto(updated, userId, replyCount);
+    await broadcast(
+      conversationTopic(message.conversationId),
+      "message:edit",
+      dto
+    );
+    return dto;
+  }
+
   async updateConversation(
     userId: string,
     roomId: string,
@@ -357,7 +443,7 @@ class ChatService {
     userId: string
   ) {
     const conversations = await this.prisma.conversation.findMany({
-      where: { organizationId },
+      where: { organizationId, projectId: null },
       include: roomInclude,
       orderBy: { createdAt: "asc" }
     });
@@ -597,6 +683,7 @@ function toMessageDto(
     sentAt: message.createdAt.toISOString(),
     body: message.body,
     editedAt: message.editedAt?.toISOString() ?? null,
+    pinned: message.pinned,
     parentMessageId: message.parentMessageId,
     replyCount,
     reactions: [...reactionsByEmoji.values()]
