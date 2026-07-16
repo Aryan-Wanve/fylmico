@@ -25,146 +25,116 @@ becoming decorative or inefficient.
 
 ## Current Architecture
 
-Sprint 1 has completed the complete technical architecture documentation
-baseline. No Sprint 1 application features, database migrations, API endpoints,
-package folders, or placeholder implementations were created.
+The original plan (Sprint 1) was a frontend-only workstream with a
+black-box, separately-owned backend (ADR 0017, two-developer split). That
+model was superseded early: backend implementation entered this workstream
+under ADR 0018, and the backend was later merged directly into the Next.js
+app under ADR 0037 (there is no separate `apps/api` anymore).
 
-Development direction update: Fylmico is now developed by two developers. This
-workstream is frontend-only unless the user explicitly changes direction.
-Developer 1 owns frontend engineering, UI/UX, frontend architecture, design
-system, component library, state management, frontend performance,
-accessibility, animations, responsive design, and frontend API integration.
-Developer 2 owns backend engineering, authentication, database, Prisma, NestJS,
-business logic, REST APIs, WebSockets, permissions, storage, notifications, AI
-services, infrastructure, and backend deployment.
-
-The accepted frontend baseline is a TypeScript npm workspace:
+Actual repository layout:
 
 ```text
 apps/
-  web/
+  web/            # Next.js App Router - both the UI and the /api/v1/* backend
 packages/
-  ui/
-  shared/
+  database/       # Prisma schema, migrations, generated client
 docs/
 ```
 
-Baseline architecture decisions:
-
-- `apps/web`: Next.js App Router web application. This is the only runnable app
-  in Sprint 0.
-- `packages/ui`: Shared design system and UI primitives.
-- `packages/shared`: Frontend-safe public API contracts, shared domain types,
-  and validation schemas for client-side forms only.
-
-`apps/api`, backend packages, and backend implementation folders must not be
-created in this workstream unless the user explicitly changes direction.
-
-Sprint 1 accepted architecture decisions:
-
-- Start with a modular monolith backend, not microservices.
-- Use Next.js App Router with a shared UI package and typed API/realtime
-  clients.
-- Use versioned REST over JSON under `/api/v1`.
-- Treat organization as the primary tenant boundary.
-- Treat project as the primary production workspace inside an organization.
-- Store file binaries in object storage and file metadata in PostgreSQL.
-- Use Socket.IO with server-authorized rooms for realtime collaboration.
-- Use AI only through permission-aware backend services with minimized context.
-- Keep API/auth/realtime/file contracts compatible with future mobile clients.
-- Scale in phases: single-node deployment, workers/Redis/object storage,
-  horizontal scale, then selective service extraction.
-- Treat the backend as a black box and communicate only through documented
-  public API contracts.
-- Use realistic mock data and service abstractions until backend APIs exist.
-- Never put Prisma, SQL, database logic, backend business logic, backend
-  validation implementations, or backend implementation assumptions in frontend
-  code.
+- `apps/web/src/app/api/v1/*`: the entire backend - Next.js Route Handlers,
+  not a separate NestJS service (ADR 0037).
+- `apps/web/src/server/*`: domain services (organizations, tasks, files,
+  analytics, notifications, ...), one folder per domain, called directly by
+  the route handlers.
+- `packages/database`: Prisma schema/migrations, shared by the app via
+  `apps/web/src/server/prisma.ts`.
+- Every route follows the `/api/v1` prefix and `{ "data": ... }` response
+  envelope from ADR 0010.
+- Organization ("House") is the tenant boundary; Project is the production
+  workspace inside a House.
+- File binaries live in each House's own connected Google Drive
+  (ADR 0038, 0045); file metadata lives in PostgreSQL.
+- Realtime (chat, presence) uses Supabase Realtime, not Socket.IO
+  (ADR 0044) - the earlier Socket.IO plan in ADR 0005 was superseded.
+- AI integration and audit logs remain planned, not implemented (see
+  `docs/features.md`).
 
 ## Planned Stack
 
-- Web: Next.js, React, TypeScript, TailwindCSS, shadcn/ui, Framer Motion
-- Frontend API layer: `lib/api/*` and service abstractions with mock services
-  until backend APIs exist
-- Backend API: public API contracts defined by frontend/backend collaboration
-- Backend implementation stack: owned by Developer 2 and treated as a black box
+Actual stack in use: Next.js (App Router) + React + TypeScript + Tailwind
+v4 + shadcn/ui on the frontend; the same Next.js app's Route Handlers +
+Prisma + PostgreSQL on the backend; JWT access tokens with rotated refresh
+tokens (ADR 0003); Supabase Realtime for chat/presence (ADR 0044); Google
+Drive for file storage (ADR 0045); Hostinger VPS via Docker/Nginx for
+deployment (ADR 0006, 0034, 0042).
 
 ## Database Overview
 
-Database work is owned by Developer 2. Frontend work must not create schemas,
-migrations, Prisma models, SQL, or database logic. Frontend models represent
-public API contracts and UI view models only.
+`packages/database/prisma/schema.prisma` is the single source of truth.
+Every table/column addition ships as a hand-written migration plus a
+`docs/database.md` update in the same change - see that file for the full
+implemented schema.
 
 ## Authentication Overview
 
-Authentication backend implementation is owned by Developer 2. Frontend work
-builds authentication screens, session UI, auth state, route protection UX, and
-API contracts/mock services without implementing backend auth logic.
+OTP-based email login plus Google OAuth (ADR 0035, 0039), short-lived JWT
+access tokens, rotated opaque refresh tokens, and session management under
+`/api/v1/auth/*`. Fully implemented - see `docs/authentication.md` and
+`docs/api.md`.
 
 ## Permissions Overview
 
-Permissions backend implementation is owned by Developer 2. Frontend work may
-use public permission claims or capability responses for UI experience, but the
-API remains the enforcement source.
+A centralized 18-key permission system exists
+(`apps/web/src/lib/permissions.ts`, ADR 0048): named Positions (roles) hold
+a permission set, assigned via the Crews "Assign Role" wizard. Only
+`approve_members` is enforced via `requirePermission` so far; other domain
+services still use simpler Owner-only/any-member gates (see
+`docs/features.md`'s Permissions entry for what's left).
 
 ## Current Milestone
 
-Phase 1 (foundation and planning) is complete. The project is now in Phase
-2/3: frontend application scaffold and early authentication UI, built
-frontend-only with a black-box backend and public API contracts (ADR 0017).
+Phase 9 (see `docs/progress.md`'s latest entries) - real backend for every
+remaining domain, now well past the original Phase 1-8 roadmap. Every page
+in `apps/web` runs against the real backend; there is no mock data or mock
+service layer left anywhere in the app.
 
 ## Current Progress
 
-The repository has a root npm workspace, Next.js App Router app in
-`apps/web`, TypeScript, ESLint, Prettier, Husky, lint-staged, Docker, GitHub
-Actions CI, and both a Hostinger Node.js standalone startup entry and a
-static Git deployment path (`npm run build:hostinger`, publishing to
-`dist/hostinger` and mirroring to the repository root).
+The repository is a root npm workspace with `apps/web` (Next.js app +
+backend) and `packages/database` (Prisma). ESLint, Prettier, Husky,
+lint-staged, Docker, and GitHub Actions CI (migrate-on-push, ADR 0042) are
+in place. Deployment targets a Hostinger VPS via a Node.js standalone
+startup entry.
 
-`apps/web` now uses Tailwind v4 + shadcn/ui as its actual design system
-(`components/ui/*`). Real routes exist under an `(app)` route group: a home
-dashboard (`/`), a no-house onboarding flow (`/houses/new`), and a login
-screen (`/login`) outside the group. All are backed by the mock service in
-`services/base-workspace.service.ts` per ADR 0017 — no backend
-implementation exists in this workstream.
-
-Sprint 1 architecture documentation is complete in `docs/architecture.md` with
-ADR coverage through ADR 0016. It covers overall system architecture, frontend,
-backend, database, API, authentication, authorization, organization hierarchy,
-project hierarchy, file storage, realtime, AI integration, future mobile
-compatibility, deployment, and scaling strategy.
-
-ADR 0017 records the frontend/backend independence model.
+Every sidebar destination (Home/HUD, Projects, Calendar, Tasks, Crews,
+Files, Storyboard, Scripts, Messages, Bookings, Call Sheets, Announcements,
+Analytics, Settings) is a real route backed by the real database - see
+`docs/progress.md` for the full session-by-session build history and
+`docs/adr/` for the architectural decision behind each one.
 
 ## Current Blockers
 
-- Backend implementation must not be started in this workstream.
-- Confirm the Hostinger deployment returns HTTP 200 after using either root
-  Node.js deployment with `server.js` startup or static Git deployment with
-  `dist/hostinger`, if this has not already been confirmed outside the repo.
+- None tracked. Check `docs/progress.md`'s latest entry's "Known
+  limitations / tradeoffs" and "Next task" sections for open items.
 
 ## Current Priorities
 
-1. Focus only on frontend application development.
-2. For every backend dependency, define an API contract and mock service.
-3. Confirm the deployed domain returns HTTP 200 if deployment confirmation is
-   still pending.
+See the latest entry in `docs/progress.md` for the current "Next task"
+list and `docs/features.md` for feature-level status (several modules -
+Timeline/Gantt, Equipment, Budgets/Invoices/Contracts, Moodboards, Video
+review, AI assistant, Voice/Video, Audit logs - remain planned, not
+implemented).
 
 ## Latest Implemented Feature
 
-Full frontend rebuild on the new design system: login screen, authenticated
-app shell (sidebar/topbar), home dashboard (stat cards, schedule, tasks,
-projects, activity), and no-house onboarding. See
-[docs/progress.md](progress.md) for the detailed session log.
+See the most recent dated entry at the bottom of
+[docs/progress.md](progress.md) - each entry lists what shipped, what was
+explicitly deferred, and the ADR documenting the decision.
 
 ## Next Feature
 
-The remaining sidebar destinations (Projects, Calendar, Tasks, Crews, Files,
-Storyboard, Messages, Bookings, Analytics, Settings) each need their own
-route, following the same pattern already established: design UI against the
-shared reference mockups, define/extend the API contract, create or extend a
-mock service, build components, connect to mocks, handle loading/empty/error/
-success states, and update documentation.
+See the "Next task" section of the latest entry in
+[docs/progress.md](progress.md).
 
 ## Things Never To Change Without Explicit Decision
 
@@ -175,18 +145,15 @@ success states, and update documentation.
 - Do not rely on chat history as project memory.
 - Do not write placeholder implementations.
 - Do not rewrite unrelated files.
-- Frontend must never depend on backend implementation details.
-- Frontend must communicate only through documented public API contracts.
-- Mock services are required until backend APIs exist.
+- The client must communicate only through the documented `/api/v1/*`
+  contracts in `docs/api.md` - no direct Prisma/SQL calls from components.
+- No mock data or mock services remain anywhere in the app - every page
+  runs against the real database.
 
 ## Known Issues
 
-- Hostinger deployment needs confirmation after switching the panel to either
-  Node.js mode with `server.js` or static Git mode with `dist/hostinger`.
-- Backend implementation is external to this frontend workstream.
-- Frontend API contracts must be created as features need them.
-- Sprint 1 architecture is documentation-only and does not implement the
-  architecture.
+- See the latest entry in `docs/progress.md`'s "Known limitations /
+  tradeoffs" section - kept there per-feature instead of duplicated here.
 
 ## Session Startup Checklist
 

@@ -13,6 +13,12 @@
 
 ## Current Milestone
 
+Phases 2-8 below are historical (all complete). The project has since moved
+well past this roadmap's original scope into an unnumbered "Phase 9" - real
+backend for every remaining domain, tracked entry-by-entry in
+`docs/progress.md` rather than as fixed phases here. See that file's latest
+dated entry for the current milestone and next task.
+
 ### Phase 2: Frontend Application Scaffold / Sprint 2
 
 Status: Complete
@@ -265,7 +271,9 @@ Progress:
 
 ### Phase 8: Backend Bootstrap
 
-Status: In progress
+Status: Complete (originally scaffolded `apps/api` as a separate NestJS
+service, as described below; later merged directly into `apps/web` under
+ADR 0037 - there is no standalone `apps/api` anymore)
 
 Priority: Critical
 

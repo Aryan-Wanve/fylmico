@@ -20,7 +20,7 @@ Priority values:
 
 ## Authentication
 
-Status: Planned
+Status: Complete
 
 Priority: Critical
 
@@ -30,26 +30,27 @@ permissions model
 Description: User identity, email authentication, OAuth support, JWT sessions,
 and secure account lifecycle.
 
-Implementation notes: Use short-lived JWT access tokens and rotated opaque
-refresh tokens. Keep authentication separate from authorization.
+Implementation notes: OTP-based email auth plus Google OAuth, short-lived JWT
+access tokens and rotated opaque refresh tokens. See ADR 0003, 0019, 0035, 0039.
 
 ## Organizations
 
-Status: Planned
+Status: Complete
 
 Priority: Critical
 
 Dependencies: Authentication, permissions model, database package
 
-Description: Top-level workspaces that own users, teams, projects, clients, and
-production data.
+Description: Top-level workspaces ("Houses") that own users, teams, projects,
+clients, and production data.
 
-Implementation notes: Multi-tenant boundaries must be explicit from the first
-schema design.
+Implementation notes: Multi-house dashboard, house types with per-type default
+modules, pending-member/role-assignment flow, favorites/pins/archive. See ADR
+0020, 0040, 0046, 0048, 0049.
 
 ## Projects
 
-Status: Planned
+Status: Complete
 
 Priority: High
 
@@ -58,12 +59,12 @@ Dependencies: Organizations, clients, teams
 Description: Central production workspaces for creative jobs, campaigns, shoots,
 and deliverables.
 
-Implementation notes: Project data should connect naturally to tasks, assets,
-crew, scheduling, review, budgets, and approvals.
+Implementation notes: Connected to tasks, files, crew, scheduling, comments,
+and clients. See ADR 0022, 0027.
 
 ## Collaboration
 
-Status: Planned
+Status: Complete
 
 Priority: High
 
@@ -71,12 +72,12 @@ Dependencies: Realtime architecture, permissions, notifications
 
 Description: Chat, comments, notifications, tasks, and workflow coordination.
 
-Implementation notes: Realtime events should be typed, authorized, and scoped to
-the relevant organization and project.
+Implementation notes: Real-time chat/presence via Supabase Realtime (ADR 0044),
+task @mention comments, cross-house notification deep-linking (ADR 0049).
 
 ## Creative Production
 
-Status: Planned
+Status: Complete
 
 Priority: High
 
@@ -85,12 +86,13 @@ Dependencies: Projects, assets, permissions
 Description: Storyboards, moodboards, scripts, shot lists, call sheets,
 equipment, crew, and locations.
 
-Implementation notes: These modules should share consistent project, approval,
-commenting, attachment, and versioning patterns.
+Implementation notes: Storyboard canvas + shot lists, scripts, call sheets, and
+crew all shipped (ADR 0028, 0041). Moodboards and a dedicated equipment
+inventory are not built.
 
 ## Asset Review
 
-Status: Planned
+Status: In progress
 
 Priority: High
 
@@ -99,12 +101,13 @@ Dependencies: Assets, comments, approvals, version control
 Description: Upload, organize, review, comment on, version, and approve creative
 assets.
 
-Implementation notes: Must be designed with large media files, client feedback,
-and auditability in mind.
+Implementation notes: Drive-backed file storage with sensitive/portfolio
+flags (ADR 0038, 0045) and task-level draft uploads (ADR 0050) ship today;
+timestamped video review and full version history are not built.
 
 ## Permissions
 
-Status: Planned
+Status: In progress
 
 Priority: Critical
 
@@ -113,12 +116,14 @@ Dependencies: Organizations, authentication, database package
 Description: Organization-aware RBAC and policy checks for members, projects,
 clients, assets, approvals, billing, and audit logs.
 
-Implementation notes: API enforcement is mandatory. UI checks are only for
-experience. Cross-organization access is denied by default.
+Implementation notes: Centralized 18-key permission system exists
+(`apps/web/src/lib/permissions.ts`, ADR 0048); only `approve_members` is
+enforced via `requirePermission` so far, other domain services still use
+simpler Owner-only/any-member gates.
 
 ## Audit Logs
 
-Status: Planned
+Status: In progress
 
 Priority: High
 
@@ -127,12 +132,12 @@ Dependencies: Authentication, permissions, database package
 Description: Immutable records of important organization, project, auth, and
 administrative actions.
 
-Implementation notes: Audit logging should be included early for security and
-enterprise readiness.
+Implementation notes: Per-task `TaskActivity` log and a Recent Activity feed
+exist; there is no house-wide/cross-domain audit log yet.
 
 ## Publishing and Analytics
 
-Status: Planned
+Status: In progress
 
 Priority: Medium
 
@@ -141,54 +146,55 @@ Dependencies: Projects, assets, integrations, permissions
 Description: Publishing workflows, delivery tracking, reporting, and production
 analytics.
 
-Implementation notes: Keep integration boundaries modular so channels can be
-added without rewriting core production workflows.
+Implementation notes: Analytics (time tracking, task status, estimate vs
+actual, personal HUD stats) ships (ADR 0031, 0047, 0049, 0050); external
+publishing/delivery-channel integrations do not exist.
 
 ## Full Module Register
 
 | Module          | Status      | Priority |
 | --------------- | ----------- | -------- |
-| Authentication  | Planned     | Critical |
-| Organizations   | Planned     | Critical |
-| Teams           | Planned     | High     |
-| Projects        | Planned     | High     |
-| Clients         | Planned     | High     |
-| Departments     | Planned     | Medium   |
-| Permissions     | Planned     | Critical |
-| Chat            | Planned     | High     |
+| Authentication  | Complete    | Critical |
+| Organizations   | Complete    | Critical |
+| Teams           | Complete    | High     |
+| Projects        | Complete    | High     |
+| Clients         | Complete    | High     |
+| Departments     | Complete    | Medium   |
+| Permissions     | In progress | Critical |
+| Chat            | Complete    | High     |
 | Voice channels  | Planned     | Medium   |
 | Video meetings  | Planned     | Medium   |
-| Announcements   | Planned     | Medium   |
-| Notifications   | Planned     | High     |
-| Tasks           | Planned     | High     |
-| Kanban          | Planned     | High     |
-| Calendar        | In progress | High     |
+| Announcements   | Complete    | Medium   |
+| Notifications   | Complete    | High     |
+| Tasks           | Complete    | High     |
+| Kanban          | Complete    | High     |
+| Calendar        | Complete    | High     |
 | Timeline        | Planned     | High     |
-| Scheduling      | Planned     | High     |
-| Storyboards     | Planned     | High     |
+| Scheduling      | Complete    | High     |
+| Storyboards     | Complete    | High     |
 | Moodboards      | Planned     | High     |
-| Scripts         | Planned     | High     |
-| Shot lists      | Planned     | High     |
-| Call sheets     | Planned     | High     |
+| Scripts         | Complete    | High     |
+| Shot lists      | Complete    | High     |
+| Call sheets     | Complete    | High     |
 | Equipment       | Planned     | Medium   |
-| Crew            | Planned     | Medium   |
-| Locations       | Planned     | Medium   |
+| Crew            | Complete    | Medium   |
+| Locations       | Complete    | Medium   |
 | Budgets         | Planned     | Medium   |
 | Invoices        | Planned     | Medium   |
 | Contracts       | Planned     | Medium   |
-| Assets          | Planned     | High     |
-| Cloud storage   | Planned     | High     |
+| Assets          | Complete    | High     |
+| Cloud storage   | Complete    | High     |
 | Video review    | Planned     | High     |
-| Comments        | Planned     | High     |
-| Approvals       | Planned     | High     |
-| Version control | Planned     | High     |
+| Comments        | Complete    | High     |
+| Approvals       | Complete    | High     |
+| Version control | In progress | High     |
 | Publishing      | Planned     | Medium   |
-| Analytics       | In progress | Medium   |
-| Dashboards      | Planned     | High     |
-| Global search   | Planned     | Medium   |
-| Templates       | Planned     | Medium   |
+| Analytics       | Complete    | Medium   |
+| Dashboards      | Complete    | High     |
+| Global search   | In progress | Medium   |
+| Templates       | In progress | Medium   |
 | AI assistant    | Planned     | Medium   |
-| Administration  | Planned     | High     |
-| Settings        | Planned     | High     |
-| Audit logs      | Planned     | High     |
-| Activity feed   | Planned     | High     |
+| Administration  | In progress | High     |
+| Settings        | Complete    | High     |
+| Audit logs      | In progress | High     |
+| Activity feed   | Complete    | High     |

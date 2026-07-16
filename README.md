@@ -9,17 +9,18 @@ workspace, from client onboarding to final delivery.
 
 ## Current Phase
 
-Phase 1 (foundation and planning) is complete. The project is in Phase 2/3:
-frontend application scaffold and early authentication UI.
+The app runs on a real backend end-to-end - no mock data or mock services
+remain anywhere. Every sidebar destination (Home/HUD, Projects, Calendar,
+Tasks, Crews, Files, Storyboard, Scripts, Messages, Bookings, Call Sheets,
+Announcements, Analytics, Settings) is a real route backed by PostgreSQL via
+Prisma.
 
-Shipped so far in `apps/web`: Tailwind v4 + shadcn/ui design system, a
-pixel-matched login screen wired to a mock auth service, an authenticated app
-shell (sidebar/topbar with compact and full modes), a home dashboard, and a
-no-house onboarding flow. All screens use real Next.js routes and mock
-services per [ADR 0017](docs/adr/0017-frontend-backend-independence.md); no
-backend implementation lives in this workstream. See
-[docs/progress.md](docs/progress.md) for the latest session log and
-[docs/roadmap.md](docs/roadmap.md) for what is still planned.
+The backend lives inside `apps/web` itself (Next.js Route Handlers under
+`src/app/api/v1/*` + domain services under `src/server/*`), not a separate
+NestJS service - see [ADR 0037](docs/adr/0037-merge-backend-into-nextjs.md).
+See [docs/progress.md](docs/progress.md) for the session-by-session build
+log and [docs/features.md](docs/features.md) for what's shipped vs. still
+planned.
 
 ## Required Reading Before Implementation
 
@@ -69,16 +70,18 @@ Whitespace should be intentional. Animations should be subtle.
 
 ## Technical Direction
 
-The intended architecture is a monorepo with:
+The actual architecture is a monorepo with:
 
-- `apps/web` for the Next.js web app.
-- `apps/api` for the NestJS API.
-- `packages/*` for shared platform libraries.
+- `apps/web` for the Next.js web app - this is both the frontend and the
+  backend (Route Handlers under `src/app/api/v1/*`).
+- `packages/database` for the Prisma schema, migrations, and generated
+  client.
 - `docs/*` for durable project memory.
 
-The intended stack is Next.js, React, TypeScript, TailwindCSS, shadcn/ui, Framer
-Motion, NestJS, PostgreSQL, Prisma, Socket.IO, JWT, OAuth, Docker, Nginx, and
-Hostinger VPS.
+The actual stack is Next.js, React, TypeScript, TailwindCSS, shadcn/ui,
+Framer Motion, PostgreSQL, Prisma, Supabase Realtime, JWT, Google OAuth,
+Docker, Nginx, and Hostinger VPS. (The originally planned separate NestJS
+API and Socket.IO realtime layer were superseded - see ADR 0037 and 0044.)
 
 ## Current Baseline Decisions
 
@@ -87,9 +90,14 @@ Hostinger VPS.
 - JWT access tokens with rotated refresh tokens are accepted in
   [ADR 0003](docs/adr/0003-authentication.md).
 - Hybrid RBAC and policy-based authorization is accepted in
-  [ADR 0004](docs/adr/0004-permissions.md).
-- Socket.IO realtime architecture is accepted in
-  [ADR 0005](docs/adr/0005-realtime.md).
+  [ADR 0004](docs/adr/0004-permissions.md), extended with a modular
+  permission system in [ADR 0048](docs/adr/0048-pending-members-and-permissions.md).
+- The backend was merged directly into the Next.js app in
+  [ADR 0037](docs/adr/0037-merge-backend-into-nextjs.md), superseding the
+  original separate-NestJS-service plan.
+- Supabase Realtime powers chat/presence, accepted in
+  [ADR 0044](docs/adr/0044-realtime-chat-supabase.md), superseding the
+  original Socket.IO plan in [ADR 0005](docs/adr/0005-realtime.md).
 - Docker, Nginx, GitHub, and Hostinger VPS deployment is accepted in
   [ADR 0006](docs/adr/0006-deployment.md).
 

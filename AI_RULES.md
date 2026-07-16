@@ -10,81 +10,32 @@ company codebase, not for generating code quickly.
 
 ## Current Development Responsibility
 
-Fylmico is now developed by two developers. This repository workstream is
-frontend-first unless the user explicitly changes direction.
+Fylmico is now a single full-stack Next.js app (`apps/web`) - there is no
+separate backend team, backend service, or mock-service layer (the original
+frontend/backend split under ADR 0017 was superseded by ADR 0018, then the
+backend itself was merged into `apps/web` under ADR 0037). One session does
+schema, backend service, route, frontend, and docs work together for a
+feature.
 
-Developer 1 owns:
+## Full-Stack Feature Workflow
 
-- Frontend engineering.
-- UI/UX.
-- Frontend architecture.
-- Design system and component library.
-- State management.
-- Frontend performance.
-- Accessibility.
-- Animations.
-- Responsive design.
-- Frontend API integration.
+Every feature is developed in this order:
 
-Developer 2 owns backend engineering:
+1. Schema change (if any): edit `packages/database/prisma/schema.prisma`,
+   write a hand-written `migration.sql`, apply it, run
+   `prisma migrate resolve --applied` + `prisma generate` + `prisma format`.
+2. Backend: domain service in `apps/web/src/server/<domain>/`, DTOs, and
+   Route Handlers under `apps/web/src/app/api/v1/*` (`/api/v1` prefix,
+   `{ "data": ... }` envelope per ADR 0010).
+3. Frontend: types in `types/base.ts`, client functions in
+   `services/base-workspace.service.ts`, components. Never fetch directly
+   inside components - always go through the service layer.
+4. Handle loading/empty/error/success states.
+5. Verify: typecheck, lint, build, then a live browser check of the actual
+   flow (not just types).
+6. Update documentation in the same change (see below).
 
-- Authentication.
-- Database and Prisma.
-- NestJS.
-- Business logic.
-- REST APIs.
-- WebSockets.
-- Permissions.
-- Storage.
-- Notifications.
-- AI services.
-- Backend infrastructure and deployment.
-
-## Frontend and Backend Independence
-
-Treat the backend as a black box owned by another engineering team.
-
-Frontend work must never depend on backend implementation details:
-
-- No Prisma.
-- No SQL.
-- No database logic.
-- No backend business logic.
-- No backend validation logic.
-- No NestJS internals.
-- No assumptions about backend storage, schema, queues, or infrastructure.
-
-The frontend communicates only through documented public API contracts.
-
-When frontend work requires backend functionality:
-
-1. Define the API contract.
-2. Create or update a mock service.
-3. Build the UI against the service abstraction.
-4. Leave backend implementation to the backend team.
-
-Never block frontend work waiting for backend implementation when a realistic
-contract and mock service can unblock the UI.
-
-## Frontend Feature Workflow
-
-Every frontend feature must be developed in this order:
-
-1. Design UI.
-2. Define API contract.
-3. Create mock service.
-4. Build components.
-5. Connect components to the mock service.
-6. Handle loading state.
-7. Handle empty state.
-8. Handle error state.
-9. Handle success state.
-10. Update documentation.
-
-Never fetch directly inside components. Use a dedicated API/service layer such
-as `lib/api/*` and feature services such as `services/project.service.ts`.
-When backend APIs become available, only API/service files should need to
-change.
+No mock data or mock services - build directly against the real database.
 
 ## Required Reading Before Code
 
@@ -109,7 +60,7 @@ Explain:
 - Architecture
 - Reasoning
 - Folder changes
-- Database impact, which should normally be none for frontend work
+- Database impact (schema/migration changes, if any)
 - API contract changes
 - Security implications
 - Performance implications
