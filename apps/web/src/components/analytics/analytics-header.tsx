@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
 import { Download } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 const RANGE_OPTIONS = [
   { value: 7, label: "Last 7 days" },
@@ -31,17 +38,24 @@ export function AnalyticsHeader({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <select
-          className="h-9 rounded-lg border border-black/10 bg-white px-3 text-sm font-semibold text-[#4b5268] outline-none hover:bg-black/[0.03] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
-          onChange={(event) => onRangeChange(Number(event.target.value))}
-          value={rangeDays}
+        <Select
+          items={Object.fromEntries(
+            RANGE_OPTIONS.map((option) => [String(option.value), option.label])
+          )}
+          onValueChange={(next) => onRangeChange(Number(next))}
+          value={String(rangeDays)}
         >
-          {RANGE_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="h-9 bg-white dark:bg-[#171a28]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {RANGE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={String(option.value)}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <button
           className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
           onClick={onExportCsv}
