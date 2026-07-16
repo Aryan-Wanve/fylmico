@@ -1,4 +1,5 @@
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, Users } from "lucide-react";
 
 export function ProjectsHeader({ onNewProject }: { onNewProject: () => void }) {
   return (
@@ -12,14 +13,23 @@ export function ProjectsHeader({ onNewProject }: { onNewProject: () => void }) {
           life.
         </p>
       </div>
-      <button
-        className="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
-        onClick={onNewProject}
-        type="button"
-      >
-        <Plus className="h-4 w-4" />
-        New Project
-      </button>
+      <div className="flex shrink-0 items-center gap-2">
+        <Link
+          className="flex h-10 items-center gap-2 rounded-xl border border-black/10 px-4 text-sm font-bold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
+          href="/projects/clients"
+        >
+          <Users className="h-4 w-4" />
+          Clients
+        </Link>
+        <button
+          className="flex h-10 items-center gap-2 rounded-xl bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+          onClick={onNewProject}
+          type="button"
+        >
+          <Plus className="h-4 w-4" />
+          New Project
+        </button>
+      </div>
     </div>
   );
 }
