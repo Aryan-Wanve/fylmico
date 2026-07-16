@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TaskAssigneePicker } from "@/components/tasks/task-assignee-picker";
@@ -100,11 +101,7 @@ export function ShootCreateDialog({
           <div className="grid grid-cols-2 gap-4">
             <label className="grid gap-1.5">
               <Label>Scheduled Date</Label>
-              <Input
-                onChange={(event) => setScheduledDate(event.target.value)}
-                type="date"
-                value={scheduledDate}
-              />
+              <DatePicker onChange={setScheduledDate} value={scheduledDate} />
             </label>
             <label className="grid gap-1.5">
               <Label>Call Time</Label>
