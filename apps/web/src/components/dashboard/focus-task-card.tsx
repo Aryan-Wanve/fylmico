@@ -6,19 +6,32 @@ import {
   CheckCircle2,
   FolderOpen,
   ListChecks,
+  MapPin,
   Pause,
   Paperclip,
   Play,
-  Upload
+  Upload,
+  Wrench,
+  X
 } from "lucide-react";
 import {
   PRIORITY_META,
   formatDueDate,
   toInitials
 } from "@/components/tasks/task-data";
+import { ShootCancelDialog } from "@/components/dashboard/shoot-cancel-dialog";
 import {
+  archiveShoot,
+  cancelShoot,
+  finishAndUploadShoot,
+  finishShoot,
+  getShoot,
   listTaskAttachments,
   listTaskTimeEntries,
+  markShootReached,
+  markShootReadyForEditing,
+  markShootUploaded,
+  startShoot,
   startTaskTimer,
   stopTaskTimer,
   updateTask
@@ -26,8 +39,21 @@ import {
 import type {
   FileEntryItem,
   ProductionTask,
+  Shoot,
   TaskTimeEntryItem
 } from "@/types/base";
+
+const SHOOT_STATUS_LABELS: Record<Shoot["status"], string> = {
+  scheduled: "Scheduled",
+  "crew-reached": "Crew Reached",
+  started: "Shoot In Progress",
+  finished: "Shoot Finished",
+  uploading: "Uploading Data",
+  uploaded: "Data Uploaded",
+  "ready-for-editing": "Ready For Editing",
+  archived: "Archived",
+  cancelled: "Cancelled"
+};
 
 function toDateKey(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -64,6 +90,9 @@ export function FocusTaskCard({
   const [attachments, setAttachments] = useState<FileEntryItem[]>([]);
   const [nowTick, setNowTick] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
+  const [shoot, setShoot] = useState<Shoot | null>(null);
+  const [shootBusy, setShootBusy] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   async function refresh() {
     const [entries, files] = await Promise.all([
@@ -72,13 +101,27 @@ export function FocusTaskCard({
     ]);
     setTimeEntries(entries);
     setAttachments(files);
+    if (task.shootId) {
+      setShoot(await getShoot(task.shootId));
+    }
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetching time entries/attachments for a (possibly new) task.id, not deriving render output
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetching time entries/attachments/shoot for a (possibly new) task.id, not deriving render output
     void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task.id]);
+
+  async function handleShootAction(action: () => Promise<Shoot>) {
+    setShootBusy(true);
+    try {
+      setShoot(await action());
+      await refresh();
+      onChanged();
+    } finally {
+      setShootBusy(false);
+    }
+  }
 
   const runningEntry = timeEntries.find(
     (entry) => entry.userId === currentUserId && !entry.endedAt
@@ -150,16 +193,71 @@ export function FocusTaskCard({
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference * (1 - task.progress / 100);
 
+  async function handleReachedLocation() {
+    if (shoot) await handleShootAction(() => markShootReached(shoot.id));
+  }
+
+  async function handleStartShoot() {
+    if (!shoot) return;
+    await startTaskTimer(task.id);
+    await handleShootAction(() => startShoot(shoot.id));
+  }
+
+  async function handleFinishShoot() {
+    if (!shoot) return;
+    if (runningEntry) await stopTaskTimer(task.id);
+    await handleShootAction(() => finishShoot(shoot.id));
+  }
+
+  async function handleFinishAndUpload() {
+    if (!shoot) return;
+    if (runningEntry) await stopTaskTimer(task.id);
+    await handleShootAction(() => finishAndUploadShoot(shoot.id));
+  }
+
+  async function handleMarkUploaded() {
+    if (shoot) await handleShootAction(() => markShootUploaded(shoot.id));
+  }
+
+  async function handleMarkReadyForEditing() {
+    if (shoot)
+      await handleShootAction(() => markShootReadyForEditing(shoot.id));
+  }
+
+  async function handleArchiveShoot() {
+    if (shoot) await handleShootAction(() => archiveShoot(shoot.id));
+  }
+
+  async function handleCancelShoot(reason: string, notes: string) {
+    if (shoot)
+      await handleShootAction(() => cancelShoot(shoot.id, reason, notes));
+  }
+
+  const cancellableStatuses: Shoot["status"][] = [
+    "scheduled",
+    "crew-reached",
+    "started",
+    "finished",
+    "uploading"
+  ];
+
   return (
     <section className="min-w-0 rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold tracking-wide text-[#8a90a3] uppercase dark:text-[#7d8299]">
           Current Task
         </span>
-        <span
-          className={`rounded-full px-2.5 py-1 text-xs font-bold ${priority.badge}`}
-        >
-          {priority.label} Priority
+        <span className="flex items-center gap-2">
+          {shoot ? (
+            <span className="rounded-full bg-[#654cff]/10 px-2.5 py-1 text-xs font-bold text-[#654cff]">
+              {SHOOT_STATUS_LABELS[shoot.status]}
+            </span>
+          ) : null}
+          <span
+            className={`rounded-full px-2.5 py-1 text-xs font-bold ${priority.badge}`}
+          >
+            {priority.label} Priority
+          </span>
         </span>
       </div>
 
@@ -221,6 +319,79 @@ export function FocusTaskCard({
         </p>
       ) : null}
 
+      {shoot ? (
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          {shoot.location ? (
+            <div>
+              <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                Location
+              </span>
+              <a
+                className="flex items-center gap-1 font-semibold text-[#654cff] hover:underline"
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shoot.location)}`}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <MapPin className="h-3.5 w-3.5" />
+                {shoot.location}
+              </a>
+            </div>
+          ) : null}
+          {shoot.callTime ? (
+            <div>
+              <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                Call Time
+              </span>
+              <strong className="text-[#11142c] dark:text-[#f1f2f8]">
+                {shoot.callTime}
+              </strong>
+            </div>
+          ) : null}
+          {shoot.equipment.length > 0 ? (
+            <div>
+              <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                Equipment
+              </span>
+              <span className="flex items-center gap-1 font-semibold text-[#11142c] dark:text-[#f1f2f8]">
+                <Wrench className="h-3.5 w-3.5" />
+                {shoot.equipment.join(", ")}
+              </span>
+            </div>
+          ) : null}
+          {shoot.crew.length > 0 ? (
+            <div>
+              <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                Crew
+              </span>
+              <span className="flex -space-x-1.5">
+                {shoot.crew.map((member) => (
+                  <span
+                    className="grid h-5 w-5 place-items-center rounded-full border border-white bg-[#654cff]/10 text-[0.6rem] font-bold text-[#654cff] dark:border-[#171a28]"
+                    key={member.userId}
+                    title={member.name}
+                  >
+                    {toInitials(member.name)}
+                  </span>
+                ))}
+              </span>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {shoot?.notes ? (
+        <p className="mt-3 text-sm text-[#5f667d] dark:text-[#a8acbf]">
+          {shoot.notes}
+        </p>
+      ) : null}
+
+      {shoot?.status === "cancelled" ? (
+        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-600">
+          <strong>Cancelled:</strong> {shoot.cancelReason}
+          {shoot.cancelNotes ? ` — ${shoot.cancelNotes}` : ""}
+        </p>
+      ) : null}
+
       <div className="mt-5 flex flex-wrap items-center gap-5 rounded-xl bg-black/[0.02] p-4 dark:bg-white/[0.03]">
         <div className="relative grid h-16 w-16 shrink-0 place-items-center">
           <svg className="h-16 w-16 -rotate-90" viewBox="0 0 64 64">
@@ -277,20 +448,132 @@ export function FocusTaskCard({
           </div>
         </div>
 
-        <div className="ml-auto flex gap-2">
-          <button
-            className="flex items-center gap-2 rounded-xl bg-[#654cff] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
-            disabled={busy}
-            onClick={() => void handleToggleTimer()}
-            type="button"
-          >
-            {runningEntry ? (
-              <Pause className="h-4 w-4" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-            {timerLabel}
-          </button>
+        <div className="ml-auto flex flex-wrap justify-end gap-2">
+          {shoot ? (
+            <>
+              {shoot.status === "scheduled" ? (
+                <button
+                  className="flex items-center gap-2 rounded-xl bg-[#654cff] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                  disabled={shootBusy}
+                  onClick={() => void handleReachedLocation()}
+                  type="button"
+                >
+                  Reached Location
+                </button>
+              ) : null}
+              {shoot.status === "crew-reached" ? (
+                <button
+                  className="flex items-center gap-2 rounded-xl bg-[#654cff] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                  disabled={shootBusy}
+                  onClick={() => void handleStartShoot()}
+                  type="button"
+                >
+                  <Play className="h-4 w-4" />
+                  Start Shoot
+                </button>
+              ) : null}
+              {shoot.status === "started" ? (
+                <>
+                  <button
+                    className="flex items-center gap-2 rounded-xl bg-[#654cff] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                    disabled={busy}
+                    onClick={() => void handleToggleTimer()}
+                    type="button"
+                  >
+                    {runningEntry ? (
+                      <Pause className="h-4 w-4" />
+                    ) : (
+                      <Play className="h-4 w-4" />
+                    )}
+                    {runningEntry ? "Pause" : "Resume"}
+                  </button>
+                  <button
+                    className="rounded-xl border border-black/[0.06] px-4 py-2.5 text-sm font-bold text-[#11142c] disabled:opacity-50 dark:border-white/[0.08] dark:text-[#f1f2f8]"
+                    disabled={shootBusy}
+                    onClick={() => void handleFinishShoot()}
+                    type="button"
+                  >
+                    Finish
+                  </button>
+                  <button
+                    className="flex items-center gap-2 rounded-xl bg-[#16c784] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                    disabled={shootBusy}
+                    onClick={() => void handleFinishAndUpload()}
+                    type="button"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Finish + Upload
+                  </button>
+                </>
+              ) : null}
+              {shoot.status === "finished" ? (
+                <button
+                  className="flex items-center gap-2 rounded-xl bg-[#16c784] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                  disabled={shootBusy}
+                  onClick={() => void handleFinishAndUpload()}
+                  type="button"
+                >
+                  <Upload className="h-4 w-4" />
+                  Start Upload
+                </button>
+              ) : null}
+              {shoot.status === "uploading" ? (
+                <button
+                  className="flex items-center gap-2 rounded-xl bg-[#16c784] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                  disabled={shootBusy}
+                  onClick={() => void handleMarkUploaded()}
+                  type="button"
+                >
+                  Mark Data Uploaded
+                </button>
+              ) : null}
+              {shoot.status === "uploaded" ? (
+                <button
+                  className="rounded-xl bg-[#654cff] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                  disabled={shootBusy}
+                  onClick={() => void handleMarkReadyForEditing()}
+                  type="button"
+                >
+                  Mark Ready For Editing
+                </button>
+              ) : null}
+              {shoot.status === "ready-for-editing" ? (
+                <button
+                  className="rounded-xl border border-black/[0.06] px-4 py-2.5 text-sm font-bold text-[#11142c] disabled:opacity-50 dark:border-white/[0.08] dark:text-[#f1f2f8]"
+                  disabled={shootBusy}
+                  onClick={() => void handleArchiveShoot()}
+                  type="button"
+                >
+                  Archive Shoot
+                </button>
+              ) : null}
+              {cancellableStatuses.includes(shoot.status) ? (
+                <button
+                  className="flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-bold text-red-600 disabled:opacity-50"
+                  disabled={shootBusy}
+                  onClick={() => setCancelOpen(true)}
+                  type="button"
+                >
+                  <X className="h-4 w-4" />
+                  Cancel
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <button
+              className="flex items-center gap-2 rounded-xl bg-[#654cff] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+              disabled={busy}
+              onClick={() => void handleToggleTimer()}
+              type="button"
+            >
+              {runningEntry ? (
+                <Pause className="h-4 w-4" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
+              {timerLabel}
+            </button>
+          )}
         </div>
       </div>
 
@@ -350,6 +633,14 @@ export function FocusTaskCard({
           </span>
         </button>
       </div>
+
+      {shoot ? (
+        <ShootCancelDialog
+          onCancel={handleCancelShoot}
+          onOpenChange={setCancelOpen}
+          open={cancelOpen}
+        />
+      ) : null}
     </section>
   );
 }
