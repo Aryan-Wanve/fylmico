@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -34,7 +34,8 @@ import {
   startShoot,
   startTaskTimer,
   stopTaskTimer,
-  updateTask
+  updateTask,
+  uploadFilesToShoot
 } from "@/services/base-workspace.service";
 import type {
   FileEntryItem,
@@ -93,6 +94,7 @@ export function FocusTaskCard({
   const [shoot, setShoot] = useState<Shoot | null>(null);
   const [shootBusy, setShootBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
 
   async function refresh() {
     const [entries, files] = await Promise.all([
@@ -209,10 +211,25 @@ export function FocusTaskCard({
     await handleShootAction(() => finishShoot(shoot.id));
   }
 
-  async function handleFinishAndUpload() {
-    if (!shoot) return;
-    if (runningEntry) await stopTaskTimer(task.id);
-    await handleShootAction(() => finishAndUploadShoot(shoot.id));
+  function triggerFinishAndUpload() {
+    uploadInputRef.current?.click();
+  }
+
+  async function handleFilesSelected(fileList: FileList | null) {
+    if (!shoot || !fileList || fileList.length === 0) {
+      return;
+    }
+    setShootBusy(true);
+    try {
+      if (runningEntry) await stopTaskTimer(task.id);
+      await finishAndUploadShoot(shoot.id);
+      await uploadFilesToShoot(shoot.id, Array.from(fileList));
+      setShoot(await markShootUploaded(shoot.id));
+      await refresh();
+      onChanged();
+    } finally {
+      setShootBusy(false);
+    }
   }
 
   async function handleMarkUploaded() {
@@ -498,7 +515,7 @@ export function FocusTaskCard({
                   <button
                     className="flex items-center gap-2 rounded-xl bg-[#16c784] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
                     disabled={shootBusy}
-                    onClick={() => void handleFinishAndUpload()}
+                    onClick={triggerFinishAndUpload}
                     type="button"
                   >
                     <Upload className="h-4 w-4" />
@@ -510,7 +527,7 @@ export function FocusTaskCard({
                 <button
                   className="flex items-center gap-2 rounded-xl bg-[#16c784] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
                   disabled={shootBusy}
-                  onClick={() => void handleFinishAndUpload()}
+                  onClick={triggerFinishAndUpload}
                   type="button"
                 >
                   <Upload className="h-4 w-4" />
@@ -635,11 +652,20 @@ export function FocusTaskCard({
       </div>
 
       {shoot ? (
-        <ShootCancelDialog
-          onCancel={handleCancelShoot}
-          onOpenChange={setCancelOpen}
-          open={cancelOpen}
-        />
+        <>
+          <input
+            className="hidden"
+            multiple
+            onChange={(event) => void handleFilesSelected(event.target.files)}
+            ref={uploadInputRef}
+            type="file"
+          />
+          <ShootCancelDialog
+            onCancel={handleCancelShoot}
+            onOpenChange={setCancelOpen}
+            open={cancelOpen}
+          />
+        </>
       ) : null}
     </section>
   );
