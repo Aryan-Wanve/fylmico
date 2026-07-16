@@ -1473,6 +1473,32 @@ Authentication: required. Response: `{ "data": Analytics }`. Errors:
 }
 ```
 
+### `GET /api/v1/houses/:houseId/analytics/me`
+
+Added per ADR 0050 for the HUD's Personal Stats panel. Authentication:
+required, caller must be an active member of `houseId`. Response:
+
+```json
+{
+  "data": {
+    "tasksCompleted": 4,
+    "tasksPending": 2,
+    "completionRate": 67,
+    "onTimePercentage": 100,
+    "workingHours": { "today": 1.5, "week": 6.2, "month": 14, "total": 40 },
+    "workStreak": { "current": 3, "best": 12 }
+  }
+}
+```
+
+Scoped to the caller's own assigned tasks and own `TaskTimeEntry`/
+`TimeEntry` rows in this house only (unlike `getAnalytics` above, which
+is house-wide). `onTimePercentage` uses `task.updatedAt <= task.dueDate`
+as an approximation (no dedicated `completedAt` column exists).
+`workStreak` counts consecutive calendar days with at least one logged
+time entry, anchored at today (or yesterday, if nothing is logged yet
+today).
+
 Metric definitions (see ADR 0031 for the full reasoning): `activeProjects`
 excludes projects staged `Completed` or `On Hold`; `teamEfficiency` is
 `tasksCompleted / tasksTotal * 100`; `teamWorkload.percentage` is hours

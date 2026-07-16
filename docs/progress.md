@@ -5396,3 +5396,118 @@ Next task:
   advanced/saved filter builder remain open for a future phase.
 - Retrofit `requirePermission` into the remaining domain services
   (ADR 0048's deferred item, still outstanding).
+
+## 2026-07-16 HUD: Personal Workspace Redesign of the Home Page
+
+Current milestone: Phase 9 - real backend for every remaining domain
+
+Completion percentage: 99%
+
+Features completed:
+
+- `/home` rebuilt as a "HUD" centered on one question - what do I need
+  to do right now - instead of a generic house-wide dashboard.
+- New dominant Focus Card (`focus-task-card.tsx`) for the user's current
+  task: live start/pause timer (reusing the already-built but previously
+  unused `startTaskTimer`/`stopTaskTimer`/`TaskTimeEntry` machinery),
+  Current Session/Today's Time/Total Time, a circular progress ring,
+  checklist/attachment counts as quick-link tiles opening the existing
+  `TaskDetailPanel`, and a Submit Draft dialog (`submit-draft-dialog.tsx`)
+  reusing `uploadTaskAttachment` with a computed "Draft Vn" label.
+- Focus task is picked client-side (in-progress over todo, then
+  priority, then nearest due date) from the user's own assigned,
+  non-completed tasks - no new backend query.
+- `my-tasks-groups-panel.tsx` replaces the old `my-tasks-panel.tsx` with
+  tabbed groups (Active/Today/Upcoming/Review/Blocked/Done), a pure
+  client-side filter over the already-loaded `workspace.tasks`.
+- New `today-timeline-panel.tsx` (today's calendar events only) and
+  `upcoming-deadlines-panel.tsx` (my assigned tasks by due date,
+  countdown-formatted).
+- New `notifications-preview-panel.tsx` and `team-online-panel.tsx`,
+  reusing `listNotifications()`/the notification bell's exported
+  `TYPE_DESTINATION` map, and `usePresence`/`AvatarWithStatus`.
+- New personal analytics endpoint `analyticsService.getMyStats` (`GET
+/api/v1/houses/:houseId/analytics/me`): tasks completed/pending,
+  completion rate, on-time %, working hours (today/week/month/total),
+  and a work streak (current/best consecutive days with logged time) -
+  rendered in `personal-stats-panel.tsx`.
+- New `quick-actions-panel.tsx` (nav shortcuts) and `weather-widget.tsx`
+  (browser Geolocation + keyless Open-Meteo + BigDataCloud reverse
+  geocoding, `sessionStorage`-cached, hidden silently on denial/error) -
+  wired into a rebuilt `greeting-header.tsx` with a live clock and
+  role/house line.
+- New Focus Mode toggle (`focus-mode.ts`, `focus-mode-toggle.tsx`) in
+  the sidebar footer - hides the sidebar/topbar (same pattern as the
+  Dashboard's full-bleed view) with a floating "Exit Focus Mode" pill.
+- Removed the now-dead `dashboard/my-tasks-panel.tsx` and
+  `dashboard/stat-cards-row.tsx` (superseded; the distinct
+  `analytics/stat-cards-row.tsx` is unrelated and untouched).
+
+Features started:
+
+- None beyond the above.
+
+Explicitly skipped this pass (see ADR 0050 for why):
+
+- Attendance/Clock-In-Out, Leave management, Achievements/Badges,
+  Personal Skills leveling, Assigned Equipment, Voice Room, automated
+  Productivity Insights/End-of-Day summary text generation, private
+  Notes, full draft version-history UI, a manual "Mark Blocked" toggle,
+  and a mini month-calendar widget.
+
+Files created:
+
+- `docs/adr/0050-hud-personal-workspace.md`
+- `apps/web/src/app/api/v1/houses/[houseId]/analytics/me/route.ts`
+- `apps/web/src/components/dashboard/focus-task-card.tsx`,
+  `submit-draft-dialog.tsx`, `my-tasks-groups-panel.tsx`,
+  `today-timeline-panel.tsx`, `upcoming-deadlines-panel.tsx`,
+  `notifications-preview-panel.tsx`, `team-online-panel.tsx`,
+  `personal-stats-panel.tsx`, `quick-actions-panel.tsx`,
+  `weather-widget.tsx`
+- `apps/web/src/components/layout/focus-mode-toggle.tsx`
+- `apps/web/src/lib/focus-mode.ts`
+
+Files modified:
+
+- `apps/web/src/server/analytics/analytics.service.ts` (`getMyStats` +
+  `computeStreak` helper)
+- `apps/web/src/services/base-workspace.service.ts` (`getMyStats` client
+  fn), `apps/web/src/types/base.ts` (`PersonalStats`)
+- `apps/web/src/components/layout/notification-bell.tsx` (exported
+  `TYPE_DESTINATION`/`TYPE_STYLES`/`DEFAULT_TYPE_STYLE` for reuse)
+- `apps/web/src/components/layout/app-shell-gate.tsx` (Focus Mode
+  hide/exit), `app-sidebar.tsx` (`FocusModeToggle` placement)
+- `apps/web/src/components/dashboard/home-dashboard.tsx` (full rewrite),
+  `greeting-header.tsx` (live clock, role/house, weather)
+
+Files deleted:
+
+- `apps/web/src/components/dashboard/my-tasks-panel.tsx`,
+  `stat-cards-row.tsx` (dead code after the rewrite)
+
+Known limitations / tradeoffs:
+
+- Focus task selection is a status/priority/due-date heuristic, not a
+  "which task do I have a running timer on" check (would need N+1
+  per-task fetches) - can differ from the task a user was last actively
+  timing if they have multiple in-progress tasks.
+- "Drive Folder" links to the in-app Files page, not an external Google
+  Drive URL - no client-facing Drive web link is exposed by the API
+  today.
+- Verified live in-browser with a real logged-in session: Focus Card
+  task selection, timer start/stop (confirmed via direct
+  `task_time_entries` DB query, then cleaned up), Today's/Total Time
+  updates, My Tasks group tab filtering, Personal Stats real numbers,
+  Focus Mode hide/restore. Submit Draft's upload call was confirmed to
+  fail identically to the pre-existing `TaskDetailPanel` attachment
+  upload on this test house (no Google Drive connected, ADR 0045) -
+  a pre-existing environment constraint, not a regression.
+
+Next task:
+
+- Custom Fields, Pomodoro Mode, Gantt/Timeline view, advanced/saved
+  filter builder, and `requirePermission` retrofit remain open from
+  ADR 0048/0049.
+- Private Notes, achievements/skills/equipment, attendance/leave, and
+  voice rooms remain candidates for a future HUD phase.

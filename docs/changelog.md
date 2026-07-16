@@ -535,4 +535,32 @@ Migration notes:
   `archived_at` and `notifications.organization_id` (FK, `SetNull`).
 - Migration `20260716140000_task_templates` - adds `tasks.is_template`
   (default `false`).
+
+## 0.16.0 - 2026-07-16
+
+Summary:
+
+- Home page rebuilt as a "HUD": a dominant Focus Card for your current
+  task with a live start/pause timer, checklist and attachment counts,
+  and a Submit Draft upload - all reusing task-timer/attachment/checklist
+  code that already existed but wasn't wired into any UI before now.
+- New "My Tasks" tabs (Active/Today/Upcoming/Review/Blocked/Done),
+  Today's Schedule, Upcoming Deadlines, a Notifications preview, and a
+  Team Online panel.
+- New Personal Stats (Work Streak, Working Hours, Completed Tasks,
+  On-Time Rate) from a new personal analytics endpoint.
+- New live clock + weather (browser location, no account data used) in
+  the greeting header.
+- New Focus Mode toggle in the sidebar that hides distractions
+  (sidebar/topbar) with a one-click exit.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- None - this release adds one new read-only endpoint
+  (`GET /api/v1/houses/:houseId/analytics/me`) and reuses existing
+  tables only.
 - Run `prisma migrate deploy` for both.
