@@ -657,3 +657,28 @@ Breaking changes:
 Migration notes:
 
 - Adds a new `deliverables` table. Run `prisma migrate deploy`.
+
+## 0.21.0 - 2026-07-16
+
+Summary:
+
+- Projects Module Overhaul, Phase 5 of 5 (**final phase**): every
+  project now gets its own dedicated chat, a chronological activity
+  Timeline, and a per-project Analytics dashboard.
+- Project chat supports Pinned Notes and reuses the existing realtime
+  chat infrastructure end-to-end.
+- Timeline unions project/task/shoot/deliverable events into one feed;
+  Analytics surfaces shoots, editing/team hours, storage, deliverables,
+  review time, revisions, and completion % at a glance.
+- This completes the 5-phase Projects Module Overhaul - Project is now
+  the connective layer every major feature (Tasks, Drive, Shoots,
+  Deliverables, Chat, Analytics) automatically ties back to.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- Adds a nullable, unique `project_id` column to `conversations` and a
+  `pinned` column to `messages`. Run `prisma migrate deploy`.

@@ -871,19 +871,22 @@ Purpose: a named, house-wide chat channel (product-facing as part of a
 
 Ownership: belongs to one `organization`.
 
-Columns: `id`, `organization_id`, `name`, `topic`, `created_at`.
+Columns: `id`, `organization_id`, `project_id` (nullable, unique - added
+per ADR 0055, Phase 5), `name`, `topic`, `created_at`.
 
-Relationships: belongs to `organizations` (cascade delete); has many
-`messages`; has many `tasks`, `calendar_events`, and `file_entries` (each
-via its own optional `conversation_id`, added in
-`20260712080000_conversation_links` — a task/event/file created from
-within this room).
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`projects` (nullable, cascade delete - a project-scoped conversation dies
+with its project); has many `messages`; has many `tasks`,
+`calendar_events`, and `file_entries` (each via its own optional
+`conversation_id`, added in `20260712080000_conversation_links` — a
+task/event/file created from within this room).
 
-Indexes: unique compound index on `(organization_id, name)`; index on
-`organization_id`.
+Indexes: unique compound index on `(organization_id, name)`; unique index
+on `project_id`; index on `organization_id`.
 
 Constraints: `(organization_id, name)` unique - channel names are unique
-within a house.
+within a house. `project_id` unique (nullable - Postgres allows many
+nulls) - at most one conversation per project.
 
 Permissions: 3 default conversations (`"general"`, `"edit-bay"`,
 `"shoot-floor"`) are seeded automatically at house creation, matching the
@@ -894,7 +897,14 @@ enforced by the existing unique constraint). Every house member can see
 and post to every conversation in their house - there is no
 `conversation_members` table yet, so there's no concept of a
 private/restricted room, and no direct-message (1:1) capability exists at
-all - every conversation is a house-wide group channel.
+all - every conversation is a house-wide group channel. As of ADR 0055,
+one conversation is auto-provisioned per project at project-creation time
+(best-effort, named `"{project name} (Project Chat)"`) and is excluded
+from the house-wide room list (`GET /api/v1/houses/:houseId/conversations`
+
+- filters `project_id: null`) - it's only reachable via `GET
+/api/v1/projects/:projectId/conversation`, which lazily creates one if an
+  older project doesn't have one yet.
 
 Reasoning: named "conversations" (matching `docs/database.md`'s original
 Collaboration group naming) rather than a new "chat_rooms" table, even
@@ -903,7 +913,8 @@ Organization-is-House-at-the-API-layer mapping pattern as ADR 0018/0020,
 so the eventual `conversation_members` table (for private/DM threads) can
 be added later without a rename.
 
-Migration history: `20260708165828_tasks_chat`.
+Migration history: `20260708165828_tasks_chat`; `project_id` added in
+`20260716220000_project_chat` (ADR 0055).
 
 ### Table: `messages`
 
@@ -915,8 +926,10 @@ Ownership: belongs to one `conversation`.
 
 Columns: `id`, `conversation_id`, `author_id`, `parent_message_id`
 (nullable, self-referencing — added per the `20260713220000_message_threads_reactions`
-migration for one-level-deep threaded replies), `body`, `created_at`,
-`edited_at` (nullable, set on edit — `20260715120000_message_edited_at`).
+migration for one-level-deep threaded replies), `body`, `pinned` (default
+`false` - added per ADR 0055, Phase 5, for a project chat's "Pinned
+Notes"), `created_at`, `edited_at` (nullable, set on edit —
+`20260715120000_message_edited_at`).
 
 Relationships: belongs to `conversations` (cascade delete); belongs to
 `users` via `author_id` (no cascade, same reasoning as `tasks.assignee_id`);
@@ -938,7 +951,9 @@ Older history paginates via `GET /api/v1/chat/rooms/:roomId/messages`
 (cursor-based, ADR 0044). Edited via `PATCH /api/v1/messages/:messageId`
 (author-only, `403 not_author`/`403 edit_window_expired` otherwise) within
 10 minutes of `created_at`, sets `edited_at` and broadcasts `message:edit`
-on the same channel. No delete endpoint exists yet.
+on the same channel. Pinned via `POST /api/v1/messages/:messageId/pin`
+(ADR 0055, toggles `pinned`, reuses the same `message:edit` broadcast -
+no new realtime event type). No delete endpoint exists yet.
 
 Reasoning: threading is intentionally shallow — `parent_message_id` points
 directly at the message being replied to with no separate "thread root"
@@ -951,7 +966,8 @@ that cap.
 
 Migration history: `20260708165828_tasks_chat` (initial columns);
 `parent_message_id` added in `20260713220000_message_threads_reactions`;
-`edited_at` added in `20260715120000_message_edited_at`.
+`edited_at` added in `20260715120000_message_edited_at`; `pinned` added
+in `20260716220000_project_chat` (ADR 0055).
 
 ### Table: `message_reactions`
 

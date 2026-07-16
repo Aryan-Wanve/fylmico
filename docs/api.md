@@ -945,6 +945,7 @@ the unit of both endpoints now (`POST`'s response is one `Message`; `GET`'s
   "sentAt": "2026-07-04T10:25:00.000Z",
   "body": "Version 03 is ready for producer review.",
   "editedAt": null,
+  "pinned": false,
   "parentMessageId": null,
   "replyCount": 0,
   "reactions": [{ "emoji": "👍", "count": 2, "reactedByMe": true }]
@@ -1035,6 +1036,17 @@ open clients update the bubble live. Errors: `400 invalid_request` (empty
 `body`), `401 unauthenticated`, `403 not_author` (caller didn't author this
 message), `403 edit_window_expired` (more than 10 minutes since
 `sentAt`), `404 message_not_found`.
+
+### `POST /api/v1/messages/:messageId/pin`
+
+Authentication: required. Added per ADR 0055 (Phase 5, for project
+chat's "Pinned Notes"). No body. Toggles `Message.pinned` and returns
+the updated `Message` (same shape as the endpoints above). Broadcasts
+the change as a `message:edit` realtime event on the room's topic - the
+same event type message editing already uses, so no new client-side
+handling was needed. Any house member can pin/unpin, not just the
+author. Errors: `401 unauthenticated`, `403 forbidden`,
+`404 message_not_found`.
 
 ### `GET`/`POST /api/v1/chat/rooms/:roomId/events`
 
@@ -1196,6 +1208,91 @@ starts with `project:{projectId}` (the existing Drive-folder-key scoping
 from ADR 0045, not a new FK); `timeLoggedHours` sums `TimeEntry.hours`;
 `completionPercent` echoes `Project.progress`. Errors: `401 unauthenticated`,
 `403 forbidden`, `404 project_not_found`.
+
+### `GET /api/v1/projects/:projectId/timeline`
+
+Authentication: required. Added per ADR 0055 (Phase 5). Response:
+`{ "data": ProjectTimelineEntry[] }` (not paginated), newest-first:
+
+```json
+{
+  "data": [
+    {
+      "id": "shoot_123-uploaded",
+      "actorName": "",
+      "text": "Footage from \"Rooftop Interview\" was uploaded",
+      "occurredAt": "2026-07-16T10:00:00.000Z"
+    },
+    {
+      "id": "task-task_123",
+      "actorName": "Rehan Patel",
+      "text": "added a new task \"Edit Rooftop Interview\"",
+      "occurredAt": "2026-07-15T09:00:00.000Z"
+    }
+  ]
+}
+```
+
+Unions Project/Task creation, `TaskActivity` (status changes), Shoot
+status-transition timestamps, and Deliverable submission/status
+timestamps into one merge-and-sort feed - the same shape and pattern as
+`dashboard.service.ts`'s house-wide `getSummary().recentActivity`, just
+project-scoped with more sources (see ADR 0055 - there's no dedicated
+status-history table, so this reads the timestamp columns and current
+status that already exist on `Shoot`/`Deliverable`). `actorName` is
+empty for entity-level events (e.g. a shoot status change) that have no
+single acting user. Errors: `401 unauthenticated`, `403 forbidden`,
+`404 project_not_found`.
+
+### `GET /api/v1/projects/:projectId/analytics`
+
+Authentication: required. Added per ADR 0055 (Phase 5). Response:
+
+```json
+{
+  "data": {
+    "shootsCompleted": 3,
+    "shootsUpcoming": 1,
+    "editingHours": 12.5,
+    "teamHours": 40.2,
+    "storageBytes": 2147483648,
+    "filesUploaded": 87,
+    "deliverableCount": 4,
+    "avgReviewHours": 6.5,
+    "revisionCount": 1,
+    "completionPercent": 60
+  }
+}
+```
+
+Computed on read: `shootsCompleted`/`shootsUpcoming` count `Shoot` rows
+by status (`archived` / `scheduled` with a future `scheduledDate`);
+`editingHours` sums `TaskTimeEntry.durationMinutes` for the project's
+`type: "edit"` tasks; `teamHours` sums every `TaskTimeEntry` plus
+`TimeEntry.hours` for the project; `storageBytes`/`filesUploaded` reuse
+the same `driveKey` prefix scoping as `getProjectStats`; `avgReviewHours`
+averages `updatedAt - createdAt` across deliverables that have left
+`review`; `revisionCount` counts deliverables _currently_ in `revision`
+(not a full historical count - no status-history table exists yet, see
+ADR 0055); `completionPercent` echoes `Project.progress`. Errors:
+`401 unauthenticated`, `403 forbidden`, `404 project_not_found`.
+
+### `GET /api/v1/projects/:projectId/conversation`
+
+Authentication: required. Added per ADR 0055 (Phase 5). Resolves
+(lazily creating if needed - for projects created before this phase)
+the project's dedicated chat `Conversation` and returns its id:
+
+```json
+{ "data": { "roomId": "conversation_123" } }
+```
+
+The client then uses this `roomId` with the existing chat endpoints
+(`POST`/`GET /api/v1/chat/rooms/:roomId/messages`,
+`useConversationChannel`) exactly as any other room - no new messaging
+endpoints were needed. This conversation is excluded from `GET
+/api/v1/houses/:houseId/conversations` (the house-wide room list).
+Errors: `401 unauthenticated`, `403 forbidden`, `404 project_not_found`.
 
 ### `POST /api/v1/projects/:projectId/clients`
 

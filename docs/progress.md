@@ -5876,3 +5876,103 @@ Known limitations / tradeoffs:
 Next task:
 
 - Phase 5: Project Chat, Timeline, Per-Project Analytics.
+
+## 2026-07-16 Projects Module Overhaul — Phase 5: Project Chat, Timeline, Analytics (final phase)
+
+Current milestone: Projects Module Overhaul (5-phase effort) — **complete**
+
+Completion percentage: 100% of Phase 5, 100% of the overall overhaul
+
+Features completed:
+
+- `Conversation` gains a nullable, unique `projectId`; one conversation
+  is auto-provisioned (best-effort) at project-creation time, reusing
+  100% of the existing chat/realtime infrastructure (ADR 0044) - no new
+  realtime plumbing at all.
+- Project-scoped conversations are excluded from the house-wide
+  Messages page room list; reachable only via the new `GET
+/api/v1/projects/:projectId/conversation` (lazily creates one for
+  older projects).
+- `Message` gains a `pinned` column + `POST
+/api/v1/messages/:messageId/pin`, broadcasting the existing
+  `message:edit` realtime event - no new event type needed.
+- New compact `ProjectChatPanel` (Chat tab): message list, composer,
+  live realtime updates, and a Pinned Notes section.
+- New `getProjectTimeline` unioning Project/Task creation, `TaskActivity`,
+  Shoot status timestamps, and Deliverable submission/status timestamps
+  into one chronological feed - same merge-and-sort shape as the
+  house-wide dashboard activity feed.
+- New `getProjectAnalytics` (shoots completed/upcoming, editing hours,
+  team hours, storage, deliverables, avg review time, revision count,
+  completion %, files uploaded), rendered as a `StatCard` grid on a new
+  Analytics tab.
+- New Timeline tab rendering the chronological feed.
+
+Features started:
+
+- None beyond the above - Phase 5, and the full 5-phase Projects Module
+  Overhaul, is complete.
+
+Explicitly skipped this pass (see ADR 0055 for why):
+
+- No client-facing login/portal for "Client Feedback" - staff relay
+  feedback as regular messages in the project chat; this app has no
+  client-facing auth anywhere.
+- "Avg Review Time"/"Revision Count" are computed from current
+  Deliverable state, not a true status-history table (none exists yet
+  anywhere in this overhaul) - documented as an honest limitation, not
+  silently approximated.
+- `ProjectChatPanel` intentionally doesn't replicate every feature of
+  the full Messages page (no reactions, no reply threads, no offline
+  send-queue) - it covers the project-chat use case without
+  reimplementing the house-wide chat UI.
+
+Files created:
+
+- `packages/database/prisma/migrations/20260716220000_project_chat/migration.sql`
+- `docs/adr/0055-projects-overhaul-phase-5-chat-timeline-analytics.md`
+- `apps/web/src/app/api/v1/messages/[messageId]/pin/route.ts`,
+  `.../projects/[projectId]/conversation/route.ts`,
+  `.../projects/[projectId]/timeline/route.ts`,
+  `.../projects/[projectId]/analytics/route.ts`
+- `apps/web/src/components/projects/project-activity-timeline.tsx`,
+  `project-analytics-panel.tsx`, `project-chat-panel.tsx`
+
+Files modified:
+
+- `packages/database/prisma/schema.prisma` (`Conversation.projectId`,
+  `Message.pinned`)
+- `apps/web/src/server/chat/chat.service.ts`
+  (`ensureProjectConversation`, `getRoomIdForProject`, `pinMessage`,
+  house-wide list now filters `projectId: null`)
+- `apps/web/src/server/projects/projects.service.ts`
+  (`getProjectTimeline`, chat auto-provision in `create`)
+- `apps/web/src/server/analytics/analytics.service.ts`
+  (`getProjectAnalytics`)
+- `apps/web/src/types/base.ts`, `apps/web/src/services/base-workspace.service.ts`
+  (`ProjectTimelineEntry`, `ProjectAnalytics`, `ChatMessage.pinned`,
+  matching client functions)
+- `apps/web/src/components/messages/messages-page.tsx` (optimistic
+  message objects updated for the new required `pinned` field)
+- `apps/web/src/components/projects/project-detail-page.tsx` (Chat/
+  Timeline/Analytics tabs)
+- `docs/database.md`, `docs/api.md`
+
+Known limitations / tradeoffs:
+
+- Verified live in-browser end-to-end: sent a message in a fresh
+  project's Chat tab, pinned it, confirmed it appeared in Pinned Notes;
+  confirmed the Timeline tab showed project-creation/task-creation/
+  task-activity events in newest-first order; confirmed the Analytics
+  tab rendered all 9 stat cards, then inserted a completed Shoot and a
+  `TaskTimeEntry` directly via SQL and confirmed "Shoots Completed" and
+  "Team Hours" updated to real non-zero numbers on reload.
+  Typecheck/lint/build all clean. All synthetic data removed via direct
+  SQL afterward.
+
+Next task:
+
+- None from this overhaul - all 5 phases are shipped. Future work
+  (deferred out of scope per the original plan): ZIP/folder upload,
+  client-facing portal, project-level fine-grained permissions, a real
+  status-history table for more precise Timeline/Analytics.

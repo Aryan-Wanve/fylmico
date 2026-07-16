@@ -104,6 +104,7 @@ Current ADRs:
 - [0052-projects-overhaul-phase-2-shoots.md](docs/adr/0052-projects-overhaul-phase-2-shoots.md)
 - [0053-projects-overhaul-phase-3-upload-automation.md](docs/adr/0053-projects-overhaul-phase-3-upload-automation.md)
 - [0054-projects-overhaul-phase-4-deliverables.md](docs/adr/0054-projects-overhaul-phase-4-deliverables.md)
+- [0055-projects-overhaul-phase-5-chat-timeline-analytics.md](docs/adr/0055-projects-overhaul-phase-5-chat-timeline-analytics.md)
 
 ## Current Sprint Gate
 
