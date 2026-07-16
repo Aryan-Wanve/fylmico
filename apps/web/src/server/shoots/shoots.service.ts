@@ -1,4 +1,5 @@
 import type { Prisma } from "@fylmico/database";
+import { driveStructureService } from "../drive/drive-structure.service";
 import { AppException, HttpStatus } from "../http";
 import { notificationsService } from "../notifications/notifications.service";
 import { organizationsService } from "../organizations/organizations.service";
@@ -167,11 +168,84 @@ class ShootsService {
     });
   }
 
+  async getUploadFolder(userId: string, shootId: string) {
+    const shoot = await this.findShootOrThrow(shootId);
+    await organizationsService.requireMembership(shoot.organizationId, userId);
+
+    const folder = await driveStructureService.ensureShootFolder(
+      shoot.organizationId,
+      shoot.projectId,
+      shoot.id,
+      shoot.name,
+      shoot.scheduledDate.slice(0, 10)
+    );
+    return { parentId: folder.id };
+  }
+
   async markUploaded(userId: string, shootId: string) {
-    return this.transition(userId, shootId, {
+    const updated = await this.transition(userId, shootId, {
       status: "uploaded",
       uploadedAt: new Date()
     });
+
+    try {
+      await this.createEditingTask(userId, shootId);
+    } catch (error) {
+      // Best-effort, same as every other Drive-dependent side effect in
+      // this codebase (see ensureProjectFolder/ensureClientFolder calls) -
+      // the shoot's own status transition above already succeeded, so a
+      // Drive hiccup here shouldn't fail the whole request.
+      console.error(
+        "[shoots] could not auto-create editing task for shoot",
+        error
+      );
+    }
+
+    return updated;
+  }
+
+  private async createEditingTask(
+    userId: string,
+    shootId: string
+  ): Promise<void> {
+    const shoot = await this.findShootOrThrow(shootId);
+
+    const editingTask = await this.prisma.task.create({
+      data: {
+        organizationId: shoot.organizationId,
+        createdById: userId,
+        projectId: shoot.projectId,
+        title: `Edit ${shoot.name}`,
+        type: "edit"
+      }
+    });
+
+    const folder = await driveStructureService.ensureShootFolder(
+      shoot.organizationId,
+      shoot.projectId,
+      shoot.id,
+      shoot.name,
+      shoot.scheduledDate.slice(0, 10)
+    );
+    await this.prisma.fileEntry.update({
+      where: { id: folder.id },
+      data: { taskId: editingTask.id }
+    });
+
+    const assets = await this.prisma.fileEntry.findUnique({
+      where: {
+        organizationId_driveKey: {
+          organizationId: shoot.organizationId,
+          driveKey: `project:${shoot.projectId}:Assets`
+        }
+      }
+    });
+    if (assets) {
+      await this.prisma.fileEntry.update({
+        where: { id: assets.id },
+        data: { taskId: editingTask.id }
+      });
+    }
   }
 
   async markReadyForEditing(userId: string, shootId: string) {

@@ -180,6 +180,26 @@ class DriveStructureService {
     );
   }
 
+  async ensureShootFolder(
+    organizationId: string,
+    projectId: string,
+    shootId: string,
+    name: string,
+    dateISO: string
+  ): Promise<FileEntry> {
+    const shoots = await this.requireFolder(
+      organizationId,
+      `project:${projectId}:Shoots`
+    );
+    return this.ensureFolder(
+      organizationId,
+      `project:${projectId}:shoot:${shootId}`,
+      `${dateISO} - ${name}`,
+      shoots,
+      false
+    );
+  }
+
   async ensureEmployeeFolder(
     organizationId: string,
     userId: string,

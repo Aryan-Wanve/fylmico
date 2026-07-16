@@ -718,6 +718,24 @@ export async function markShootReadyForEditing(
   });
 }
 
+export async function getShootUploadFolder(
+  shootId: string
+): Promise<{ parentId: string }> {
+  return apiRequest<{ parentId: string }>(`/shoots/${shootId}/upload-folder`);
+}
+
+export async function uploadFilesToShoot(
+  shootId: string,
+  files: File[]
+): Promise<FileEntryItem[]> {
+  const { parentId } = await getShootUploadFolder(shootId);
+  const uploaded: FileEntryItem[] = [];
+  for (const file of files) {
+    uploaded.push(await uploadFileEntry(file, parentId));
+  }
+  return uploaded;
+}
+
 export async function archiveShoot(shootId: string): Promise<Shoot> {
   return apiRequest<Shoot>(`/shoots/${shootId}/archive`, { method: "POST" });
 }
