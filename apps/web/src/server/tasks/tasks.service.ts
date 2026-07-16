@@ -806,6 +806,7 @@ function toTaskDto(task: TaskWithRelations) {
     scriptTitle: task.script?.title ?? null,
     shootDayEventId: task.shootDayEventId,
     shootDayEventTitle: task.shootDayEvent?.title ?? null,
+    shootId: task.shootId,
     parentTaskId: task.parentTaskId,
     assignees: task.assignees.map((a) => ({
       userId: a.userId,
