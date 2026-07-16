@@ -31,6 +31,13 @@ import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
 import { TaskDetailPanel } from "@/components/tasks/task-detail-panel";
 import { TaskTemplatesPopover } from "@/components/tasks/task-templates-popover";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import {
   PRIORITY_META,
   PRIORITY_ORDER,
   STATUS_META,
@@ -418,38 +425,40 @@ export function TasksPage() {
             <span className="text-sm font-bold text-[#654cff]">
               {selectedIds.size} selected
             </span>
-            <select
-              className="h-8 rounded-md border border-black/10 bg-white px-2 text-xs font-semibold dark:border-white/10 dark:bg-[#171a28]"
-              onChange={(event) =>
-                void bulkUpdateStatus(event.target.value as TaskStatus)
+            <Select
+              onValueChange={(next) =>
+                void bulkUpdateStatus(next as TaskStatus)
               }
               value=""
             >
-              <option disabled value="">
-                Set status...
-              </option>
-              {STATUS_ORDER.map((status) => (
-                <option key={status} value={status}>
-                  {STATUS_META[status].label}
-                </option>
-              ))}
-            </select>
-            <select
-              className="h-8 rounded-md border border-black/10 bg-white px-2 text-xs font-semibold dark:border-white/10 dark:bg-[#171a28]"
-              onChange={(event) =>
-                void bulkUpdatePriority(event.target.value as TaskPriority)
+              <SelectTrigger className="bg-white dark:bg-[#171a28]" size="sm">
+                <SelectValue placeholder="Set status..." />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_ORDER.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {STATUS_META[status].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              onValueChange={(next) =>
+                void bulkUpdatePriority(next as TaskPriority)
               }
               value=""
             >
-              <option disabled value="">
-                Set priority...
-              </option>
-              {PRIORITY_ORDER.map((priority) => (
-                <option key={priority} value={priority}>
-                  {PRIORITY_META[priority].label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="bg-white dark:bg-[#171a28]" size="sm">
+                <SelectValue placeholder="Set priority..." />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITY_ORDER.map((priority) => (
+                  <SelectItem key={priority} value={priority}>
+                    {PRIORITY_META[priority].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <button
               className="text-xs font-bold text-red-600"
               onClick={() => void bulkDelete()}
