@@ -245,12 +245,27 @@ export type Project = {
   description: string | null;
   stage: ProjectStage;
   status: ProjectStatus;
+  priority: TaskPriority;
   progress: number;
   coverGradient: string | null;
   coverIcon: ProjectCoverIcon | null;
   dueDate: string | null;
   teamIds: string[];
   clients: { id: string; name: string }[];
+  taskCount?: number;
+  completedTaskCount?: number;
+  storageBytes?: number;
+  fileCount?: number;
+};
+
+export type ProjectStats = {
+  taskCount: number;
+  completedTaskCount: number;
+  teamMemberCount: number;
+  fileCount: number;
+  storageBytes: number;
+  timeLoggedHours: number;
+  completionPercent: number;
 };
 
 export type UploadCategory =
@@ -259,10 +274,24 @@ export type UploadCategory =
 export type ClientItem = {
   id: string;
   name: string;
+  logoUrl: string | null;
   contactName: string | null;
   contactEmail: string | null;
+  phone: string | null;
+  address: string | null;
+  gst: string | null;
+  notes: string | null;
+  status: string;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ClientStats = {
+  activeProjects: number;
+  completedProjects: number;
+  totalShoots: number;
+  videosDelivered: number;
+  storageBytes: number;
 };
 
 export type Comment = {
@@ -585,14 +614,29 @@ export type CreateProjectRequest = {
   type?: ProjectType;
   genre?: string;
   stage?: ProjectStage;
+  priority?: TaskPriority;
   progress?: number;
   coverGradient?: string;
   coverIcon?: ProjectCoverIcon;
   dueDate?: string;
   teamIds?: string[];
+  clientId?: string;
 };
 
 export type UpdateProjectRequest = Partial<CreateProjectRequest>;
+
+export type CreateClientRequest = {
+  name: string;
+  logoUrl?: string;
+  contactName?: string;
+  contactEmail?: string;
+  phone?: string;
+  address?: string;
+  gst?: string;
+  notes?: string;
+};
+
+export type UpdateClientRequest = Partial<CreateClientRequest>;
 
 export type CreateCalendarEventRequest = {
   title: string;

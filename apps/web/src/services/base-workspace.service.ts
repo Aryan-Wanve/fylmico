@@ -15,6 +15,7 @@ import type {
   ChatMessage,
   ChatRoom,
   ClientItem,
+  ClientStats,
   Comment,
   CreateBoardRequest,
   CreateAnnouncementRequest,
@@ -22,6 +23,7 @@ import type {
   CreateCalendarEventRequest,
   CreateCallSheetRequest,
   CreateCharacterRequest,
+  CreateClientRequest,
   CreateConversationRequest,
   CreateHouseRequest,
   CreateLocationRequest,
@@ -47,6 +49,7 @@ import type {
   PersonalStats,
   ProductionTask,
   Project,
+  ProjectStats,
   RequestJoinHouseRequest,
   RequestPasswordResetRequest,
   ResetPasswordRequest,
@@ -67,6 +70,7 @@ import type {
   UpdateCrewProfileRequest,
   UpdateConversationRequest,
   UpdateHouseRequest,
+  UpdateClientRequest,
   UpdateMeRequest,
   UpdateProjectRequest,
   UpdateScriptRequest,
@@ -607,6 +611,55 @@ export async function listClients(): Promise<ClientItem[]> {
   return apiRequest<ClientItem[]>(`/houses/${activeHouseId}/clients`, {
     query: { limit: 100 }
   });
+}
+
+export async function createClient(
+  request: CreateClientRequest
+): Promise<ClientItem> {
+  if (!request.name.trim()) {
+    throw new Error("Give the client a name.");
+  }
+
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before adding clients.");
+  }
+
+  return apiRequest<ClientItem>(`/houses/${activeHouseId}/clients`, {
+    method: "POST",
+    body: request
+  });
+}
+
+export async function updateClient(
+  clientId: string,
+  request: UpdateClientRequest
+): Promise<ClientItem> {
+  return apiRequest<ClientItem>(`/clients/${clientId}`, {
+    method: "PATCH",
+    body: request
+  });
+}
+
+export async function archiveClient(clientId: string): Promise<ClientItem> {
+  return apiRequest<ClientItem>(`/clients/${clientId}/archive`, {
+    method: "POST"
+  });
+}
+
+export async function deleteClient(clientId: string): Promise<void> {
+  await apiRequest<{ success: boolean }>(`/clients/${clientId}`, {
+    method: "DELETE"
+  });
+}
+
+export async function getClientStats(clientId: string): Promise<ClientStats> {
+  return apiRequest<ClientStats>(`/clients/${clientId}/stats`);
+}
+
+export async function getProjectStats(
+  projectId: string
+): Promise<ProjectStats> {
+  return apiRequest<ProjectStats>(`/projects/${projectId}/stats`);
 }
 
 export async function listProjects(): Promise<Project[]> {
