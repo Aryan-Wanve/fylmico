@@ -52,7 +52,9 @@ import type {
   PersonalStats,
   ProductionTask,
   Project,
+  ProjectAnalytics,
   ProjectStats,
+  ProjectTimelineEntry,
   RequestJoinHouseRequest,
   RequestPasswordResetRequest,
   ResetPasswordRequest,
@@ -664,6 +666,30 @@ export async function getProjectStats(
   projectId: string
 ): Promise<ProjectStats> {
   return apiRequest<ProjectStats>(`/projects/${projectId}/stats`);
+}
+
+export async function getProjectTimeline(
+  projectId: string
+): Promise<ProjectTimelineEntry[]> {
+  return apiRequest<ProjectTimelineEntry[]>(`/projects/${projectId}/timeline`);
+}
+
+export async function getProjectAnalytics(
+  projectId: string
+): Promise<ProjectAnalytics> {
+  return apiRequest<ProjectAnalytics>(`/projects/${projectId}/analytics`);
+}
+
+export async function getProjectConversation(
+  projectId: string
+): Promise<{ roomId: string }> {
+  return apiRequest<{ roomId: string }>(`/projects/${projectId}/conversation`);
+}
+
+export async function pinMessage(messageId: string): Promise<ChatMessage> {
+  return apiRequest<ChatMessage>(`/messages/${messageId}/pin`, {
+    method: "POST"
+  });
 }
 
 export async function listShoots(projectId: string): Promise<Shoot[]> {

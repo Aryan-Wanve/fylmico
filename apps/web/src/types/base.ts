@@ -270,6 +270,26 @@ export type ProjectStats = {
   completionPercent: number;
 };
 
+export type ProjectTimelineEntry = {
+  id: string;
+  actorName: string;
+  text: string;
+  occurredAt: string;
+};
+
+export type ProjectAnalytics = {
+  shootsCompleted: number;
+  shootsUpcoming: number;
+  editingHours: number;
+  teamHours: number;
+  storageBytes: number;
+  filesUploaded: number;
+  deliverableCount: number;
+  avgReviewHours: number;
+  revisionCount: number;
+  completionPercent: number;
+};
+
 export type UploadCategory =
   "raw" | "assets" | "deliverables" | "project-files";
 
@@ -518,6 +538,7 @@ export type ChatMessage = {
   sentAt: string;
   body: string;
   editedAt: string | null;
+  pinned: boolean;
   parentMessageId: string | null;
   replyCount: number;
   reactions: MessageReactionSummary[];
