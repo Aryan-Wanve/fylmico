@@ -675,10 +675,11 @@ Ownership: belongs to one `organization`.
 Columns: `id`, `organization_id`, `conversation_id` (nullable - set when
 created from a chat room), `title`, `description` (nullable, markdown-lite
 text - see `renderMarkdownLite()` in `task-data.ts`), `type` (default
-`"custom"`; 20-value vocab - shoot/edit/color-grade/sound-design/vfx/
+`"custom"`; 21-value vocab - shoot/edit/color-grade/sound-design/vfx/
 motion-graphics/storyboarding/script-writing/thumbnail/photography/reels/
-social-media/client-review/asset-collection/equipment/location-scouting/
-casting/meeting/admin/custom - validated in the DTO only, not a DB enum),
+social-media/client-review/delivery/asset-collection/equipment/
+location-scouting/casting/meeting/admin/custom (`delivery` added per ADR
+0054, Phase 4) - validated in the DTO only, not a DB enum),
 `status` (default `"todo"`; `"todo" | "in-progress" | "review" |
 "changes-requested" | "completed" | "archived"` as of ADR 0047, replacing
 the old 4-value vocab), `priority` (default `"medium"`; `"low" | "medium" |
@@ -1254,15 +1255,15 @@ Ownership: belongs to one `organization` (denormalized from the target,
 matching `tasks`/`messages`' pattern) and one `user` (the author).
 
 Columns: `id`, `organization_id`, `commentable_type` (`"task"` |
-`"project"`), `commentable_id`, `author_id`, `body`, `created_at`,
-`updated_at`.
+`"project"` | `"deliverable"` - the third value added per ADR 0054),
+`commentable_id`, `author_id`, `body`, `created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
 `users` via `author_id` (no cascade, same reasoning as `tasks.assignee_id`).
-No database foreign key on `commentable_id` - it points to either a `tasks`
-or a `projects` row depending on `commentable_type`, so validity is
-enforced at the service layer (404 checks before create/list), not a DB
-constraint.
+No database foreign key on `commentable_id` - it points to a `tasks`,
+`projects`, or `deliverables` row depending on `commentable_type`, so
+validity is enforced at the service layer (404 checks before create/list),
+not a DB constraint.
 
 Indexes: index on `organization_id`; compound index on
 `(commentable_type, commentable_id)` (the actual lookup path for listing a
@@ -1270,16 +1271,66 @@ target's comments).
 
 Constraints: none beyond required foreign keys.
 
-Permissions: created/read via `POST`/`GET /api/v1/tasks/:taskId/comments`
-and `POST`/`GET /api/v1/projects/:projectId/comments` by any member of the
+Permissions: created/read via `POST`/`GET /api/v1/tasks/:taskId/comments`,
+`POST`/`GET /api/v1/projects/:projectId/comments`, and `POST`/`GET
+/api/v1/deliverables/:deliverableId/comments` by any member of the
 target's house. No edit/delete endpoint exists yet.
 
 Reasoning: a type+id pair rather than a join table per commentable type
-(`task_comments`, `project_comments`) - adding a new commentable type later
-(`asset_version`) is a new string value and a thin controller/service pair,
-not a schema migration (ADR 0024).
+(`task_comments`, `project_comments`) - adding a new commentable type
+(`deliverable`, ADR 0054, following the exact prediction this doc already
+made about `asset_version`) was a new string value and a thin
+controller/service pair, not a schema migration (ADR 0024).
 
 Migration history: `20260708211532_comments`.
+
+### Table: `deliverables`
+
+Purpose: a versioned submission for a project (Projects Module Overhaul
+Phase 4, ADR 0054) - every draft submitted via `SubmitDraftDialog` creates
+a new row rather than overwriting the previous one, moving through a
+`draft | review | revision | approved | final` workflow.
+
+Ownership: belongs to one `organization` and one `project`.
+
+Columns: `id`, `organization_id`, `project_id`, `task_id` (nullable FK -
+the editing task this version was submitted from), `file_entry_id` (the
+submitted file), `created_by_id`, `version` (`Int`, auto-incremented
+**per project** at create time - `count + 1`, never reused or
+overwritten), `status` (default `"review"`; 5-value vocab, validated in
+the DTO/service only, not a DB enum, matching every other workflow
+vocabulary in this codebase), `notes` (nullable), `created_at`,
+`updated_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`projects` (cascade delete); belongs to `tasks` (nullable, `onDelete:
+SetNull`); belongs to `file_entries` (cascade delete - deleting the
+underlying file removes its deliverable record); belongs to `users` via
+`created_by_id`.
+
+Indexes: indexes on `organization_id`, `project_id`, `task_id`,
+`file_entry_id`; unique compound index on `(project_id, version)` - a
+version number is physically never reused for the same project even if
+the count-based computation ever raced.
+
+Constraints: `(project_id, version)` unique.
+
+Permissions: create via `POST /api/v1/projects/:projectId/deliverables`
+by any member of the project's house (in practice called by
+`SubmitDraftDialog`, not directly by users); list via `GET
+/api/v1/projects/:projectId/deliverables`; status transitions via
+dedicated `POST /api/v1/deliverables/:deliverableId/<action>` endpoints
+(`approve`, `request-revision`, `mark-final`) - no finer-grained role
+check yet, matching Tasks'/Shoots' own permission model. Comments via
+`POST`/`GET /api/v1/deliverables/:deliverableId/comments` (the `comments`
+table's new `"deliverable"` commentable type).
+
+Reasoning: see ADR 0054. `approve` best-effort auto-creates a Delivery
+`Task` (new `"delivery"` value on `TASK_TYPES`) and bumps
+`Project.progress` by 10 (capped at 100) - the same inline-pipeline
+pattern used for Shoot → Editing task in Phase 3 (ADR 0053).
+
+Migration history: `20260716200000_deliverables`.
 
 ### Table: `crew_profiles`
 

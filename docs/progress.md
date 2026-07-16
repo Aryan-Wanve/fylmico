@@ -5789,3 +5789,90 @@ Known limitations / tradeoffs:
 Next task:
 
 - Phase 4: Deliverables (versioned draft/review/approval workflow).
+
+## 2026-07-16 Projects Module Overhaul — Phase 4: Deliverables
+
+Current milestone: Projects Module Overhaul (5-phase effort), Phase 4 of 5
+
+Completion percentage: 100% of Phase 4
+
+Features completed:
+
+- New `Deliverable` model - a versioned project submission (never
+  overwritten), `version` auto-incremented per project, `status`
+  (`draft|review|revision|approved|final`, starts at `review`).
+- `deliverablesService`: create, list, and three status-transition
+  endpoints (`approve`, `request-revision`, `mark-final`).
+- `comments.service.ts` gains `createForDeliverable`/`listForDeliverable`
+  - the existing polymorphic `Comment` model absorbed a fourth
+    `commentableType` with zero schema changes.
+- `SubmitDraftDialog` now creates a real `Deliverable` version row
+  (best-effort) after its existing file upload, instead of just
+  uploading a bare attachment.
+- Approving a deliverable best-effort auto-creates a Delivery `Task`
+  (new `"delivery"` type added to `TASK_TYPES`) and bumps
+  `Project.progress` by 10 (capped at 100) - same inline-pipeline
+  pattern as Shoot → Editing task (Phase 3).
+- New Deliverables tab on the project detail page (`DeliverableRow`):
+  version + status badges, status-conditional actions, and an
+  expandable inline comment thread.
+
+Features started:
+
+- None beyond the above - Phase 4 is complete per the approved plan.
+
+Explicitly skipped this pass (see ADR 0054 for why):
+
+- No dedicated download/preview UI for a deliverable's file in this
+  tab - the file name/size is shown, but downloading is a separate,
+  already-existing Files-page concern not duplicated here.
+- Progress bump on approval is a flat `+10`, not a real completion
+  formula (none exists for Projects in this codebase yet).
+
+Files created:
+
+- `packages/database/prisma/migrations/20260716200000_deliverables/migration.sql`
+- `docs/adr/0054-projects-overhaul-phase-4-deliverables.md`
+- `apps/web/src/server/deliverables/deliverables.service.ts`,
+  `dto/create-deliverable.dto.ts`
+- `apps/web/src/app/api/v1/projects/[projectId]/deliverables/route.ts`,
+  `.../deliverables/[deliverableId]/approve/route.ts`,
+  `.../request-revision/route.ts`, `.../mark-final/route.ts`,
+  `.../comments/route.ts`
+- `apps/web/src/components/projects/deliverable-row.tsx`
+
+Files modified:
+
+- `packages/database/prisma/schema.prisma` (`Deliverable` model +
+  relations)
+- `apps/web/src/server/comments/comments.service.ts`
+  (`createForDeliverable`/`listForDeliverable`)
+- `apps/web/src/server/tasks/dto/create-task.dto.ts`, `apps/web/src/types/base.ts`,
+  `apps/web/src/components/tasks/task-data.ts` (`"delivery"` task type)
+- `apps/web/src/types/base.ts` (`Deliverable`, `DeliverableStatus`,
+  `CreateDeliverableRequest`)
+- `apps/web/src/services/base-workspace.service.ts` (deliverable client
+  functions)
+- `apps/web/src/components/dashboard/submit-draft-dialog.tsx`,
+  `home-dashboard.tsx` (`projectId` prop threaded through)
+- `apps/web/src/components/projects/project-detail-page.tsx`
+  (Deliverables tab)
+- `docs/database.md`, `docs/api.md`
+
+Known limitations / tradeoffs:
+
+- Verified live in-browser end-to-end: created a Deliverable v1 (review),
+  posted a comment, approved it (confirmed the Delivery task
+  auto-created and `Project.progress` bumped to 10 via direct DB query),
+  marked it Final (status badge updated, actions correctly disappeared),
+  then created a v2 and confirmed `request-revision` transitioned it to
+  `revision` and the version counter never reused v1 - all through the
+  actual UI/API, not simulated. Used a directly-inserted `FileEntry` row
+  to stand in for an uploaded file since this dev house has no Google
+  Drive connection (same constraint noted in Phases 2-3).
+  Typecheck/lint/build all clean. All synthetic data removed via direct
+  SQL afterward.
+
+Next task:
+
+- Phase 5: Project Chat, Timeline, Per-Project Analytics.

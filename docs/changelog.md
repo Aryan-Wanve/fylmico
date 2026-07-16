@@ -636,3 +636,24 @@ Breaking changes:
 Migration notes:
 
 - None - no schema changes this release.
+
+## 0.20.0 - 2026-07-16
+
+Summary:
+
+- Projects Module Overhaul, Phase 4 of 5: versioned Deliverables -
+  submitting a draft now creates a new version row instead of
+  overwriting the previous one, moving through
+  draft/review/revision/approved/final.
+- Approving a deliverable auto-creates a Delivery task and bumps the
+  project's progress.
+- New Deliverables tab on the project detail page with version history,
+  approve/request-revision/mark-final actions, and inline comments.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- Adds a new `deliverables` table. Run `prisma migrate deploy`.

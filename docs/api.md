@@ -1475,6 +1475,80 @@ Same shape/error pattern as the task endpoints above, scoped to a
 `Project` (`404 project_not_found` instead). No edit/delete endpoint
 exists for either yet.
 
+### `POST`/`GET /api/v1/deliverables/:deliverableId/comments`
+
+Same shape/error pattern as the endpoints above, scoped to a
+`Deliverable` (`404 deliverable_not_found` instead) - notifies the
+project's `teamIds`, same as project comments.
+
+## Deliverables (Implemented)
+
+Implemented per ADR 0054 (`apps/web/src/server/deliverables/*`) -
+Projects Module Overhaul Phase 4. A `Deliverable` is a versioned
+submission for a project - every draft submitted creates a new row
+(never overwriting a previous version) moving through a
+`draft | review | revision | approved | final` workflow.
+
+### `POST /api/v1/projects/:projectId/deliverables`
+
+Authentication: required. Body:
+`{ "fileEntryId": string, "taskId"?: string, "notes"?: string }`.
+`version` is computed server-side (current count for the project + 1) -
+not client-supplied. New deliverables start at `status: "review"`
+(submitting a draft already means "ready for review"). In practice
+called by `SubmitDraftDialog` right after its existing file upload, not
+directly by users. Response:
+
+```json
+{
+  "data": {
+    "id": "deliverable_123",
+    "projectId": "project_123",
+    "taskId": "task_123",
+    "version": 2,
+    "status": "review",
+    "notes": null,
+    "file": {
+      "id": "file_123",
+      "name": "sizzle_reel_v2.mp4",
+      "size": 60000000,
+      "mimeType": "video/mp4"
+    },
+    "createdById": "user_123",
+    "createdByName": "Rehan Patel",
+    "createdAt": "2026-07-16T10:00:00.000Z",
+    "updatedAt": "2026-07-16T10:00:00.000Z"
+  }
+}
+```
+
+Errors: `400 invalid_request` (missing `fileEntryId`, or a `taskId` that
+isn't in this house), `401 unauthenticated`, `403 forbidden`,
+`404 project_not_found`.
+
+### `GET /api/v1/projects/:projectId/deliverables`
+
+Authentication: required. Response: `{ "data": Deliverable[] }` (not
+paginated), ordered by `version` ascending. Errors:
+`401 unauthenticated`, `403 forbidden`, `404 project_not_found`.
+
+### Deliverable status transitions
+
+Each is a dedicated action endpoint (matches the Shoot-status-transition
+precedent, ADR 0052/0053) rather than a generic `PATCH status`. All:
+authentication required, no body, response is the updated `Deliverable`,
+errors `401 unauthenticated` / `403 forbidden` / `404 deliverable_not_found`.
+
+- `POST /api/v1/deliverables/:deliverableId/approve` → `status:
+"approved"`. Also best-effort auto-creates a Delivery `Task`
+  (`type: "delivery"`, titled `"Deliver v{version} - {project name}"`)
+  and bumps `Project.progress` by 10 (capped at 100) - a failure in this
+  side effect is logged and swallowed, never undoes the approval itself.
+- `POST /api/v1/deliverables/:deliverableId/request-revision` →
+  `status: "revision"`.
+- `POST /api/v1/deliverables/:deliverableId/mark-final` → `status:
+"final"`.
+
 ## Crews (Implemented)
 
 Implemented per ADR 0028 (`apps/web/src/server/crews/*`). A "crew member" is a
