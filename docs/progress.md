@@ -5706,3 +5706,86 @@ Next task:
 - Phase 3: Upload Automation + Editing Auto-Attach (multi-file upload,
   per-shoot Drive folder, auto-created Editing task pre-attached to
   footage/references).
+
+## 2026-07-16 Projects Module Overhaul — Phase 3: Upload Automation + Editing Auto-Attach
+
+Current milestone: Projects Module Overhaul (5-phase effort), Phase 3 of 5
+
+Completion percentage: 100% of Phase 3
+
+Features completed:
+
+- Multi-file upload: `uploadFilesToShoot(shootId, files)` loops the
+  existing single-file upload call - no backend route changes needed.
+- New `ensureShootFolder` (mirrors `ensureRawDataDateFolder`) + `GET
+/api/v1/shoots/:shootId/upload-folder`, resolving/creating a per-shoot
+  Drive folder nested under the project's `Shoots` subfolder.
+- `FocusTaskCard`'s "Finish + Upload" (and "Start Upload" for a
+  `finished` shoot) now opens a real multi-file picker: selecting files
+  runs finish-upload → uploads every file into the shoot's folder →
+  mark-uploaded, instead of just flipping a status flag.
+- `markUploaded` best-effort auto-creates an Editing `Task`, pre-attached
+  to the shoot's footage folder and the project's `Assets` folder - the
+  same `linkTaskAttachment` mechanism the manager raw-footage picker
+  already used.
+- `task-create-dialog.tsx`'s raw-footage picker gains a third cascading
+  level (Shoot), filtered to `uploaded`/`ready-for-editing` shoots, so a
+  manager can attach a specific shoot's footage instead of a date-based
+  Raw Data folder.
+
+Features started:
+
+- None beyond the above - Phase 3 is complete per the approved plan.
+
+Explicitly skipped this pass (see ADR 0053 for why):
+
+- ZIP upload and native folder-select (`webkitdirectory`) remain
+  deferred - real new tech with no precedent in this codebase.
+- Only the project's `Assets` subfolder is auto-attached alongside the
+  shoot's footage - the original plan wording listed References/Music/
+  Graphics too, but those subfolders don't exist in this codebase's
+  actual `PROJECT_SUBFOLDERS` and inventing them was out of scope.
+
+Files created:
+
+- `docs/adr/0053-projects-overhaul-phase-3-upload-automation.md`
+- `apps/web/src/app/api/v1/shoots/[shootId]/upload-folder/route.ts`
+
+Files modified:
+
+- `apps/web/src/server/drive/drive-structure.service.ts`
+  (`ensureShootFolder`)
+- `apps/web/src/server/shoots/shoots.service.ts` (`getUploadFolder`,
+  `createEditingTask`, best-effort wrapping in `markUploaded`)
+- `apps/web/src/services/base-workspace.service.ts`
+  (`getShootUploadFolder`, `uploadFilesToShoot`)
+- `apps/web/src/components/dashboard/focus-task-card.tsx` (real file
+  picker wired to Finish + Upload / Start Upload)
+- `apps/web/src/components/tasks/task-create-dialog.tsx` (Shoot cascade
+  level)
+- `docs/database.md`, `docs/api.md`
+
+Known limitations / tradeoffs:
+
+- `FileEntry.taskId` is single-owner, so re-attaching the shared
+  `Assets` folder to each new Editing task just moves which task it
+  last "belongs" to - a pre-existing modeling limitation from ADR 0051,
+  not new to this phase.
+- Verified live in an environment with **no Google Drive connection**
+  on the test house (matches this session's existing HUD-phase Submit
+  Draft constraint) - could not confirm real file bytes landing in
+  Drive end-to-end. What was verified instead: `mark-uploaded` now
+  correctly persists the shoot's `status: "uploaded"` transition even
+  when the Drive-dependent Editing-task-folder-linking step throws
+  (caught and fixed a real bug here - the method originally let that
+  failure propagate and fail the whole request); the Editing `Task` row
+  itself (a DB-only operation) was confirmed auto-created; and the
+  manager-side Shoot cascade dropdown in the New Task dialog correctly
+  populated with an `uploaded` shoot and excluded shoots not yet ready.
+  Typecheck/lint/build all clean. All synthetic data (test project,
+  client, shoots, tasks, calendar events) removed via direct SQL
+  afterward.
+
+Next task:
+
+- Phase 4: Deliverables (versioned draft/review/approval workflow).

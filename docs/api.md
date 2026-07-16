@@ -1353,6 +1353,24 @@ a project's shoot list is expected to stay small), ordered by
 Authentication: required. Response: single `Shoot`. Errors:
 `401 unauthenticated`, `403 forbidden`, `404 shoot_not_found`.
 
+### `GET /api/v1/shoots/:shootId/upload-folder`
+
+Authentication: required. Added per ADR 0053 (Phase 3: Upload
+Automation). Resolves (creating if needed) the shoot's Drive folder -
+`project:{projectId}:shoot:{shootId}`, nested under the project's
+`Shoots` subfolder, named `"{scheduledDate} - {shoot name}"`. Response:
+
+```json
+{ "data": { "parentId": "folder_123" } }
+```
+
+The client uploads each selected file with this `parentId` via the
+existing `POST /api/v1/houses/:houseId/files/upload` endpoint, once per
+file (multi-file upload is a client-side loop over the single-file
+endpoint, not a new bulk endpoint). Errors: `401 unauthenticated`,
+`403 forbidden`, `404 shoot_not_found`, and any Drive-related error if
+the house has no Drive connection (ADR 0045).
+
 ### Shoot status transitions
 
 Each is a dedicated action endpoint (matches the `archive`-endpoint
@@ -1368,12 +1386,14 @@ errors `401 unauthenticated` / `403 forbidden` / `404 shoot_not_found`.
 - `POST /api/v1/shoots/:shootId/finish` → `status: "finished"`, sets
   `finishedAt`.
 - `POST /api/v1/shoots/:shootId/finish-upload` → `status: "uploading"`,
-  sets `finishedAt`. Does not yet perform a real file upload - Phase 3
-  ("Upload Automation") wires the actual multi-file upload behind this
-  transition; for now advancing past `uploading` is a separate manual
-  step.
+  sets `finishedAt`. The client calls this right before uploading files
+  into the shoot's folder (see `upload-folder` above).
 - `POST /api/v1/shoots/:shootId/mark-uploaded` → `status: "uploaded"`,
-  sets `uploadedAt`.
+  sets `uploadedAt`. Also best-effort auto-creates an Editing `Task`
+  (`type: "edit"`, titled `"Edit {shoot name}"`) linked to the shoot's
+  footage folder and the project's `Assets` folder (ADR 0053) - a
+  failure in this Drive-dependent step (e.g. no Drive connection) is
+  logged and swallowed, never fails the status transition itself.
 - `POST /api/v1/shoots/:shootId/ready-for-editing` → `status:
 "ready-for-editing"`.
 - `POST /api/v1/shoots/:shootId/archive` → `status: "archived"`.

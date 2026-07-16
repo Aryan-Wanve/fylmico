@@ -616,3 +616,23 @@ Migration notes:
 
 - Adds a new `shoots` table and a `shoot_id` column on `tasks`. Run
   `prisma migrate deploy`.
+
+## 0.19.0 - 2026-07-16
+
+Summary:
+
+- Projects Module Overhaul, Phase 3 of 5: real multi-file upload into a
+  per-shoot Drive folder, replacing Phase 2's status-only placeholder.
+- Finishing and uploading a shoot's footage now automatically creates an
+  Editing task pre-attached to that footage and the project's Assets
+  folder.
+- The New Task dialog's raw-footage picker can now target a specific
+  shoot's footage instead of just a date-based Raw Data folder.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- None - no schema changes this release.

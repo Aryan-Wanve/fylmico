@@ -1191,11 +1191,18 @@ status transitions via dedicated `POST /api/v1/shoots/:shootId/<action>`
 endpoints (`reached`, `start`, `finish`, `finish-upload`,
 `mark-uploaded`, `ready-for-editing`, `archive`, `cancel`) by any house
 member - no finer-grained role check yet, matching Tasks' own
-permission model.
+permission model. `GET /api/v1/shoots/:shootId/upload-folder` (ADR 0053,
+Phase 3) resolves/creates the shoot's Drive folder
+(`project:{projectId}:shoot:{shootId}`, under the project's `Shoots`
+subfolder) for the client to upload footage into.
 
 Reasoning: see ADR 0052. Status transitions use dedicated action
 endpoints (not a generic `PATCH status`) because several of them need to
 atomically stamp a specific timestamp column alongside the status change.
+Per ADR 0053, `mark-uploaded` also best-effort auto-creates an Editing
+`Task` (type `"edit"`) linked to the shoot's footage folder and the
+project's `Assets` folder - best-effort because the shoot's own status
+transition must persist even if the Drive-dependent linking step fails.
 
 Migration history: `20260716180000_shoots`.
 
