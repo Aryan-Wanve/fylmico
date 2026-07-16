@@ -564,3 +564,31 @@ Migration notes:
   (`GET /api/v1/houses/:houseId/analytics/me`) and reuses existing
   tables only.
 - Run `prisma migrate deploy` for both.
+
+## 0.17.0 - 2026-07-16
+
+Summary:
+
+- Projects Module Overhaul, Phase 1 of 5: lays the foundation for making
+  Project the app's single source of truth.
+- `Client` gains a real company profile (logo, phone, address, GST,
+  notes) plus archive/delete and a stats endpoint (active/completed
+  projects, storage used).
+- `Project` gains a `priority` field (reusing Tasks' own vocabulary) and
+  a stats endpoint (task counts, team size, files, storage, time logged,
+  completion %).
+- New Clients management page (`/projects/clients`).
+- Redesigned project cards: client name, priority/stage badges, task/
+  storage/online-member stats, "Due in N days".
+- Project detail page's Team section now also includes everyone assigned
+  through the project's tasks, not just the manually-added list.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- Adds six columns to `clients` (`logo_url`, `phone`, `address`, `gst`,
+  `notes`, `status`) and one to `projects` (`priority`) - all with
+  defaults, no backfill required. Run `prisma migrate deploy`.

@@ -5511,3 +5511,100 @@ Next task:
   ADR 0048/0049.
 - Private Notes, achievements/skills/equipment, attendance/leave, and
   voice rooms remain candidates for a future HUD phase.
+
+## 2026-07-16 Projects Module Overhaul — Phase 1: Foundation
+
+Current milestone: Projects Module Overhaul (5-phase effort), Phase 1 of 5
+
+Completion percentage: 100% of Phase 1
+
+Features completed:
+
+- `Client` gains a real company profile: `logoUrl`, `phone`, `address`,
+  `gst`, `notes`, and a `status` column (active/archived, matching
+  `Project`'s convention).
+- `Project` gains `priority` (`low|medium|high|urgent`, reusing
+  `Task.priority`'s exact vocabulary and `PRIORITY_META` styling - no new
+  vocabulary invented).
+- `clientsService`: `archive`, `delete` (refuses if the client still has
+  linked projects - `409 client_has_projects`), `getClientStats`
+  (active/completed project counts, storage used via `driveKey` prefix
+  matching - shoots/videos delivered are `0` placeholders until Phases
+  2/4).
+- `projectsService.getProjectStats` (task counts, team size, file count,
+  storage, time logged, completion %) and a batched `getProjectListStats`
+  merged into the project list response (`groupBy`-then-merge, same
+  pattern as `organizations.service.ts`'s `getStorageAndActivity` - no
+  N+1 queries across the grid).
+- `PROJECT_SUBFOLDERS` gains `"Shoots"`, ready for Phase 2's per-shoot
+  footage folders.
+- New Clients management page (`/projects/clients`): list/create/edit/
+  archive/delete, each card showing live stats. Linked from a new
+  "Clients" button in the Projects header.
+- Redesigned project cards (grid + list): client name, priority + stage
+  badges, task/storage/online-member-count stats row, "Due in N days"
+  countdown.
+- `project-edit-dialog.tsx` gains a priority pill selector (same visual
+  pattern as the task create dialog's).
+- Project detail page's Team section now shows the union of
+  `Project.teamIds` and everyone assigned via the project's tasks
+  (`Task.assignees`) - computed client-side from already-loaded
+  `workspace.tasks`, no new backend call. A priority badge was also added
+  to the project cover banner.
+
+Features started:
+
+- None beyond the above - Phase 1 is complete per the approved plan.
+
+Explicitly skipped this pass (deferred to later phases, see ADR 0051):
+
+- Shoot/Deliverable counts on project cards and stats show `0` rather
+  than fake data until Phases 2/4 actually produce it.
+- No UI yet to link a client at project-creation time (create still
+  accepts `clientId` server-side; the picker UI is a Phase 2+ concern).
+
+Files created:
+
+- `packages/database/prisma/migrations/20260716160000_projects_client_depth/migration.sql`
+- `docs/adr/0051-projects-overhaul-phase-1-foundation.md`
+- `apps/web/src/app/api/v1/clients/[clientId]/archive/route.ts`,
+  `.../clients/[clientId]/stats/route.ts`,
+  `.../projects/[projectId]/stats/route.ts`
+- `apps/web/src/components/projects/client-edit-dialog.tsx`,
+  `client-card.tsx`, `clients-page.tsx`
+- `apps/web/src/app/(app)/projects/clients/page.tsx`
+
+Files modified:
+
+- `packages/database/prisma/schema.prisma` (`Client`/`Project` fields)
+- `apps/web/src/server/clients/clients.service.ts`,
+  `dto/create-client.dto.ts`, `dto/update-client.dto.ts`
+- `apps/web/src/server/projects/projects.service.ts`,
+  `dto/create-project.dto.ts`, `dto/update-project.dto.ts`
+- `apps/web/src/server/drive/drive-structure.service.ts`
+  (`PROJECT_SUBFOLDERS`)
+- `apps/web/src/app/api/v1/clients/[clientId]/route.ts` (added `DELETE`)
+- `apps/web/src/types/base.ts`, `apps/web/src/services/base-workspace.service.ts`
+- `apps/web/src/components/projects/projects-header.tsx`,
+  `project-data.ts` (`formatDueIn`), `project-grid-card.tsx`,
+  `project-list-row.tsx`, `projects-page.tsx`, `project-edit-dialog.tsx`,
+  `project-detail-page.tsx`
+- `docs/database.md`, `docs/api.md`
+
+Known limitations / tradeoffs:
+
+- Per-client stats fetch one card at a time (not batched like the
+  project list) - fine for a handful of clients per house, revisit if
+  that assumption breaks.
+- Verified live in-browser: created a client with full profile fields
+  and confirmed its stats render; created a test project linked to that
+  client via a direct authenticated API call (no creation-time client
+  picker UI yet) and confirmed the redesigned card shows client name,
+  priority badge, and stats; confirmed Team-from-Tasks renders an
+  assignee's initials despite an empty `teamIds`. Typecheck/lint/build
+  all clean. Synthetic test rows cleaned up via direct SQL afterward.
+
+Next task:
+
+- Phase 2: Shoots entity + Videographer Workflow HUD (extends
+  `FocusTaskCard` with a shoot-mode branch).

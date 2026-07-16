@@ -1038,6 +1038,8 @@ string), `stage` (default `"Development"`; one of `"Development" |
 mapped to a Lucide icon component client-side), `due_date` (nullable
 freeform string - same non-real-date choice as `tasks.due_date`),
 `team_ids` (`String[]`, Postgres native array of `users.id` values),
+`priority` (default `"medium"`; `"low" | "medium" | "high" | "urgent"` -
+added per ADR 0051, reusing `tasks.priority`'s exact vocabulary),
 `status` (`"active"` | `"archived"`, default `"active"` - archive tracking
 only, distinct from the display-facing status derived from `stage`),
 `created_at`, `updated_at`.
@@ -1074,7 +1076,8 @@ system exists yet anywhere in the backend, so new projects fall back to
 `cover_gradient`/`cover_icon` only.
 
 Migration history: `20260708172602_projects_clients`,
-`20260710172256_project_designed_ui_fields`.
+`20260710172256_project_designed_ui_fields`; `priority` added in
+`20260716160000_projects_client_depth` (ADR 0051).
 
 ### Table: `clients`
 
@@ -1083,8 +1086,13 @@ Purpose: an external client that can be linked to one or more projects
 
 Ownership: belongs to one `organization`.
 
-Columns: `id`, `organization_id`, `name`, `contact_name` (nullable),
-`contact_email` (nullable), `created_at`, `updated_at`.
+Columns: `id`, `organization_id`, `name`, `logo_url` (nullable, added per
+ADR 0051), `contact_name` (nullable), `contact_email` (nullable), `phone`
+(nullable, added per ADR 0051), `address` (nullable, added per ADR 0051),
+`gst` (nullable, added per ADR 0051), `notes` (nullable, added per ADR
+0051), `status` (`"active"` | `"archived"`, default `"active"`, added per
+ADR 0051 - same archive-tracking convention as `projects.status`),
+`created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); has many
 `project_clients` (linking to `projects`).
@@ -1094,15 +1102,22 @@ Indexes: index on `organization_id`.
 Constraints: none beyond required foreign keys - client names are not
 unique within a house.
 
-Permissions: created/read/updated via `/api/v1/houses/:houseId/clients`
-and `/api/v1/clients/:clientId` routes by any member of the house (ADR
-0022).
+Permissions: created/read/updated/archived/deleted via
+`/api/v1/houses/:houseId/clients` and `/api/v1/clients/:clientId(/archive)`
+routes by any member of the house (ADR 0022, extended per ADR 0051).
+Hard delete (`DELETE /api/v1/clients/:clientId`) is refused with
+`409 client_has_projects` while any `project_clients` row still links to
+it - archive or unlink its projects first.
 
-Reasoning: kept intentionally minimal (no address, billing, or portal
-fields) - only what a project needs to display/link a client right now;
-extend when a real feature needs more.
+Reasoning: originally kept intentionally minimal (no address, billing, or
+portal fields); ADR 0051 added the company-profile fields the Projects
+Module Overhaul's Clients page needed (logo, phone, address, GST, notes)
+plus an archive/delete lifecycle, matching `projects.status`'s existing
+pattern rather than inventing a new one.
 
-Migration history: `20260708172602_projects_clients`.
+Migration history: `20260708172602_projects_clients`; `logo_url`/`phone`/
+`address`/`gst`/`notes`/`status` added in
+`20260716160000_projects_client_depth` (ADR 0051).
 
 ### Table: `project_clients`
 

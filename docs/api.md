@@ -1093,15 +1093,18 @@ matching the designed Projects page UI).
 ### `POST /api/v1/houses/:houseId/projects`
 
 Authentication: required. Body:
-`{ "name": string, "description"?: string, "type"?: string, "genre"?: string, "stage"?: string, "progress"?: number, "coverGradient"?: string, "coverIcon"?: string, "dueDate"?: string, "teamIds"?: string[], "clientId"?: string }`.
+`{ "name": string, "description"?: string, "type"?: string, "genre"?: string, "stage"?: string, "priority"?: string, "progress"?: number, "coverGradient"?: string, "coverIcon"?: string, "dueDate"?: string, "teamIds"?: string[], "clientId"?: string }`.
 `type` must be one of a fixed production-type list (`"Short Film"`,
 `"Documentary"`, `"Commercial"`, `"Music Video"`, `"Feature Film"`,
 `"Corporate Video"`, `"Web Series"`, `"Wedding Film"`); `stage` one of
 `"Development" | "Pre-Production" | "In Production" | "In Progress" |
 "Post-Production" | "On Hold" | "Completed"` (default `"Development"`);
-`coverIcon` one of `"camera" | "clapperboard" | "heart" | "megaphone" |
-"mic" | "music"`; `teamIds` must all be current members of `houseId`;
-`clientId` (added per ADR 0045) links the client immediately and files the
+`priority` one of `"low" | "medium" | "high" | "urgent"` (default
+`"medium"`, added per ADR 0051 — reuses `Task.priority`'s exact
+vocabulary and `PRIORITY_META` styling, no new vocabulary); `coverIcon`
+one of `"camera" | "clapperboard" | "heart" | "megaphone" | "mic" |
+"music"`; `teamIds` must all be current members of `houseId`; `clientId`
+(added per ADR 0045) links the client immediately and files the
 project's Drive folder under it — omit to file under Clients/Misc instead.
 Response:
 
@@ -1115,6 +1118,7 @@ Response:
     "description": "Launch campaign film + stills.",
     "stage": "Development",
     "status": "active",
+    "priority": "medium",
     "progress": 0,
     "coverGradient": "from-slate-400 via-slate-600 to-slate-800",
     "coverIcon": null,
@@ -1135,8 +1139,9 @@ table doc for the mapping) and is distinct from the DB's own
 active/archived tracking column.
 
 Errors: `400 invalid_request` (missing `name`, bad `type`/`stage`/
-`coverIcon` value, or a `teamIds` entry that isn't a house member),
-`401 unauthenticated`, `403 forbidden` (caller isn't a member of `houseId`).
+`priority`/`coverIcon` value, or a `teamIds` entry that isn't a house
+member), `401 unauthenticated`, `403 forbidden` (caller isn't a member of
+`houseId`).
 
 ### `GET /api/v1/houses/:houseId/projects`
 
@@ -1166,6 +1171,32 @@ Authentication: required. No body. Response: updated `Project` with
 status flag (matches `logout`/`logout-all`'s precedent). Errors:
 `401 unauthenticated`, `403 forbidden`, `404 project_not_found`.
 
+### `GET /api/v1/projects/:projectId/stats`
+
+Authentication: required. Added per ADR 0051. Response:
+
+```json
+{
+  "data": {
+    "taskCount": 12,
+    "completedTaskCount": 5,
+    "teamMemberCount": 4,
+    "fileCount": 23,
+    "storageBytes": 104857600,
+    "timeLoggedHours": 18.5,
+    "completionPercent": 40
+  }
+}
+```
+
+Computed on read, not stored: task counts and `teamMemberCount` (union of
+every task's assignees) come from the project's non-template `Task` rows;
+`fileCount`/`storageBytes` come from `FileEntry` rows whose `driveKey`
+starts with `project:{projectId}` (the existing Drive-folder-key scoping
+from ADR 0045, not a new FK); `timeLoggedHours` sums `TimeEntry.hours`;
+`completionPercent` echoes `Project.progress`. Errors: `401 unauthenticated`,
+`403 forbidden`, `404 project_not_found`.
+
 ### `POST /api/v1/projects/:projectId/clients`
 
 Authentication: required. Body: `{ "clientId": string }`. Response: updated
@@ -1180,16 +1211,23 @@ the same project don't move it again. Errors: `400 invalid_request`
 ### `POST /api/v1/houses/:houseId/clients`
 
 Authentication: required. Body:
-`{ "name": string, "contactName"?: string, "contactEmail"?: string }`.
-Response:
+`{ "name": string, "logoUrl"?: string, "contactName"?: string, "contactEmail"?: string, "phone"?: string, "address"?: string, "gst"?: string, "notes"?: string }`.
+The `logoUrl`/`phone`/`address`/`gst`/`notes` fields were added per ADR
+0051 for a fuller company profile — all optional. Response:
 
 ```json
 {
   "data": {
     "id": "client_123",
     "name": "North Star Films",
+    "logoUrl": null,
     "contactName": "Dev Anand",
     "contactEmail": "dev@northstarfilms.example",
+    "phone": null,
+    "address": null,
+    "gst": null,
+    "notes": null,
+    "status": "active",
     "createdAt": "2026-07-08T10:00:00.000Z",
     "updatedAt": "2026-07-08T10:00:00.000Z"
   }
@@ -1205,13 +1243,54 @@ Drive isn't connected or the call fails. Errors: `400 invalid_request`
 ### `GET /api/v1/houses/:houseId/clients`
 
 Authentication: required. Query: `limit?`, `cursor?` (same as projects).
-Response: `{ "data": Client[], "page": {...} }`. Errors:
-`401 unauthenticated`, `403 forbidden`.
+Response: `{ "data": Client[], "page": {...} }` — excludes archived
+clients (`status: "archived"`, ADR 0051). Errors: `401 unauthenticated`,
+`403 forbidden`.
 
 ### `GET /api/v1/clients/:clientId` / `PATCH /api/v1/clients/:clientId`
 
 Same shape/error pattern as the corresponding project endpoints, scoped to
-a `Client` instead.
+a `Client` instead. `PATCH` accepts any subset of the create body's
+fields (all optional).
+
+### `POST /api/v1/clients/:clientId/archive`
+
+Authentication: required. Added per ADR 0051. No body. Response: updated
+`Client` with `status: "archived"` (then excluded from the list
+endpoint). Errors: `401 unauthenticated`, `403 forbidden`,
+`404 client_not_found`.
+
+### `DELETE /api/v1/clients/:clientId`
+
+Authentication: required. Added per ADR 0051. No body. Response:
+`{ "data": { "success": true } }`. Refuses to delete a client that still
+has linked projects — archive or unlink them first — since deleting would
+silently orphan project-client links. Errors: `401 unauthenticated`,
+`403 forbidden`, `404 client_not_found`, `409 client_has_projects`.
+
+### `GET /api/v1/clients/:clientId/stats`
+
+Authentication: required. Added per ADR 0051. Response:
+
+```json
+{
+  "data": {
+    "activeProjects": 3,
+    "completedProjects": 1,
+    "totalShoots": 0,
+    "videosDelivered": 0,
+    "storageBytes": 52428800
+  }
+}
+```
+
+Computed on read: project counts come from `ProjectClient` links joined to
+each project's `stage`/`status`; `storageBytes` sums `FileEntry.size`
+under the client's own Drive folder plus every linked project's folder
+(matched by `driveKey` prefix, same mechanism as the project stats
+endpoint). `totalShoots`/`videosDelivered` are placeholders (`0`) until
+Phases 2/4 of the Projects Overhaul add those entities. Errors:
+`401 unauthenticated`, `403 forbidden`, `404 client_not_found`.
 
 ## Notifications (Implemented)
 
