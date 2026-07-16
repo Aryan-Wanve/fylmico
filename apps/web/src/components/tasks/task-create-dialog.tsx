@@ -38,6 +38,18 @@ import type {
 const selectClassName =
   "h-10 w-full rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]";
 
+const COMMON_TASK_TYPES: TaskType[] = [
+  "shoot",
+  "edit",
+  "color-grade",
+  "script-writing",
+  "meeting",
+  "custom"
+];
+const MORE_TASK_TYPES = TASK_TYPES.filter(
+  (value) => !COMMON_TASK_TYPES.includes(value)
+);
+
 export function TaskCreateDialog({
   open,
   onOpenChange,
@@ -55,6 +67,8 @@ export function TaskCreateDialog({
 }) {
   const [type, setType] = useState<TaskType>("custom");
   const [title, setTitle] = useState("");
+  const [titleTouched, setTitleTouched] = useState(false);
+  const [showMoreTypes, setShowMoreTypes] = useState(false);
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [assignees, setAssignees] = useState<TaskAssigneeInput[]>([]);
   const [dueDate, setDueDate] = useState("");
@@ -90,9 +104,19 @@ export function TaskCreateDialog({
       )
     : [];
 
+  function handleSelectType(value: TaskType) {
+    setType(value);
+    if (!titleTouched && value !== "custom") {
+      const count = tasks.filter((task) => task.type === value).length;
+      setTitle(`${TASK_TYPE_LABELS[value]} ${count + 1}`);
+    }
+  }
+
   function reset() {
     setType("custom");
     setTitle("");
+    setTitleTouched(false);
+    setShowMoreTypes(false);
     setPriority("medium");
     setAssignees([]);
     setDueDate("");
@@ -158,7 +182,7 @@ export function TaskCreateDialog({
       }}
       open={open}
     >
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl">
         <form className="grid gap-5" onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>New Task</DialogTitle>
@@ -167,7 +191,7 @@ export function TaskCreateDialog({
           <div className="grid gap-1.5">
             <Label>Type</Label>
             <div className="flex flex-wrap gap-1.5">
-              {TASK_TYPES.map((value) => (
+              {COMMON_TASK_TYPES.map((value) => (
                 <button
                   className={`rounded-full px-3 py-1.5 text-xs font-bold ${
                     type === value
@@ -175,20 +199,46 @@ export function TaskCreateDialog({
                       : "bg-black/[0.04] text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]"
                   }`}
                   key={value}
-                  onClick={() => setType(value)}
+                  onClick={() => handleSelectType(value)}
                   type="button"
                 >
                   {TASK_TYPE_LABELS[value]}
                 </button>
               ))}
+              {showMoreTypes
+                ? MORE_TASK_TYPES.map((value) => (
+                    <button
+                      className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+                        type === value
+                          ? "bg-[#654cff] text-white"
+                          : "bg-black/[0.04] text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]"
+                      }`}
+                      key={value}
+                      onClick={() => handleSelectType(value)}
+                      type="button"
+                    >
+                      {TASK_TYPE_LABELS[value]}
+                    </button>
+                  ))
+                : null}
+              <button
+                className="rounded-full px-3 py-1.5 text-xs font-bold text-[#654cff]"
+                onClick={() => setShowMoreTypes((current) => !current)}
+                type="button"
+              >
+                {showMoreTypes ? "Show less" : "Show more"}
+              </button>
             </div>
           </div>
 
           <label className="grid gap-1.5">
-            <Label>{type === "custom" ? "Custom name" : "Task name"}</Label>
+            <Label>Description</Label>
             <Input
               autoFocus
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={(event) => {
+                setTitle(event.target.value);
+                setTitleTouched(true);
+              }}
               placeholder="Color grade the interview scene"
               value={title}
             />
@@ -227,6 +277,7 @@ export function TaskCreateDialog({
           <label className="grid gap-1.5">
             <Label>Deadline</Label>
             <Input
+              className="dark:[color-scheme:dark]"
               onChange={(event) => setDueDate(event.target.value)}
               type="datetime-local"
               value={dueDate}
