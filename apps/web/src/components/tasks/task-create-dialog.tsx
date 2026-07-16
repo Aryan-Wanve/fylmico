@@ -19,9 +19,11 @@ import {
   TASK_TYPES
 } from "@/components/tasks/task-data";
 import {
+  getShootUploadFolder,
   linkTaskAttachment,
   listClients,
   listProjects,
+  listShoots,
   resolveFileDestination
 } from "@/services/base-workspace.service";
 import type {
@@ -30,6 +32,7 @@ import type {
   HouseMember,
   ProductionTask,
   Project,
+  Shoot,
   TaskAssigneeInput,
   TaskPriority,
   TaskType
@@ -75,11 +78,13 @@ export function TaskCreateDialog({
   const [location, setLocation] = useState("");
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState("");
+  const [shootId, setShootId] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [shoots, setShoots] = useState<Shoot[]>([]);
 
   useEffect(() => {
     if (!open) {
@@ -97,6 +102,27 @@ export function TaskCreateDialog({
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  useEffect(() => {
+    if (!projectId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing the shoot picker's options when its parent project selection is cleared, not deriving render output
+      setShoots([]);
+      return;
+    }
+    listShoots(projectId)
+      .then((shootList) =>
+        setShoots(
+          shootList.filter(
+            (shoot) =>
+              shoot.status === "uploaded" ||
+              shoot.status === "ready-for-editing"
+          )
+        )
+      )
+      .catch(() => {
+        // Shoot picker just shows fewer options if this fails.
+      });
+  }, [projectId]);
 
   const projectsForClient = clientId
     ? projects.filter((project) =>
@@ -123,6 +149,7 @@ export function TaskCreateDialog({
     setLocation("");
     setClientId("");
     setProjectId("");
+    setShootId("");
     setError("");
   }
 
@@ -146,7 +173,14 @@ export function TaskCreateDialog({
         projectId: type === "edit" ? projectId || undefined : undefined
       });
 
-      if (type === "edit" && clientId && projectId) {
+      if (type === "edit" && shootId) {
+        try {
+          const { parentId } = await getShootUploadFolder(shootId);
+          await linkTaskAttachment(created.id, parentId);
+        } catch {
+          // Task itself was created fine - the footage link is best-effort.
+        }
+      } else if (type === "edit" && clientId && projectId) {
         try {
           const { parentId } = await resolveFileDestination({
             clientId,
@@ -287,12 +321,13 @@ export function TaskCreateDialog({
           {type === "edit" ? (
             <div className="grid gap-1.5">
               <Label>Assign raw footage</Label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <select
                   className={selectClassName}
                   onChange={(event) => {
                     setClientId(event.target.value);
                     setProjectId("");
+                    setShootId("");
                   }}
                   value={clientId}
                 >
@@ -306,13 +341,31 @@ export function TaskCreateDialog({
                 <select
                   className={selectClassName}
                   disabled={!clientId}
-                  onChange={(event) => setProjectId(event.target.value)}
+                  onChange={(event) => {
+                    setProjectId(event.target.value);
+                    setShootId("");
+                  }}
                   value={projectId}
                 >
                   <option value="">Select folder</option>
                   {projectsForClient.map((project) => (
                     <option key={project.id} value={project.id}>
                       {project.title}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className={selectClassName}
+                  disabled={!projectId || shoots.length === 0}
+                  onChange={(event) => setShootId(event.target.value)}
+                  value={shootId}
+                >
+                  <option value="">
+                    {shoots.length === 0 ? "No shoots ready" : "Whole folder"}
+                  </option>
+                  {shoots.map((shoot) => (
+                    <option key={shoot.id} value={shoot.id}>
+                      {shoot.name}
                     </option>
                   ))}
                 </select>
