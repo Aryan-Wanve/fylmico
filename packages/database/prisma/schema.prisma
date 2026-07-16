@@ -47,6 +47,7 @@ model User {
   callSheets                CallSheet[]
   announcements             Announcement[]
   conversationReads         ConversationRead[]
+  createdShoots             Shoot[]
 
   @@map("users")
 }
@@ -86,6 +87,7 @@ model Organization {
   announcements   Announcement[]
   notifications   Notification[]
   driveConnection DriveConnection?
+  shoots          Shoot[]
 
   @@map("organizations")
 }
@@ -239,6 +241,7 @@ model Task {
   boardId           String?   @map("board_id")
   scriptId          String?   @map("script_id")
   shootDayEventId   String?   @map("shoot_day_event_id")
+  shootId           String?   @map("shoot_id")
   createdById       String    @map("created_by_id")
   title             String
   description       String?
@@ -268,6 +271,7 @@ model Task {
   board          Board?              @relation(fields: [boardId], references: [id], onDelete: SetNull)
   script         Script?             @relation(fields: [scriptId], references: [id], onDelete: SetNull)
   shootDayEvent  CalendarEvent?      @relation(fields: [shootDayEventId], references: [id], onDelete: SetNull)
+  shoot          Shoot?              @relation(fields: [shootId], references: [id], onDelete: SetNull)
   createdBy      User                @relation("TasksCreated", fields: [createdById], references: [id])
   assignees      TaskAssignee[]
   checklistItems TaskChecklistItem[]
@@ -284,6 +288,7 @@ model Task {
   @@index([boardId])
   @@index([scriptId])
   @@index([shootDayEventId])
+  @@index([shootId])
   @@index([createdById])
   @@map("tasks")
 }
@@ -464,6 +469,7 @@ model Project {
   scripts        Script[]
   callSheets     CallSheet[]
   tasks          Task[]
+  shoots         Shoot[]
 
   @@index([organizationId])
   @@map("projects")
@@ -504,6 +510,41 @@ model ProjectClient {
   @@index([projectId])
   @@index([clientId])
   @@map("project_clients")
+}
+
+model Shoot {
+  id              String    @id @default(cuid())
+  organizationId  String    @map("organization_id")
+  projectId       String    @map("project_id")
+  calendarEventId String?   @map("calendar_event_id")
+  createdById     String    @map("created_by_id")
+  name            String
+  scheduledDate   String    @map("scheduled_date")
+  callTime        String?   @map("call_time")
+  location        String?
+  equipment       String[]
+  notes           String?
+  status          String    @default("scheduled")
+  cancelReason    String?   @map("cancel_reason")
+  cancelNotes     String?   @map("cancel_notes")
+  reachedAt       DateTime? @map("reached_at")
+  startedAt       DateTime? @map("started_at")
+  finishedAt      DateTime? @map("finished_at")
+  uploadedAt      DateTime? @map("uploaded_at")
+  cancelledAt     DateTime? @map("cancelled_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  calendarEvent CalendarEvent? @relation(fields: [calendarEventId], references: [id], onDelete: SetNull)
+  createdBy     User           @relation(fields: [createdById], references: [id])
+  tasks         Task[]
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([calendarEventId])
+  @@map("shoots")
 }
 
 model Notification {
@@ -583,6 +624,7 @@ model CalendarEvent {
   conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
   createdBy    User          @relation(fields: [createdById], references: [id])
   tasks        Task[]
+  shoots       Shoot[]
 
   @@index([organizationId])
   @@index([projectId])
