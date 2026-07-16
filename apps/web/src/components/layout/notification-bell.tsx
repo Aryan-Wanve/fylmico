@@ -31,7 +31,7 @@ const POLL_INTERVAL_MS = 25_000;
 // Where each notification type's "relevant page" is, once its house is
 // active - a plain lookup, not a routing framework, since it's just 10-ish
 // known notification types.
-const TYPE_DESTINATION: Record<string, string> = {
+export const TYPE_DESTINATION: Record<string, string> = {
   task_assigned: "/tasks",
   task_comment: "/tasks",
   task_mentioned: "/tasks",
@@ -46,7 +46,7 @@ const TYPE_DESTINATION: Record<string, string> = {
   member_role_assigned: "/home"
 };
 
-const TYPE_STYLES: Record<
+export const TYPE_STYLES: Record<
   string,
   { icon: typeof Bell; bg: string; color: string }
 > = {
@@ -97,7 +97,7 @@ const TYPE_STYLES: Record<
   }
 };
 
-const DEFAULT_TYPE_STYLE = {
+export const DEFAULT_TYPE_STYLE = {
   icon: Bell,
   bg: "bg-[#8a90a3]/10",
   color: "text-[#8a90a3]"
