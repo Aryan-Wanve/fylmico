@@ -1,6 +1,13 @@
 "use client";
 
 import { LayoutGrid, List, Minus, Plus, Play } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { formatRelativeTime } from "@/lib/relative-time";
 import type { Board, ScriptSummary } from "@/types/base";
 
@@ -38,18 +45,30 @@ export function BoardToolbar({
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        <select
-          className="h-9 rounded-lg border border-black/10 bg-white px-2.5 text-sm text-[#4b5268] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9]"
-          onChange={(event) => onLinkScript(event.target.value)}
-          value={board.scriptId ?? ""}
+        <Select
+          items={{
+            none: "No linked script",
+            ...Object.fromEntries(
+              scripts.map((script) => [script.id, script.title])
+            )
+          }}
+          onValueChange={(next) =>
+            onLinkScript(next && next !== "none" ? next : "")
+          }
+          value={board.scriptId || "none"}
         >
-          <option value="">No linked script</option>
-          {scripts.map((script) => (
-            <option key={script.id} value={script.id}>
-              {script.title}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="h-9 bg-white dark:bg-[#171a28]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No linked script</SelectItem>
+            {scripts.map((script) => (
+              <SelectItem key={script.id} value={script.id}>
+                {script.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <button
           className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 text-sm font-semibold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
