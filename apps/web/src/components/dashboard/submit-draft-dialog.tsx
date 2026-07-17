@@ -12,12 +12,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useUploadQueue } from "@/lib/uploads/use-upload-queue";
 import {
   createDeliverable,
   stopTaskTimer,
-  updateTask,
-  uploadTaskAttachment
+  updateTask
 } from "@/services/base-workspace.service";
+import type { FileEntryItem } from "@/types/base";
 
 export function SubmitDraftDialog({
   taskId,
@@ -32,13 +33,13 @@ export function SubmitDraftDialog({
   onOpenChange: (open: boolean) => void;
   onUploaded: () => void;
 }) {
+  const { enqueue } = useUploadQueue();
   const [dragOver, setDragOver] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
   const [resolution, setResolution] = useState("");
   const [codec, setCodec] = useState("");
   const [frameRate, setFrameRate] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   function handlePick(picked: File | undefined) {
     if (picked) {
@@ -46,43 +47,46 @@ export function SubmitDraftDialog({
     }
   }
 
-  async function handleSubmit() {
-    if (!file) return;
-    setSubmitting(true);
-    try {
-      const uploaded = await uploadTaskAttachment(taskId, file);
-      if (projectId) {
-        try {
-          const exportSettings: Record<string, string> = {};
-          if (resolution.trim()) exportSettings.Resolution = resolution.trim();
-          if (codec.trim()) exportSettings.Codec = codec.trim();
-          if (frameRate.trim()) exportSettings["Frame Rate"] = frameRate.trim();
-
-          await createDeliverable(projectId, {
-            fileEntryId: uploaded.id,
-            taskId,
-            notes: notes.trim() || undefined,
-            exportSettings:
-              Object.keys(exportSettings).length > 0
-                ? exportSettings
-                : undefined
-          });
-        } catch {
-          // Attachment itself succeeded - the versioned Deliverable row
-          // is best-effort on top of it.
-        }
-      }
+  // The upload continues in the background (global queue panel) after this
+  // dialog closes - createDeliverable/stopTaskTimer/updateTask only run
+  // once the file has actually finished uploading, via this callback.
+  async function finishSubmission(uploaded: FileEntryItem) {
+    if (projectId) {
       try {
-        await stopTaskTimer(taskId);
+        const exportSettings: Record<string, string> = {};
+        if (resolution.trim()) exportSettings.Resolution = resolution.trim();
+        if (codec.trim()) exportSettings.Codec = codec.trim();
+        if (frameRate.trim()) exportSettings["Frame Rate"] = frameRate.trim();
+
+        await createDeliverable(projectId, {
+          fileEntryId: uploaded.id,
+          taskId,
+          notes: notes.trim() || undefined,
+          exportSettings:
+            Object.keys(exportSettings).length > 0 ? exportSettings : undefined
+        });
       } catch {
-        // No running timer - fine.
+        // Attachment itself succeeded - the versioned Deliverable row
+        // is best-effort on top of it.
       }
-      await updateTask(taskId, { status: "review" });
-      onUploaded();
-      onOpenChange(false);
-    } finally {
-      setSubmitting(false);
     }
+    try {
+      await stopTaskTimer(taskId);
+    } catch {
+      // No running timer - fine.
+    }
+    await updateTask(taskId, { status: "review" });
+    onUploaded();
+  }
+
+  function handleSubmit() {
+    if (!file) return;
+    enqueue(
+      file,
+      { parentId: null, taskId, label: "Submit Draft" },
+      (uploaded) => void finishSubmission(uploaded)
+    );
+    onOpenChange(false);
   }
 
   return (
@@ -116,7 +120,6 @@ export function SubmitDraftDialog({
             </span>
             <input
               className="hidden"
-              disabled={submitting}
               onChange={(event) => handlePick(event.target.files?.[0])}
               type="file"
             />
@@ -176,12 +179,8 @@ export function SubmitDraftDialog({
           >
             Cancel
           </Button>
-          <Button
-            disabled={!file || submitting}
-            onClick={() => void handleSubmit()}
-            type="button"
-          >
-            {submitting ? "Submitting..." : "Submit for Review"}
+          <Button disabled={!file} onClick={handleSubmit} type="button">
+            Submit for Review
           </Button>
         </DialogFooter>
       </DialogContent>

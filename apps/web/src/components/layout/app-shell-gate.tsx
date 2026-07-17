@@ -11,6 +11,7 @@ import { WaitingForApprovalPage } from "@/components/houses/waiting-for-approval
 import { getFocusMode, setFocusMode } from "@/lib/focus-mode";
 import { setLastPage } from "@/lib/house-last-page";
 import { sendHeartbeat } from "@/services/base-workspace.service";
+import { UploadQueuePanel } from "@/components/uploads/upload-queue-panel";
 
 const DASHBOARD_PATH = "/dashboard";
 const HEARTBEAT_INTERVAL_MS = 60_000;
@@ -162,6 +163,8 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
           Welcome to {welcomeHouseName}!
         </div>
       ) : null}
+
+      <UploadQueuePanel />
     </div>
   );
 }

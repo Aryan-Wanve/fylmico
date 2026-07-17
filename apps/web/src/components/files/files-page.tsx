@@ -19,9 +19,11 @@ import { RecentFileActivityPanel } from "@/components/files/recent-file-activity
 import { DriveConnectionBanner } from "@/components/files/drive-connection-banner";
 import { UploadDestinationDialog } from "@/components/files/upload-destination-dialog";
 import {
-  UploadProgressToast,
-  type UploadProgressItem
-} from "@/components/files/upload-progress-toast";
+  UploadValidationDialog,
+  getFileWarnings,
+  type FileWarning
+} from "@/components/uploads/upload-validation-dialog";
+import { useUploadQueue } from "@/lib/uploads/use-upload-queue";
 import { PaginationFooter } from "@/components/layout/pagination-footer";
 import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
@@ -33,9 +35,7 @@ import {
   listClients,
   listFileEntries,
   listProjects,
-  resolveFileDestination,
-  uploadFileEntryWithProgress,
-  type UploadHandle
+  resolveFileDestination
 } from "@/services/base-workspace.service";
 import {
   disconnectDrive,
@@ -53,9 +53,12 @@ import type {
 
 type Crumb = { id: string | null; name: string };
 
+type PendingBatch = { parentId: string | null; category?: UploadCategory };
+
 export function FilesPage() {
   const prompt = usePrompt();
   const { activeHouse, workspace } = useWorkspace();
+  const { enqueue } = useUploadQueue();
   const isOwner =
     activeHouse?.members.find((member) => member.id === workspace.user.id)
       ?.role === "Owner";
@@ -72,13 +75,16 @@ export function FilesPage() {
     connected: false,
     email: null
   });
-  const [uploads, setUploads] = useState<UploadProgressItem[]>([]);
+  const [dragOver, setDragOver] = useState(false);
   const [previewFile, setPreviewFile] = useState<FileEntryItem | null>(null);
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [destinationDialogOpen, setDestinationDialogOpen] = useState(false);
-  const uploadHandles = useRef(new Map<string, UploadHandle>());
-  const uploadStartTimes = useRef(new Map<string, number>());
+  const [validation, setValidation] = useState<{
+    flagged: { file: File; warnings: FileWarning[] }[];
+    batch: PendingBatch;
+  } | null>(null);
+  const pendingDropFiles = useRef<File[] | null>(null);
 
   const currentFolderId = path[path.length - 1].id;
 
@@ -250,94 +256,121 @@ export function FilesPage() {
     }
   }
 
+  function enqueueBatch(files: File[], batch: PendingBatch) {
+    const label =
+      batch.parentId === currentFolderId ? path[path.length - 1].name : "Files";
+    for (const file of files) {
+      enqueue(
+        file,
+        { parentId: batch.parentId, label: `Files — ${label}` },
+        (uploaded) => {
+          if (batch.parentId === currentFolderId) {
+            setEntries((current) => [uploaded, ...current]);
+          }
+          if (batch.category === "deliverables") {
+            void promptAddToPortfolio(uploaded.id);
+          }
+        }
+      );
+    }
+  }
+
+  function beginUploadBatch(files: File[], batch: PendingBatch) {
+    const existingNames =
+      batch.parentId === currentFolderId
+        ? entries.map((entry) => entry.name)
+        : [];
+    const flagged: { file: File; warnings: FileWarning[] }[] = [];
+    const clean: File[] = [];
+    for (const file of files) {
+      const warnings = getFileWarnings(file, existingNames);
+      if (warnings.length > 0) {
+        flagged.push({ file, warnings });
+      } else {
+        clean.push(file);
+      }
+    }
+    if (clean.length > 0) {
+      enqueueBatch(clean, batch);
+    }
+    if (flagged.length > 0) {
+      setValidation({ flagged, batch });
+    }
+  }
+
+  async function handleFolderUpload(
+    files: File[],
+    rootParentId: string | null,
+    category?: UploadCategory
+  ) {
+    const folderIds = new Map<string, Promise<string | null>>();
+
+    function resolveFolder(pathParts: string[]): Promise<string | null> {
+      if (pathParts.length === 0) {
+        return Promise.resolve(rootParentId);
+      }
+      const key = pathParts.join("/");
+      let pending = folderIds.get(key);
+      if (!pending) {
+        pending = (async () => {
+          const parentId = await resolveFolder(pathParts.slice(0, -1));
+          const folder = await createFolder(
+            pathParts[pathParts.length - 1],
+            parentId
+          );
+          return folder.id;
+        })();
+        folderIds.set(key, pending);
+      }
+      return pending;
+    }
+
+    try {
+      for (const file of files) {
+        const relativePath =
+          (file as File & { webkitRelativePath?: string }).webkitRelativePath ||
+          file.name;
+        const parts = relativePath.split("/");
+        const parentId = await resolveFolder(parts.slice(0, -1));
+        beginUploadBatch([file], { parentId, category });
+      }
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not recreate this folder's structure."
+      );
+    }
+  }
+
   function startUpload(
     targetParentId: string | null,
     category?: UploadCategory
   ) {
     const input = document.createElement("input");
     input.type = "file";
+    input.multiple = true;
     input.onchange = () => {
-      const file = input.files?.[0];
-      if (!file) {
-        return;
-      }
+      const files = input.files ? Array.from(input.files) : [];
+      if (files.length === 0) return;
+      beginUploadBatch(files, { parentId: targetParentId, category });
+    };
+    input.click();
+  }
 
-      const uploadId = `${Date.now()}-${file.name}`;
-      uploadStartTimes.current.set(uploadId, performance.now());
-      setUploads((current) => [
-        {
-          id: uploadId,
-          fileName: file.name,
-          loaded: 0,
-          total: file.size,
-          speedBytesPerSec: 0,
-          status: "uploading"
-        },
-        ...current
-      ]);
-
-      const handle = uploadFileEntryWithProgress(
-        file,
-        targetParentId,
-        (loaded, total) => {
-          const startedAt =
-            uploadStartTimes.current.get(uploadId) ?? performance.now();
-          const elapsedSeconds = (performance.now() - startedAt) / 1000;
-          const speedBytesPerSec =
-            elapsedSeconds > 0 ? loaded / elapsedSeconds : 0;
-          setUploads((current) =>
-            current.map((upload) =>
-              upload.id === uploadId
-                ? { ...upload, loaded, total, speedBytesPerSec }
-                : upload
-            )
-          );
-        }
-      );
-      uploadHandles.current.set(uploadId, handle);
-
-      handle.promise
-        .then((uploaded) => {
-          if (targetParentId === currentFolderId) {
-            setEntries((current) => [uploaded, ...current]);
-          }
-          setUploads((current) =>
-            current.map((upload) =>
-              upload.id === uploadId
-                ? { ...upload, status: "done", loaded: upload.total }
-                : upload
-            )
-          );
-          setTimeout(() => {
-            setUploads((current) =>
-              current.filter((upload) => upload.id !== uploadId)
-            );
-          }, 4000);
-
-          if (category === "deliverables") {
-            void promptAddToPortfolio(uploaded.id);
-          }
-        })
-        .catch((error) => {
-          setUploads((current) =>
-            current.map((upload) =>
-              upload.id === uploadId
-                ? {
-                    ...upload,
-                    status: "error",
-                    errorMessage:
-                      error instanceof Error
-                        ? error.message
-                        : "Could not upload the file."
-                  }
-                : upload
-            )
-          );
-        })
-        .finally(() => {
-          uploadHandles.current.delete(uploadId);
-          uploadStartTimes.current.delete(uploadId);
-        });
+  function startFolderUpload(
+    targetParentId: string | null,
+    category?: UploadCategory
+  ) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = true;
+    (input as HTMLInputElement & { webkitdirectory: boolean }).webkitdirectory =
+      true;
+    input.onchange = () => {
+      const files = input.files ? Array.from(input.files) : [];
+      if (files.length === 0) return;
+      void handleFolderUpload(files, targetParentId, category);
     };
     input.click();
   }
@@ -349,11 +382,38 @@ export function FilesPage() {
     }
 
     if (!sensitiveView && currentFolderId === null) {
+      pendingDropFiles.current = null;
       setDestinationDialogOpen(true);
       return;
     }
 
     startUpload(currentFolderId);
+  }
+
+  function handleUploadFolder() {
+    if (!driveStatus.connected) {
+      window.alert("Connect your Google Drive before uploading files.");
+      return;
+    }
+    if (!sensitiveView && currentFolderId === null) {
+      window.alert("Open (or create) a folder first, then upload into it.");
+      return;
+    }
+    startFolderUpload(currentFolderId);
+  }
+
+  function handleFilesDropped(files: File[]) {
+    if (files.length === 0) return;
+    if (!driveStatus.connected) {
+      window.alert("Connect your Google Drive before uploading files.");
+      return;
+    }
+    if (!sensitiveView && currentFolderId === null) {
+      pendingDropFiles.current = files;
+      setDestinationDialogOpen(true);
+      return;
+    }
+    beginUploadBatch(files, { parentId: currentFolderId });
   }
 
   async function handleConfirmDestination(destination: {
@@ -363,7 +423,15 @@ export function FilesPage() {
   }) {
     try {
       const { parentId } = await resolveFileDestination(destination);
-      startUpload(parentId, destination.category);
+      if (pendingDropFiles.current) {
+        beginUploadBatch(pendingDropFiles.current, {
+          parentId,
+          category: destination.category
+        });
+        pendingDropFiles.current = null;
+      } else {
+        startUpload(parentId, destination.category);
+      }
     } catch (error) {
       window.alert(
         error instanceof Error
@@ -371,14 +439,6 @@ export function FilesPage() {
           : "Could not resolve where to upload this file."
       );
     }
-  }
-
-  function handleDismissUpload(uploadId: string) {
-    setUploads((current) => current.filter((upload) => upload.id !== uploadId));
-  }
-
-  function handleCancelUpload(uploadId: string) {
-    uploadHandles.current.get(uploadId)?.cancel();
   }
 
   async function handleDelete(entryId: string) {
@@ -415,6 +475,7 @@ export function FilesPage() {
         onNewFolder={handleNewFolder}
         onToggleSensitive={handleToggleSensitive}
         onUpload={handleUpload}
+        onUploadFolder={handleUploadFolder}
         sensitiveView={sensitiveView}
         showSensitiveToggle={isOwner}
       />
@@ -431,7 +492,27 @@ export function FilesPage() {
           <StorageUsedPanel usedBytes={summary?.usedBytes ?? 0} />
         </div>
 
-        <div className="grid min-w-0 grid-cols-1 content-start gap-4">
+        <div
+          className={`grid min-w-0 grid-cols-1 content-start gap-4 rounded-2xl transition-colors ${
+            dragOver
+              ? "bg-[#654cff]/[0.03] outline outline-2 -outline-offset-2 outline-[#654cff]"
+              : ""
+          }`}
+          onDragLeave={(event) => {
+            if (event.currentTarget === event.target) {
+              setDragOver(false);
+            }
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setDragOver(true);
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            setDragOver(false);
+            handleFilesDropped(Array.from(event.dataTransfer.files));
+          }}
+        >
           <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
             <FilesBreadcrumb onNavigate={handleNavigate} path={path} />
             <FilesViewControls
@@ -503,18 +584,26 @@ export function FilesPage() {
         </aside>
       </div>
 
-      <UploadProgressToast
-        onCancel={handleCancelUpload}
-        onDismiss={handleDismissUpload}
-        uploads={uploads}
-      />
-
       <UploadDestinationDialog
         clients={clients}
         onConfirm={handleConfirmDestination}
         onOpenChange={setDestinationDialogOpen}
         open={destinationDialogOpen}
         projects={projects}
+      />
+
+      <UploadValidationDialog
+        flagged={validation?.flagged ?? []}
+        onConfirm={(files) => {
+          if (validation) {
+            enqueueBatch(files, validation.batch);
+          }
+          setValidation(null);
+        }}
+        onOpenChange={(open) => {
+          if (!open) setValidation(null);
+        }}
+        open={validation !== null}
       />
 
       {previewFile ? (

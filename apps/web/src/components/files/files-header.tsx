@@ -10,12 +10,14 @@ import {
 
 export function FilesHeader({
   onUpload,
+  onUploadFolder,
   onNewFolder,
   showSensitiveToggle = false,
   sensitiveView = false,
   onToggleSensitive
 }: {
   onUpload: () => void;
+  onUploadFolder?: () => void;
   onNewFolder: () => void;
   showSensitiveToggle?: boolean;
   sensitiveView?: boolean;
@@ -76,6 +78,11 @@ export function FilesHeader({
           />
           <DropdownMenuContent align="end" className="w-44">
             <DropdownMenuItem onClick={onUpload}>Upload files</DropdownMenuItem>
+            {onUploadFolder ? (
+              <DropdownMenuItem onClick={onUploadFolder}>
+                Upload folder
+              </DropdownMenuItem>
+            ) : null}
             <DropdownMenuItem onClick={onNewFolder}>
               New folder
             </DropdownMenuItem>
