@@ -233,7 +233,6 @@ export function FocusTaskCard({
       <div className="mt-4">
         {task.shootId ? (
           <ShootTaskCard
-            busy={busy}
             onChanged={handleCardChanged}
             onToggleTimer={handleToggleTimer}
             runningEntry={runningEntry}

@@ -95,13 +95,11 @@ function mapsEmbedSrc(location: string): string | null {
 export function ShootTaskCard({
   task,
   runningEntry,
-  busy,
   onToggleTimer,
   onChanged
 }: {
   task: ProductionTask;
   runningEntry: TaskTimeEntryItem | undefined;
-  busy: boolean;
   onToggleTimer: () => void | Promise<void>;
   onChanged: () => void;
 }) {
@@ -361,14 +359,6 @@ export function ShootTaskCard({
         ) : null}
         {shoot.status === "started" ? (
           <>
-            <button
-              className="rounded-xl border border-black/[0.06] px-4 py-2.5 text-sm font-bold text-[#11142c] disabled:opacity-50 dark:border-white/[0.08] dark:text-[#f1f2f8]"
-              disabled={busy}
-              onClick={() => void onToggleTimer()}
-              type="button"
-            >
-              {runningEntry ? "Pause" : "Resume"}
-            </button>
             <button
               className="rounded-xl border border-black/[0.06] px-4 py-2.5 text-sm font-bold text-[#11142c] disabled:opacity-50 dark:border-white/[0.08] dark:text-[#f1f2f8]"
               disabled={shootBusy}

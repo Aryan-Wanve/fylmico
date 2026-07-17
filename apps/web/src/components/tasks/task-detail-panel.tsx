@@ -109,7 +109,6 @@ export function TaskDetailPanel({
   const [dependencyPickerId, setDependencyPickerId] = useState("");
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [draftAssignees, setDraftAssignees] = useState<TaskAssigneeInput[]>([]);
-  const [timerBusy, setTimerBusy] = useState(false);
 
   async function refresh() {
     const [t, act, com, entries, files] = await Promise.all([
@@ -211,17 +210,12 @@ export function TaskDetailPanel({
   }
 
   async function handleToggleTimer() {
-    setTimerBusy(true);
-    try {
-      if (runningEntry) {
-        await stopTaskTimer(taskId);
-      } else {
-        await startTaskTimer(taskId);
-      }
-      await refresh();
-    } finally {
-      setTimerBusy(false);
+    if (runningEntry) {
+      await stopTaskTimer(taskId);
+    } else {
+      await startTaskTimer(taskId);
     }
+    await refresh();
   }
 
   return (
@@ -342,7 +336,6 @@ export function TaskDetailPanel({
 
           {task.shootId ? (
             <ShootTaskCard
-              busy={timerBusy}
               onChanged={() => void refresh()}
               onToggleTimer={handleToggleTimer}
               runningEntry={runningEntry}
