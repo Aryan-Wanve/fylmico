@@ -47,7 +47,6 @@ export const ALL_MODULE_IDS = [
   "scripts",
   "messages",
   "bookings",
-  "call-sheets",
   "announcements",
   "analytics",
   "settings"

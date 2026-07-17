@@ -4,7 +4,6 @@ import {
   CalendarClock,
   Clapperboard,
   ClipboardCheck,
-  ClipboardList,
   FileText,
   Folder,
   FolderKanban,
@@ -34,7 +33,6 @@ export type NavItem = {
     | "/settings"
     | "/analytics"
     | "/bookings"
-    | "/call-sheets"
     | "/announcements"
     | null;
   icon: LucideIcon;
@@ -72,12 +70,6 @@ export const navItems: NavItem[] = [
     label: "Bookings",
     href: "/bookings",
     icon: CalendarClock
-  },
-  {
-    id: "call-sheets",
-    label: "Call Sheets",
-    href: "/call-sheets",
-    icon: ClipboardList
   },
   {
     id: "announcements",
