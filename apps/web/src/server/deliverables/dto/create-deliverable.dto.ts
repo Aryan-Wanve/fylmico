@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MinLength } from "class-validator";
+import { IsObject, IsOptional, IsString, MinLength } from "class-validator";
 
 export const DELIVERABLE_STATUSES = [
   "draft",
@@ -20,4 +20,8 @@ export class CreateDeliverableDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsObject()
+  exportSettings?: Record<string, string>;
 }
