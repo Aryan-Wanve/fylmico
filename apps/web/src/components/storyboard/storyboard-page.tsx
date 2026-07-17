@@ -385,7 +385,7 @@ export function StoryboardPage() {
   const showDetailPanel = activeTab === "boards" && Boolean(selectedShot);
 
   return (
-    <div className="grid grid-cols-1 gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:p-8">
       <StoryboardHeader />
       <StoryboardToolbar
         activeTab={activeTab}

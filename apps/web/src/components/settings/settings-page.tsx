@@ -47,7 +47,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:p-8">
       <div>
         <h1 className="text-3xl font-black text-[#11142c] dark:text-[#f1f2f8]">
           Settings
