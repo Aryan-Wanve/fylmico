@@ -1,4 +1,5 @@
 import type { Prisma } from "@fylmico/database";
+import { commentsService } from "../comments/comments.service";
 import { driveStructureService } from "../drive/drive-structure.service";
 import { AppException, HttpStatus } from "../http";
 import { notificationsService } from "../notifications/notifications.service";
@@ -6,6 +7,8 @@ import { organizationsService } from "../organizations/organizations.service";
 import { prisma } from "../prisma";
 import type { CancelShootDto } from "./dto/cancel-shoot.dto";
 import type { CreateShootDto } from "./dto/create-shoot.dto";
+import type { ReportShootIssueDto } from "./dto/report-shoot-issue.dto";
+import type { RequestExtraTimeDto } from "./dto/request-extra-time.dto";
 
 const shootInclude = {
   tasks: { include: { assignees: { include: { user: true } } } }
@@ -312,6 +315,62 @@ class ShootsService {
     }
 
     return updated;
+  }
+
+  async reportIssue(
+    userId: string,
+    shootId: string,
+    dto: ReportShootIssueDto
+  ): Promise<void> {
+    const shoot = await this.findShootOrThrow(shootId);
+    await organizationsService.requireMembership(shoot.organizationId, userId);
+
+    const taskId = shoot.tasks[0]?.id;
+    if (taskId) {
+      await commentsService.createForTask(
+        userId,
+        taskId,
+        `Issue reported: ${dto.message.trim()}`
+      );
+    }
+
+    if (shoot.createdById !== userId) {
+      await notificationsService.create(
+        shoot.createdById,
+        "shoot_issue_reported",
+        `Issue reported: ${shoot.name}`,
+        dto.message.trim(),
+        shoot.organizationId
+      );
+    }
+  }
+
+  async requestExtraTime(
+    userId: string,
+    shootId: string,
+    dto: RequestExtraTimeDto
+  ): Promise<void> {
+    const shoot = await this.findShootOrThrow(shootId);
+    await organizationsService.requireMembership(shoot.organizationId, userId);
+
+    const taskId = shoot.tasks[0]?.id;
+    if (taskId) {
+      await commentsService.createForTask(
+        userId,
+        taskId,
+        `Requested extra time: ${dto.reason.trim()}`
+      );
+    }
+
+    if (shoot.createdById !== userId) {
+      await notificationsService.create(
+        shoot.createdById,
+        "shoot_extra_time_requested",
+        `Extra time requested: ${shoot.name}`,
+        dto.reason.trim(),
+        shoot.organizationId
+      );
+    }
   }
 
   private async transition(
