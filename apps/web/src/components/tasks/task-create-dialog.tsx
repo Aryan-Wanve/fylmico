@@ -27,6 +27,7 @@ import {
   TASK_TYPES
 } from "@/components/tasks/task-data";
 import {
+  createShoot,
   getShootUploadFolder,
   linkTaskAttachment,
   listBoards,
@@ -68,7 +69,8 @@ export function TaskCreateDialog({
   members,
   tasks,
   defaultAssigneeId,
-  onCreate
+  onCreate,
+  onShootCreated
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -76,6 +78,7 @@ export function TaskCreateDialog({
   tasks: ProductionTask[];
   defaultAssigneeId?: string;
   onCreate: (request: CreateTaskRequest) => Promise<ProductionTask>;
+  onShootCreated: () => void;
 }) {
   const [type, setType] = useState<TaskType>("custom");
   const [title, setTitle] = useState("");
@@ -84,6 +87,7 @@ export function TaskCreateDialog({
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [assignees, setAssignees] = useState<TaskAssigneeInput[]>([]);
   const [dueDate, setDueDate] = useState("");
+  const [callTime, setCallTime] = useState("");
   const [location, setLocation] = useState("");
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState("");
@@ -161,6 +165,7 @@ export function TaskCreateDialog({
     setPriority("medium");
     setAssignees([]);
     setDueDate("");
+    setCallTime("");
     setLocation("");
     setClientId("");
     setProjectId("");
@@ -176,39 +181,63 @@ export function TaskCreateDialog({
       setError("Give the task a name.");
       return;
     }
+    if (type === "shoot" && !projectId) {
+      setError("Pick which client and project this shoot belongs to.");
+      return;
+    }
+    if (type === "shoot" && !dueDate) {
+      setError("Pick a shoot date.");
+      return;
+    }
 
     setError("");
     setSaving(true);
     try {
-      const created = await onCreate({
-        title: title.trim(),
-        type,
-        priority,
-        assignees: assignees.length ? assignees : undefined,
-        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-        location: type === "shoot" ? location.trim() || undefined : undefined,
-        projectId: type === "edit" ? projectId || undefined : undefined,
-        boardId: type === "storyboarding" ? boardId || undefined : undefined,
-        scriptId: type === "script-writing" ? scriptId || undefined : undefined
-      });
+      if (type === "shoot") {
+        // Shoots are their own entity (call time, crew, equipment, a
+        // status machine) - creating one here goes through the same
+        // shootsService.create used from the Project detail page, which
+        // creates the linked Task in the same transaction, rather than a
+        // bare Task with type "shoot" and no Shoot behind it.
+        await createShoot(projectId, {
+          name: title.trim(),
+          scheduledDate: new Date(dueDate).toISOString(),
+          callTime: callTime.trim() || undefined,
+          location: location.trim() || undefined,
+          crewIds: assignees.map((assignee) => assignee.userId)
+        });
+        onShootCreated();
+      } else {
+        const created = await onCreate({
+          title: title.trim(),
+          type,
+          priority,
+          assignees: assignees.length ? assignees : undefined,
+          dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+          projectId: type === "edit" ? projectId || undefined : undefined,
+          boardId: type === "storyboarding" ? boardId || undefined : undefined,
+          scriptId:
+            type === "script-writing" ? scriptId || undefined : undefined
+        });
 
-      if (type === "edit" && shootId) {
-        try {
-          const { parentId } = await getShootUploadFolder(shootId);
-          await linkTaskAttachment(created.id, parentId);
-        } catch {
-          // Task itself was created fine - the footage link is best-effort.
-        }
-      } else if (type === "edit" && clientId && projectId) {
-        try {
-          const { parentId } = await resolveFileDestination({
-            clientId,
-            projectId,
-            category: "raw"
-          });
-          await linkTaskAttachment(created.id, parentId);
-        } catch {
-          // Task itself was created fine - the raw-footage link is best-effort.
+        if (type === "edit" && shootId) {
+          try {
+            const { parentId } = await getShootUploadFolder(shootId);
+            await linkTaskAttachment(created.id, parentId);
+          } catch {
+            // Task itself was created fine - the footage link is best-effort.
+          }
+        } else if (type === "edit" && clientId && projectId) {
+          try {
+            const { parentId } = await resolveFileDestination({
+              clientId,
+              projectId,
+              category: "raw"
+            });
+            await linkTaskAttachment(created.id, parentId);
+          } catch {
+            // Task itself was created fine - the raw-footage link is best-effort.
+          }
         }
       }
 
@@ -327,10 +356,88 @@ export function TaskCreateDialog({
             />
           </div>
 
-          <label className="grid gap-1.5">
-            <Label>Deadline</Label>
-            <DatePicker onChange={setDueDate} value={dueDate} withTime />
-          </label>
+          {type === "shoot" ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <label className="grid gap-1.5">
+                <Label>Shoot Date</Label>
+                <DatePicker onChange={setDueDate} value={dueDate} />
+              </label>
+              <label className="grid gap-1.5">
+                <Label>Call Time</Label>
+                <Input
+                  onChange={(event) => setCallTime(event.target.value)}
+                  placeholder="e.g. 7:00 AM"
+                  value={callTime}
+                />
+              </label>
+            </div>
+          ) : (
+            <label className="grid gap-1.5">
+              <Label>Deadline</Label>
+              <DatePicker onChange={setDueDate} value={dueDate} withTime />
+            </label>
+          )}
+
+          {type === "shoot" ? (
+            <div className="grid gap-1.5">
+              <Label>Client & Project</Label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Select
+                  items={{
+                    none: "Select client",
+                    ...Object.fromEntries(
+                      clients.map((client) => [client.id, client.name])
+                    )
+                  }}
+                  onValueChange={(next) => {
+                    setClientId(next && next !== "none" ? next : "");
+                    setProjectId("");
+                  }}
+                  value={clientId || "none"}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Select client</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  disabled={!clientId}
+                  items={{
+                    none: "Select project",
+                    ...Object.fromEntries(
+                      projectsForClient.map((project) => [
+                        project.id,
+                        project.title
+                      ])
+                    )
+                  }}
+                  onValueChange={(next) =>
+                    setProjectId(next && next !== "none" ? next : "")
+                  }
+                  value={projectId || "none"}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Select project</SelectItem>
+                    {projectsForClient.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          ) : null}
 
           {type === "edit" ? (
             <div className="grid gap-1.5">

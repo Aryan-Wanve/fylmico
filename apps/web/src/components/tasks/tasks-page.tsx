@@ -570,6 +570,7 @@ export function TasksPage() {
           return created;
         }}
         onOpenChange={setCreateOpen}
+        onShootCreated={() => void refreshWorkspace()}
         open={createOpen}
         tasks={tasks}
       />
