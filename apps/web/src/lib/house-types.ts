@@ -40,6 +40,7 @@ export const ALL_MODULE_IDS = [
   "projects",
   "calendar",
   "tasks",
+  "review",
   "crews",
   "files",
   "storyboard",

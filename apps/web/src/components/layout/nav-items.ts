@@ -3,6 +3,7 @@ import {
   Calendar,
   CalendarClock,
   Clapperboard,
+  ClipboardCheck,
   ClipboardList,
   FileText,
   Folder,
@@ -24,6 +25,7 @@ export type NavItem = {
     | "/calendar"
     | "/projects"
     | "/tasks"
+    | "/review"
     | "/crews"
     | "/files"
     | "/storyboard"
@@ -44,6 +46,7 @@ export const navItems: NavItem[] = [
   { id: "projects", label: "Projects", href: "/projects", icon: FolderKanban },
   { id: "calendar", label: "Calendar", href: "/calendar", icon: Calendar },
   { id: "tasks", label: "Tasks", href: "/tasks", icon: ListChecks },
+  { id: "review", label: "Review", href: "/review", icon: ClipboardCheck },
   { id: "crews", label: "Crews", href: "/crews", icon: Users },
   { id: "files", label: "Files", href: "/files", icon: Folder },
   {
