@@ -26,7 +26,7 @@ const STATUS_LABELS: Record<DeliverableStatus, string> = {
   review: "In Review",
   revision: "Revision Requested",
   approved: "Approved",
-  final: "Final"
+  final: "Delivered to Client"
 };
 
 function formatSize(bytes: number | null): string {
