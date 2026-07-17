@@ -21,7 +21,8 @@ export const POST = withParamsRoute<{ deliverableId: string }>(
     return commentsService.createForDeliverable(
       user.id,
       deliverableId,
-      dto.body
+      dto.body,
+      dto.timestampSeconds
     );
   }
 );
