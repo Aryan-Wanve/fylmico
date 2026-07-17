@@ -2,11 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/lib/workspace-context";
+import { useUploadQueue } from "@/lib/uploads/use-upload-queue";
 import {
   createTask as createTaskApi,
   createTaskFromTemplate,
   deleteTask as deleteTaskApi,
   duplicateTaskRequest,
+  finishAndUploadShoot,
+  getShoot,
+  getShootUploadFolder,
+  markShootUploaded,
   saveTaskAsTemplate,
   updateTask as updateTaskApi
 } from "@/services/base-workspace.service";
@@ -146,6 +151,7 @@ function toggleInSet<T>(set: Set<T>, value: T): Set<T> {
 
 export function TasksPage() {
   const { workspace, activeHouse, refreshWorkspace } = useWorkspace();
+  const { enqueue } = useUploadQueue();
   const currentUserId = workspace.user.id;
   const tasks = workspace.tasks;
   const members = activeHouse?.members ?? [];
@@ -320,6 +326,68 @@ export function TasksPage() {
           : "Could not create a task from this template."
       );
     }
+  }
+
+  // Lets a manager attach footage to a Shoot task straight from the
+  // Completed list, without opening the detail panel - the shoot may
+  // have been marked complete before its footage was actually uploaded.
+  // Mirrors ShootTaskCard's own upload flow (finish-and-upload, enqueue,
+  // mark uploaded), but checks the shoot's current status first since
+  // this entry point doesn't have it preloaded.
+  function handleUploadShootData(task: ProductionTask) {
+    const shootId = task.shootId;
+    if (!shootId) return;
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = true;
+    input.onchange = () => {
+      const files = input.files ? Array.from(input.files) : [];
+      if (files.length === 0) return;
+
+      void (async () => {
+        try {
+          const shoot = await getShoot(shootId);
+          const notYetUploading = [
+            "scheduled",
+            "crew-reached",
+            "started",
+            "finished"
+          ].includes(shoot.status);
+          if (notYetUploading) {
+            await finishAndUploadShoot(shootId);
+          }
+
+          const { parentId } = await getShootUploadFolder(shootId);
+          let remaining = files.length;
+          for (const file of files) {
+            enqueue(
+              file,
+              { parentId, label: `Shoot footage — ${task.title}` },
+              () => {
+                remaining -= 1;
+                if (remaining === 0) {
+                  void (async () => {
+                    const latest = await getShoot(shootId);
+                    if (latest.status === "uploading" || notYetUploading) {
+                      await markShootUploaded(shootId);
+                    }
+                    await refreshWorkspace();
+                  })();
+                }
+              }
+            );
+          }
+        } catch (error) {
+          window.alert(
+            error instanceof Error
+              ? error.message
+              : "Could not upload the shoot data."
+          );
+        }
+      })();
+    };
+    input.click();
   }
 
   async function handleDelete(taskId: string) {
@@ -525,6 +593,9 @@ export function TasksPage() {
                             }
                             onToggleComplete={() => toggleComplete(task.id)}
                             onToggleSelect={() => toggleSelect(task.id)}
+                            onUploadShootData={() =>
+                              handleUploadShootData(task)
+                            }
                             selected={selectedIds.has(task.id)}
                             task={task}
                           />

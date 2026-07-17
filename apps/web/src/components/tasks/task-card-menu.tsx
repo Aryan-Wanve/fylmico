@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, MoreVertical, Sparkles, Trash2 } from "lucide-react";
+import { Copy, MoreVertical, Sparkles, Trash2, Upload } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,10 +9,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function TaskCardMenu({
+  onUploadShootData,
   onDuplicate,
   onSaveAsTemplate,
   onDelete
 }: {
+  onUploadShootData?: () => void;
   onDuplicate: () => void;
   onSaveAsTemplate: () => void;
   onDelete: () => void;
@@ -31,6 +33,12 @@ export function TaskCardMenu({
         }
       />
       <DropdownMenuContent align="end" className="w-44">
+        {onUploadShootData ? (
+          <DropdownMenuItem onClick={onUploadShootData}>
+            <Upload className="h-4 w-4" />
+            Upload Shoot Data
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem onClick={onDuplicate}>
           <Copy className="h-4 w-4" />
           Duplicate

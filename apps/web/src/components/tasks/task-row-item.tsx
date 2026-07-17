@@ -18,6 +18,7 @@ export function TaskRowItem({
   onToggleSelect,
   onOpen,
   onToggleComplete,
+  onUploadShootData,
   onDuplicate,
   onSaveAsTemplate,
   onDelete
@@ -27,6 +28,7 @@ export function TaskRowItem({
   onToggleSelect: () => void;
   onOpen: () => void;
   onToggleComplete: () => void;
+  onUploadShootData?: () => void;
   onDuplicate: () => void;
   onSaveAsTemplate: () => void;
   onDelete: () => void;
@@ -140,6 +142,9 @@ export function TaskRowItem({
         onDelete={onDelete}
         onDuplicate={onDuplicate}
         onSaveAsTemplate={onSaveAsTemplate}
+        onUploadShootData={
+          task.shootId && isDone ? onUploadShootData : undefined
+        }
       />
     </div>
   );
