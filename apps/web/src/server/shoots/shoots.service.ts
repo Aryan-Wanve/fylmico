@@ -183,6 +183,7 @@ class ShootsService {
   }
 
   async markUploaded(userId: string, shootId: string) {
+    const shootBefore = await this.findShootOrThrow(shootId);
     const updated = await this.transition(userId, shootId, {
       status: "uploaded",
       uploadedAt: new Date()
@@ -198,6 +199,16 @@ class ShootsService {
       console.error(
         "[shoots] could not auto-create editing task for shoot",
         error
+      );
+    }
+
+    if (shootBefore.createdById !== userId) {
+      await notificationsService.create(
+        shootBefore.createdById,
+        "shoot_uploaded",
+        `Footage uploaded: ${shootBefore.name}`,
+        `Footage for "${shootBefore.name}" was uploaded and an editing task was created.`,
+        shootBefore.organizationId
       );
     }
 
@@ -249,9 +260,22 @@ class ShootsService {
   }
 
   async markReadyForEditing(userId: string, shootId: string) {
-    return this.transition(userId, shootId, {
+    const shootBefore = await this.findShootOrThrow(shootId);
+    const updated = await this.transition(userId, shootId, {
       status: "ready-for-editing"
     });
+
+    if (shootBefore.createdById !== userId) {
+      await notificationsService.create(
+        shootBefore.createdById,
+        "shoot_ready_for_editing",
+        `Ready for editing: ${shootBefore.name}`,
+        `"${shootBefore.name}" is ready for editing.`,
+        shootBefore.organizationId
+      );
+    }
+
+    return updated;
   }
 
   async archive(userId: string, shootId: string) {
@@ -259,12 +283,35 @@ class ShootsService {
   }
 
   async cancel(userId: string, shootId: string, dto: CancelShootDto) {
-    return this.transition(userId, shootId, {
+    const shootBefore = await this.findShootOrThrow(shootId);
+    const updated = await this.transition(userId, shootId, {
       status: "cancelled",
       cancelReason: dto.reason.trim(),
       cancelNotes: dto.notes?.trim() || null,
       cancelledAt: new Date()
     });
+
+    const crewIds = new Set(
+      shootBefore.tasks.flatMap((task) =>
+        task.assignees.map((assignee) => assignee.userId)
+      )
+    );
+    if (shootBefore.createdById !== userId) {
+      crewIds.add(shootBefore.createdById);
+    }
+    for (const crewId of crewIds) {
+      if (crewId !== userId) {
+        await notificationsService.create(
+          crewId,
+          "shoot_cancelled",
+          `Shoot cancelled: ${shootBefore.name}`,
+          `"${shootBefore.name}" was cancelled: ${dto.reason.trim()}`,
+          shootBefore.organizationId
+        );
+      }
+    }
+
+    return updated;
   }
 
   private async transition(
