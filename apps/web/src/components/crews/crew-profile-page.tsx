@@ -17,6 +17,7 @@ import {
   createConversation,
   listBookings,
   listCrew,
+  listReviewQueue,
   removeCrewMember,
   updateCrewProfile
 } from "@/services/base-workspace.service";
@@ -27,8 +28,10 @@ import {
   STATUS_META,
   getInitials
 } from "@/components/crews/crew-data";
+import { REVIEW_STATUS_META } from "@/components/review/review-item-card";
 import { formatDateRange } from "@/components/bookings/bookings-data";
-import type { Booking, CrewMember } from "@/types/base";
+import { formatRelativeTime } from "@/lib/relative-time";
+import type { Booking, CrewMember, ReviewQueueItem } from "@/types/base";
 
 export function CrewProfilePage() {
   const params = useParams<{ userId: string }>();
@@ -40,6 +43,7 @@ export function CrewProfilePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [submissions, setSubmissions] = useState<ReviewQueueItem[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +75,14 @@ export function CrewProfilePage() {
       .then((data) => {
         if (!cancelled) {
           setBookings(data);
+        }
+      })
+      .catch(() => undefined);
+
+    listReviewQueue({ editorId: params.userId, status: "all" })
+      .then((data) => {
+        if (!cancelled) {
+          setSubmissions(data);
         }
       })
       .catch(() => undefined);
@@ -381,6 +393,41 @@ export function CrewProfilePage() {
             ))
           )}
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+        <div className="border-b border-black/5 px-5 py-3.5 dark:border-white/[0.06]">
+          <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
+            Submitted Work ({submissions.length})
+          </strong>
+        </div>
+        {submissions.length === 0 ? (
+          <p className="p-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            No drafts submitted yet.
+          </p>
+        ) : (
+          submissions.map((item) => (
+            <div
+              className="flex items-center gap-3 border-b border-black/5 px-5 py-3 last:border-b-0 dark:border-white/[0.06]"
+              key={item.id}
+            >
+              <div className="min-w-0 flex-1">
+                <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
+                  {item.taskTitle ?? item.file.name} · v{item.version}
+                </strong>
+                <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                  {item.projectTitle ?? "No Project"} &bull; Submitted{" "}
+                  {formatRelativeTime(item.submittedAt)}
+                </span>
+              </div>
+              <span
+                className={`shrink-0 rounded-md px-2.5 py-1 text-xs font-bold ${REVIEW_STATUS_META[item.status].className}`}
+              >
+                {REVIEW_STATUS_META[item.status].label}
+              </span>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
