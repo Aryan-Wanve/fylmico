@@ -438,7 +438,7 @@ export function FocusTaskCard({
           </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-5 text-sm">
+        <div className="grid grid-cols-2 gap-5 text-sm sm:grid-cols-3">
           <div>
             <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
               Current Session
