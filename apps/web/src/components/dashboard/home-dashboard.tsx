@@ -13,6 +13,7 @@ import { TodayPanel } from "@/components/dashboard/today-panel";
 import { NotificationsPreviewPanel } from "@/components/dashboard/notifications-preview-panel";
 import { TeamOnlinePanel } from "@/components/dashboard/team-online-panel";
 import { PersonalStatsPanel } from "@/components/dashboard/personal-stats-panel";
+import { ReviewMetricsPanel } from "@/components/dashboard/review-metrics-panel";
 import { QuickActionsPanel } from "@/components/dashboard/quick-actions-panel";
 import { RecentProjectsPanel } from "@/components/dashboard/recent-projects-panel";
 import { RecentActivityPanel } from "@/components/dashboard/recent-activity-panel";
@@ -84,6 +85,10 @@ export function HomeDashboard() {
 
       <FadeInSection delay={0.1}>
         <PersonalStatsPanel />
+      </FadeInSection>
+
+      <FadeInSection delay={0.12}>
+        <ReviewMetricsPanel />
       </FadeInSection>
 
       <FadeInSection delay={0.15}>
