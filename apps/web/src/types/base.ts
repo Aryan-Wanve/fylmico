@@ -995,6 +995,9 @@ export type FileEntryItem = {
   type: FileEntryType;
   size: number | null;
   mimeType: string | null;
+  durationSeconds: number | null;
+  width: number | null;
+  height: number | null;
   sensitive: boolean;
   uploadedById: string;
   uploadedByName: string;
