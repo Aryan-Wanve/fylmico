@@ -134,7 +134,7 @@ export function SubmitDraftDialog({
             />
           </label>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <label className="grid gap-1.5">
               <Label className="text-xs font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                 Resolution
