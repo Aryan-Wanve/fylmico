@@ -58,6 +58,9 @@ import type {
   RequestJoinHouseRequest,
   RequestPasswordResetRequest,
   ResetPasswordRequest,
+  ReviewBulkAction,
+  ReviewMetrics,
+  ReviewQueueItem,
   TaskActivityItem,
   TaskChecklistItemDto,
   TaskTimeEntryItem,
@@ -804,11 +807,12 @@ export async function approveDeliverable(
 }
 
 export async function requestDeliverableRevision(
-  deliverableId: string
+  deliverableId: string,
+  comment?: string
 ): Promise<Deliverable> {
   return apiRequest<Deliverable>(
     `/deliverables/${deliverableId}/request-revision`,
-    { method: "POST" }
+    { method: "POST", body: comment ? { comment } : undefined }
   );
 }
 
@@ -817,6 +821,16 @@ export async function markDeliverableFinal(
 ): Promise<Deliverable> {
   return apiRequest<Deliverable>(`/deliverables/${deliverableId}/mark-final`, {
     method: "POST"
+  });
+}
+
+export async function reassignDeliverable(
+  deliverableId: string,
+  newEditorId: string
+): Promise<Deliverable> {
+  return apiRequest<Deliverable>(`/deliverables/${deliverableId}/reassign`, {
+    method: "PATCH",
+    body: { newEditorId }
   });
 }
 
@@ -830,11 +844,53 @@ export async function listDeliverableComments(
 
 export async function createDeliverableComment(
   deliverableId: string,
-  body: string
+  body: string,
+  timestampSeconds?: number
 ): Promise<Comment> {
   return apiRequest<Comment>(`/deliverables/${deliverableId}/comments`, {
     method: "POST",
-    body: { body }
+    body: { body, timestampSeconds }
+  });
+}
+
+export async function listReviewQueue(filters?: {
+  projectId?: string;
+  clientId?: string;
+  editorId?: string;
+  status?: string;
+  priority?: string;
+  search?: string;
+  sortBy?: "submittedAt" | "priority" | "version";
+}): Promise<ReviewQueueItem[]> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing the review queue.");
+  }
+  return apiRequest<ReviewQueueItem[]>(
+    `/houses/${activeHouseId}/review-queue`,
+    { query: filters as Record<string, string | number | undefined> }
+  );
+}
+
+export async function getReviewMetrics(): Promise<ReviewMetrics> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing review metrics.");
+  }
+  return apiRequest<ReviewMetrics>(
+    `/houses/${activeHouseId}/review-queue/metrics`
+  );
+}
+
+export async function bulkReviewAction(
+  action: ReviewBulkAction,
+  deliverableIds: string[],
+  payload?: { comment?: string; newEditorId?: string }
+): Promise<{ results: { id: string; ok: boolean; error?: string }[] }> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before reviewing submissions.");
+  }
+  return apiRequest(`/houses/${activeHouseId}/review-queue/bulk-action`, {
+    method: "POST",
+    body: { action, deliverableIds, ...payload }
   });
 }
 

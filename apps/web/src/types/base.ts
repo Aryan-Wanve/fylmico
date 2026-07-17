@@ -370,6 +370,7 @@ export type Deliverable = {
   version: number;
   status: DeliverableStatus;
   notes: string | null;
+  exportSettings?: Record<string, string> | null;
   file: {
     id: string;
     name: string;
@@ -386,6 +387,7 @@ export type CreateDeliverableRequest = {
   fileEntryId: string;
   taskId?: string;
   notes?: string;
+  exportSettings?: Record<string, string>;
 };
 
 export type Comment = {
@@ -393,9 +395,47 @@ export type Comment = {
   body: string;
   authorId: string;
   authorName: string;
+  timestampSeconds?: number | null;
   createdAt: string;
   updatedAt: string;
 };
+
+export type ReviewQueueItem = {
+  id: string;
+  projectId: string;
+  projectTitle: string | null;
+  clientId: string | null;
+  clientName: string | null;
+  taskId: string | null;
+  taskTitle: string | null;
+  editorId: string;
+  editorName: string;
+  assigneeId: string | null;
+  assigneeName: string | null;
+  version: number;
+  status: DeliverableStatus;
+  priority: TaskPriority;
+  dueDate: string | null;
+  notes: string | null;
+  exportSettings?: Record<string, string> | null;
+  file: {
+    id: string;
+    name: string;
+    size: number | null;
+    mimeType: string | null;
+  };
+  submittedAt: string;
+  updatedAt: string;
+};
+
+export type ReviewMetrics = {
+  waitingForReview: number;
+  changesRequested: number;
+  approvedToday: number;
+  overdueReviews: number;
+};
+
+export type ReviewBulkAction = "approve" | "request-revision" | "reassign";
 
 export type CrewMember = {
   id: string;
