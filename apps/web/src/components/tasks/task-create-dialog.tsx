@@ -29,17 +29,21 @@ import {
 import {
   getShootUploadFolder,
   linkTaskAttachment,
+  listBoards,
   listClients,
   listProjects,
+  listScripts,
   listShoots,
   resolveFileDestination
 } from "@/services/base-workspace.service";
 import type {
+  Board,
   ClientItem,
   CreateTaskRequest,
   HouseMember,
   ProductionTask,
   Project,
+  ScriptSummary,
   Shoot,
   TaskAssigneeInput,
   TaskPriority,
@@ -84,12 +88,16 @@ export function TaskCreateDialog({
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState("");
   const [shootId, setShootId] = useState("");
+  const [boardId, setBoardId] = useState("");
+  const [scriptId, setScriptId] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [scripts, setScripts] = useState<ScriptSummary[]>([]);
 
   useEffect(() => {
     if (!open) {
@@ -97,13 +105,15 @@ export function TaskCreateDialog({
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting form state each time the dialog re-opens, not deriving render output
     setAssignees(defaultAssigneeId ? [{ userId: defaultAssigneeId }] : []);
-    Promise.all([listClients(), listProjects()])
-      .then(([clientList, projectList]) => {
+    Promise.all([listClients(), listProjects(), listBoards(), listScripts()])
+      .then(([clientList, projectList, boardList, scriptList]) => {
         setClients(clientList);
         setProjects(projectList);
+        setBoards(boardList);
+        setScripts(scriptList);
       })
       .catch(() => {
-        // Raw-footage picker just shows fewer options if this fails.
+        // Raw-footage/storyboard/script pickers just show fewer options if this fails.
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -155,6 +165,8 @@ export function TaskCreateDialog({
     setClientId("");
     setProjectId("");
     setShootId("");
+    setBoardId("");
+    setScriptId("");
     setError("");
   }
 
@@ -175,7 +187,9 @@ export function TaskCreateDialog({
         assignees: assignees.length ? assignees : undefined,
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
         location: type === "shoot" ? location.trim() || undefined : undefined,
-        projectId: type === "edit" ? projectId || undefined : undefined
+        projectId: type === "edit" ? projectId || undefined : undefined,
+        boardId: type === "storyboarding" ? boardId || undefined : undefined,
+        scriptId: type === "script-writing" ? scriptId || undefined : undefined
       });
 
       if (type === "edit" && shootId) {
@@ -420,6 +434,62 @@ export function TaskCreateDialog({
                 value={location}
               />
             </label>
+          ) : null}
+
+          {type === "storyboarding" ? (
+            <div className="grid gap-1.5">
+              <Label>Storyboard (optional)</Label>
+              <Select
+                items={{
+                  none: "No storyboard",
+                  ...Object.fromEntries(boards.map((b) => [b.id, b.name]))
+                }}
+                onValueChange={(next) =>
+                  setBoardId(next && next !== "none" ? next : "")
+                }
+                value={boardId || "none"}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No storyboard</SelectItem>
+                  {boards.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
+
+          {type === "script-writing" ? (
+            <div className="grid gap-1.5">
+              <Label>Script (optional)</Label>
+              <Select
+                items={{
+                  none: "No script",
+                  ...Object.fromEntries(scripts.map((s) => [s.id, s.title]))
+                }}
+                onValueChange={(next) =>
+                  setScriptId(next && next !== "none" ? next : "")
+                }
+                value={scriptId || "none"}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No script</SelectItem>
+                  {scripts.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           ) : null}
 
           {error ? (

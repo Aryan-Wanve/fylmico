@@ -28,6 +28,11 @@ import {
 } from "@/components/tasks/task-data";
 import { TaskAssigneePicker } from "@/components/tasks/task-assignee-picker";
 import { TaskDescriptionEditor } from "@/components/tasks/task-description-editor";
+import { useUploadQueue } from "@/lib/uploads/use-upload-queue";
+import { ShootTaskCard } from "@/components/tasks/cards/shoot-task-card";
+import { EditTaskCard } from "@/components/tasks/cards/edit-task-card";
+import { StoryboardingTaskCard } from "@/components/tasks/cards/storyboarding-task-card";
+import { ScriptingTaskCard } from "@/components/tasks/cards/scripting-task-card";
 import {
   addChecklistItem,
   addTaskDependency,
@@ -44,8 +49,7 @@ import {
   stopTaskTimer,
   unlinkTaskAttachment,
   updateChecklistItem,
-  updateTask,
-  uploadTaskAttachment
+  updateTask
 } from "@/services/base-workspace.service";
 import type {
   Comment,
@@ -93,6 +97,7 @@ export function TaskDetailPanel({
   onOpenChange: (open: boolean) => void;
   onChanged: () => void;
 }) {
+  const { enqueue } = useUploadQueue();
   const [task, setTask] = useState<ProductionTask | null>(null);
   const [activity, setActivity] = useState<TaskActivityItem[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -104,6 +109,7 @@ export function TaskDetailPanel({
   const [dependencyPickerId, setDependencyPickerId] = useState("");
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [draftAssignees, setDraftAssignees] = useState<TaskAssigneeInput[]>([]);
+  const [timerBusy, setTimerBusy] = useState(false);
 
   async function refresh() {
     const [t, act, com, entries, files] = await Promise.all([
@@ -191,23 +197,31 @@ export function TaskDetailPanel({
     await refresh();
   }
 
-  async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) {
       return;
     }
-    await uploadTaskAttachment(taskId, file);
-    await refresh();
+    enqueue(
+      file,
+      { parentId: null, taskId, label: "Task attachment" },
+      () => void refresh()
+    );
   }
 
   async function handleToggleTimer() {
-    if (runningEntry) {
-      await stopTaskTimer(taskId);
-    } else {
-      await startTaskTimer(taskId);
+    setTimerBusy(true);
+    try {
+      if (runningEntry) {
+        await stopTaskTimer(taskId);
+      } else {
+        await startTaskTimer(taskId);
+      }
+      await refresh();
+    } finally {
+      setTimerBusy(false);
     }
-    await refresh();
   }
 
   return (
@@ -325,6 +339,25 @@ export function TaskDetailPanel({
               Save description
             </button>
           </section>
+
+          {task.shootId ? (
+            <ShootTaskCard
+              busy={timerBusy}
+              onChanged={() => void refresh()}
+              onToggleTimer={handleToggleTimer}
+              runningEntry={runningEntry}
+              task={task}
+            />
+          ) : task.type === "edit" ? (
+            <EditTaskCard onChanged={() => void refresh()} task={task} />
+          ) : task.type === "storyboarding" ? (
+            <StoryboardingTaskCard
+              onChanged={() => void refresh()}
+              task={task}
+            />
+          ) : task.type === "script-writing" ? (
+            <ScriptingTaskCard onChanged={() => void refresh()} task={task} />
+          ) : null}
 
           <section className="grid gap-2">
             <div className="flex items-center justify-between">
