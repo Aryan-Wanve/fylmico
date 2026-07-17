@@ -177,7 +177,7 @@ export function AssignRoleDialog({
                 </button>
               ))}
             </div>
-            <div className="grid max-h-72 grid-cols-2 gap-x-4 gap-y-2 overflow-y-auto">
+            <div className="grid max-h-72 grid-cols-1 gap-x-4 gap-y-2 overflow-y-auto sm:grid-cols-2">
               {PERMISSIONS.map((permission) => (
                 <label
                   className="flex items-center gap-2 text-sm text-[#3a3f57] dark:text-[#b4b8cc]"
