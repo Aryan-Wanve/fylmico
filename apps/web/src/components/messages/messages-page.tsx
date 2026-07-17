@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
 import { useWorkspace } from "@/lib/workspace-context";
 import { usePrompt } from "@/components/ui/prompt-dialog";
@@ -143,6 +144,9 @@ export function MessagesPage() {
   const [activeChannelId, setActiveChannelId] = useState(
     () => workspace.chatRooms[0]?.id ?? ""
   );
+  // Below `xl`, the sidebar and the active conversation share one column
+  // and only one is shown at a time - this tracks which.
+  const [mobileShowList, setMobileShowList] = useState(true);
   const [activeTab, setActiveTab] = useState<ChatTab>("messages");
   const [filter, setFilter] = useState<ChannelsFilter>("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -508,6 +512,7 @@ export function MessagesPage() {
     setActiveChannelId(id);
     setActiveTab("messages");
     setReplyingToId(null);
+    setMobileShowList(false);
   }
 
   async function handleSend(body: string) {
@@ -643,7 +648,7 @@ export function MessagesPage() {
     : undefined;
 
   return (
-    <div className="grid grid-cols-1 gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:p-8">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-black text-[#11142c] dark:text-[#f1f2f8]">
@@ -665,21 +670,35 @@ export function MessagesPage() {
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 xl:grid-cols-[20rem_1fr_20rem]">
-        <ChannelsSidebar
-          activeChannelId={activeChannelId}
-          filter={filter}
-          onFilterChange={setFilter}
-          onNewChat={handleNewChat}
-          onSearchChange={setSearchTerm}
-          onSelectChannel={handleSelectChannel}
-          pinnedChannels={[]}
-          recentChannels={recentChannels}
-          searchTerm={searchTerm}
-          unreadCount={totalUnread}
-        />
+        <div className={mobileShowList ? "block" : "hidden xl:block"}>
+          <ChannelsSidebar
+            activeChannelId={activeChannelId}
+            filter={filter}
+            onFilterChange={setFilter}
+            onNewChat={handleNewChat}
+            onSearchChange={setSearchTerm}
+            onSelectChannel={handleSelectChannel}
+            pinnedChannels={[]}
+            recentChannels={recentChannels}
+            searchTerm={searchTerm}
+            unreadCount={totalUnread}
+          />
+        </div>
 
         {activeChannel ? (
-          <div className="flex min-h-0 flex-col gap-3 rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+          <div
+            className={`min-h-0 flex-col gap-3 rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28] ${mobileShowList ? "hidden xl:flex" : "flex"}`}
+          >
+            <div className="flex items-center gap-1 px-4 pt-4 xl:hidden">
+              <button
+                aria-label="Back to chats"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#4b5268] hover:bg-black/[0.04] dark:text-[#c7cad9] dark:hover:bg-white/[0.06]"
+                onClick={() => setMobileShowList(true)}
+                type="button"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            </div>
             <ChatHeader
               channel={activeChannel}
               onRename={handleRenameChannel}
@@ -823,17 +842,19 @@ export function MessagesPage() {
           <MessagesEmptyState />
         )}
 
-        {activeChannel ? (
-          <ChannelInfoPanel
-            channel={activeChannel}
-            members={members}
-            onRename={handleRenameChannel}
-            onSelectTab={setActiveTab}
-            onlineUserIds={onlineUserIds}
-          />
-        ) : (
-          <div />
-        )}
+        <div className="hidden xl:block">
+          {activeChannel ? (
+            <ChannelInfoPanel
+              channel={activeChannel}
+              members={members}
+              onRename={handleRenameChannel}
+              onSelectTab={setActiveTab}
+              onlineUserIds={onlineUserIds}
+            />
+          ) : (
+            <div />
+          )}
+        </div>
       </div>
     </div>
   );
