@@ -573,14 +573,15 @@ model Notification {
 }
 
 model Comment {
-  id              String   @id @default(cuid())
-  organizationId  String   @map("organization_id")
-  commentableType String   @map("commentable_type")
-  commentableId   String   @map("commentable_id")
-  authorId        String   @map("author_id")
-  body            String
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(cuid())
+  organizationId   String   @map("organization_id")
+  commentableType  String   @map("commentable_type")
+  commentableId    String   @map("commentable_id")
+  authorId         String   @map("author_id")
+  body             String
+  timestampSeconds Float?   @map("timestamp_seconds")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   author       User         @relation(fields: [authorId], references: [id])
@@ -600,6 +601,7 @@ model Deliverable {
   version        Int
   status         String   @default("review")
   notes          String?
+  exportSettings Json?    @map("export_settings")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
