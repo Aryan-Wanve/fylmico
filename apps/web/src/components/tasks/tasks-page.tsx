@@ -382,7 +382,7 @@ export function TasksPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 p-8 xl:grid-cols-[1fr_20rem]">
+    <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:p-8 xl:grid-cols-[1fr_20rem]">
       <div className="grid min-w-0 grid-cols-1 gap-4">
         <TasksHeader />
         <TasksToolbar
