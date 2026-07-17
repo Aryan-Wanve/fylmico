@@ -26,7 +26,6 @@ const TYPE_TO_PREFERENCE_ID: Record<string, string> = {
   shoot_cancelled: "task-reminders",
   shoot_uploaded: "task-reminders",
   shoot_ready_for_editing: "task-reminders",
-  call_sheet_assigned: "task-reminders",
   project_team_added: "task-reminders",
   shoot_issue_reported: "task-reminders",
   shoot_extra_time_requested: "task-reminders"
