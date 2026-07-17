@@ -346,8 +346,12 @@ export function ProjectDetailPage() {
         </div>
       </div>
 
-      <Tabs onValueChange={setActiveTab} value={activeTab}>
-        <TabsList variant="line">
+      <Tabs
+        className="max-w-full min-w-0 overflow-x-auto"
+        onValueChange={setActiveTab}
+        value={activeTab}
+      >
+        <TabsList className="shrink-0" variant="line">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="tasks">Tasks ({tasks.length})</TabsTrigger>
           <TabsTrigger value="shoots">Shoots ({shoots.length})</TabsTrigger>
