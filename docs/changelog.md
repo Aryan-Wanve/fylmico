@@ -712,3 +712,20 @@ Migration notes:
 
 - Adds nullable `timestamp_seconds` to `comments` and nullable
   `export_settings` to `deliverables`. Run `prisma migrate deploy`.
+
+## 0.23.0 - 2026-07-17
+
+Summary:
+
+- Notifications coverage audit: shoot cancellation, shoot uploaded,
+  shoot ready-for-editing, call sheet crew assignment, and project team
+  additions now all notify the affected people - closing gaps found by
+  reviewing every workflow-changing action across the app.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- None (no schema changes).

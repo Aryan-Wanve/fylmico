@@ -6098,3 +6098,60 @@ Next task:
 
 - Notifications coverage audit across the whole app, then a mobile
   responsiveness pass - both requested as immediate follow-ups.
+
+## 2026-07-17 Notifications Coverage Audit
+
+What shipped:
+
+- Went service-by-service (`grep -rln "notificationsService" apps/web/src/server`)
+  checking every workflow-changing action for a corresponding notification.
+- Confirmed-complete, no changes needed: `announcements`, `bookings`
+  (creation and status changes), `comments` (task/project/deliverable +
+  @mentions), `deliverables`, `organizations` (house-join/invite/role-
+  assignment), `tasks` (assignment/status/comments).
+- Found and fixed three real gaps, all following the same "diff old vs
+  new assignee list, notify only the delta" pattern already used by
+  `tasksService.update`:
+  - `shoots.service.ts`: `cancel` now notifies all crew + the creator
+    (`shoot_cancelled`, includes the cancellation reason); `markUploaded`
+    notifies the shoot's creator (`shoot_uploaded`); `markReadyForEditing`
+    notifies the creator (`shoot_ready_for_editing`).
+  - `call-sheets.service.ts`: `create` notifies every crew entry
+    (`call_sheet_assigned`, includes call time); `update` diffs
+    `crewCallTimes` and notifies only newly-added entries.
+  - `projects.service.ts`: `create` notifies every initial `teamIds`
+    entry (`project_team_added`); `update` diffs `teamIds` and notifies
+    only newly-added members.
+- Registered all six new notification types in `notifications.service.ts`'s
+  `TYPE_TO_PREFERENCE_ID` map (`task-reminders` bucket, matching every
+  other workflow-event type).
+
+Deliberately left as-is (reasoned, not a gap):
+
+- Chat/messages has no @mention push notification - realtime delivery +
+  unread badges already cover this, and layering a push notification on
+  top would be redundant with what the chat UI already surfaces live.
+- `clients.service.ts` (client create/update) - no assignee/team concept,
+  nothing to notify about.
+- `crews.service.ts` (crew profile update: job title/department/status) -
+  internal HR-style self-view data, not a workflow event affecting anyone
+  else.
+- `files.service.ts` (upload/portfolio/sensitive-toggle) - file activity
+  is already visible on the Files page and task attachments list; not a
+  "someone needs to act" event like an assignment or status change.
+
+Files modified:
+
+- `apps/web/src/server/shoots/shoots.service.ts`
+- `apps/web/src/server/call-sheets/call-sheets.service.ts`
+- `apps/web/src/server/projects/projects.service.ts`
+- `apps/web/src/server/notifications/notifications.service.ts`
+
+Verified: `tsc --noEmit`, `eslint --max-warnings=0` on all four changed
+files, and a full `next build` all pass clean.
+
+Next task:
+
+- Mobile responsiveness pass across the entire app, including the Review
+  page/components built in the previous session (currently only cursory
+  responsive classes, not yet checked at mobile viewport widths).
