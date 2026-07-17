@@ -1,9 +1,12 @@
 import type { Prisma } from "@fylmico/database";
 import { AppException, HttpStatus } from "../http";
+import { notificationsService } from "../notifications/notifications.service";
 import { organizationsService } from "../organizations/organizations.service";
 import { prisma } from "../prisma";
 import type { CreateCallSheetDto } from "./dto/create-call-sheet.dto";
 import type { UpdateCallSheetDto } from "./dto/update-call-sheet.dto";
+
+type CrewCallTime = { userId: string; callTime: string };
 
 const callSheetInclude = {
   project: true,
@@ -61,6 +64,14 @@ class CallSheetsService {
       include: callSheetInclude
     });
 
+    await this.notifyCrew(
+      userId,
+      houseId,
+      (dto.crewCallTimes ?? []) as CrewCallTime[],
+      callSheet.title,
+      callSheet.shootDate
+    );
+
     return toCallSheetDto(callSheet);
   }
 
@@ -107,7 +118,44 @@ class CallSheetsService {
       include: callSheetInclude
     });
 
+    if (dto.crewCallTimes !== undefined) {
+      const previousIds = new Set(
+        (callSheet.crewCallTimes as unknown as CrewCallTime[]).map(
+          (entry) => entry.userId
+        )
+      );
+      const newlyAdded = (dto.crewCallTimes as CrewCallTime[]).filter(
+        (entry) => !previousIds.has(entry.userId)
+      );
+      await this.notifyCrew(
+        userId,
+        callSheet.organizationId,
+        newlyAdded,
+        updated.title,
+        updated.shootDate
+      );
+    }
+
     return toCallSheetDto(updated);
+  }
+
+  private async notifyCrew(
+    actorUserId: string,
+    houseId: string,
+    crewCallTimes: CrewCallTime[],
+    title: string,
+    shootDate: string
+  ): Promise<void> {
+    for (const entry of crewCallTimes) {
+      if (entry.userId === actorUserId) continue;
+      await notificationsService.create(
+        entry.userId,
+        "call_sheet_assigned",
+        `Call sheet: ${title}`,
+        `You're on the call sheet for "${title}" on ${shootDate} - call time ${entry.callTime}.`,
+        houseId
+      );
+    }
   }
 
   async remove(userId: string, callSheetId: string): Promise<void> {
