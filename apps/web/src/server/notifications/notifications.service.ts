@@ -19,7 +19,10 @@ const TYPE_TO_PREFERENCE_ID: Record<string, string> = {
   task_status_changed: "task-reminders",
   task_mentioned: "comments",
   task_review_requested: "task-reminders",
-  task_completed: "task-reminders"
+  task_completed: "task-reminders",
+  deliverable_changes_requested: "task-reminders",
+  deliverable_reassigned: "task-reminders",
+  deliverable_approved: "task-reminders"
 };
 
 class NotificationsService {
