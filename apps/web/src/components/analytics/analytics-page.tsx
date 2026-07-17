@@ -104,7 +104,7 @@ export function AnalyticsPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:p-8">
       <AnalyticsHeader
         logTimeSlot={
           <LogTimePopover onLogTime={handleLogTime} projects={projects} />
