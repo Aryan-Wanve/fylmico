@@ -841,6 +841,9 @@ model FileEntry {
   sensitive      Boolean  @default(false)
   size           Int?
   mimeType       String?  @map("mime_type")
+  durationSeconds Float?  @map("duration_seconds")
+  width          Int?
+  height         Int?
   uploadedById   String   @map("uploaded_by_id")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
