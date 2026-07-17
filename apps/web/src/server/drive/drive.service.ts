@@ -11,9 +11,13 @@ import {
   downloadDriveFile,
   exchangeDriveCode,
   fetchDriveAccountEmail,
+  getResumableUploadStatus,
+  initiateResumableUpload,
   moveDriveFile,
   refreshDriveAccessToken,
-  uploadDriveFile
+  uploadDriveFile,
+  uploadResumableChunk,
+  type DriveChunkResult
 } from "./google-drive.util";
 
 const VISIBLE_ROOT_NAME = "FYLMICO House";
@@ -183,6 +187,51 @@ class DriveService {
       mimeType: file.mimeType,
       buffer: file.buffer
     });
+  }
+
+  async initiateResumableUpload(
+    organizationId: string,
+    folderId: string,
+    name: string,
+    mimeType: string,
+    size: number
+  ): Promise<string> {
+    const accessToken = await this.getValidAccessToken(organizationId);
+    return initiateResumableUpload({
+      accessToken,
+      folderId,
+      name,
+      mimeType,
+      size
+    });
+  }
+
+  async uploadResumableChunk(
+    organizationId: string,
+    sessionUrl: string,
+    chunk: ArrayBuffer,
+    start: number,
+    end: number,
+    total: number
+  ): Promise<DriveChunkResult> {
+    const accessToken = await this.getValidAccessToken(organizationId);
+    return uploadResumableChunk({
+      accessToken,
+      sessionUrl,
+      chunk,
+      start,
+      end,
+      total
+    });
+  }
+
+  async getResumableUploadStatus(
+    organizationId: string,
+    sessionUrl: string,
+    total: number
+  ): Promise<DriveChunkResult> {
+    const accessToken = await this.getValidAccessToken(organizationId);
+    return getResumableUploadStatus({ accessToken, sessionUrl, total });
   }
 
   async createFolder(

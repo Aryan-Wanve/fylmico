@@ -188,6 +188,127 @@ export async function uploadDriveFile(params: {
   return json.id;
 }
 
+// Initiates a Drive resumable-upload session (uploadType=resumable) and
+// returns the session URL (Drive's `Location` response header). Chunks are
+// then PUT directly to that URL - see uploadResumableChunk/
+// getResumableUploadStatus below - so a dropped connection or reload of
+// this server process never needs to re-buffer the whole file, and a
+// retry can ask Drive how many bytes it already has instead of restarting.
+export async function initiateResumableUpload(params: {
+  accessToken: string;
+  folderId: string;
+  name: string;
+  mimeType: string;
+  size: number;
+}): Promise<string> {
+  const response = await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${params.accessToken}`,
+        "Content-Type": "application/json; charset=UTF-8",
+        "X-Upload-Content-Type": params.mimeType,
+        "X-Upload-Content-Length": String(params.size)
+      },
+      body: JSON.stringify({ name: params.name, parents: [params.folderId] })
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive resumable-upload session could not be created (status ${response.status})`
+    );
+  }
+
+  const sessionUrl = response.headers.get("location");
+  if (!sessionUrl) {
+    throw new Error(
+      "Google Drive did not return a resumable-upload session URL."
+    );
+  }
+  return sessionUrl;
+}
+
+export type DriveChunkResult =
+  { done: false; receivedBytes: number } | { done: true; fileId: string };
+
+function parseReceivedBytes(rangeHeader: string | null): number {
+  // Drive's `Range: bytes=0-N` header reports the last byte offset it has
+  // durably received - resuming means sending from N+1, not N, hence +1.
+  const match = rangeHeader?.match(/bytes=\d+-(\d+)/);
+  return match ? Number(match[1]) + 1 : 0;
+}
+
+export async function uploadResumableChunk(params: {
+  accessToken: string;
+  sessionUrl: string;
+  chunk: ArrayBuffer;
+  start: number;
+  end: number;
+  total: number;
+}): Promise<DriveChunkResult> {
+  const response = await fetch(params.sessionUrl, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${params.accessToken}`,
+      "Content-Length": String(params.chunk.byteLength),
+      "Content-Range": `bytes ${params.start}-${params.end}/${params.total}`
+    },
+    body: params.chunk
+  });
+
+  if (response.status === 308) {
+    return {
+      done: false,
+      receivedBytes: parseReceivedBytes(response.headers.get("range"))
+    };
+  }
+
+  if (response.ok) {
+    const json = (await response.json()) as { id: string };
+    return { done: true, fileId: json.id };
+  }
+
+  throw new Error(
+    `Google Drive chunk upload failed with status ${response.status}`
+  );
+}
+
+// Asks Drive how many bytes of an in-progress resumable session it has
+// durably received, without sending any new data - the mechanism that lets
+// an upload resume after a dropped connection instead of restarting at 0%.
+export async function getResumableUploadStatus(params: {
+  accessToken: string;
+  sessionUrl: string;
+  total: number;
+}): Promise<DriveChunkResult> {
+  const response = await fetch(params.sessionUrl, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${params.accessToken}`,
+      "Content-Length": "0",
+      "Content-Range": `bytes */${params.total}`
+    }
+  });
+
+  if (response.status === 308) {
+    return {
+      done: false,
+      receivedBytes: parseReceivedBytes(response.headers.get("range"))
+    };
+  }
+
+  if (response.ok) {
+    const json = (await response.json()) as { id: string };
+    return { done: true, fileId: json.id };
+  }
+
+  throw new Error(
+    `Google Drive upload session is no longer valid (status ${response.status})`
+  );
+}
+
 export async function downloadDriveFile(params: {
   accessToken: string;
   fileId: string;
