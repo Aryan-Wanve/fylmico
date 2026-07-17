@@ -1,4 +1,9 @@
-import { signDownloadToken } from "../drive/drive-token.util";
+import {
+  signDownloadToken,
+  signUploadSessionToken,
+  verifyUploadSessionToken,
+  type UploadSessionClaims
+} from "../drive/drive-token.util";
 import { driveService } from "../drive/drive.service";
 import {
   driveStructureService,
@@ -9,6 +14,8 @@ import { getAppUrl } from "../mail/mailer";
 import { organizationsService } from "../organizations/organizations.service";
 import { prisma } from "../prisma";
 import type { CreateFolderDto } from "./dto/create-folder.dto";
+import type { InitiateUploadDto } from "./dto/initiate-upload.dto";
+import type { UpdateMediaMetadataDto } from "./dto/update-media-metadata.dto";
 
 class FilesService {
   private readonly prisma = prisma;
@@ -94,30 +101,234 @@ class FilesService {
       parentDriveFolderId
     );
 
+    return this.createFileEntryRow({
+      organizationId: houseId,
+      parentId,
+      parentEntry,
+      conversationId: conversationId ?? null,
+      taskId: taskId ?? null,
+      name: file.name,
+      storagePath,
+      size: file.size,
+      mimeType: file.mimeType,
+      uploadedById: userId
+    });
+  }
+
+  // Step 1 of the resumable-upload flow (ADR 0058): opens a Drive
+  // resumable-upload session and hands the caller back a signed, opaque
+  // token encoding everything needed to relay chunks and finalize the
+  // FileEntry later - no session state is kept in our own database, Drive
+  // keeps the session alive server-side for up to a week.
+  async initiateUpload(
+    userId: string,
+    houseId: string,
+    dto: InitiateUploadDto
+  ): Promise<{ uploadToken: string }> {
+    await organizationsService.requireMembership(houseId, userId);
+
+    const parentEntry = dto.parentId
+      ? await this.requireEntry(houseId, dto.parentId, userId)
+      : null;
+    const parentDriveFolderId = await this.rootFolderId(houseId, parentEntry);
+
+    const driveSessionUrl = await driveService.initiateResumableUpload(
+      houseId,
+      parentDriveFolderId,
+      dto.name,
+      dto.mimeType,
+      dto.size
+    );
+
+    const uploadToken = signUploadSessionToken({
+      organizationId: houseId,
+      userId,
+      driveSessionUrl,
+      parentId: dto.parentId ?? null,
+      name: dto.name,
+      mimeType: dto.mimeType,
+      size: dto.size,
+      conversationId: dto.conversationId ?? null,
+      taskId: dto.taskId ?? null
+    });
+
+    return { uploadToken };
+  }
+
+  // Step 2 - relays one chunk to the Drive session named by the token.
+  // Unauthenticated by design, same trust model as getDownloadUrl's
+  // signed token: it's meaningless without our server's stored Drive
+  // access token, so no separate requireUser check is needed here.
+  async relayUploadChunk(
+    token: string,
+    chunk: ArrayBuffer,
+    start: number,
+    end: number,
+    total: number
+  ) {
+    const claims = this.verifyUploadToken(token);
+
+    let result;
+    try {
+      result = await driveService.uploadResumableChunk(
+        claims.organizationId,
+        claims.driveSessionUrl,
+        chunk,
+        start,
+        end,
+        total
+      );
+    } catch (error) {
+      throw new AppException(
+        HttpStatus.BAD_GATEWAY,
+        "drive_upload_failed",
+        error instanceof Error
+          ? error.message
+          : "Could not upload this chunk to Google Drive."
+      );
+    }
+
+    if (!result.done) {
+      return {
+        status: "incomplete" as const,
+        receivedBytes: result.receivedBytes
+      };
+    }
+
+    const file = await this.finalizeUploadFromClaims(claims, result.fileId);
+    return { status: "complete" as const, file };
+  }
+
+  // Step 3 - "how far did we get?", the mechanism that lets the client
+  // resume after a dropped connection instead of restarting from 0%.
+  async getUploadStatus(token: string) {
+    const claims = this.verifyUploadToken(token);
+
+    let result;
+    try {
+      result = await driveService.getResumableUploadStatus(
+        claims.organizationId,
+        claims.driveSessionUrl,
+        claims.size
+      );
+    } catch (error) {
+      throw new AppException(
+        HttpStatus.GONE,
+        "upload_session_expired",
+        error instanceof Error
+          ? error.message
+          : "This upload session has expired - please restart the upload."
+      );
+    }
+
+    if (!result.done) {
+      return {
+        status: "incomplete" as const,
+        receivedBytes: result.receivedBytes,
+        total: claims.size
+      };
+    }
+
+    const file = await this.finalizeUploadFromClaims(claims, result.fileId);
+    return { status: "complete" as const, file };
+  }
+
+  async updateMediaMetadata(
+    userId: string,
+    houseId: string,
+    entryId: string,
+    dto: UpdateMediaMetadataDto
+  ) {
+    await organizationsService.requireMembership(houseId, userId);
+    await this.requireEntry(houseId, entryId, userId);
+
+    const updated = await this.prisma.fileEntry.update({
+      where: { id: entryId },
+      data: {
+        ...(dto.durationSeconds !== undefined
+          ? { durationSeconds: dto.durationSeconds }
+          : {}),
+        ...(dto.width !== undefined ? { width: dto.width } : {}),
+        ...(dto.height !== undefined ? { height: dto.height } : {})
+      },
+      include: { uploadedBy: true }
+    });
+
+    return toFileEntryDto(updated);
+  }
+
+  private verifyUploadToken(token: string): UploadSessionClaims {
+    try {
+      return verifyUploadSessionToken(token);
+    } catch {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_or_expired_token",
+        "This upload session is invalid or has expired."
+      );
+    }
+  }
+
+  private async finalizeUploadFromClaims(
+    claims: UploadSessionClaims,
+    fileId: string
+  ) {
+    const parentEntry = claims.parentId
+      ? await this.prisma.fileEntry.findUnique({
+          where: { id: claims.parentId }
+        })
+      : null;
+
+    return this.createFileEntryRow({
+      organizationId: claims.organizationId,
+      parentId: claims.parentId,
+      parentEntry,
+      conversationId: claims.conversationId,
+      taskId: claims.taskId,
+      name: claims.name,
+      storagePath: fileId,
+      size: claims.size,
+      mimeType: claims.mimeType,
+      uploadedById: claims.userId
+    });
+  }
+
+  private async createFileEntryRow(params: {
+    organizationId: string;
+    parentId: string | null;
+    parentEntry: { sensitive: boolean } | null;
+    conversationId: string | null;
+    taskId: string | null;
+    name: string;
+    storagePath: string;
+    size: number;
+    mimeType: string;
+    uploadedById: string;
+  }) {
     const entry = await this.prisma.fileEntry.create({
       data: {
-        organizationId: houseId,
-        parentId,
-        conversationId: conversationId ?? null,
-        taskId: taskId ?? null,
-        name: file.name,
+        organizationId: params.organizationId,
+        parentId: params.parentId,
+        conversationId: params.conversationId,
+        taskId: params.taskId,
+        name: params.name,
         type: "file",
-        storagePath,
-        size: file.size,
-        mimeType: file.mimeType,
-        sensitive: parentEntry?.sensitive ?? false,
-        uploadedById: userId
+        storagePath: params.storagePath,
+        size: params.size,
+        mimeType: params.mimeType,
+        sensitive: params.parentEntry?.sensitive ?? false,
+        uploadedById: params.uploadedById
       },
       include: { uploadedBy: true }
     });
 
     await this.mirrorIntoEmployeeWork(
-      houseId,
-      userId,
+      params.organizationId,
+      params.uploadedById,
       entry.name,
-      file.mimeType,
-      storagePath,
-      file.size
+      params.mimeType,
+      params.storagePath,
+      params.size
     );
 
     return toFileEntryDto(entry);
@@ -459,6 +670,9 @@ function toFileEntryDto(entry: {
   storagePath: string | null;
   size: number | null;
   mimeType: string | null;
+  durationSeconds: number | null;
+  width: number | null;
+  height: number | null;
   sensitive: boolean;
   uploadedBy: { id: string; name: string };
   createdAt: Date;
@@ -472,6 +686,9 @@ function toFileEntryDto(entry: {
     type: entry.type,
     size: entry.size,
     mimeType: entry.mimeType,
+    durationSeconds: entry.durationSeconds,
+    width: entry.width,
+    height: entry.height,
     sensitive: entry.sensitive,
     uploadedById: entry.uploadedBy.id,
     uploadedByName: entry.uploadedBy.name,
