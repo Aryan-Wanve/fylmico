@@ -44,7 +44,6 @@ model User {
   connectedDriveConnections DriveConnection[]
   scripts                   Script[]
   messageReactions          MessageReaction[]
-  callSheets                CallSheet[]
   announcements             Announcement[]
   conversationReads         ConversationRead[]
   createdShoots             Shoot[]
@@ -84,7 +83,6 @@ model Organization {
   characters      Character[]
   storyLocations  StoryLocation[]
   scripts         Script[]
-  callSheets      CallSheet[]
   announcements   Announcement[]
   notifications   Notification[]
   driveConnection DriveConnection?
@@ -473,7 +471,6 @@ model Project {
   characters     Character[]
   storyLocations StoryLocation[]
   scripts        Script[]
-  callSheets     CallSheet[]
   tasks          Task[]
   shoots         Shoot[]
   deliverables   Deliverable[]
@@ -882,30 +879,6 @@ model DriveConnection {
   connectedBy  User         @relation(fields: [connectedById], references: [id])
 
   @@map("drive_connections")
-}
-
-model CallSheet {
-  id              String   @id @default(cuid())
-  organizationId  String   @map("organization_id")
-  projectId       String?  @map("project_id")
-  title           String
-  shootDate       String   @map("shoot_date")
-  generalCallTime String   @map("general_call_time")
-  location        String?
-  weather         String?
-  notes           String?
-  crewCallTimes   Json     @map("crew_call_times")
-  createdById     String   @map("created_by_id")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  createdBy    User         @relation(fields: [createdById], references: [id])
-
-  @@index([organizationId])
-  @@index([projectId])
-  @@map("call_sheets")
 }
 
 model Announcement {
