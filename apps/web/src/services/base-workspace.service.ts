@@ -8,7 +8,6 @@ import type {
   Board,
   Booking,
   CalendarEvent,
-  CallSheet,
   ChangePasswordRequest,
   BookingStatus,
   ChannelTaskItem,
@@ -21,7 +20,6 @@ import type {
   CreateAnnouncementRequest,
   CreateBookingRequest,
   CreateCalendarEventRequest,
-  CreateCallSheetRequest,
   CreateCharacterRequest,
   CreateClientRequest,
   CreateConversationRequest,
@@ -75,7 +73,6 @@ import type {
   TimeEntry,
   UpdateAnnouncementRequest,
   UpdateBoardRequest,
-  UpdateCallSheetRequest,
   UpdateCrewProfileRequest,
   UpdateConversationRequest,
   UpdateHouseRequest,
@@ -1716,47 +1713,6 @@ export async function deleteScript(scriptId: string): Promise<void> {
     `/houses/${activeHouseId}/scripts/${scriptId}`,
     { method: "DELETE" }
   );
-}
-
-export async function listCallSheets(): Promise<CallSheet[]> {
-  if (!activeHouseId) {
-    throw new Error("Join or create a house before viewing call sheets.");
-  }
-
-  return apiRequest<CallSheet[]>(`/houses/${activeHouseId}/call-sheets`);
-}
-
-export async function createCallSheet(
-  request: CreateCallSheetRequest
-): Promise<CallSheet> {
-  if (!request.title.trim()) {
-    throw new Error("Give the call sheet a title.");
-  }
-
-  if (!activeHouseId) {
-    throw new Error("Join or create a house before creating call sheets.");
-  }
-
-  return apiRequest<CallSheet>(`/houses/${activeHouseId}/call-sheets`, {
-    method: "POST",
-    body: request
-  });
-}
-
-export async function updateCallSheet(
-  callSheetId: string,
-  request: UpdateCallSheetRequest
-): Promise<CallSheet> {
-  return apiRequest<CallSheet>(`/call-sheets/${callSheetId}`, {
-    method: "PATCH",
-    body: request
-  });
-}
-
-export async function deleteCallSheet(callSheetId: string): Promise<void> {
-  await apiRequest<{ success: boolean }>(`/call-sheets/${callSheetId}`, {
-    method: "DELETE"
-  });
 }
 
 export async function listAnnouncements(): Promise<Announcement[]> {
