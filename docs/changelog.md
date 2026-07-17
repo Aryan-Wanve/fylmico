@@ -729,3 +729,25 @@ Breaking changes:
 Migration notes:
 
 - None (no schema changes).
+
+## 0.24.0 - 2026-07-17
+
+Summary:
+
+- Mobile responsiveness pass: dialogs now keep a side gutter and scroll
+  internally instead of running edge-to-edge and off-screen; ~10 dialog
+  form grids collapse to one column on narrow screens instead of
+  cramming Selects/inputs into unreadable columns; the project detail
+  page's 9-tab bar now scrolls horizontally instead of overflowing;
+  Messages switches to a single-pane, back-button navigation on mobile
+  instead of stacking the channel list above every conversation; 16 top-
+  level pages now scale their padding down on small screens instead of a
+  fixed 32px.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- None (no schema changes).

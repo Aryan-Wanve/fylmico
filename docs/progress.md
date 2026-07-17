@@ -6155,3 +6155,81 @@ Next task:
 - Mobile responsiveness pass across the entire app, including the Review
   page/components built in the previous session (currently only cursory
   responsive classes, not yet checked at mobile viewport widths).
+
+## 2026-07-17 Mobile Responsiveness Pass
+
+What shipped:
+
+- The app shell (sidebar/topbar) was already mobile-ready (slide-in drawer
+  behind a hamburger button, global search hidden below `sm`) - no change
+  needed there. This pass focused on individual pages and components.
+- `components/ui/dialog.tsx`: every dialog in the app now gets a
+  side-gutter on narrow screens (`w-[calc(100%-2rem)]` instead of edge-to-
+  edge `w-full`) and a `max-h-[calc(100vh-2rem)] overflow-y-auto` so a
+  tall dialog scrolls internally instead of extending off-screen with no
+  way to reach its footer buttons.
+- Fixed ~10 dialogs/panels whose internal 2-3 column form grids had no
+  mobile breakpoint (`grid-cols-2`/`grid-cols-3` with no `sm:` prefix),
+  which crammed Selects and inputs into unreadably narrow columns on a
+  phone: `project-edit-dialog`, `client-edit-dialog`,
+  `shoot-create-dialog`, `new-call-sheet-dialog`, `new-booking-dialog`
+  (x2), `submit-draft-dialog`, `task-create-dialog`, `task-detail-panel`,
+  `review-detail-panel` (version compare), `assign-role-dialog`
+  (permissions checklist), `focus-task-card` (stats row).
+- `project-detail-page.tsx`: its 9-tab bar (Overview/Tasks/Shoots/
+  Deliverables/Calendar/Comments/Chat/Timeline/Analytics) was missing the
+  `max-w-full min-w-0 overflow-x-auto` treatment already used by every
+  other multi-tab toolbar in the app (bookings, projects, crews,
+  storyboard) - on a phone this let the tab bar overflow un-scrollably,
+  making the later tabs unreachable. Now scrolls horizontally like the
+  others.
+- `messages-page.tsx`: the three-column layout (channel list / active
+  conversation / info panel) collapsed to a single stacked column below
+  `xl`, meaning on mobile the user had to scroll past the entire channel
+  list to reach a conversation, with no way back. Reworked into a
+  WhatsApp-Web-style single-pane mobile view: channel list shows first,
+  selecting a channel swaps to the conversation with a back arrow, and
+  the auxiliary info panel (channel members/settings) is desktop-only
+  (`xl:block`) since there's no mobile affordance to open it anyway.
+- Root padding on 16 top-level pages (analytics, announcements, bookings,
+  calendar, crews, crew-profile, files, messages, clients, project-detail,
+  projects, settings, storyboard, tasks, home dashboard) was a fixed
+  `p-8` (32px every side) regardless of viewport - inconsistent with the
+  `p-4 sm:p-6 lg:p-8` pattern already used by the Review and Scripts
+  pages. Brought all of them in line with that pattern.
+- Verified already-correct and left untouched: tables (`task-table-view`,
+  `bookings-table`) already wrap in `overflow-x-auto` with a `min-w`, so
+  they scroll horizontally rather than break; page-level card grids
+  (projects, clients, crews, storyboard) already use mobile-first
+  `grid-cols-1 sm:grid-cols-2 ...`; toolbars with tabs or multi-select
+  filters (`tasks-toolbar`, `review-toolbar`, `bookings-tabs-bar`,
+  `projects-toolbar`, `crews-toolbar`, `storyboard-toolbar`) already use
+  `flex-wrap` or `overflow-x-auto`; the login page's marketing panel is
+  `hidden md:flex` so its 4-column grid never renders on mobile.
+
+Known limitations:
+
+- Live in-browser verification at a phone viewport could not be
+  completed this session - the Browser pane's `computer` tool (click/
+  type/screenshot) was non-functional (screenshots timed out, typed text
+  didn't register in form fields despite reporting success), blocking
+  login. All changes were instead verified by: reading the exact
+  Tailwind classes controlling layout at each breakpoint, confirming the
+  fix follows patterns already proven correct elsewhere in the codebase,
+  and a clean `tsc --noEmit` / `eslint --max-warnings=0` / `next build`.
+  This is weaker than an actual phone-width screenshot walkthrough and
+  should be spot-checked in a browser once the tool is working again.
+- This was a systemic pass (shell, dialogs, tabs, page padding, the one
+  clear two-pane layout) rather than an exhaustive screen-by-screen
+  audit - lower-traffic surfaces (Settings sub-sections, Storyboard
+  board/script editor, Analytics panels) were spot-checked for the same
+  patterns but not individually walked.
+
+Files modified: `components/ui/dialog.tsx`; 10 dialog/panel components
+listed above; `project-detail-page.tsx`; `messages-page.tsx`; the 16 page
+components' root padding listed above.
+
+Next task: none outstanding from the user's standing instructions - both
+"notifications for everything" and "mobile responsiveness" are done.
+Recommend a follow-up live phone-viewport walkthrough once the Browser
+pane tool is confirmed working again.
