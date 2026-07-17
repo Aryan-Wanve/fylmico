@@ -814,6 +814,31 @@ class OrganizationsService {
     return membership;
   }
 
+  // Owner or Admin - the gate for manager-level actions (review approvals,
+  // reassignment, ...) that shouldn't be limited to the Owner alone but
+  // also aren't part of the 19-key custom permission system.
+  async requireManagerRole(
+    organizationId: string,
+    userId: string,
+    action = "do this"
+  ) {
+    const membership = await this.prisma.organizationMembership.findUnique({
+      where: { organizationId_userId: { organizationId, userId } },
+      include: { role: true }
+    });
+    if (
+      !membership ||
+      (membership.role?.name !== "Owner" && membership.role?.name !== "Admin")
+    ) {
+      throw new AppException(
+        HttpStatus.FORBIDDEN,
+        "forbidden",
+        `Only owners and admins can ${action}.`
+      );
+    }
+    return membership;
+  }
+
   // The access gate every domain service (tasks, chat, files, projects,
   // crews, ...) calls - requires a role to have been assigned, so a
   // pending member (joined, awaiting an admin's role assignment) gets no
