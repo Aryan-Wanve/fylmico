@@ -1272,7 +1272,10 @@ matching `tasks`/`messages`' pattern) and one `user` (the author).
 
 Columns: `id`, `organization_id`, `commentable_type` (`"task"` |
 `"project"` | `"deliverable"` - the third value added per ADR 0054),
-`commentable_id`, `author_id`, `body`, `created_at`, `updated_at`.
+`commentable_id`, `author_id`, `body`, `timestamp_seconds` (nullable
+`Float`, added per ADR 0056 - an optional video-timestamp a reviewer is
+commenting against, surfaced on any comment thread, not just deliverables),
+`created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
 `users` via `author_id` (no cascade, same reasoning as `tasks.assignee_id`).
@@ -1315,7 +1318,9 @@ submitted file), `created_by_id`, `version` (`Int`, auto-incremented
 **per project** at create time - `count + 1`, never reused or
 overwritten), `status` (default `"review"`; 5-value vocab, validated in
 the DTO/service only, not a DB enum, matching every other workflow
-vocabulary in this codebase), `notes` (nullable), `created_at`,
+vocabulary in this codebase), `notes` (nullable), `export_settings`
+(nullable `Json`, added per ADR 0056 - freeform key/value metadata like
+resolution/codec/frame rate captured from `SubmitDraftDialog`), `created_at`,
 `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
@@ -1334,19 +1339,36 @@ Constraints: `(project_id, version)` unique.
 Permissions: create via `POST /api/v1/projects/:projectId/deliverables`
 by any member of the project's house (in practice called by
 `SubmitDraftDialog`, not directly by users); list via `GET
-/api/v1/projects/:projectId/deliverables`; status transitions via
-dedicated `POST /api/v1/deliverables/:deliverableId/<action>` endpoints
-(`approve`, `request-revision`, `mark-final`) - no finer-grained role
-check yet, matching Tasks'/Shoots' own permission model. Comments via
-`POST`/`GET /api/v1/deliverables/:deliverableId/comments` (the `comments`
-table's new `"deliverable"` commentable type).
+/api/v1/projects/:projectId/deliverables`; the review queue via `GET
+/api/v1/houses/:houseId/review-queue` (+ `/metrics`, `/bulk-action`).
+Status/assignment transitions via dedicated `POST`/`PATCH
+/api/v1/deliverables/:deliverableId/<action>` endpoints (`approve`,
+`request-revision`, `mark-final`, `reassign`) gated by the new
+`organizationsService.requireManagerRole` (Owner or Admin - see ADR 0056),
+not the generic membership check the rest of this table used through
+Phase 4. Comments via `POST`/`GET
+/api/v1/deliverables/:deliverableId/comments` (the `comments` table's
+`"deliverable"` commentable type), optionally carrying `timestampSeconds`.
 
-Reasoning: see ADR 0054. `approve` best-effort auto-creates a Delivery
-`Task` (new `"delivery"` value on `TASK_TYPES`) and bumps
-`Project.progress` by 10 (capped at 100) - the same inline-pipeline
-pattern used for Shoot → Editing task in Phase 3 (ADR 0053).
+Reasoning: see ADR 0054 for the original version/status model and ADR
+0056 for the Review & Approval pipeline built on top of it. `approve` now
+sets `status` directly to `"final"` (superseding Phase 4's two-step
+approve→mark-final for this flow; `mark-final` itself is unchanged and
+still available), marks the linked task `completed`, best-effort copies
+the `FileEntry` into the project's `Deliveries` Drive folder, and
+recomputes `Project.progress` as `completedTaskCount / taskCount` -
+replacing the flat `+10` bump Phase 4 shipped as a placeholder.
+`request-revision` now also reverts the linked task to `"in-progress"`,
+attaches the reviewer's comment to the _task_ (not the deliverable), and
+notifies the assigned editor(s). `reassign` swaps the task's assignee via
+the existing `tasksService.update` assignee-diff path (so
+`TaskActivity`/`Comment`/`Deliverable` history all survive untouched,
+since none of them key off assignee) and notifies both the old and new
+editor.
 
-Migration history: `20260716200000_deliverables`.
+Migration history: `20260716200000_deliverables`;
+`export_settings`/`comments.timestamp_seconds` added in
+`20260717120000_review_pipeline` (ADR 0056).
 
 ### Table: `crew_profiles`
 

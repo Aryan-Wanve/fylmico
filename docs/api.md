@@ -1576,7 +1576,10 @@ exists for either yet.
 
 Same shape/error pattern as the endpoints above, scoped to a
 `Deliverable` (`404 deliverable_not_found` instead) - notifies the
-project's `teamIds`, same as project comments.
+project's `teamIds`, same as project comments. `POST` body optionally
+accepts `"timestampSeconds"?: number` (ADR 0056) - a video-timestamp the
+comment is anchored to, rendered as an `M:SS` badge in the Review page's
+comment thread.
 
 ## Deliverables (Implemented)
 
@@ -1589,12 +1592,12 @@ submission for a project - every draft submitted creates a new row
 ### `POST /api/v1/projects/:projectId/deliverables`
 
 Authentication: required. Body:
-`{ "fileEntryId": string, "taskId"?: string, "notes"?: string }`.
-`version` is computed server-side (current count for the project + 1) -
-not client-supplied. New deliverables start at `status: "review"`
-(submitting a draft already means "ready for review"). In practice
-called by `SubmitDraftDialog` right after its existing file upload, not
-directly by users. Response:
+`{ "fileEntryId": string, "taskId"?: string, "notes"?: string,
+"exportSettings"?: Record<string, string> }`. `version` is computed
+server-side (current count for the project + 1) - not client-supplied.
+New deliverables start at `status: "review"` (submitting a draft already
+means "ready for review"). In practice called by `SubmitDraftDialog`
+right after its existing file upload, not directly by users. Response:
 
 ```json
 {
@@ -1605,6 +1608,7 @@ directly by users. Response:
     "version": 2,
     "status": "review",
     "notes": null,
+    "exportSettings": { "Resolution": "1920x1080", "Codec": "H.264" },
     "file": {
       "id": "file_123",
       "name": "sizzle_reel_v2.mp4",
@@ -1629,22 +1633,68 @@ Authentication: required. Response: `{ "data": Deliverable[] }` (not
 paginated), ordered by `version` ascending. Errors:
 `401 unauthenticated`, `403 forbidden`, `404 project_not_found`.
 
-### Deliverable status transitions
+### Deliverable status/assignment transitions
 
 Each is a dedicated action endpoint (matches the Shoot-status-transition
 precedent, ADR 0052/0053) rather than a generic `PATCH status`. All:
-authentication required, no body, response is the updated `Deliverable`,
-errors `401 unauthenticated` / `403 forbidden` / `404 deliverable_not_found`.
+authentication required, response is the updated `Deliverable`, errors
+`401 unauthenticated` / `403 forbidden` / `404 deliverable_not_found`.
+`approve`/`request-revision`/`reassign` additionally return
+`403 forbidden` for members who aren't the house's Owner or Admin
+(`requireManagerRole`, ADR 0056) - `mark-final` keeps the looser
+membership check it shipped with in Phase 4.
 
-- `POST /api/v1/deliverables/:deliverableId/approve` → `status:
-"approved"`. Also best-effort auto-creates a Delivery `Task`
-  (`type: "delivery"`, titled `"Deliver v{version} - {project name}"`)
-  and bumps `Project.progress` by 10 (capped at 100) - a failure in this
-  side effect is logged and swallowed, never undoes the approval itself.
-- `POST /api/v1/deliverables/:deliverableId/request-revision` →
-  `status: "revision"`.
+- `POST /api/v1/deliverables/:deliverableId/approve` → `status: "final"`
+  directly (Review & Approval pipeline, ADR 0056 - supersedes Phase 4's
+  two-step approve→mark-final for this flow). Also: marks the linked task
+  `completed`; best-effort copies the file into the project's `Deliveries`
+  Drive folder (logged and swallowed on failure, e.g. no Drive connected);
+  recomputes `Project.progress` as `completedTaskCount / taskCount`; and
+  notifies the submitting editor if someone else approved it.
+- `POST /api/v1/deliverables/:deliverableId/request-revision` → `status:
+"revision"`. Body: `{ "comment"?: string }`. Also reverts the linked
+  task to `status: "in-progress"`, attaches the comment (if given) to the
+  _task_ via `commentsService.createForTask`, and notifies the assigned
+  editor(s) (`deliverable_changes_requested`).
 - `POST /api/v1/deliverables/:deliverableId/mark-final` → `status:
-"final"`.
+"final"` (unchanged from Phase 4 - a manual finalize path independent of
+  `approve`).
+- `PATCH /api/v1/deliverables/:deliverableId/reassign` → body:
+  `{ "newEditorId": string }`. Swaps the linked task's assignee to
+  `newEditorId` via the existing assignee-diff path in
+  `tasksService.update` (so `TaskActivity`/comments/version history all
+  survive - none of them key off assignee), then notifies both the
+  previous and new editor. Errors also include `400 invalid_request` if
+  the deliverable has no linked task.
+
+### `GET /api/v1/houses/:houseId/review-queue`
+
+Authentication: required. The cross-project Review queue (ADR 0056) -
+every `Deliverable` with `status` in `review`/`revision` for the house
+(or a single status via `?status=`, `status=all` for every status),
+joined with its task/project/client/assignee/priority/due-date. Query
+params (all optional): `projectId`, `clientId`, `editorId`, `status`,
+`priority`, `search`, `sortBy` (`submittedAt` | `priority` | `version`).
+Response: `{ "data": ReviewQueueItem[] }` (not paginated - review queues
+are expected to stay in the tens, not thousands, of items).
+
+### `GET /api/v1/houses/:houseId/review-queue/metrics`
+
+Authentication: required. Response:
+`{ "data": { "waitingForReview": number, "changesRequested": number,
+"approvedToday": number, "overdueReviews": number } }` - dashboard/Review
+page stat cards. `approvedToday` counts `approved`+`final` deliverables
+updated since local midnight; `overdueReviews` counts `review`-status
+deliverables whose linked task's `dueDate` has passed.
+
+### `POST /api/v1/houses/:houseId/review-queue/bulk-action`
+
+Authentication: required. Body: `{ "action": "approve" |
+"request-revision" | "reassign", "deliverableIds": string[], "comment"?:
+string, "newEditorId"?: string }`. Loops the single-item methods above
+per id (no duplicated transition logic) and never aborts early - each
+id's outcome is independent. Response:
+`{ "data": { "results": { "id": string, "ok": boolean, "error"?: string }[] } }`.
 
 ## Crews (Implemented)
 

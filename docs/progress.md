@@ -5976,3 +5976,125 @@ Next task:
   (deferred out of scope per the original plan): ZIP/folder upload,
   client-facing portal, project-level fine-grained permissions, a real
   status-history table for more precise Timeline/Analytics.
+
+## 2026-07-17 Review & Approval System
+
+Built a cross-project Review queue on top of the Phase 4 Deliverable
+pipeline: Approve/Request Changes/Reassign/bulk actions, search/filter/
+sort, dashboard metrics, timestamped comments, and version compare - see
+ADR 0056 for the full design.
+
+What shipped:
+
+- Schema: `Comment.timestampSeconds` (nullable `Float`),
+  `Deliverable.exportSettings` (nullable `Json`). Migration
+  `20260717120000_review_pipeline`.
+- `organizationsService.requireManagerRole` (Owner or Admin) gating
+  Approve/Request Changes/Reassign/bulk actions.
+- `deliverablesService` rewritten in place:
+  - `approve`: `status` → `"final"` directly, task → `completed`,
+    best-effort copy into the project's `Deliveries` Drive folder,
+    `Project.progress` recomputed from real task completion (replacing
+    Phase 4's flat `+10`), notifies the submitting editor.
+  - `requestRevision`: task → `"in-progress"`, comment attached to the
+    task, assigned editor(s) notified, old version stays as history.
+  - `reassign`: swaps the task's assignee via the existing
+    `tasksService.update` diff path, notifies both editors, preserves
+    every version/comment/activity row untouched.
+  - `listQueue`/`getMetrics`/`bulkAction`: new cross-project queue read,
+    dashboard counts, and bulk-loop methods.
+- New routes: `GET /api/v1/houses/:houseId/review-queue` (+`/metrics`,
+  `/bulk-action`), `PATCH /api/v1/deliverables/:deliverableId/reassign`;
+  `request-revision` now accepts `{ comment }`; deliverable creation
+  accepts `exportSettings`; deliverable comments accept
+  `timestampSeconds`.
+- New `/review` page (toggleable module, on by default for
+  agency/custom houses): toolbar (search/filter by project/client/
+  editor/status/priority, sort, bulk-select), item cards, and a detail
+  dialog (version history, compare, timestamped comments, Approve/
+  Request Changes/Reassign, Open in Drive).
+- Dashboard `ReviewMetricsPanel` (4 stat cards, links to `/review`).
+- `SubmitDraftDialog` extended with Notes + Resolution/Codec/Frame Rate
+  fields, threaded through to `Deliverable.notes`/`exportSettings`.
+- "Editor's Work" surfaced as a "Submitted Work" panel on the existing
+  crew profile page (reuses `listReviewQueue` filtered by editor,
+  `status=all`); "Client's Work" surfaced by relabeling the existing
+  Deliverables tab's `final` status badge to "Delivered to Client" - the
+  underlying Drive folders (per-editor Employee Work, per-project
+  Deliveries) already existed from ADR 0045/0054.
+
+Bug found and fixed during verification: the Review toolbar's filter
+`Select`s (Project/Client/Editor/Status/Priority/Sort) initially showed
+the raw sentinel value (`"all"`) instead of a resolved label until first
+opened - the same Base UI `Select` behavior already fixed once this
+session in the UI-audit pass. Fixed by passing an `items` map to every
+affected `Select`, matching the pattern already established there.
+
+Known limitations / tradeoffs:
+
+- Verified live in-browser end-to-end against a real house: created a
+  project + task, seeded a `Deliverable` version directly (the
+  verification house had no Google Drive connection, so the real
+  `POST /files/upload` path itself couldn't be exercised - correctly
+  rejected with `drive_not_connected`), then drove the rest of the
+  pipeline entirely through the real UI: Review queue listing with
+  correct project/client/editor/priority/notes/export-settings; a
+  timestamped comment; Request Changes (task reverted to in-progress,
+  comment attached to the task, metrics updated live); Reassign dialog
+  (opens safely with zero other house members, no crash); Approve (task
+  → completed, deliverable → final, project progress recomputed to
+  100%, metrics updated live); confirmed on the crew profile's
+  "Submitted Work" panel and the project's Deliverables tab
+  ("Delivered to Client"). Typecheck/lint/build all clean.
+- Compare-versions is metadata-only (no frame-accurate video diff);
+  "Preview/thumbnail" is a mime-type icon, not a real video frame - both
+  flagged in ADR 0056 as deliberate scope calls, not gaps.
+- The Review queue is unpaginated - fine while backlogs stay small, will
+  need a cursor if that stops holding.
+
+Files created:
+
+- `packages/database/prisma/migrations/20260717120000_review_pipeline/migration.sql`
+- `docs/adr/0056-review-approval-system.md`
+- `apps/web/src/app/(app)/review/page.tsx`
+- `apps/web/src/app/api/v1/houses/[houseId]/review-queue/route.ts`,
+  `.../review-queue/metrics/route.ts`, `.../review-queue/bulk-action/route.ts`
+- `apps/web/src/app/api/v1/deliverables/[deliverableId]/reassign/route.ts`
+- `apps/web/src/server/deliverables/dto/reassign-deliverable.dto.ts`,
+  `dto/bulk-review-action.dto.ts`
+- `apps/web/src/components/review/review-page.tsx`,
+  `review-toolbar.tsx`, `review-item-card.tsx`, `review-detail-panel.tsx`,
+  `request-changes-dialog.tsx`, `reassign-dialog.tsx`
+- `apps/web/src/components/dashboard/review-metrics-panel.tsx`
+
+Files modified:
+
+- `packages/database/prisma/schema.prisma` (`Comment.timestampSeconds`,
+  `Deliverable.exportSettings`)
+- `apps/web/src/server/organizations/organizations.service.ts`
+  (`requireManagerRole`)
+- `apps/web/src/server/deliverables/deliverables.service.ts` (rewritten -
+  see above), `dto/create-deliverable.dto.ts` (`exportSettings`)
+- `apps/web/src/server/comments/comments.service.ts`,
+  `dto/create-comment.dto.ts` (`timestampSeconds`)
+- `apps/web/src/server/notifications/notifications.service.ts`
+  (`deliverable_changes_requested`, `deliverable_reassigned`,
+  `deliverable_approved`)
+- `apps/web/src/app/api/v1/deliverables/[deliverableId]/request-revision/route.ts`,
+  `.../comments/route.ts`
+- `apps/web/src/types/base.ts`, `apps/web/src/services/base-workspace.service.ts`
+  (`ReviewQueueItem`, `ReviewMetrics`, `ReviewBulkAction`, extended
+  `Deliverable`/`Comment`, matching client functions)
+- `apps/web/src/lib/house-types.ts` (`"review"` module),
+  `apps/web/src/components/layout/nav-items.ts` (`/review` nav entry)
+- `apps/web/src/components/dashboard/home-dashboard.tsx`
+  (`ReviewMetricsPanel`), `submit-draft-dialog.tsx` (Notes/export fields)
+- `apps/web/src/components/crews/crew-profile-page.tsx` ("Submitted
+  Work" panel), `apps/web/src/components/projects/deliverable-row.tsx`
+  ("Delivered to Client" label)
+- `docs/database.md`, `docs/api.md`
+
+Next task:
+
+- Notifications coverage audit across the whole app, then a mobile
+  responsiveness pass - both requested as immediate follow-ups.

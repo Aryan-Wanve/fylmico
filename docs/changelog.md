@@ -682,3 +682,33 @@ Migration notes:
 
 - Adds a nullable, unique `project_id` column to `conversations` and a
   `pinned` column to `messages`. Run `prisma migrate deploy`.
+
+## 0.22.0 - 2026-07-17
+
+Summary:
+
+- New cross-project **Review** page: search/filter/sort every submitted
+  draft across all projects, with bulk Approve/Request Changes/Reassign.
+- Approving now completes the linked task, files the deliverable into
+  the project's Deliveries folder, and recomputes real project progress
+  (replacing the earlier flat +10 bump).
+- Requesting changes moves the task back to In Progress, attaches the
+  reviewer's comment to it, and notifies the editor; the previous
+  version stays as history.
+- Reassigning a submission transfers the task to a new editor while
+  preserving every version, comment, and activity entry.
+- New dashboard metrics: Waiting for Review, Changes Requested, Approved
+  Today, Overdue Reviews.
+- Comments can now carry an optional video timestamp; draft submissions
+  can include notes and export settings (resolution/codec/frame rate).
+- Editor's Work and Client's Work are now surfaced on the crew profile
+  page and project Deliverables tab respectively.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- Adds nullable `timestamp_seconds` to `comments` and nullable
+  `export_settings` to `deliverables`. Run `prisma migrate deploy`.
