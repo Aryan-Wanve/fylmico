@@ -2,6 +2,7 @@ import type { Prisma } from "@fylmico/database";
 import { chatService } from "../chat/chat.service";
 import { driveStructureService } from "../drive/drive-structure.service";
 import { AppException, HttpStatus } from "../http";
+import { notificationsService } from "../notifications/notifications.service";
 import { organizationsService } from "../organizations/organizations.service";
 import {
   buildPage,
@@ -99,6 +100,13 @@ class ProjectsService {
         error
       );
     }
+
+    await this.notifyTeamAdded(
+      userId,
+      houseId,
+      dto.teamIds ?? [],
+      project.name
+    );
 
     return toProjectDto(project);
   }
@@ -277,7 +285,36 @@ class ProjectsService {
       include: projectInclude
     });
 
+    if (dto.teamIds !== undefined) {
+      const previousIds = new Set(project.teamIds);
+      const newlyAdded = dto.teamIds.filter((id) => !previousIds.has(id));
+      await this.notifyTeamAdded(
+        userId,
+        project.organizationId,
+        newlyAdded,
+        updated.name
+      );
+    }
+
     return toProjectDto(updated);
+  }
+
+  private async notifyTeamAdded(
+    actorUserId: string,
+    houseId: string,
+    teamIds: string[],
+    projectName: string
+  ): Promise<void> {
+    for (const memberId of teamIds) {
+      if (memberId === actorUserId) continue;
+      await notificationsService.create(
+        memberId,
+        "project_team_added",
+        `Added to project: ${projectName}`,
+        `You were added to the team for "${projectName}".`,
+        houseId
+      );
+    }
   }
 
   async archive(userId: string, projectId: string) {
