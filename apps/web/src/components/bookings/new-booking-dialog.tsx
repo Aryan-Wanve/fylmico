@@ -129,7 +129,7 @@ export function NewBookingDialog({
               />
             </label>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="grid gap-1.5">
                 <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                   Category
@@ -190,7 +190,7 @@ export function NewBookingDialog({
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="grid gap-1.5">
                 <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                   Start date
