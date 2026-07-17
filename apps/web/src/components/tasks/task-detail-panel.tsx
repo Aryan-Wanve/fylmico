@@ -388,7 +388,7 @@ export function TaskDetailPanel({
             )}
           </section>
 
-          <section className="grid grid-cols-2 gap-4">
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <h3 className="text-xs font-bold tracking-wide text-[#8a90a3] uppercase dark:text-[#7d8299]">
                 Subtasks
