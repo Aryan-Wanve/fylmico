@@ -751,3 +751,51 @@ Breaking changes:
 Migration notes:
 
 - None (no schema changes).
+
+## 0.25.0 - 2026-07-17
+
+Summary:
+
+- Task System Overhaul Phase 1: Shoot/Edit/Storyboarding/Scripting tasks
+  now get a dedicated card with type-specific info, actions, and a live
+  progress tracker, instead of the same generic panel for every task
+  type. Shoot tasks gain Pause, Report Issue, Request Extra Time actions
+  and an embedded map preview. Edit tasks show live deliverable/review
+  status and link to the Review page. Storyboarding and Scripting tasks
+  are now linked to their Storyboard/Script and show live shot count /
+  word count. Client Approval task type is deferred pending a decision on
+  client-facing access.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- None (no schema changes). Optional new env var
+  `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` for the embedded shoot-location map
+  preview - the feature falls back to a plain link without it.
+
+## 0.26.0 - 2026-07-17
+
+Summary:
+
+- Task System Overhaul Phase 2: uploads now go through a real resumable
+  engine instead of buffering the whole file in memory - large files
+  upload in 8 MiB chunks, survive a dropped connection or in-app
+  navigation without restarting from 0%, and show live progress/speed/
+  ETA in a floating queue panel that persists across every page. Files
+  page gains multi-file drag-and-drop and folder upload with pre-upload
+  warnings (duplicate name, large file, unrecognized extension). Submit
+  Draft, task attachments, and shoot footage upload all now run in the
+  background instead of blocking their dialog/card. Uploaded videos get
+  client-extracted duration/resolution shown once processing finishes.
+
+Breaking changes:
+
+- None.
+
+Migration notes:
+
+- New migration `20260717180000_file_media_metadata` adds nullable
+  `FileEntry.durationSeconds/width/height` columns.

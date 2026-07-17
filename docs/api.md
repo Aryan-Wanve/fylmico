@@ -1499,6 +1499,21 @@ errors `401 unauthenticated` / `403 forbidden` / `404 shoot_not_found`.
   sets `cancelReason`/`cancelNotes`/`cancelledAt`. Errors additionally
   include `400 invalid_request` (missing `reason`).
 
+Two more shoot actions don't transition `status` at all - they're the
+Shoot task card's Report Issue / Request Extra Time buttons (ADR 0057),
+which just post a task comment and notify the shoot's creator:
+
+- `POST /api/v1/shoots/:shootId/report-issue` - Body:
+  `{ "message": string }`. Posts `"Issue reported: {message}"` as a
+  comment on the shoot's linked Task (if any, via
+  `commentsService.createForTask`, which itself notifies other
+  assignees), then notifies the shoot's creator (`shoot_issue_reported`)
+  if different from the actor. Response: `{ "success": true }`.
+- `POST /api/v1/shoots/:shootId/request-extra-time` - Body:
+  `{ "reason": string }`. Same shape - posts a
+  `"Requested extra time: {reason}"` comment, notifies the creator
+  (`shoot_extra_time_requested`). Response: `{ "success": true }`.
+
 ## Notifications (Implemented)
 
 Implemented per ADR 0023 (`apps/web/src/server/notifications/*`). No public
@@ -2295,6 +2310,58 @@ under the Sensitive tree for management visibility. Response: created
 `FileEntry` (`type: "file"`). Errors: `400 invalid_request` (missing
 file), `400 drive_not_connected`, `401 unauthenticated`, `403 forbidden`,
 `404 file_not_found` (bad `parentId`).
+
+### `POST /api/v1/houses/:houseId/files/upload-sessions`
+
+Implemented per ADR 0058 (resumable uploads - large-file alternative to
+the multipart `upload` route above, which buffers the whole file in
+memory). Authentication: required (member). Body:
+`{ "parentId"?: string, "name": string, "mimeType": string, "size": number, "conversationId"?: string, "taskId"?: string }`.
+Opens a Google Drive `uploadType=resumable` session and wraps the raw
+Drive session URL, destination, and requesting user in a short-lived
+signed token (same pattern as `signDownloadToken`). Response:
+`{ "data": { "uploadToken": string } }`. Errors: `400 invalid_request`,
+`400 drive_not_connected`, `401 unauthenticated`, `403 forbidden`,
+`404 file_not_found` (bad `parentId`).
+
+### `PUT /api/v1/files/upload-sessions/:token/chunk`
+
+Authentication: none (the opaque, short-lived `uploadToken` from the
+route above is itself the bearer credential — same trust model as
+`GET /api/v1/files/download/:token`). Header: `Content-Range: bytes
+{start}-{end}/{total}`. Body: the raw chunk bytes (the client slices the
+file into 8 MiB chunks, a multiple of Drive's required 256 KiB
+granularity). Relays the chunk to the Drive resumable session. Response
+while more chunks remain: `{ "data": { "status": "incomplete",
+"receivedBytes": number } }` (Drive's `308 Resume Incomplete`, translated
+
+- the client resumes from this offset after a drop instead of restarting
+  at 0%). Response once Drive confirms the file is complete:
+  `{ "data": { "status": "complete", "file": FileEntry } }` — the server
+  runs the same finalization (`FileEntry` row, best-effort Employee Work
+  mirror) as the multipart `upload` route. Errors: `400`/`410
+upload_session_expired` (bad or stale token), `502 drive_upload_failed`.
+
+### `GET /api/v1/files/upload-sessions/:token/status`
+
+Authentication: none (token-bearer, see above). Asks Drive how many bytes
+of this session it has durably received (an empty-body `PUT` with
+`Content-Range: bytes */{total}`, per Drive's resumable-upload spec) —
+used to resume a session that survived a network drop or in-app
+navigation, or to skip already-sent bytes after re-selecting a file post-
+reload. Response: same shape as the chunk route above
+(`{ "status": "incomplete", "receivedBytes" }` or
+`{ "status": "complete", "file" }`). Errors: `400`/`410
+upload_session_expired`.
+
+### `PATCH /api/v1/houses/:houseId/files/:entryId`
+
+Implemented per ADR 0058. Authentication: required (member). Body:
+`{ "durationSeconds"?: number, "width"?: number, "height"?: number }` — the
+client extracts these from a local `<video>` element pointed at the
+just-uploaded file (no server-side processing) and writes them back once
+available. Response: updated `FileEntry`. Errors: `400 invalid_request`,
+`401 unauthenticated`, `403 forbidden`, `404 file_not_found`.
 
 ### `GET /api/v1/houses/:houseId/files/summary`
 

@@ -6233,3 +6233,210 @@ Next task: none outstanding from the user's standing instructions - both
 "notifications for everything" and "mobile responsiveness" are done.
 Recommend a follow-up live phone-viewport walkthrough once the Browser
 pane tool is confirmed working again.
+
+## 2026-07-17 Task System Overhaul — Phase 1: Dynamic Task Cards
+
+What shipped (ADR 0057):
+
+- A shared `TaskProgressTracker` component (horizontal stepper) and four
+  new type-specific task cards: `ShootTaskCard`, `EditTaskCard`,
+  `StoryboardingTaskCard`, `ScriptingTaskCard` - wired into both
+  `FocusTaskCard` (dashboard widget) and `TaskDetailPanel` (full modal)
+  as a "hero" section chosen by `task.type`/`task.shootId`, sitting above
+  the existing generic sections (assignees/checklist/attachments/
+  activity/comments), which are unchanged and still shared across every
+  type.
+- `ShootTaskCard` is the existing "Videographer HUD" branch extracted
+  verbatim out of `focus-task-card.tsx` (not rebuilt), plus: **Pause**
+  (reuses the existing timer start/stop, no new `Shoot` status), **Report
+  Issue** / **Request Extra Time** (new `shootsService.reportIssue`/
+  `requestExtraTime` methods - post a task comment + notify the shoot's
+  creator), an **embedded Google Maps preview** when
+  `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set (falls back to a plain link
+  otherwise), and the existing dashboard `WeatherWidget` embedded as the
+  "weather snapshot".
+- `EditTaskCard` shows the linked `Deliverable`'s current version/status
+  and links out to the existing `/review` page rather than duplicating
+  review UI. **Upload Draft** reuses the existing `SubmitDraftDialog`;
+  **Request Missing Files**/**Ask Question** are thin `createTaskComment`
+  wrappers.
+- `StoryboardingTaskCard`/`ScriptingTaskCard` are the first UI to
+  actually read/write `Task.boardId`/`Task.scriptId`, which existed in
+  the schema and DTOs but were never surfaced anywhere - each shows the
+  linked Board/Script live (shot count / word count) with a "link one"
+  picker fallback for tasks that don't have one yet.
+- `task-create-dialog.tsx` gained Storyboard/Script pickers alongside the
+  existing Client/Project/Shoot cascade (`edit`) and Location field
+  (`shoot`).
+
+Bug found and fixed during live verification:
+
+- All four progress-tracker stage computations had the same bug: the
+  terminal stage (e.g. "Approved", "Ready for Editing") rendered as
+  still-active (numbered) instead of done (✓) once actually reached,
+  since the "is this the active stage" check never distinguished "in
+  progress" from "this is the last stage and we're there." Fixed by
+  tracking a `terminal` boolean per card and marking the final stage done
+  when the underlying status has genuinely completed. Caught by opening a
+  completed Edit task in the browser and seeing "5 Approved" (numbered)
+  instead of "✓ Approved."
+
+Known limitations / deliberately out of scope for this phase:
+
+- **Client Approval Task is deferred indefinitely** - decided with the
+  user before starting, since it needs client-facing access and the app
+  has no client auth today.
+- No "Review Task" type was created - reviewing continues through the
+  existing cross-project Review queue (ADR 0056), not a new
+  personally-assigned task type, since there's no natural one-task-one-
+  reviewer relationship to model.
+- Frame-accurate review tools (draw on frame, voice notes), the full
+  professional upload engine (resumable/chunked uploads, background
+  queue, drag-and-drop multi-file, pre-upload validation), post-upload
+  video metadata extraction, offline mobile sync, and AI
+  assistant/inspiration are all separate future phases (see the roadmap
+  in ADR 0057) - each is an independently large effort, and none of them
+  block on this phase.
+- `StoryboardingTaskCard`/`ScriptingTaskCard`'s board/script picker only
+  offers existing boards/scripts - no inline "create new" flow.
+
+Files created: `components/tasks/task-progress-tracker.tsx`,
+`components/tasks/cards/{shoot,edit,storyboarding,scripting}-task-card.tsx`,
+`server/shoots/dto/{report-shoot-issue,request-extra-time}.dto.ts`,
+`app/api/v1/shoots/[shootId]/{report-issue,request-extra-time}/route.ts`.
+
+Files modified: `focus-task-card.tsx` (delegates to the new shoot card,
+drops the inlined branch), `task-detail-panel.tsx` (hero section),
+`task-create-dialog.tsx` (storyboard/script pickers), `shoots.service.ts`
+(new methods), `notifications.service.ts` (2 new types),
+`base-workspace.service.ts` (new client functions), `.env.example`
+(optional Maps key).
+
+Verified: `tsc --noEmit`, `eslint --max-warnings=0`, `next build` all
+clean; live browser walkthrough of Edit/Storyboarding/Scripting task
+cards (created and opened one of each, confirmed correct rendering, the
+progress-tracker bug above, and the fix). Shoot card wasn't exercised
+live (no existing Shoot record in the test house) but is a near-verbatim
+extraction of already-proven code.
+
+Next task: none outstanding - the next phase of the task system overhaul
+(upload engine, video metadata, offline sync, AI assistant, or whichever
+the user prioritizes) needs its own research-then-plan pass before
+starting, per the phased approach agreed with the user.
+
+## 2026-07-17 Task System Overhaul — Phase 2: Professional Upload Engine
+
+Current milestone: Task system overhaul, Phase 2 of 5 (see ADR 0057's
+roadmap)
+
+Completion percentage: unchanged (feature-complete phase within an
+ongoing overhaul, not a standalone milestone)
+
+Features completed:
+
+- Real Google Drive resumable-upload protocol (`initiateResumableUpload`/
+  `uploadResumableChunk`/`getResumableUploadStatus` in
+  `google-drive.util.ts`), replacing whole-file memory buffering with
+  8 MiB chunked `PUT`s relayed through the server (Drive tokens never
+  reach the browser, matching every other Drive interaction).
+- Stateless upload sessions: a signed JWT (`signUploadSessionToken`/
+  `verifyUploadSessionToken`) wraps Drive's own resumable-session URL -
+  no new database table. Chunk/status routes are unauthenticated-by-
+  token, same trust model as the existing file-download route.
+- A global, reactive upload queue (`lib/uploads/upload-engine.ts`,
+  `upload-queue-store.ts`, `use-upload-queue.ts`) - max 2 concurrent,
+  pause/resume/cancel, automatic retry-with-backoff and resume-after-drop
+  (never restarts from 0% on a network blip), `localStorage`-backed
+  "needs-reselect" recovery after a page reload.
+- `upload-queue-panel.tsx`, a floating bottom-right panel mounted once in
+  `app-shell-gate.tsx` (replaces the old page-local
+  `upload-progress-toast.tsx`, now deleted) - shows every upload's
+  progress/speed/ETA regardless of which page enqueued it, survives
+  in-app navigation.
+- `upload-validation-dialog.tsx` - warns (doesn't block) on a duplicate
+  filename in the destination folder, a large file, or an unrecognized
+  extension, with an inline rename for duplicates.
+- Every upload call site now enqueues instead of blocking: `files-page.tsx`
+  (multi-file input, real drag-and-drop, `webkitdirectory` folder picks
+  that recreate subfolder structure), `submit-draft-dialog.tsx` (closes
+  immediately - the Deliverable/timer/status chain runs once the
+  background upload actually finishes), task attachment upload
+  (`task-detail-panel.tsx`, `storyboarding-task-card.tsx`), and shoot
+  footage upload (`shoot-task-card.tsx` - the original motivating
+  multi-GB case; the shoot only advances to "uploaded" once every
+  enqueued file finishes).
+- Client-side video metadata: duration/width/height read from a hidden
+  `<video>` element pointed at the local `File` after upload, `PATCH`ed
+  onto the new nullable `FileEntry.durationSeconds/width/height` columns.
+
+Bug found and fixed during this pass (not live-browser-caught - found
+while wiring the metadata `PATCH` call): `updateFileMetadata`'s client
+function called `.../files/:entryId/metadata`, but the actual route lives
+at `.../files/:entryId` (`PATCH` alongside the existing `DELETE`) - every
+metadata update would have 404'd. Fixed by correcting the client call to
+drop the `/metadata` suffix.
+
+Known limitations / deliberately out of scope for this phase:
+
+- A hard refresh or tab close mid-upload always requires re-selecting the
+  file to resume (the File System Access API would avoid this but is
+  Chromium-only - declined per the user's explicit decision for uniform
+  cross-browser behavior).
+- Thumbnail generation, FPS/codec extraction, and proxy previews remain
+  future work, per the metadata scope decided before this phase started.
+- Drag-and-drop of a folder itself isn't recursively traversed (only
+  individual dropped files); the `webkitdirectory` folder-picker button
+  covers whole-folder uploads instead.
+
+Files created: `lib/uploads/{upload-engine,upload-queue-store,use-upload-queue}.ts`,
+`components/uploads/{upload-queue-panel,upload-validation-dialog}.tsx`,
+`server/files/dto/{initiate-upload,update-media-metadata}.dto.ts`,
+`app/api/v1/houses/[houseId]/files/upload-sessions/route.ts`,
+`app/api/v1/files/upload-sessions/[token]/{chunk,status}/route.ts`,
+`packages/database/prisma/migrations/20260717180000_file_media_metadata/`.
+
+Files modified: `schema.prisma` (`FileEntry` gains `size`/`mimeType`/
+`durationSeconds`/`width`/`height`/`uploadedById`), `drive-token.util.ts`
+(upload-session token signing), `google-drive.util.ts`/`drive.service.ts`
+(resumable protocol), `http.ts` (`BAD_GATEWAY` status), `files.service.ts`
+(`initiateUpload`/`relayUploadChunk`/`getUploadStatus`/
+`updateMediaMetadata`, extracted `createFileEntryRow`), `houses/[houseId]/
+files/[entryId]/route.ts` (new `PATCH`), `types/base.ts`
+(`FileEntryItem` metadata fields), `base-workspace.service.ts`
+(`initiateFileUpload`/`updateFileMetadata`, dropped
+`uploadFileEntryWithProgress`), `app-shell-gate.tsx` (panel mount),
+`files-page.tsx`, `files-header.tsx`, `submit-draft-dialog.tsx`,
+`task-detail-panel.tsx`, `storyboarding-task-card.tsx`,
+`shoot-task-card.tsx`. Deleted: `upload-progress-toast.tsx`.
+
+Bug found and fixed during live verification (this one did crash the
+whole app shell, not just Files): `getUploadQueueSnapshot` returned a
+freshly-mapped array on every call. `useSyncExternalStore` requires a
+stable reference between actual store changes - a fresh array every call
+reads as "the store changed" on every render, and React kept re-rendering
+trying to reach a stable snapshot until it gave up with "Maximum update
+depth exceeded," crashing `AppShellGate` (and therefore every page, since
+the queue panel is mounted there). Fixed by caching the mapped snapshot
+and only invalidating it inside `notify()`. Confirmed fixed via a fresh
+dev server restart + a clean page load with zero console errors (a
+still-running server exhibited the same crash even after the file was
+saved, apparently a stale Turbopack module-graph cache for this
+module-singleton store - restarting the process, not just editing the
+file, was what actually cleared it).
+
+Verified: `tsc --noEmit`, `eslint --max-warnings=0`, `next build` all
+clean; live browser walkthrough of the Files page (queue panel renders,
+"Upload folder" appears in the New menu, no console errors, the
+"Connect your Google Drive" guard fires correctly on Upload). Full
+end-to-end chunked-upload behavior (bytes actually reaching Drive,
+pause/resume, resume-after-drop, duplicate-name warning, video duration/
+resolution appearing post-upload) was **not** exercised live - this house
+has no connected Google Drive, and the user chose to skip setting one up
+for this pass rather than have it verified now.
+
+Next task: when Drive is connected in this (or another) house, do a full
+live pass of the upload queue (multi-file drag, a large enough file to
+span several chunks, pause/resume/cancel, duplicate-name warning +
+rename, an offline-simulation resume test) before treating Phase 2 as
+fully proven end-to-end. Start Phase 3 (frame-accurate review tooling)
+only after the user explicitly prioritizes it.

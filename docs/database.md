@@ -694,7 +694,11 @@ storyboard and shot-list since `Board` contains ordered `Shot`s;
 `shoot_day_event_id` points at a `CalendarEvent` with `category = "shoot"`;
 `shoot_id` points at the new `Shoot` row this task drives - added per ADR
 0052, lets `FocusTaskCard` detect a shoot-type task and switch to the
-videographer HUD), `parent_task_id`
+videographer HUD; `board_id`/`script_id` sat unused by any Task UI until
+ADR 0057's `StoryboardingTaskCard`/`ScriptingTaskCard` started reading and
+setting them - showing the linked board's shot count / script's live word
+count, with a picker to link one after the fact if the task predates the
+link or was created without one), `parent_task_id`
 (nullable self-relation - subtasks, cascade delete like `FileEntry.parentId`),
 `equipment`/`deliverables`/`tags` (`String[]`), `location`/`call_time`
 (nullable strings), `progress` (default `0` - auto-recomputed from
@@ -1785,7 +1789,11 @@ Drive), `drive_key` (nullable, unique per `organization_id` - a stable
 identifier for system-managed folders, e.g. `"clients"`, `"client:<id>"`,
 `"project:<id>:Raw Data"`; `null` for ad-hoc user-created folders/files),
 `sensitive` (`Boolean`, default `false` - gates visibility to Owners only),
-`size` (nullable `Int`, bytes), `mime_type` (nullable), `uploaded_by_id`,
+`size` (nullable `Int`, bytes), `mime_type` (nullable), `duration_seconds`
+(nullable `Float`, added in ADR 0058 - client-extracted video duration in
+seconds, `null` for non-video files or until the client's post-upload
+metadata `PATCH` lands), `width`/`height` (nullable `Int`, same ADR - video
+pixel dimensions from the same client-side extraction), `uploaded_by_id`,
 `created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); self-relation
@@ -1820,7 +1828,14 @@ the Sensitive-tree paths, which require the Owner role. Chat rooms can
 also list/attach files scoped to their `conversation_id` via `GET`/`POST
 /api/v1/chat/rooms/:roomId/files`. Downloads are served via a short-lived
 signed token (`GET /api/v1/files/download/:token`), not a direct Drive
-URL.
+URL. Large uploads instead go through the resumable-upload flow (ADR
+0058): `POST /api/v1/houses/:houseId/files/upload-sessions` opens a Drive
+resumable session and returns a signed upload token; the client `PUT`s
+8 MiB chunks to `/api/v1/files/upload-sessions/:token/chunk` (and can poll
+`GET .../status` to resume after a drop) - both chunk/status routes are
+unauthenticated-by-token, same trust model as the download route. Client-
+extracted video duration/resolution are written back via `PATCH
+/api/v1/houses/:houseId/files/:entryId`.
 
 Reasoning: no object storage of its own - `storage_path` is a Google Drive
 object id, not a bucket key (distinct from `users.avatar_url`, which uses
@@ -1833,7 +1848,9 @@ Migration history: `20260711234500_file_entries` (initial columns);
 `conversation_id` added in `20260712080000_conversation_links`; `drive_key`
 and `sensitive` added in `20260715150000_house_drive_connection` (ADR
 0045), which also dropped `drive_folder_links`; `task_id` added in
-`20260715200000_tasks_production_workflow` (ADR 0047).
+`20260715200000_tasks_production_workflow` (ADR 0047);
+`duration_seconds`/`width`/`height` added in
+`20260717180000_file_media_metadata` (ADR 0058).
 
 ### Table: `drive_connections`
 
