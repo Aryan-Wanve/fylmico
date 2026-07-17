@@ -218,7 +218,7 @@ export function CrewProfilePage() {
   const roleMeta = ROLE_CATEGORY_META[member.roleCategory];
 
   return (
-    <div className="grid grid-cols-1 gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:p-8">
       <button
         className="flex w-fit items-center gap-1.5 text-sm font-semibold text-[#5f667d] hover:text-[#11142c] dark:text-[#a8acbf] dark:hover:text-[#f1f2f8]"
         onClick={() => router.push("/crews")}

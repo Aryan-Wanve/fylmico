@@ -71,7 +71,7 @@ export function ClientsPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:p-8">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
         <div className="min-w-0 flex-1">
           <Link

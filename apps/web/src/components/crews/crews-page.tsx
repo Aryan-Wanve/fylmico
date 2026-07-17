@@ -254,7 +254,7 @@ export function CrewsPage() {
   ).length;
 
   return (
-    <div className="grid grid-cols-1 gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:p-8">
       <CrewsHeader onInvite={handleInvite} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

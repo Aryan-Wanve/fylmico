@@ -410,7 +410,7 @@ export function FilesPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 p-8">
+    <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:p-8">
       <FilesHeader
         onNewFolder={handleNewFolder}
         onToggleSensitive={handleToggleSensitive}
