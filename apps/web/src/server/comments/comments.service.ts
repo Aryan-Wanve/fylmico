@@ -149,7 +149,8 @@ class CommentsService {
   async createForDeliverable(
     userId: string,
     deliverableId: string,
-    body: string
+    body: string,
+    timestampSeconds?: number
   ): Promise<CommentDto> {
     const deliverable = await this.prisma.deliverable.findUnique({
       where: { id: deliverableId },
@@ -167,7 +168,8 @@ class CommentsService {
       deliverable.organizationId,
       "deliverable",
       deliverableId,
-      body
+      body,
+      timestampSeconds
     );
 
     const recipientIds = deliverable.project.teamIds.filter(
@@ -246,7 +248,8 @@ class CommentsService {
     organizationId: string,
     commentableType: string,
     commentableId: string,
-    body: string
+    body: string,
+    timestampSeconds?: number
   ): Promise<CommentDto> {
     await organizationsService.requireMembership(organizationId, userId);
 
@@ -256,7 +259,8 @@ class CommentsService {
         commentableType,
         commentableId,
         authorId: userId,
-        body: body.trim()
+        body: body.trim(),
+        timestampSeconds: timestampSeconds ?? null
       },
       include: { author: true }
     });
@@ -299,6 +303,7 @@ function toCommentDto(
     body: comment.body,
     authorId: comment.authorId,
     authorName: comment.author.name,
+    timestampSeconds: comment.timestampSeconds,
     createdAt: comment.createdAt,
     updatedAt: comment.updatedAt
   };
