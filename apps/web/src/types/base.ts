@@ -811,7 +811,8 @@ export type CreateCalendarEventRequest = {
   time: string;
   location?: string;
   category?: CalendarEventCategory;
-  projectId?: string;
+  ownerType?: OwnerType;
+  ownerId?: string;
 };
 
 export type CreateTimeEntryRequest = {

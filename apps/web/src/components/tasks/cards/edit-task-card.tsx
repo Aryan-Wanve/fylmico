@@ -12,7 +12,7 @@ import {
 import { REVIEW_STATUS_META } from "@/components/review/review-item-card";
 import {
   createTaskComment,
-  listDeliverables
+  listDeliverablesForOwner
 } from "@/services/base-workspace.service";
 import type { Deliverable, ProductionTask } from "@/types/base";
 
@@ -66,12 +66,15 @@ export function EditTaskCard({
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!task.projectId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing stale versions when the task has no project to look them up in, not deriving render output
+    if (!task.ownerType || !task.ownerId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing stale versions when the task has no owner to look them up under, not deriving render output
       setVersions([]);
       return;
     }
-    listDeliverables(task.projectId)
+    listDeliverablesForOwner({
+      ownerType: task.ownerType,
+      ownerId: task.ownerId
+    })
       .then((all) =>
         setVersions(
           all
@@ -80,7 +83,7 @@ export function EditTaskCard({
         )
       )
       .catch(() => setVersions([]));
-  }, [task.id, task.projectId]);
+  }, [task.id, task.ownerType, task.ownerId]);
 
   const latest = versions[0];
 
@@ -192,12 +195,12 @@ export function EditTaskCard({
         </button>
       </div>
 
-      {submitDraftOpen && task.projectId ? (
+      {submitDraftOpen && task.ownerType && task.ownerId ? (
         <SubmitDraftDialog
           nextVersion={versions.length + 1}
           onOpenChange={setSubmitDraftOpen}
           onUploaded={onChanged}
-          projectId={task.projectId}
+          owner={{ ownerType: task.ownerType, ownerId: task.ownerId }}
           taskId={task.id}
         />
       ) : null}

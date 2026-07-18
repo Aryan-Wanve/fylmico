@@ -852,6 +852,20 @@ export async function listDeliverables(
   return apiRequest<Deliverable[]>(`/projects/${projectId}/deliverables`);
 }
 
+export async function createDeliverableForOwner(
+  owner: { ownerType: OwnerType; ownerId: string },
+  request: Omit<CreateDeliverableRequest, "ownerType" | "ownerId">
+): Promise<Deliverable> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before submitting a draft.");
+  }
+
+  return apiRequest<Deliverable>(`/houses/${activeHouseId}/deliverables`, {
+    method: "POST",
+    body: { ...request, ownerType: owner.ownerType, ownerId: owner.ownerId }
+  });
+}
+
 export async function approveDeliverable(
   deliverableId: string
 ): Promise<Deliverable> {

@@ -16,7 +16,6 @@ import {
 } from "@/components/calendar/new-event-popover";
 import {
   buildCalendarSources,
-  MY_SCHEDULE_ID,
   toCalendarEvent,
   toTaskCalendarEvent,
   type CalendarEvent,
@@ -27,9 +26,10 @@ import { useWorkspace } from "@/lib/workspace-context";
 import {
   createCalendarEvent,
   listCalendarEvents,
+  listClients,
   listProjects
 } from "@/services/base-workspace.service";
-import type { Project } from "@/types/base";
+import type { ClientItem, Project } from "@/types/base";
 
 type ViewMode = "month" | "week" | "day";
 
@@ -63,6 +63,7 @@ export function CalendarPage() {
   );
   const [selectedDate, setSelectedDate] = useState(today);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [clients, setClients] = useState<ClientItem[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [inactiveCalendarIds, setInactiveCalendarIds] = useState<Set<string>>(
     () => new Set()
@@ -72,8 +73,8 @@ export function CalendarPage() {
   );
 
   const calendarSources = useMemo(
-    () => buildCalendarSources(projects),
-    [projects]
+    () => buildCalendarSources(projects, clients),
+    [projects, clients]
   );
 
   const activeCalendarIds = useMemo(
@@ -89,12 +90,13 @@ export function CalendarPage() {
   useEffect(() => {
     let cancelled = false;
 
-    Promise.all([listProjects(), listCalendarEvents()])
-      .then(([projectsData, eventsData]) => {
+    Promise.all([listProjects(), listClients(), listCalendarEvents()])
+      .then(([projectsData, clientsData, eventsData]) => {
         if (cancelled) {
           return;
         }
         setProjects(projectsData);
+        setClients(clientsData);
         setEvents(eventsData.map(toCalendarEvent));
       })
       .catch((error) => {
@@ -121,14 +123,19 @@ export function CalendarPage() {
   }
 
   async function handleCreateEvent(input: NewEventInput) {
+    const isProject = projects.some(
+      (project) => project.id === input.calendarId
+    );
+    const isClient = clients.some((client) => client.id === input.calendarId);
+
     const created = await createCalendarEvent({
       title: input.title,
       date: input.date,
       time: input.time,
       location: input.location || undefined,
       category: input.category,
-      projectId:
-        input.calendarId === MY_SCHEDULE_ID ? undefined : input.calendarId
+      ownerType: isProject ? "project" : isClient ? "client" : undefined,
+      ownerId: isProject || isClient ? input.calendarId : undefined
     });
 
     const event = toCalendarEvent(created);

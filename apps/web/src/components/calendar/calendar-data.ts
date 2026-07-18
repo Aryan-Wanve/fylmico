@@ -1,5 +1,6 @@
 import type {
   CalendarEvent as ApiCalendarEvent,
+  ClientItem,
   ProductionTask,
   Project
 } from "@/types/base";
@@ -79,7 +80,10 @@ function hashString(value: string): number {
   return Math.abs(hash);
 }
 
-export function buildCalendarSources(projects: Project[]): CalendarSource[] {
+export function buildCalendarSources(
+  projects: Project[],
+  clients: ClientItem[] = []
+): CalendarSource[] {
   return [
     { id: MY_SCHEDULE_ID, name: "My Schedule", color: "bg-[#654cff]" },
     { id: TASK_DEADLINES_ID, name: "Task Deadlines", color: "bg-[#ef4444]" },
@@ -87,6 +91,11 @@ export function buildCalendarSources(projects: Project[]): CalendarSource[] {
       id: project.id,
       name: project.title,
       color: SOURCE_COLORS[hashString(project.id) % SOURCE_COLORS.length]
+    })),
+    ...clients.map((client) => ({
+      id: client.id,
+      name: `${client.name} (Client)`,
+      color: SOURCE_COLORS[hashString(client.id) % SOURCE_COLORS.length]
     }))
   ];
 }
@@ -109,7 +118,7 @@ export function toCalendarEvent(event: ApiCalendarEvent): CalendarEvent {
     time: event.time,
     location: event.location ?? undefined,
     category: event.category,
-    calendarId: event.projectId ?? MY_SCHEDULE_ID
+    calendarId: event.ownerId ?? MY_SCHEDULE_ID
   };
 }
 

@@ -131,7 +131,11 @@ export function HomeDashboard() {
           nextVersion={focusTask.attachmentIds.length + 1}
           onOpenChange={setSubmitDraftOpen}
           onUploaded={() => void refreshWorkspace()}
-          projectId={focusTask.projectId}
+          owner={
+            focusTask.ownerType && focusTask.ownerId
+              ? { ownerType: focusTask.ownerType, ownerId: focusTask.ownerId }
+              : null
+          }
           taskId={focusTask.id}
         />
       ) : null}

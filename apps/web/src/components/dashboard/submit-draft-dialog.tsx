@@ -14,21 +14,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUploadQueue } from "@/lib/uploads/use-upload-queue";
 import {
-  createDeliverable,
+  createDeliverableForOwner,
   stopTaskTimer,
   updateTask
 } from "@/services/base-workspace.service";
-import type { FileEntryItem } from "@/types/base";
+import type { FileEntryItem, OwnerType } from "@/types/base";
 
 export function SubmitDraftDialog({
   taskId,
-  projectId,
+  owner,
   nextVersion,
   onOpenChange,
   onUploaded
 }: {
   taskId: string;
-  projectId: string | null;
+  owner: { ownerType: OwnerType; ownerId: string } | null;
   nextVersion: number;
   onOpenChange: (open: boolean) => void;
   onUploaded: () => void;
@@ -51,14 +51,14 @@ export function SubmitDraftDialog({
   // dialog closes - createDeliverable/stopTaskTimer/updateTask only run
   // once the file has actually finished uploading, via this callback.
   async function finishSubmission(uploaded: FileEntryItem) {
-    if (projectId) {
+    if (owner) {
       try {
         const exportSettings: Record<string, string> = {};
         if (resolution.trim()) exportSettings.Resolution = resolution.trim();
         if (codec.trim()) exportSettings.Codec = codec.trim();
         if (frameRate.trim()) exportSettings["Frame Rate"] = frameRate.trim();
 
-        await createDeliverable(projectId, {
+        await createDeliverableForOwner(owner, {
           fileEntryId: uploaded.id,
           taskId,
           notes: notes.trim() || undefined,
