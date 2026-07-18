@@ -1,7 +1,9 @@
-import { AppException, HttpStatus } from "../http";
 import { organizationsService } from "../organizations/organizations.service";
+import { ownerWhere, resolveOwner, toOwnerDto } from "../owners/owners.util";
 import { prisma } from "../prisma";
 import type { CreateCalendarEventDto } from "./dto/create-calendar-event.dto";
+
+const eventInclude = { project: true, client: true } as const;
 
 class CalendarService {
   private readonly prisma = prisma;
@@ -11,6 +13,7 @@ class CalendarService {
 
     const events = await this.prisma.calendarEvent.findMany({
       where: { organizationId: houseId },
+      include: eventInclude,
       orderBy: [{ date: "asc" }, { time: "asc" }]
     });
 
@@ -20,18 +23,13 @@ class CalendarService {
   async create(userId: string, houseId: string, dto: CreateCalendarEventDto) {
     await organizationsService.requireMembership(houseId, userId);
 
-    if (dto.projectId) {
-      const project = await this.prisma.project.findUnique({
-        where: { id: dto.projectId }
-      });
-      if (!project || project.organizationId !== houseId) {
-        throw new AppException(
-          HttpStatus.NOT_FOUND,
-          "project_not_found",
-          "This project does not exist in this house."
-        );
-      }
-    }
+    const owner =
+      dto.ownerType && dto.ownerId
+        ? await resolveOwner(houseId, {
+            ownerType: dto.ownerType,
+            ownerId: dto.ownerId
+          })
+        : null;
 
     const event = await this.prisma.calendarEvent.create({
       data: {
@@ -42,8 +40,9 @@ class CalendarService {
         time: dto.time.trim(),
         location: dto.location?.trim() || null,
         category: dto.category ?? "other",
-        projectId: dto.projectId ?? null
-      }
+        ...(owner ? ownerWhere(owner) : {})
+      },
+      include: eventInclude
     });
 
     return toCalendarEventDto(event);
@@ -60,8 +59,12 @@ function toCalendarEventDto(event: {
   location: string | null;
   category: string;
   projectId: string | null;
+  clientId: string | null;
   organizationId: string;
+  project?: { id: string; name: string } | null;
+  client?: { id: string; name: string } | null;
 }) {
+  const owner = toOwnerDto(event);
   return {
     id: event.id,
     title: event.title,
@@ -69,6 +72,9 @@ function toCalendarEventDto(event: {
     time: event.time,
     location: event.location,
     category: event.category,
+    ownerType: owner?.ownerType ?? null,
+    ownerId: owner?.ownerId ?? null,
+    ownerName: owner?.ownerName ?? null,
     projectId: event.projectId,
     organizationId: event.organizationId
   };

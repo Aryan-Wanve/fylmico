@@ -7,11 +7,13 @@ import { readJsonBody, validateDto, withParamsRoute } from "@/server/http";
 export const POST = withParamsRoute<{ projectId: string }>(
   async (request: NextRequest, { projectId }) => {
     const user = requireUser(request);
-    const dto = await validateDto(
-      CreateDeliverableDto,
-      await readJsonBody(request)
-    );
-    return deliverablesService.create(user.id, projectId, dto);
+    const body = (await readJsonBody(request)) as Record<string, unknown>;
+    const dto = await validateDto(CreateDeliverableDto, {
+      ...body,
+      ownerType: "project",
+      ownerId: projectId
+    });
+    return deliverablesService.createForProject(user.id, projectId, dto);
   }
 );
 

@@ -4,6 +4,12 @@ import { driveStructureService } from "../drive/drive-structure.service";
 import { AppException, HttpStatus } from "../http";
 import { notificationsService } from "../notifications/notifications.service";
 import { organizationsService } from "../organizations/organizations.service";
+import {
+  ownerWhere,
+  resolveOwner,
+  toOwnerDto,
+  type OwnerInput
+} from "../owners/owners.util";
 import { prisma } from "../prisma";
 import type { CancelShootDto } from "./dto/cancel-shoot.dto";
 import type { CreateShootDto } from "./dto/create-shoot.dto";
@@ -11,7 +17,9 @@ import type { ReportShootIssueDto } from "./dto/report-shoot-issue.dto";
 import type { RequestExtraTimeDto } from "./dto/request-extra-time.dto";
 
 const shootInclude = {
-  tasks: { include: { assignees: { include: { user: true } } } }
+  tasks: { include: { assignees: { include: { user: true } } } },
+  project: true,
+  client: true
 } satisfies Prisma.ShootInclude;
 
 type ShootWithRelations = Prisma.ShootGetPayload<{
@@ -21,23 +29,29 @@ type ShootWithRelations = Prisma.ShootGetPayload<{
 class ShootsService {
   private readonly prisma = prisma;
 
-  async create(
+  async createForProject(
     userId: string,
     houseId: string,
     projectId: string,
     dto: CreateShootDto
   ) {
-    const project = await this.prisma.project.findUnique({
-      where: { id: projectId }
-    });
-    if (!project || project.organizationId !== houseId) {
-      throw new AppException(
-        HttpStatus.NOT_FOUND,
-        "project_not_found",
-        "This project does not exist."
-      );
-    }
+    return this.create(
+      userId,
+      houseId,
+      { ownerType: "project", ownerId: projectId },
+      dto
+    );
+  }
+
+  async create(
+    userId: string,
+    houseId: string,
+    ownerInput: OwnerInput,
+    dto: CreateShootDto
+  ) {
     await organizationsService.requireMembership(houseId, userId);
+    const owner = await resolveOwner(houseId, ownerInput);
+    const ownerData = ownerWhere(owner);
 
     const crewIds = dto.crewIds ?? [];
     if (crewIds.length) {
@@ -50,7 +64,7 @@ class ShootsService {
       const calendarEvent = await tx.calendarEvent.create({
         data: {
           organizationId: houseId,
-          projectId,
+          ...ownerData,
           createdById: userId,
           title: name,
           date: dto.scheduledDate,
@@ -63,7 +77,7 @@ class ShootsService {
       const shoot = await tx.shoot.create({
         data: {
           organizationId: houseId,
-          projectId,
+          ...ownerData,
           calendarEventId: calendarEvent.id,
           createdById: userId,
           name,
@@ -79,7 +93,7 @@ class ShootsService {
         data: {
           organizationId: houseId,
           createdById: userId,
-          projectId,
+          ...ownerData,
           shootId: shoot.id,
           shootDayEventId: calendarEvent.id,
           title: name,
@@ -175,9 +189,11 @@ class ShootsService {
     const shoot = await this.findShootOrThrow(shootId);
     await organizationsService.requireMembership(shoot.organizationId, userId);
 
+    const owner = shootOwner(shoot);
     const folder = await driveStructureService.ensureShootFolder(
       shoot.organizationId,
-      shoot.projectId,
+      owner.ownerType,
+      owner.ownerId,
       shoot.id,
       shoot.name,
       shoot.scheduledDate.slice(0, 10)
@@ -223,12 +239,14 @@ class ShootsService {
     shootId: string
   ): Promise<void> {
     const shoot = await this.findShootOrThrow(shootId);
+    const owner = shootOwner(shoot);
+    const ownerKey = `${owner.ownerType}:${owner.ownerId}`;
 
     const editingTask = await this.prisma.task.create({
       data: {
         organizationId: shoot.organizationId,
         createdById: userId,
-        projectId: shoot.projectId,
+        ...ownerWhere(owner),
         title: `Edit ${shoot.name}`,
         type: "edit"
       }
@@ -236,7 +254,8 @@ class ShootsService {
 
     const folder = await driveStructureService.ensureShootFolder(
       shoot.organizationId,
-      shoot.projectId,
+      owner.ownerType,
+      owner.ownerId,
       shoot.id,
       shoot.name,
       shoot.scheduledDate.slice(0, 10)
@@ -250,7 +269,7 @@ class ShootsService {
       where: {
         organizationId_driveKey: {
           organizationId: shoot.organizationId,
-          driveKey: `project:${shoot.projectId}:Assets`
+          driveKey: `${ownerKey}:Assets`
         }
       }
     });
@@ -425,11 +444,26 @@ class ShootsService {
 
 export const shootsService = new ShootsService();
 
+// A shoot always has exactly one owner (project or client). Callers that
+// need to file it in Drive or create derived work read it through this.
+function shootOwner(shoot: {
+  projectId: string | null;
+  clientId: string | null;
+}): { ownerType: "project" | "client"; ownerId: string } {
+  return shoot.projectId
+    ? { ownerType: "project", ownerId: shoot.projectId }
+    : { ownerType: "client", ownerId: shoot.clientId! };
+}
+
 function toShootDto(shoot: ShootWithRelations) {
   const task = shoot.tasks[0];
+  const owner = toOwnerDto(shoot);
 
   return {
     id: shoot.id,
+    ownerType: owner?.ownerType ?? null,
+    ownerId: owner?.ownerId ?? null,
+    ownerName: owner?.ownerName ?? null,
     projectId: shoot.projectId,
     taskId: task?.id ?? null,
     name: shoot.name,

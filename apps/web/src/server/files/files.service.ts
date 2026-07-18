@@ -395,8 +395,8 @@ class FilesService {
     userId: string,
     houseId: string,
     params: {
-      clientId: string | "misc";
-      projectId?: string;
+      ownerType: "project" | "client";
+      ownerId: string;
       category?: UploadCategory;
     }
   ): Promise<{ parentId: string }> {

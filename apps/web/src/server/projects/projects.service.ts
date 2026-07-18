@@ -15,12 +15,9 @@ import {
   PROJECT_STAGES,
   type CreateProjectDto
 } from "./dto/create-project.dto";
-import type { LinkClientDto } from "./dto/link-client.dto";
 import type { UpdateProjectDto } from "./dto/update-project.dto";
 
-const projectInclude = {
-  clients: { include: { client: true } }
-} satisfies Prisma.ProjectInclude;
+const projectInclude = {} satisfies Prisma.ProjectInclude;
 
 type ProjectWithRelations = Prisma.ProjectGetPayload<{
   include: typeof projectInclude;
@@ -49,10 +46,6 @@ class ProjectsService {
       await this.requireHouseMembers(houseId, dto.teamIds);
     }
 
-    if (dto.clientId) {
-      await this.requireClientInHouse(houseId, dto.clientId);
-    }
-
     const project = await this.prisma.project.create({
       data: {
         organizationId: houseId,
@@ -66,20 +59,17 @@ class ProjectsService {
         coverGradient: dto.coverGradient,
         coverIcon: dto.coverIcon,
         dueDate: dto.dueDate,
-        teamIds: dto.teamIds ?? [],
-        ...(dto.clientId
-          ? { clients: { create: { clientId: dto.clientId } } }
-          : {})
+        teamIds: dto.teamIds ?? []
       },
       include: projectInclude
     });
 
     try {
-      await driveStructureService.ensureProjectFolder(
+      await driveStructureService.ensureOwnerFolder(
         houseId,
+        "project",
         project.id,
-        project.name,
-        dto.clientId ?? null
+        project.name
       );
     } catch (error) {
       console.error(
@@ -333,54 +323,6 @@ class ProjectsService {
     return toProjectDto(archived);
   }
 
-  async linkClient(userId: string, projectId: string, dto: LinkClientDto) {
-    const project = await this.findProjectOrThrow(projectId);
-    await organizationsService.requireMembership(
-      project.organizationId,
-      userId
-    );
-
-    await this.requireClientInHouse(project.organizationId, dto.clientId);
-
-    const existingLink = await this.prisma.projectClient.findUnique({
-      where: { projectId_clientId: { projectId, clientId: dto.clientId } }
-    });
-    if (existingLink) {
-      throw new AppException(
-        HttpStatus.CONFLICT,
-        "already_linked",
-        "This client is already linked to the project."
-      );
-    }
-
-    const isFirstClient = project.clients.length === 0;
-
-    await this.prisma.projectClient.create({
-      data: { projectId, clientId: dto.clientId }
-    });
-
-    if (isFirstClient) {
-      try {
-        await driveStructureService.moveProjectFolderToClient(
-          project.organizationId,
-          projectId,
-          dto.clientId
-        );
-      } catch (error) {
-        console.error(
-          "[projects] could not move Drive folder to client",
-          error
-        );
-      }
-    }
-
-    const updated = await this.prisma.project.findUniqueOrThrow({
-      where: { id: projectId },
-      include: projectInclude
-    });
-    return toProjectDto(updated);
-  }
-
   async getProjectStats(userId: string, projectId: string) {
     const project = await this.findProjectOrThrow(projectId);
     await organizationsService.requireMembership(
@@ -572,22 +514,6 @@ class ProjectsService {
       }));
   }
 
-  private async requireClientInHouse(
-    organizationId: string,
-    clientId: string
-  ): Promise<void> {
-    const client = await this.prisma.client.findUnique({
-      where: { id: clientId }
-    });
-    if (!client || client.organizationId !== organizationId) {
-      throw new AppException(
-        HttpStatus.BAD_REQUEST,
-        "invalid_request",
-        "clientId must belong to the same house as the project."
-      );
-    }
-  }
-
   private async requireHouseMembers(
     organizationId: string,
     userIds: string[]
@@ -643,10 +569,6 @@ function toProjectDto(project: ProjectWithRelations) {
     dueDate: project.dueDate,
     teamIds: project.teamIds,
     createdAt: project.createdAt,
-    updatedAt: project.updatedAt,
-    clients: project.clients.map((link) => ({
-      id: link.client.id,
-      name: link.client.name
-    }))
+    updatedAt: project.updatedAt
   };
 }

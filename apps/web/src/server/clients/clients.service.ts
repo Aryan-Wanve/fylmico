@@ -33,8 +33,9 @@ class ClientsService {
     });
 
     try {
-      await driveStructureService.ensureClientFolder(
+      await driveStructureService.ensureOwnerFolder(
         houseId,
+        "client",
         client.id,
         client.name
       );
@@ -120,17 +121,6 @@ class ClientsService {
     const client = await this.findClientOrThrow(clientId);
     await organizationsService.requireMembership(client.organizationId, userId);
 
-    const projectCount = await this.prisma.projectClient.count({
-      where: { clientId }
-    });
-    if (projectCount > 0) {
-      throw new AppException(
-        HttpStatus.CONFLICT,
-        "client_has_projects",
-        "Archive or unlink this client's projects before deleting it."
-      );
-    }
-
     await this.prisma.client.delete({ where: { id: clientId } });
     return { success: true };
   }
@@ -139,29 +129,30 @@ class ClientsService {
     const client = await this.findClientOrThrow(clientId);
     await organizationsService.requireMembership(client.organizationId, userId);
 
-    const links = await this.prisma.projectClient.findMany({
-      where: { clientId },
-      include: { project: { select: { status: true, stage: true } } }
-    });
-    const projects = links.map((link) => link.project);
-    const activeProjects = projects.filter(
-      (project) =>
-        project.status !== "archived" && project.stage !== "Completed"
-    ).length;
-    const completedProjects = projects.filter(
-      (project) => project.stage === "Completed"
-    ).length;
+    // A client now owns work directly (ADR 0059), so its stats count its
+    // own tasks/shoots/deliverables rather than linked projects.
+    const [activeTasks, completedTasks, totalShoots, videosDelivered] =
+      await Promise.all([
+        this.prisma.task.count({
+          where: {
+            clientId,
+            isTemplate: false,
+            status: { notIn: ["completed", "archived"] }
+          }
+        }),
+        this.prisma.task.count({
+          where: { clientId, isTemplate: false, status: "completed" }
+        }),
+        this.prisma.shoot.count({ where: { clientId } }),
+        this.prisma.deliverable.count({
+          where: { clientId, status: { in: ["approved", "final"] } }
+        })
+      ]);
 
-    const driveKeyPrefixes = [
-      `client:${clientId}`,
-      ...links.map((l) => `project:${l.projectId}`)
-    ];
     const folders = await this.prisma.fileEntry.findMany({
       where: {
         organizationId: client.organizationId,
-        OR: driveKeyPrefixes.map((prefix) => ({
-          driveKey: { startsWith: prefix }
-        }))
+        driveKey: { startsWith: `client:${clientId}` }
       },
       select: { id: true }
     });
@@ -171,10 +162,10 @@ class ClientsService {
     });
 
     return {
-      activeProjects,
-      completedProjects,
-      totalShoots: 0,
-      videosDelivered: 0,
+      activeTasks,
+      completedTasks,
+      totalShoots,
+      videosDelivered,
       storageBytes: storage._sum.size ?? 0
     };
   }

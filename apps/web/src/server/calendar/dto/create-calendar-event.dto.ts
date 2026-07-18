@@ -31,6 +31,14 @@ export class CreateCalendarEventDto {
   category?: (typeof CALENDAR_EVENT_CATEGORIES)[number];
 
   @IsOptional()
+  @IsIn(["project", "client"])
+  ownerType?: "project" | "client";
+
+  @IsOptional()
+  @IsString()
+  ownerId?: string;
+
+  @IsOptional()
   @IsString()
   projectId?: string;
 }

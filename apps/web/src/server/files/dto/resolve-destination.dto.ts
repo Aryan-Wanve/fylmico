@@ -8,13 +8,12 @@ const UPLOAD_CATEGORIES = [
 ] as const;
 
 export class ResolveDestinationDto {
+  @IsIn(["project", "client"])
+  ownerType!: "project" | "client";
+
   @IsString()
   @MinLength(1)
-  clientId!: string;
-
-  @IsOptional()
-  @IsString()
-  projectId?: string;
+  ownerId!: string;
 
   @IsOptional()
   @IsIn(UPLOAD_CATEGORIES)

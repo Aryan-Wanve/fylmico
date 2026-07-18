@@ -1,4 +1,10 @@
-import { IsObject, IsOptional, IsString, MinLength } from "class-validator";
+import {
+  IsIn,
+  IsObject,
+  IsOptional,
+  IsString,
+  MinLength
+} from "class-validator";
 
 export const DELIVERABLE_STATUSES = [
   "draft",
@@ -9,6 +15,13 @@ export const DELIVERABLE_STATUSES = [
 ] as const;
 
 export class CreateDeliverableDto {
+  @IsIn(["project", "client"])
+  ownerType!: "project" | "client";
+
+  @IsString()
+  @MinLength(1)
+  ownerId!: string;
+
   @IsString()
   @MinLength(1)
   fileEntryId!: string;

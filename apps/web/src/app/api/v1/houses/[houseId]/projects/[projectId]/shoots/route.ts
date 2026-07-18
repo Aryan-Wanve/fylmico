@@ -8,6 +8,6 @@ export const POST = withParamsRoute<{ houseId: string; projectId: string }>(
   async (request: NextRequest, { houseId, projectId }) => {
     const user = requireUser(request);
     const dto = await validateDto(CreateShootDto, await readJsonBody(request));
-    return shootsService.create(user.id, houseId, projectId, dto);
+    return shootsService.createForProject(user.id, houseId, projectId, dto);
   }
 );

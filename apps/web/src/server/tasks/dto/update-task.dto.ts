@@ -69,8 +69,16 @@ export class UpdateTaskDto {
   recurrenceEndDate?: string;
 
   @IsOptional()
+  @IsIn(["project", "client"])
+  ownerType?: "project" | "client";
+
+  @IsOptional()
   @IsString()
   projectId?: string;
+
+  @IsOptional()
+  @IsString()
+  clientId?: string;
 
   @IsOptional()
   @IsString()

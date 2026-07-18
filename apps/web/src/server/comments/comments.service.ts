@@ -154,7 +154,7 @@ class CommentsService {
   ): Promise<CommentDto> {
     const deliverable = await this.prisma.deliverable.findUnique({
       where: { id: deliverableId },
-      include: { project: true }
+      include: { project: true, client: true }
     });
     if (!deliverable) {
       throw new AppException(
@@ -172,7 +172,9 @@ class CommentsService {
       timestampSeconds
     );
 
-    const recipientIds = deliverable.project.teamIds.filter(
+    const ownerName =
+      deliverable.project?.name ?? deliverable.client?.name ?? "deliverable";
+    const recipientIds = (deliverable.project?.teamIds ?? []).filter(
       (id) => id !== userId
     );
     await Promise.all(
@@ -180,7 +182,7 @@ class CommentsService {
         notificationsService.create(
           recipientId,
           "project_comment",
-          `New comment on "${deliverable.project.name}" v${deliverable.version}`,
+          `New comment on "${ownerName}" v${deliverable.version}`,
           `${comment.authorName} commented: ${excerpt(body)}`,
           deliverable.organizationId
         )

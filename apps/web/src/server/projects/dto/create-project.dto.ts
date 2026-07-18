@@ -86,8 +86,4 @@ export class CreateProjectDto {
   @IsArray()
   @IsString({ each: true })
   teamIds?: string[];
-
-  @IsOptional()
-  @IsString()
-  clientId?: string;
 }

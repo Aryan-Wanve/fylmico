@@ -4,13 +4,16 @@ import { driveStructureService } from "../drive/drive-structure.service";
 import { AppException, HttpStatus } from "../http";
 import { notificationsService } from "../notifications/notifications.service";
 import { organizationsService } from "../organizations/organizations.service";
+import { ownerWhere, resolveOwner, toOwnerDto } from "../owners/owners.util";
 import { prisma } from "../prisma";
 import { tasksService } from "../tasks/tasks.service";
 import type { CreateDeliverableDto } from "./dto/create-deliverable.dto";
 
 const deliverableInclude = {
   fileEntry: true,
-  createdBy: true
+  createdBy: true,
+  project: true,
+  client: true
 } satisfies Prisma.DeliverableInclude;
 
 type DeliverableWithRelations = Prisma.DeliverableGetPayload<{
@@ -20,10 +23,13 @@ type DeliverableWithRelations = Prisma.DeliverableGetPayload<{
 const queueInclude = {
   fileEntry: true,
   createdBy: true,
+  project: true,
+  client: true,
   task: {
     include: {
       assignees: { include: { user: true } },
-      project: { include: { clients: { include: { client: true } } } }
+      project: true,
+      client: true
     }
   }
 } satisfies Prisma.DeliverableInclude;
@@ -47,18 +53,18 @@ export type ReviewBulkAction = "approve" | "request-revision" | "reassign";
 class DeliverablesService {
   private readonly prisma = prisma;
 
-  async create(userId: string, projectId: string, dto: CreateDeliverableDto) {
-    const project = await this.requireProject(projectId);
-    await organizationsService.requireMembership(
-      project.organizationId,
-      userId
-    );
+  async create(userId: string, houseId: string, dto: CreateDeliverableDto) {
+    const owner = await resolveOwner(houseId, {
+      ownerType: dto.ownerType,
+      ownerId: dto.ownerId
+    });
+    await organizationsService.requireMembership(houseId, userId);
 
     if (dto.taskId) {
       const task = await this.prisma.task.findUnique({
         where: { id: dto.taskId }
       });
-      if (!task || task.organizationId !== project.organizationId) {
+      if (!task || task.organizationId !== houseId) {
         throw new AppException(
           HttpStatus.BAD_REQUEST,
           "invalid_request",
@@ -67,14 +73,16 @@ class DeliverablesService {
       }
     }
 
+    // Version numbering is per-owner (the old @@unique([projectId, version])
+    // is gone, since a client-owned deliverable has no project).
     const existingCount = await this.prisma.deliverable.count({
-      where: { projectId }
+      where: ownerWhere(owner)
     });
 
     const deliverable = await this.prisma.deliverable.create({
       data: {
-        organizationId: project.organizationId,
-        projectId,
+        organizationId: houseId,
+        ...ownerWhere(owner),
         taskId: dto.taskId ?? null,
         fileEntryId: dto.fileEntryId,
         createdById: userId,
@@ -86,6 +94,17 @@ class DeliverablesService {
     });
 
     return toDeliverableDto(deliverable);
+  }
+
+  // Thin wrapper for the project-scoped route, which knows the projectId
+  // but not the houseId - resolve the project's house then delegate.
+  async createForProject(
+    userId: string,
+    projectId: string,
+    dto: CreateDeliverableDto
+  ) {
+    const project = await this.requireProject(projectId);
+    return this.create(userId, project.organizationId, dto);
   }
 
   async listForProject(userId: string, projectId: string) {
@@ -387,9 +406,9 @@ class DeliverablesService {
     userId: string,
     deliverable: DeliverableWithRelations
   ): Promise<void> {
-    const project = await this.prisma.project.findUniqueOrThrow({
-      where: { id: deliverable.projectId }
-    });
+    const ownerKey = deliverable.projectId
+      ? `project:${deliverable.projectId}`
+      : `client:${deliverable.clientId}`;
 
     if (deliverable.taskId) {
       await tasksService.update(userId, deliverable.taskId, {
@@ -400,7 +419,7 @@ class DeliverablesService {
     try {
       const deliveries = await driveStructureService.getFolderByKey(
         deliverable.organizationId,
-        `project:${deliverable.projectId}:Deliveries`
+        `${ownerKey}:Deliveries`
       );
       await this.prisma.fileEntry.create({
         data: {
@@ -421,13 +440,18 @@ class DeliverablesService {
       );
     }
 
+    // Project progress only applies to project-owned work; a client
+    // workspace has no single "progress" rollup.
+    if (!deliverable.projectId) {
+      return;
+    }
     const [taskCount, completedTaskCount] = await Promise.all([
       this.prisma.task.count({
-        where: { projectId: project.id, isTemplate: false }
+        where: { projectId: deliverable.projectId, isTemplate: false }
       }),
       this.prisma.task.count({
         where: {
-          projectId: project.id,
+          projectId: deliverable.projectId,
           isTemplate: false,
           status: "completed"
         }
@@ -437,7 +461,7 @@ class DeliverablesService {
       taskCount > 0 ? Math.round((completedTaskCount / taskCount) * 100) : 100;
 
     await this.prisma.project.update({
-      where: { id: project.id },
+      where: { id: deliverable.projectId },
       data: { progress }
     });
   }
@@ -497,8 +521,12 @@ class DeliverablesService {
 export const deliverablesService = new DeliverablesService();
 
 function toDeliverableDto(deliverable: DeliverableWithRelations) {
+  const owner = toOwnerDto(deliverable);
   return {
     id: deliverable.id,
+    ownerType: owner?.ownerType ?? null,
+    ownerId: owner?.ownerId ?? null,
+    ownerName: owner?.ownerName ?? null,
     projectId: deliverable.projectId,
     taskId: deliverable.taskId,
     version: deliverable.version,
@@ -520,15 +548,18 @@ function toDeliverableDto(deliverable: DeliverableWithRelations) {
 
 function toQueueItemDto(deliverable: QueueDeliverable) {
   const task = deliverable.task;
-  const primaryClient = task?.project?.clients?.[0]?.client;
+  const owner = toOwnerDto(deliverable);
   const primaryAssignee = task?.assignees?.[0];
 
   return {
     id: deliverable.id,
+    ownerType: owner?.ownerType ?? null,
+    ownerId: owner?.ownerId ?? null,
+    ownerName: owner?.ownerName ?? null,
     projectId: deliverable.projectId,
-    projectTitle: task?.project?.name ?? null,
-    clientId: primaryClient?.id ?? null,
-    clientName: primaryClient?.name ?? null,
+    projectTitle: deliverable.project?.name ?? null,
+    clientId: deliverable.clientId,
+    clientName: deliverable.client?.name ?? null,
     taskId: deliverable.taskId,
     taskTitle: task?.title ?? null,
     editorId: deliverable.createdById,

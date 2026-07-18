@@ -2,6 +2,7 @@ import type { Prisma } from "@fylmico/database";
 import { AppException, HttpStatus } from "../http";
 import { notificationsService } from "../notifications/notifications.service";
 import { organizationsService } from "../organizations/organizations.service";
+import { toOwnerDto } from "../owners/owners.util";
 import { prisma } from "../prisma";
 import type { AddChecklistItemDto } from "./dto/add-checklist-item.dto";
 import type { AddDependencyDto } from "./dto/add-dependency.dto";
@@ -16,7 +17,8 @@ const taskInclude = {
   checklistItems: { orderBy: { order: "asc" } },
   subtasks: { orderBy: { createdAt: "asc" } },
   attachments: true,
-  project: { include: { clients: { include: { client: true } } } },
+  project: true,
+  client: true,
   board: true,
   script: true,
   shootDayEvent: true,
@@ -43,6 +45,9 @@ class TasksService {
     if (dto.projectId) {
       await this.requireProjectInHouse(dto.houseId, dto.projectId);
     }
+    if (dto.clientId) {
+      await this.requireClientInHouse(dto.houseId, dto.clientId);
+    }
     if (dto.parentTaskId) {
       await this.requireTaskInHouse(dto.houseId, dto.parentTaskId);
     }
@@ -63,7 +68,8 @@ class TasksService {
         recurrenceEndDate: dto.recurrenceEndDate
           ? new Date(dto.recurrenceEndDate)
           : null,
-        projectId: dto.projectId,
+        projectId: dto.projectId ?? null,
+        clientId: dto.projectId ? null : (dto.clientId ?? null),
         boardId: dto.boardId,
         scriptId: dto.scriptId,
         shootDayEventId: dto.shootDayEventId,
@@ -125,6 +131,9 @@ class TasksService {
     }
     if (dto.projectId) {
       await this.requireProjectInHouse(existing.organizationId, dto.projectId);
+    }
+    if (dto.clientId) {
+      await this.requireClientInHouse(existing.organizationId, dto.clientId);
     }
 
     if (dto.status !== undefined && dto.status !== existing.status) {
@@ -254,7 +263,15 @@ class TasksService {
         ...(dto.recurrenceEndDate !== undefined
           ? { recurrenceEndDate: new Date(dto.recurrenceEndDate) }
           : {}),
-        ...(dto.projectId !== undefined ? { projectId: dto.projectId } : {}),
+        ...(dto.ownerType !== undefined
+          ? dto.ownerType === "client"
+            ? { clientId: dto.clientId ?? null, projectId: null }
+            : { projectId: dto.projectId ?? null, clientId: null }
+          : dto.projectId !== undefined
+            ? { projectId: dto.projectId, clientId: null }
+            : dto.clientId !== undefined
+              ? { clientId: dto.clientId, projectId: null }
+              : {}),
         ...(dto.boardId !== undefined ? { boardId: dto.boardId } : {}),
         ...(dto.scriptId !== undefined ? { scriptId: dto.scriptId } : {}),
         ...(dto.shootDayEventId !== undefined
@@ -688,6 +705,22 @@ class TasksService {
     }
   }
 
+  private async requireClientInHouse(
+    organizationId: string,
+    clientId: string
+  ): Promise<void> {
+    const client = await this.prisma.client.findUnique({
+      where: { id: clientId }
+    });
+    if (!client || client.organizationId !== organizationId) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_request",
+        "clientId must belong to this house."
+      );
+    }
+  }
+
   private async requireTaskInHouse(
     organizationId: string,
     taskId: string
@@ -772,7 +805,7 @@ function toActivityDto(activity: {
 }
 
 function toTaskDto(task: TaskWithRelations) {
-  const primaryClient = task.project?.clients?.[0]?.client;
+  const owner = toOwnerDto(task);
   const notCompleted = (status: string) =>
     status !== "completed" && status !== "archived";
 
@@ -796,10 +829,13 @@ function toTaskDto(task: TaskWithRelations) {
     progress: task.progress,
     createdById: task.createdById,
     createdByName: task.createdBy.name,
+    ownerType: owner?.ownerType ?? null,
+    ownerId: owner?.ownerId ?? null,
+    ownerName: owner?.ownerName ?? null,
     projectId: task.projectId,
     projectTitle: task.project?.name ?? null,
-    clientId: primaryClient?.id ?? null,
-    clientName: primaryClient?.name ?? null,
+    clientId: task.clientId,
+    clientName: task.client?.name ?? null,
     boardId: task.boardId,
     boardName: task.board?.name ?? null,
     scriptId: task.scriptId,
