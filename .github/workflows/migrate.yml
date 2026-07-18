@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch: {}
 
 concurrency:
   group: migrate-${{ github.ref }}
@@ -27,6 +28,34 @@ jobs:
         run: npm ci
 
       - name: Deploy migrations
-        run: npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma
+        run: |
+          # Hostinger's own deploy hook watches `main` independently of this
+          # workflow and can start serving the new app code (which expects
+          # the new schema) at roughly the same moment this job starts - if
+          # that new code is still leaking connections when this job's
+          # first attempt lands, `migrate deploy` can find Supabase's
+          # Session Pooler (pool_size 15) already full and fail outright
+          # with no automatic retry. Cap this job to a single connection
+          # (it only ever needs one) and retry with backoff so a transient
+          # exhaustion window resolves itself instead of requiring someone
+          # to notice and click "Re-run failed jobs".
+          if [[ "$DATABASE_URL" == *"?"* ]]; then
+            export DATABASE_URL="${DATABASE_URL}&connection_limit=1&pool_timeout=15"
+          else
+            export DATABASE_URL="${DATABASE_URL}?connection_limit=1&pool_timeout=15"
+          fi
+
+          attempt=1
+          max_attempts=6
+          until npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma; do
+            if [ "$attempt" -ge "$max_attempts" ]; then
+              echo "::error::prisma migrate deploy failed after $attempt attempts."
+              exit 1
+            fi
+            wait_seconds=$((attempt * 15))
+            echo "Migration attempt $attempt failed - retrying in ${wait_seconds}s..."
+            sleep "$wait_seconds"
+            attempt=$((attempt + 1))
+          done
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
