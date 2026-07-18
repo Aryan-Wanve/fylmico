@@ -21,7 +21,9 @@ const PORTFOLIO_CATEGORIES = [
   "Photography",
   "Misc"
 ];
-const PROJECT_SUBFOLDERS = [
+// Both a Project and a Client workspace get the same subfolder set (ADR
+// 0059) - they are independent, co-equal owners of work.
+const OWNER_SUBFOLDERS = [
   "Scripts",
   "Storyboards",
   "Raw Data",
@@ -30,6 +32,12 @@ const PROJECT_SUBFOLDERS = [
   "Deliveries",
   "Assets"
 ];
+
+type OwnerType = "project" | "client";
+const OWNER_ROOT_KEY: Record<OwnerType, string> = {
+  project: "projects",
+  client: "clients"
+};
 const EMPLOYEE_SUBFOLDERS = [
   "Videos",
   "Scripts",
@@ -61,13 +69,15 @@ class DriveStructureService {
   private readonly prisma = prisma;
 
   async ensureHouseSkeleton(organizationId: string): Promise<void> {
-    const clients = await this.ensureFolder(
+    // Two independent top-level trees: Projects/ and Clients/ (ADR 0059).
+    await this.ensureFolder(
       organizationId,
-      "clients",
-      "Clients",
+      "projects",
+      "Projects",
       null,
       false
     );
+    await this.ensureFolder(organizationId, "clients", "Clients", null, false);
     const resources = await this.ensureFolder(
       organizationId,
       "resources",
@@ -83,13 +93,6 @@ class DriveStructureService {
       false
     );
 
-    await this.ensureFolder(
-      organizationId,
-      "client:misc",
-      "Misc",
-      clients,
-      false
-    );
     for (const name of RESOURCE_SUBFOLDERS) {
       await this.ensureFolder(
         organizationId,
@@ -119,61 +122,55 @@ class DriveStructureService {
     }
   }
 
-  async ensureClientFolder(
+  // Creates (idempotently) a Project or Client workspace folder as a
+  // top-level entry under Projects/ or Clients/, with the shared subfolder
+  // set. drive-key scheme: `project:<id>` / `client:<id>` and
+  // `project:<id>:<sub>` / `client:<id>:<sub>`.
+  async ensureOwnerFolder(
     organizationId: string,
-    clientId: string,
+    ownerType: OwnerType,
+    ownerId: string,
     name: string
   ): Promise<FileEntry> {
-    const clients = await this.requireFolder(organizationId, "clients");
-    return this.ensureFolder(
+    const root = await this.requireFolder(
       organizationId,
-      `client:${clientId}`,
-      name,
-      clients,
-      false
+      OWNER_ROOT_KEY[ownerType]
     );
-  }
-
-  async ensureProjectFolder(
-    organizationId: string,
-    projectId: string,
-    name: string,
-    clientId: string | null
-  ): Promise<FileEntry> {
-    const parentKey = clientId ? `client:${clientId}` : "client:misc";
-    const parent = await this.requireFolder(organizationId, parentKey);
-    const project = await this.ensureFolder(
+    const ownerKey = `${ownerType}:${ownerId}`;
+    const owner = await this.ensureFolder(
       organizationId,
-      `project:${projectId}`,
+      ownerKey,
       name,
-      parent,
+      root,
       false
     );
 
-    for (const sub of PROJECT_SUBFOLDERS) {
+    for (const sub of OWNER_SUBFOLDERS) {
       await this.ensureFolder(
         organizationId,
-        `project:${projectId}:${sub}`,
+        `${ownerKey}:${sub}`,
         sub,
-        project,
+        owner,
         false
       );
     }
-    return project;
+    return owner;
   }
 
   async ensureRawDataDateFolder(
     organizationId: string,
-    projectId: string,
+    ownerType: OwnerType,
+    ownerId: string,
     dateISO: string
   ): Promise<FileEntry> {
+    const ownerKey = `${ownerType}:${ownerId}`;
     const rawData = await this.requireFolder(
       organizationId,
-      `project:${projectId}:Raw Data`
+      `${ownerKey}:Raw Data`
     );
     return this.ensureFolder(
       organizationId,
-      `project:${projectId}:rawdata:${dateISO}`,
+      `${ownerKey}:rawdata:${dateISO}`,
       dateISO,
       rawData,
       false
@@ -182,18 +179,20 @@ class DriveStructureService {
 
   async ensureShootFolder(
     organizationId: string,
-    projectId: string,
+    ownerType: OwnerType,
+    ownerId: string,
     shootId: string,
     name: string,
     dateISO: string
   ): Promise<FileEntry> {
+    const ownerKey = `${ownerType}:${ownerId}`;
     const shoots = await this.requireFolder(
       organizationId,
-      `project:${projectId}:Shoots`
+      `${ownerKey}:Shoots`
     );
     return this.ensureFolder(
       organizationId,
-      `project:${projectId}:shoot:${shootId}`,
+      `${ownerKey}:shoot:${shootId}`,
       `${dateISO} - ${name}`,
       shoots,
       false
@@ -228,73 +227,29 @@ class DriveStructureService {
     return employee;
   }
 
+  // Resolves the destination folder for an upload owned by a Project or a
+  // Client. `category` picks the subfolder (Raw Data gets a dated child).
   async resolveDestination(
     organizationId: string,
     params: {
-      clientId: string | "misc";
-      projectId?: string;
+      ownerType: OwnerType;
+      ownerId: string;
       category?: UploadCategory;
     }
   ): Promise<FileEntry> {
-    if (params.clientId === "misc") {
-      return this.requireFolder(organizationId, "client:misc");
-    }
-    if (!params.projectId) {
-      return this.requireFolder(organizationId, `client:${params.clientId}`);
-    }
-
+    const ownerKey = `${params.ownerType}:${params.ownerId}`;
     const subfolderName =
       CATEGORY_TO_SUBFOLDER[params.category ?? "project-files"];
     if (subfolderName === "Raw Data") {
       const dateISO = new Date().toISOString().slice(0, 10);
       return this.ensureRawDataDateFolder(
         organizationId,
-        params.projectId,
+        params.ownerType,
+        params.ownerId,
         dateISO
       );
     }
-    return this.requireFolder(
-      organizationId,
-      `project:${params.projectId}:${subfolderName}`
-    );
-  }
-
-  async moveProjectFolderToClient(
-    organizationId: string,
-    projectId: string,
-    clientId: string
-  ): Promise<void> {
-    const project = await this.requireFolder(
-      organizationId,
-      `project:${projectId}`
-    );
-    const newParent = await this.requireFolder(
-      organizationId,
-      `client:${clientId}`
-    );
-    if (project.parentId === newParent.id) {
-      return;
-    }
-
-    const oldParent = project.parentId
-      ? await this.prisma.fileEntry.findUnique({
-          where: { id: project.parentId }
-        })
-      : null;
-    const { visibleRootFolderId } =
-      await driveService.getRootFolderIds(organizationId);
-
-    await driveService.moveFolder(
-      organizationId,
-      project.storagePath!,
-      newParent.storagePath!,
-      oldParent?.storagePath ?? visibleRootFolderId
-    );
-
-    await this.prisma.fileEntry.update({
-      where: { id: project.id },
-      data: { parentId: newParent.id }
-    });
+    return this.requireFolder(organizationId, `${ownerKey}:${subfolderName}`);
   }
 
   private async ensureFolder(
