@@ -5,6 +5,7 @@ import {
   TASK_TYPE_LABELS,
   formatDueDate
 } from "@/components/tasks/task-data";
+import { OwnerBadge } from "@/components/owners/owner-badge";
 import type { ProductionTask } from "@/types/base";
 
 export function TaskTableView({
@@ -29,7 +30,7 @@ export function TaskTableView({
             <th className="px-2 py-2.5">Status</th>
             <th className="px-2 py-2.5">Priority</th>
             <th className="px-2 py-2.5">Assignees</th>
-            <th className="px-2 py-2.5">Project</th>
+            <th className="px-2 py-2.5">Owner</th>
             <th className="px-2 py-2.5">Due</th>
             <th className="px-2 py-2.5">Progress</th>
           </tr>
@@ -82,8 +83,11 @@ export function TaskTableView({
                       ? `${task.assignees[0].name} +${task.assignees.length - 1}`
                       : task.assignees[0].name}
                 </td>
-                <td className="max-w-32 truncate px-2 py-2.5 text-[#4b5268] dark:text-[#c7cad9]">
-                  {task.projectTitle ?? "—"}
+                <td className="max-w-32 px-2 py-2.5">
+                  <OwnerBadge
+                    ownerName={task.ownerName}
+                    ownerType={task.ownerType}
+                  />
                 </td>
                 <td
                   className={`px-2 py-2.5 font-semibold ${due.overdue ? "text-red-600" : "text-[#4b5268] dark:text-[#c7cad9]"}`}

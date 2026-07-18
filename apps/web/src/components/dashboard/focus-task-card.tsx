@@ -179,22 +179,12 @@ export function FocusTaskCard({
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
         <div>
           <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
-            Project
+            {task.ownerType === "client" ? "Client" : "Project"}
           </span>
           <strong className="text-[#11142c] dark:text-[#f1f2f8]">
-            {task.projectTitle ?? "No Project"}
+            {task.ownerName ?? "No Owner"}
           </strong>
         </div>
-        {task.clientName ? (
-          <div>
-            <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
-              Client
-            </span>
-            <strong className="text-[#11142c] dark:text-[#f1f2f8]">
-              {task.clientName}
-            </strong>
-          </div>
-        ) : null}
         <div>
           <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
             Deadline

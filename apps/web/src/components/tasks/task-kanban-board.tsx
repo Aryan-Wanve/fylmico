@@ -11,6 +11,7 @@ import {
   toInitials
 } from "@/components/tasks/task-data";
 import { TaskIndicatorBadges } from "@/components/tasks/task-indicator-badges";
+import { OwnerBadge } from "@/components/owners/owner-badge";
 import type { ProductionTask, TaskStatus } from "@/types/base";
 
 function TaskKanbanCard({
@@ -36,6 +37,9 @@ function TaskKanbanCard({
       <strong className="text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
         {task.title}
       </strong>
+      {task.ownerType ? (
+        <OwnerBadge ownerName={task.ownerName} ownerType={task.ownerType} />
+      ) : null}
       <TaskIndicatorBadges task={task} />
       <div className="flex items-center justify-between">
         <span

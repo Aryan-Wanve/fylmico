@@ -4,10 +4,10 @@ import {
   PRIORITY_META,
   TASK_TYPE_LABELS,
   formatDueDate,
-  getProjectColor,
   toInitials
 } from "@/components/tasks/task-data";
 import { TaskIndicatorBadges } from "@/components/tasks/task-indicator-badges";
+import { OwnerBadge } from "@/components/owners/owner-badge";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import { TaskCardMenu } from "@/components/tasks/task-card-menu";
 import type { ProductionTask } from "@/types/base";
@@ -35,7 +35,6 @@ export function TaskRowItem({
 }) {
   const isDone = task.status === "completed";
   const due = formatDueDate(task.dueDate);
-  const projectColor = getProjectColor(task.projectTitle);
   const priority = PRIORITY_META[task.priority];
   const checklistDone = task.checklistItems.filter((item) => item.done).length;
 
@@ -116,11 +115,9 @@ export function TaskRowItem({
         ) : null}
       </div>
 
-      <span
-        className={`hidden w-36 shrink-0 truncate rounded-md px-2.5 py-1 text-center text-xs font-bold md:inline-block ${projectColor.bg} ${projectColor.text}`}
-      >
-        {task.projectTitle ?? "No Project"}
-      </span>
+      <div className="hidden w-36 shrink-0 md:block">
+        <OwnerBadge ownerName={task.ownerName} ownerType={task.ownerType} />
+      </div>
 
       <span
         className={`hidden w-20 shrink-0 text-sm font-semibold sm:block ${
