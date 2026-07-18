@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import {
   Building2,
@@ -103,7 +104,7 @@ export function GlobalSearch() {
   function handleSelect(result: SearchResult) {
     setQuery("");
     setOpen(false);
-    router.push(result.href);
+    router.push(result.href as Route);
   }
 
   return (
