@@ -20,6 +20,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { OwnerSelect, type OwnerValue } from "@/components/owners/owner-select";
+import { toISODate } from "@/lib/calendar-utils";
 import { TaskAssigneePicker } from "@/components/tasks/task-assignee-picker";
 import {
   PRIORITY_META,
@@ -93,6 +94,8 @@ export function TaskCreateDialog({
   const [scriptId, setScriptId] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const todayISO = toISODate(new Date());
 
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [boards, setBoards] = useState<Board[]>([]);
@@ -174,6 +177,23 @@ export function TaskCreateDialog({
     }
     if (type === "shoot" && !dueDate) {
       setError("Pick a shoot date.");
+      return;
+    }
+    if (type === "shoot" && dueDate) {
+      const scheduled = callTime
+        ? new Date(`${dueDate}T${callTime}`)
+        : new Date(`${dueDate}T23:59`);
+      if (scheduled.getTime() < Date.now()) {
+        setError("Pick a shoot date and time that hasn't already passed.");
+        return;
+      }
+    }
+    if (
+      type !== "shoot" &&
+      dueDate &&
+      new Date(dueDate).getTime() < Date.now()
+    ) {
+      setError("Pick a deadline that hasn't already passed.");
       return;
     }
 
@@ -356,11 +376,20 @@ export function TaskCreateDialog({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <label className="grid gap-1.5">
                 <Label>Shoot Date</Label>
-                <DatePicker onChange={setDueDate} value={dueDate} />
+                <DatePicker
+                  minDate={todayISO}
+                  onChange={setDueDate}
+                  value={dueDate}
+                />
               </label>
               <label className="grid gap-1.5">
                 <Label>Shoot Time</Label>
                 <Input
+                  min={
+                    dueDate === todayISO
+                      ? new Date().toTimeString().slice(0, 5)
+                      : undefined
+                  }
                   onChange={(event) => setCallTime(event.target.value)}
                   type="time"
                   value={callTime}
@@ -378,7 +407,12 @@ export function TaskCreateDialog({
           ) : (
             <label className="grid gap-1.5">
               <Label>Deadline</Label>
-              <DatePicker onChange={setDueDate} value={dueDate} withTime />
+              <DatePicker
+                minDate={todayISO}
+                onChange={setDueDate}
+                value={dueDate}
+                withTime
+              />
             </label>
           )}
 

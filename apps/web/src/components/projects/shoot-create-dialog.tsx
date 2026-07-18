@@ -13,6 +13,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TaskAssigneePicker } from "@/components/tasks/task-assignee-picker";
+import { toISODate } from "@/lib/calendar-utils";
 import type {
   CreateShootRequest,
   HouseMember,
@@ -44,6 +45,8 @@ export function ShootCreateDialog({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const todayISO = toISODate(new Date());
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!name.trim()) {
@@ -52,6 +55,13 @@ export function ShootCreateDialog({
     }
     if (!scheduledDate) {
       setError("Pick a scheduled date.");
+      return;
+    }
+    const scheduled = callTime
+      ? new Date(`${scheduledDate}T${callTime}`)
+      : new Date(`${scheduledDate}T23:59`);
+    if (scheduled.getTime() < Date.now()) {
+      setError("Pick a shoot date and time that hasn't already passed.");
       return;
     }
 
@@ -103,11 +113,20 @@ export function ShootCreateDialog({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <label className="grid gap-1.5">
               <Label>Scheduled Date</Label>
-              <DatePicker onChange={setScheduledDate} value={scheduledDate} />
+              <DatePicker
+                minDate={todayISO}
+                onChange={setScheduledDate}
+                value={scheduledDate}
+              />
             </label>
             <label className="grid gap-1.5">
               <Label>Shoot Time</Label>
               <Input
+                min={
+                  scheduledDate === todayISO
+                    ? new Date().toTimeString().slice(0, 5)
+                    : undefined
+                }
                 onChange={(event) => setCallTime(event.target.value)}
                 type="time"
                 value={callTime}

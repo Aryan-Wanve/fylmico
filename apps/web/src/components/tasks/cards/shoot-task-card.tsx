@@ -31,7 +31,8 @@ import {
   markShootUploaded,
   reportShootIssue,
   requestShootExtraTime,
-  startShoot
+  startShoot,
+  updateTask
 } from "@/services/base-workspace.service";
 import type { ProductionTask, Shoot, TaskTimeEntryItem } from "@/types/base";
 
@@ -150,6 +151,17 @@ export function ShootTaskCard({
   async function handleFinishShoot() {
     if (runningEntry) await onToggleTimer();
     await handleShootAction(() => finishShoot(shoot!.id));
+    try {
+      // Finishing the shoot completes its task - footage upload then
+      // happens from the completed task (this HUD's Upload Data action,
+      // or the task list's "Upload Shoot Data" quick action) rather than
+      // being bundled into the same click as Finish.
+      await updateTask(task.id, { status: "completed" });
+      onChanged();
+    } catch {
+      // Task status update is best-effort - the shoot itself already
+      // finished successfully above.
+    }
   }
 
   function triggerFinishAndUpload() {
@@ -359,25 +371,14 @@ export function ShootTaskCard({
           </button>
         ) : null}
         {shoot.status === "started" ? (
-          <>
-            <button
-              className="rounded-xl border border-black/[0.06] px-4 py-2.5 text-sm font-bold text-[#11142c] disabled:opacity-50 dark:border-white/[0.08] dark:text-[#f1f2f8]"
-              disabled={shootBusy}
-              onClick={() => void handleFinishShoot()}
-              type="button"
-            >
-              Finish
-            </button>
-            <button
-              className="flex items-center gap-2 rounded-xl bg-[#16c784] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
-              disabled={shootBusy}
-              onClick={triggerFinishAndUpload}
-              type="button"
-            >
-              <Upload className="h-4 w-4" />
-              Finish + Upload
-            </button>
-          </>
+          <button
+            className="rounded-xl border border-black/[0.06] px-4 py-2.5 text-sm font-bold text-[#11142c] disabled:opacity-50 dark:border-white/[0.08] dark:text-[#f1f2f8]"
+            disabled={shootBusy}
+            onClick={() => void handleFinishShoot()}
+            type="button"
+          >
+            Finish
+          </button>
         ) : null}
         {shoot.status === "finished" ? (
           <button
@@ -387,7 +388,7 @@ export function ShootTaskCard({
             type="button"
           >
             <Upload className="h-4 w-4" />
-            Start Upload
+            Upload Data
           </button>
         ) : null}
         {shoot.status === "uploading" ? (
