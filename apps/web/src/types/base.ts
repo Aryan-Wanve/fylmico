@@ -349,6 +349,7 @@ export type Shoot = {
   name: string;
   scheduledDate: string;
   callTime: string | null;
+  estFinishTime: string | null;
   location: string | null;
   equipment: string[];
   notes: string | null;
@@ -371,6 +372,7 @@ export type CreateShootRequest = {
   name: string;
   scheduledDate: string;
   callTime?: string;
+  estFinishTime?: string;
   location?: string;
   equipment?: string[];
   crewIds?: string[];

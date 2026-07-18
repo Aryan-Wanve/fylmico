@@ -83,6 +83,7 @@ class ShootsService {
           name,
           scheduledDate: dto.scheduledDate,
           callTime: dto.callTime ?? null,
+          estFinishTime: dto.estFinishTime ?? null,
           location: dto.location ?? null,
           equipment: dto.equipment ?? [],
           notes: dto.notes?.trim() || null
@@ -491,6 +492,7 @@ function toShootDto(shoot: ShootWithRelations) {
     name: shoot.name,
     scheduledDate: shoot.scheduledDate,
     callTime: shoot.callTime,
+    estFinishTime: shoot.estFinishTime,
     location: shoot.location,
     equipment: shoot.equipment,
     notes: shoot.notes,

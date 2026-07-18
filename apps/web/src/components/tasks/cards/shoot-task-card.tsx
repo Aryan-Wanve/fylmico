@@ -273,10 +273,11 @@ export function ShootTaskCard({
         {shoot.callTime ? (
           <div>
             <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
-              Call Time
+              Shoot Time
             </span>
             <strong className="text-[#11142c] dark:text-[#f1f2f8]">
               {shoot.callTime}
+              {shoot.estFinishTime ? ` - ${shoot.estFinishTime}` : ""}
             </strong>
           </div>
         ) : null}

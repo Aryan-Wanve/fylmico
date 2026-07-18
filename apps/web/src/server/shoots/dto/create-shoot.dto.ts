@@ -33,6 +33,10 @@ export class CreateShootDto {
 
   @IsOptional()
   @IsString()
+  estFinishTime?: string;
+
+  @IsOptional()
+  @IsString()
   location?: string;
 
   @IsOptional()

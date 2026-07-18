@@ -85,6 +85,7 @@ export function TaskCreateDialog({
   const [assignees, setAssignees] = useState<TaskAssigneeInput[]>([]);
   const [dueDate, setDueDate] = useState("");
   const [callTime, setCallTime] = useState("");
+  const [estFinishTime, setEstFinishTime] = useState("");
   const [location, setLocation] = useState("");
   const [owner, setOwner] = useState<OwnerValue | null>(null);
   const [shootId, setShootId] = useState("");
@@ -152,6 +153,7 @@ export function TaskCreateDialog({
     setAssignees([]);
     setDueDate("");
     setCallTime("");
+    setEstFinishTime("");
     setLocation("");
     setOwner(null);
     setShootId("");
@@ -188,6 +190,7 @@ export function TaskCreateDialog({
           name: title.trim(),
           scheduledDate: new Date(dueDate).toISOString(),
           callTime: callTime.trim() || undefined,
+          estFinishTime: estFinishTime.trim() || undefined,
           location: location.trim() || undefined,
           crewIds: assignees.map((assignee) => assignee.userId)
         });
@@ -350,17 +353,25 @@ export function TaskCreateDialog({
           </div>
 
           {type === "shoot" ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <label className="grid gap-1.5">
                 <Label>Shoot Date</Label>
                 <DatePicker onChange={setDueDate} value={dueDate} />
               </label>
               <label className="grid gap-1.5">
-                <Label>Call Time</Label>
+                <Label>Shoot Time</Label>
                 <Input
                   onChange={(event) => setCallTime(event.target.value)}
-                  placeholder="e.g. 7:00 AM"
+                  type="time"
                   value={callTime}
+                />
+              </label>
+              <label className="grid gap-1.5">
+                <Label>Est. Finish Time (optional)</Label>
+                <Input
+                  onChange={(event) => setEstFinishTime(event.target.value)}
+                  type="time"
+                  value={estFinishTime}
                 />
               </label>
             </div>

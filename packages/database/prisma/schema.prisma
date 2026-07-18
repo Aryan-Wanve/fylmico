@@ -517,6 +517,7 @@ model Shoot {
   name            String
   scheduledDate   String    @map("scheduled_date")
   callTime        String?   @map("call_time")
+  estFinishTime   String?   @map("est_finish_time")
   location        String?
   equipment       String[]
   notes           String?

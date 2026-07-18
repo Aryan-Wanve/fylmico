@@ -36,6 +36,7 @@ export function ShootCreateDialog({
   const [name, setName] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [callTime, setCallTime] = useState("");
+  const [estFinishTime, setEstFinishTime] = useState("");
   const [location, setLocation] = useState("");
   const [equipment, setEquipment] = useState("");
   const [notes, setNotes] = useState("");
@@ -61,6 +62,7 @@ export function ShootCreateDialog({
         name: name.trim(),
         scheduledDate: new Date(scheduledDate).toISOString(),
         callTime: callTime.trim() || undefined,
+        estFinishTime: estFinishTime.trim() || undefined,
         location: location.trim() || undefined,
         equipment: equipment
           .split(",")
@@ -98,17 +100,25 @@ export function ShootCreateDialog({
             />
           </label>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <label className="grid gap-1.5">
               <Label>Scheduled Date</Label>
               <DatePicker onChange={setScheduledDate} value={scheduledDate} />
             </label>
             <label className="grid gap-1.5">
-              <Label>Call Time</Label>
+              <Label>Shoot Time</Label>
               <Input
                 onChange={(event) => setCallTime(event.target.value)}
-                placeholder="e.g. 7:00 AM"
+                type="time"
                 value={callTime}
+              />
+            </label>
+            <label className="grid gap-1.5">
+              <Label>Est. Finish Time (optional)</Label>
+              <Input
+                onChange={(event) => setEstFinishTime(event.target.value)}
+                type="time"
+                value={estFinishTime}
               />
             </label>
           </div>

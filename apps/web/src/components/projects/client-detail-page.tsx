@@ -342,6 +342,9 @@ export function ClientDetailPage() {
                     <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
                       {new Date(shoot.scheduledDate).toLocaleDateString()}
                       {shoot.callTime ? ` at ${shoot.callTime}` : ""}
+                      {shoot.callTime && shoot.estFinishTime
+                        ? ` - ${shoot.estFinishTime}`
+                        : ""}
                       {shoot.location ? ` • ${shoot.location}` : ""}
                     </span>
                   </div>
