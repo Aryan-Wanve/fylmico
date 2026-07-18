@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
@@ -23,6 +24,7 @@ export function ClientCard({
   onArchive: () => void;
   onDelete: () => void;
 }) {
+  const router = useRouter();
   const [stats, setStats] = useState<ClientStats | null>(null);
 
   useEffect(() => {
@@ -44,7 +46,10 @@ export function ClientCard({
   }, [client.id]);
 
   return (
-    <article className="grid min-w-0 gap-3 rounded-2xl border border-black/[0.06] bg-white p-4 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+    <article
+      className="grid min-w-0 cursor-pointer gap-3 rounded-2xl border border-black/[0.06] bg-white p-4 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]"
+      onClick={() => router.push(`/projects/clients/${client.id}`)}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2.5">
           {client.logoUrl ? (
@@ -71,16 +76,18 @@ export function ClientCard({
           </div>
         </div>
         <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <button
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
-                type="button"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-            }
-          />
+          <div onClick={(event) => event.stopPropagation()}>
+            <DropdownMenuTrigger
+              render={
+                <button
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+                  type="button"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              }
+            />
+          </div>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
             <DropdownMenuItem onClick={onArchive}>Archive</DropdownMenuItem>

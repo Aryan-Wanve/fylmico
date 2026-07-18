@@ -41,7 +41,12 @@ export type NavItem = {
 
 export const navItems: NavItem[] = [
   { id: "home", label: "Home", href: "/home", icon: Home },
-  { id: "projects", label: "Projects", href: "/projects", icon: FolderKanban },
+  {
+    id: "projects",
+    label: "Projects & Clients",
+    href: "/projects",
+    icon: FolderKanban
+  },
   { id: "calendar", label: "Calendar", href: "/calendar", icon: Calendar },
   { id: "tasks", label: "Tasks", href: "/tasks", icon: ListChecks },
   { id: "review", label: "Review", href: "/review", icon: ClipboardCheck },

@@ -663,6 +663,28 @@ export async function getClientStats(clientId: string): Promise<ClientStats> {
   return apiRequest<ClientStats>(`/clients/${clientId}/stats`);
 }
 
+export async function getClient(clientId: string): Promise<ClientItem> {
+  return apiRequest<ClientItem>(`/clients/${clientId}`);
+}
+
+export async function listShootsForOwner(owner: {
+  ownerType: OwnerType;
+  ownerId: string;
+}): Promise<Shoot[]> {
+  return owner.ownerType === "project"
+    ? listShoots(owner.ownerId)
+    : apiRequest<Shoot[]>(`/clients/${owner.ownerId}/shoots`);
+}
+
+export async function listDeliverablesForOwner(owner: {
+  ownerType: OwnerType;
+  ownerId: string;
+}): Promise<Deliverable[]> {
+  return owner.ownerType === "project"
+    ? listDeliverables(owner.ownerId)
+    : apiRequest<Deliverable[]>(`/clients/${owner.ownerId}/deliverables`);
+}
+
 export async function getProjectStats(
   projectId: string
 ): Promise<ProjectStats> {

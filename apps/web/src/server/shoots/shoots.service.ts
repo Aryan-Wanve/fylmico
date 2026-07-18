@@ -151,6 +151,28 @@ class ShootsService {
     return shoots.map(toShootDto);
   }
 
+  async listForClient(userId: string, clientId: string) {
+    const client = await this.prisma.client.findUnique({
+      where: { id: clientId }
+    });
+    if (!client) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "client_not_found",
+        "This client does not exist."
+      );
+    }
+    await organizationsService.requireMembership(client.organizationId, userId);
+
+    const shoots = await this.prisma.shoot.findMany({
+      where: { clientId },
+      include: shootInclude,
+      orderBy: { scheduledDate: "asc" }
+    });
+
+    return shoots.map(toShootDto);
+  }
+
   async get(userId: string, shootId: string) {
     const shoot = await this.findShootOrThrow(shootId);
     await organizationsService.requireMembership(shoot.organizationId, userId);

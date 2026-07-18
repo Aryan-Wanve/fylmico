@@ -5,9 +5,14 @@ import { usePresence } from "@/lib/realtime/use-presence";
 import { useWorkspace } from "@/lib/workspace-context";
 import { usePrompt } from "@/components/ui/prompt-dialog";
 import {
+  archiveClient,
   archiveProject,
+  createClient,
   createProject,
-  listProjects
+  deleteClient,
+  listClients,
+  listProjects,
+  updateClient
 } from "@/services/base-workspace.service";
 import { ProjectsHeader } from "@/components/projects/projects-header";
 import {
@@ -20,10 +25,13 @@ import { ProjectListRow } from "@/components/projects/project-list-row";
 import { ProjectsEmptyState } from "@/components/projects/projects-empty-state";
 import { ProjectTimelinePanel } from "@/components/projects/project-timeline-panel";
 import { RecentActivityPanel } from "@/components/dashboard/recent-activity-panel";
+import { ClientCard } from "@/components/projects/client-card";
+import { ClientEditDialog } from "@/components/projects/client-edit-dialog";
 import {
   PROJECT_TYPES,
   type Project
 } from "@/components/projects/project-data";
+import type { ClientItem, CreateClientRequest } from "@/types/base";
 
 export function ProjectsPage() {
   const { workspace, activeHouse } = useWorkspace();
@@ -42,6 +50,11 @@ export function ProjectsPage() {
   const [activeTypes, setActiveTypes] = useState<Set<string>>(
     () => new Set(PROJECT_TYPES)
   );
+
+  const [clients, setClients] = useState<ClientItem[]>([]);
+  const [clientsLoading, setClientsLoading] = useState(true);
+  const [clientDialogOpen, setClientDialogOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<ClientItem | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,6 +75,33 @@ export function ProjectsPage() {
       .finally(() => {
         if (!cancelled) {
           setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    listClients()
+      .then((data) => {
+        if (!cancelled) {
+          setClients(data);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          window.alert(
+            error instanceof Error ? error.message : "Could not load clients."
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setClientsLoading(false);
         }
       });
 
@@ -177,9 +217,56 @@ export function ProjectsPage() {
     }
   }
 
+  async function handleClientSave(request: CreateClientRequest) {
+    if (editingClient) {
+      const updated = await updateClient(editingClient.id, request);
+      setClients((current) =>
+        current.map((client) => (client.id === updated.id ? updated : client))
+      );
+    } else {
+      const created = await createClient(request);
+      setClients((current) => [created, ...current]);
+    }
+  }
+
+  async function handleArchiveClient(clientId: string) {
+    try {
+      await archiveClient(clientId);
+      setClients((current) => current.filter((c) => c.id !== clientId));
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not archive the client."
+      );
+    }
+  }
+
+  async function handleDeleteClient(clientId: string) {
+    if (!window.confirm("Delete this client? This cannot be undone.")) {
+      return;
+    }
+    try {
+      await deleteClient(clientId);
+      setClients((current) => current.filter((c) => c.id !== clientId));
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Could not delete the client."
+      );
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:p-8">
-      <ProjectsHeader onNewProject={handleNewProject} />
+      <ProjectsHeader
+        onNewClient={() => {
+          setEditingClient(null);
+          setClientDialogOpen(true);
+        }}
+        onNewProject={handleNewProject}
+      />
+
+      <h2 className="text-lg font-black text-[#11142c] dark:text-[#f1f2f8]">
+        Projects
+      </h2>
       <ProjectsToolbar
         activeTab={activeTab}
         activeTypes={activeTypes}
@@ -219,10 +306,43 @@ export function ProjectsPage() {
         </div>
       )}
 
+      <h2 className="mt-2 text-lg font-black text-[#11142c] dark:text-[#f1f2f8]">
+        Clients
+      </h2>
+      {!clientsLoading && clients.length === 0 ? (
+        <div className="grid place-items-center gap-2 rounded-2xl border border-black/[0.06] bg-white p-16 text-center dark:border-white/[0.08] dark:bg-[#171a28]">
+          <p className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            No clients yet. Add one to start tracking work directly for them.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {clients.map((client) => (
+            <ClientCard
+              client={client}
+              key={client.id}
+              onArchive={() => handleArchiveClient(client.id)}
+              onDelete={() => handleDeleteClient(client.id)}
+              onEdit={() => {
+                setEditingClient(client);
+                setClientDialogOpen(true);
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_1fr]">
         <ProjectTimelinePanel />
         <RecentActivityPanel />
       </div>
+
+      <ClientEditDialog
+        client={editingClient}
+        onOpenChange={setClientDialogOpen}
+        onSave={handleClientSave}
+        open={clientDialogOpen}
+      />
     </div>
   );
 }

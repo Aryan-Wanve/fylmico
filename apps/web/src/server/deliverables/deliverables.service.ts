@@ -123,6 +123,19 @@ class DeliverablesService {
     return deliverables.map(toDeliverableDto);
   }
 
+  async listForClient(userId: string, clientId: string) {
+    const client = await this.requireClient(clientId);
+    await organizationsService.requireMembership(client.organizationId, userId);
+
+    const deliverables = await this.prisma.deliverable.findMany({
+      where: { clientId },
+      include: deliverableInclude,
+      orderBy: { version: "asc" }
+    });
+
+    return deliverables.map(toDeliverableDto);
+  }
+
   async listQueue(
     userId: string,
     houseId: string,
@@ -498,6 +511,20 @@ class DeliverablesService {
       );
     }
     return project;
+  }
+
+  private async requireClient(clientId: string) {
+    const client = await this.prisma.client.findUnique({
+      where: { id: clientId }
+    });
+    if (!client) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "client_not_found",
+        "This client does not exist."
+      );
+    }
+    return client;
   }
 
   private async findOrThrow(
