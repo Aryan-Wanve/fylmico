@@ -94,6 +94,19 @@ export function FilesPage() {
         );
       }
     }
+
+    // Deep link from elsewhere in the app (e.g. an edit task's HUD linking
+    // to its raw-footage folder) - jump straight into that folder instead
+    // of the full ancestor breadcrumb, which we'd otherwise have to fetch.
+    const folderId = params.get("folder");
+    if (folderId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reading a one-time deep-link target from the URL on mount, not deriving render output
+      setPath([
+        { id: null, name: "All Files" },
+        { id: folderId, name: params.get("name") || "Folder" }
+      ]);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
   }, []);
 
   async function handleConnectDrive() {

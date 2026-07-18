@@ -34,7 +34,7 @@ import {
   linkTaskAttachment,
   listBoards,
   listScripts,
-  listShoots,
+  listShootsForOwner,
   resolveFileDestination
 } from "@/services/base-workspace.service";
 import type {
@@ -119,12 +119,12 @@ export function TaskCreateDialog({
   }, [open]);
 
   useEffect(() => {
-    if (owner?.ownerType !== "project") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing the shoot picker's options when its parent project selection is cleared, not deriving render output
+    if (!owner) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing the shoot picker's options when the owner selection is cleared, not deriving render output
       setShoots([]);
       return;
     }
-    listShoots(owner.ownerId)
+    listShootsForOwner(owner)
       .then((shootList) =>
         setShoots(
           shootList.filter(
@@ -435,9 +435,7 @@ export function TaskCreateDialog({
                   value={owner}
                 />
                 <Select
-                  disabled={
-                    owner?.ownerType !== "project" || shoots.length === 0
-                  }
+                  disabled={!owner || shoots.length === 0}
                   items={{
                     none:
                       shoots.length === 0 ? "No shoots ready" : "Whole folder",

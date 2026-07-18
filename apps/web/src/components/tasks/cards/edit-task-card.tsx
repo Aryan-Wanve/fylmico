@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { HelpCircle, MessageSquareWarning, Upload } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  FolderOpen,
+  HelpCircle,
+  MessageSquareWarning,
+  Upload
+} from "lucide-react";
 import { usePrompt } from "@/components/ui/prompt-dialog";
 import { SubmitDraftDialog } from "@/components/dashboard/submit-draft-dialog";
 import {
@@ -12,9 +18,10 @@ import {
 import { REVIEW_STATUS_META } from "@/components/review/review-item-card";
 import {
   createTaskComment,
-  listDeliverablesForOwner
+  listDeliverablesForOwner,
+  listTaskAttachments
 } from "@/services/base-workspace.service";
-import type { Deliverable, ProductionTask } from "@/types/base";
+import type { Deliverable, FileEntryItem, ProductionTask } from "@/types/base";
 
 function computeEditStages(
   task: ProductionTask,
@@ -61,7 +68,10 @@ export function EditTaskCard({
   onChanged: () => void;
 }) {
   const prompt = usePrompt();
+  const router = useRouter();
   const [versions, setVersions] = useState<Deliverable[]>([]);
+  const [rawFootageFolder, setRawFootageFolder] =
+    useState<FileEntryItem | null>(null);
   const [submitDraftOpen, setSubmitDraftOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -84,6 +94,27 @@ export function EditTaskCard({
       )
       .catch(() => setVersions([]));
   }, [task.id, task.ownerType, task.ownerId]);
+
+  useEffect(() => {
+    listTaskAttachments(task.id)
+      .then((attachments) => {
+        // The raw-footage folder linked at task creation (either the
+        // shoot's upload folder or the owner's Raw Data folder) is the
+        // task's only folder-type attachment - everything else attached
+        // here is an individual file.
+        setRawFootageFolder(
+          attachments.find((entry) => entry.type === "folder") ?? null
+        );
+      })
+      .catch(() => setRawFootageFolder(null));
+  }, [task.id]);
+
+  function handleOpenRawFootage() {
+    if (!rawFootageFolder) return;
+    router.push(
+      `/files?folder=${encodeURIComponent(rawFootageFolder.id)}&name=${encodeURIComponent(rawFootageFolder.name)}`
+    );
+  }
 
   const latest = versions[0];
 
@@ -175,6 +206,17 @@ export function EditTaskCard({
           <Upload className="h-4 w-4" />
           Upload Draft
         </button>
+        {rawFootageFolder ? (
+          <button
+            className="flex items-center gap-2 rounded-xl border border-black/[0.06] px-4 py-2.5 text-sm font-bold text-[#11142c] disabled:opacity-50 dark:border-white/[0.08] dark:text-[#f1f2f8]"
+            disabled={busy}
+            onClick={handleOpenRawFootage}
+            type="button"
+          >
+            <FolderOpen className="h-4 w-4" />
+            Open Raw Footage
+          </button>
+        ) : null}
         <button
           className="flex items-center gap-2 rounded-xl border border-black/[0.06] px-4 py-2.5 text-sm font-bold text-[#11142c] disabled:opacity-50 dark:border-white/[0.08] dark:text-[#f1f2f8]"
           disabled={busy}
