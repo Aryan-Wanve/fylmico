@@ -17,10 +17,22 @@ import {
 } from "@/components/tasks/task-data";
 import type {
   HouseMember,
+  OwnerType,
   TaskPriority,
   TaskStatus,
   TaskType
 } from "@/types/base";
+
+const OWNER_TYPE_OPTIONS: (OwnerType | "none")[] = [
+  "project",
+  "client",
+  "none"
+];
+const OWNER_TYPE_LABELS: Record<OwnerType | "none", string> = {
+  project: "Project",
+  client: "Client",
+  none: "No Owner"
+};
 
 function FilterSection<T extends string>({
   title,
@@ -66,6 +78,8 @@ export function TasksFiltersPopover({
   onToggleStatus,
   activeTypes,
   onToggleType,
+  activeOwnerTypes,
+  onToggleOwnerType,
   members,
   activeAssigneeIds,
   onToggleAssignee
@@ -76,6 +90,8 @@ export function TasksFiltersPopover({
   onToggleStatus: (status: TaskStatus) => void;
   activeTypes: Set<TaskType>;
   onToggleType: (type: TaskType) => void;
+  activeOwnerTypes: Set<OwnerType | "none">;
+  onToggleOwnerType: (value: OwnerType | "none") => void;
   members: HouseMember[];
   activeAssigneeIds: Set<string>;
   onToggleAssignee: (userId: string) => void;
@@ -84,6 +100,7 @@ export function TasksFiltersPopover({
     (activePriorities.size < PRIORITY_ORDER.length ? 1 : 0) +
     (activeStatuses.size < STATUS_ORDER.length ? 1 : 0) +
     (activeTypes.size < TASK_TYPES.length ? 1 : 0) +
+    (activeOwnerTypes.size < OWNER_TYPE_OPTIONS.length ? 1 : 0) +
     (activeAssigneeIds.size < members.length ? 1 : 0);
 
   return (
@@ -128,6 +145,13 @@ export function TasksFiltersPopover({
           onToggle={onToggleType}
           options={TASK_TYPES}
           title="Type"
+        />
+        <FilterSection
+          active={activeOwnerTypes}
+          label={(value) => OWNER_TYPE_LABELS[value]}
+          onToggle={onToggleOwnerType}
+          options={OWNER_TYPE_OPTIONS}
+          title="Owner"
         />
         {members.length > 0 ? (
           <FilterSection

@@ -52,6 +52,7 @@ import {
   getProjectColor
 } from "@/components/tasks/task-data";
 import type {
+  OwnerType,
   ProductionTask,
   TaskPriority,
   TaskStatus,
@@ -171,6 +172,9 @@ export function TasksPage() {
   const [activeTypes, setActiveTypes] = useState<Set<TaskType>>(
     () => new Set(TASK_TYPES)
   );
+  const [activeOwnerTypes, setActiveOwnerTypes] = useState<
+    Set<OwnerType | "none">
+  >(() => new Set(["project", "client", "none"]));
   const [activeAssigneeIds, setActiveAssigneeIds] = useState<Set<string>>(
     () => new Set(members.map((member) => member.id))
   );
@@ -236,6 +240,7 @@ export function TasksPage() {
       activePriorities.has(task.priority) &&
       activeStatuses.has(task.status) &&
       activeTypes.has(task.type) &&
+      activeOwnerTypes.has(task.ownerType ?? "none") &&
       (!assigneeFilterActive ||
         task.assignees.some((a) => activeAssigneeIds.has(a.userId)))
   );
@@ -476,6 +481,10 @@ export function TasksPage() {
           }
           onToggleType={(type) =>
             setActiveTypes((current) => toggleInSet(current, type))
+          }
+          activeOwnerTypes={activeOwnerTypes}
+          onToggleOwnerType={(value) =>
+            setActiveOwnerTypes((current) => toggleInSet(current, value))
           }
           onViewModeChange={setViewMode}
           viewMode={viewMode}

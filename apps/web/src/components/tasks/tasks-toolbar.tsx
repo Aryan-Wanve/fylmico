@@ -9,6 +9,7 @@ import {
 } from "@/components/tasks/tasks-group-by-menu";
 import type {
   HouseMember,
+  OwnerType,
   TaskPriority,
   TaskStatus,
   TaskType
@@ -36,6 +37,8 @@ export function TasksToolbar({
   onToggleStatus,
   activeTypes,
   onToggleType,
+  activeOwnerTypes,
+  onToggleOwnerType,
   members,
   activeAssigneeIds,
   onToggleAssignee,
@@ -54,6 +57,8 @@ export function TasksToolbar({
   onToggleStatus: (status: TaskStatus) => void;
   activeTypes: Set<TaskType>;
   onToggleType: (type: TaskType) => void;
+  activeOwnerTypes: Set<OwnerType | "none">;
+  onToggleOwnerType: (value: OwnerType | "none") => void;
   members: HouseMember[];
   activeAssigneeIds: Set<string>;
   onToggleAssignee: (userId: string) => void;
@@ -83,11 +88,13 @@ export function TasksToolbar({
       <div className="flex flex-wrap items-center gap-3">
         <TasksFiltersPopover
           activeAssigneeIds={activeAssigneeIds}
+          activeOwnerTypes={activeOwnerTypes}
           activePriorities={activePriorities}
           activeStatuses={activeStatuses}
           activeTypes={activeTypes}
           members={members}
           onToggleAssignee={onToggleAssignee}
+          onToggleOwnerType={onToggleOwnerType}
           onTogglePriority={onTogglePriority}
           onToggleStatus={onToggleStatus}
           onToggleType={onToggleType}
