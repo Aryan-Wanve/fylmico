@@ -1294,17 +1294,6 @@ endpoints were needed. This conversation is excluded from `GET
 /api/v1/houses/:houseId/conversations` (the house-wide room list).
 Errors: `401 unauthenticated`, `403 forbidden`, `404 project_not_found`.
 
-### `POST /api/v1/projects/:projectId/clients`
-
-Authentication: required. Body: `{ "clientId": string }`. Response: updated
-`Project` with the client now included in `clients`. If this is the
-project's first linked client, its Drive folder physically moves from
-Clients/Misc to this client's folder (ADR 0045); later clients linked to
-the same project don't move it again. Errors: `400 invalid_request`
-(`clientId` belongs to a different house), `401 unauthenticated`,
-`403 forbidden`, `404 project_not_found`, `409 already_linked`. Link-only
-— no unlink endpoint yet.
-
 ### `POST /api/v1/houses/:houseId/clients`
 
 Authentication: required. Body:
@@ -1360,10 +1349,9 @@ endpoint). Errors: `401 unauthenticated`, `403 forbidden`,
 ### `DELETE /api/v1/clients/:clientId`
 
 Authentication: required. Added per ADR 0051. No body. Response:
-`{ "data": { "success": true } }`. Refuses to delete a client that still
-has linked projects — archive or unlink them first — since deleting would
-silently orphan project-client links. Errors: `401 unauthenticated`,
-`403 forbidden`, `404 client_not_found`, `409 client_has_projects`.
+`{ "data": { "success": true } }`. No linked-project check anymore (ADR
+0059 removed the concept) - deletes outright. Errors:
+`401 unauthenticated`, `403 forbidden`, `404 client_not_found`.
 
 ### `GET /api/v1/clients/:clientId/stats`
 
@@ -1389,22 +1377,48 @@ endpoint). `totalShoots`/`videosDelivered` are placeholders (`0`) until
 Phases 2/4 of the Projects Overhaul add those entities. Errors:
 `401 unauthenticated`, `403 forbidden`, `404 client_not_found`.
 
+## Ownership model: Projects and Clients (ADR 0059)
+
+`Task`, `Shoot`, `Deliverable`, and `CalendarEvent` are all
+**owner-polymorphic**: each belongs to either a `Project` or a `Client`,
+never both, never a project-via-client chain (the old `ProjectClient`
+many-to-many link is gone). Every create/reassign body for these resources
+accepts `{ "ownerType": "project" | "client", "ownerId": string }`
+(`Shoot`/`Deliverable` require it; `Task`/`CalendarEvent` treat it as
+optional - unowned is valid for those two). Every response DTO for these
+resources includes the resolved `ownerType`/`ownerId`/`ownerName` alongside
+the legacy `projectId` field (kept for backward compatibility with
+existing frontend code, but `null` for a client-owned row).
+
+Project-scoped listing routes (`GET /api/v1/projects/:projectId/shoots`,
+`GET /api/v1/projects/:projectId/deliverables`) keep working unchanged.
+Client-scoped equivalents were added alongside them
+(`GET /api/v1/clients/:clientId/shoots`,
+`GET /api/v1/clients/:clientId/deliverables`). For creation, the original
+project-scoped routes (`POST .../projects/:projectId/shoots`,
+`POST /api/v1/projects/:projectId/deliverables`) still exist as thin
+`ownerType: "project"` wrappers; generic house-level routes were added for
+either owner type (`POST /api/v1/houses/:houseId/shoots`,
+`POST /api/v1/houses/:houseId/deliverables`, body carries
+`ownerType`/`ownerId` directly).
+
 ## Shoots (Implemented)
 
 Implemented per ADR 0052 (`apps/web/src/server/shoots/*`) - Projects
-Module Overhaul Phase 2. A `Shoot` is a scheduled production day, distinct
-from Storyboard's `Board`/`Shot` (frame-level references). Creating one
-also creates a `CalendarEvent` (`category: "shoot"`) and a `Task`
-(`type: "shoot"`) in the same transaction, with the crew as that task's
-assignees - the crew member's Home Focus Card automatically switches to a
-shoot-mode HUD once that task becomes their focus task (`FocusTaskCard`,
-`task.shootId` set).
+Module Overhaul Phase 2, made owner-polymorphic per ADR 0059. A `Shoot` is
+a scheduled production day, distinct from Storyboard's `Board`/`Shot`
+(frame-level references). Creating one also creates a `CalendarEvent`
+(`category: "shoot"`) and a `Task` (`type: "shoot"`) in the same
+transaction, with the crew as that task's assignees - the crew member's
+Home Focus Card automatically switches to a shoot-mode HUD once that task
+becomes their focus task (`FocusTaskCard`, `task.shootId` set).
 
 ### `POST /api/v1/houses/:houseId/projects/:projectId/shoots`
 
 Authentication: required. Body:
 `{ "name": string, "scheduledDate": string (ISO), "callTime"?: string, "location"?: string, "equipment"?: string[], "crewIds"?: string[], "notes"?: string }`.
-`crewIds` must all be current members of `houseId`. Response: the created
+`crewIds` must all be current members of `houseId`. Owner is implicitly
+`{ ownerType: "project", ownerId: projectId }`. Response: the created
 `Shoot`:
 
 ```json
@@ -1438,12 +1452,27 @@ Errors: `400 invalid_request` (missing `name`/`scheduledDate`, or a
 `crewIds` entry that isn't a house member), `401 unauthenticated`,
 `403 forbidden`, `404 project_not_found`.
 
+### `POST /api/v1/houses/:houseId/shoots`
+
+Authentication: required. Added per ADR 0059 so a shoot can be created
+under a `Client`, not only reached through the project-scoped route
+above. Body: same fields as the project-scoped route plus required
+`"ownerType": "project" | "client"` and `"ownerId": string`. Response and
+errors: same as above, plus `404 client_not_found` when `ownerType` is
+`"client"`.
+
 ### `GET /api/v1/projects/:projectId/shoots`
 
 Authentication: required. Response: `{ "data": Shoot[] }` (not paginated -
 a project's shoot list is expected to stay small), ordered by
 `scheduledDate` ascending. Errors: `401 unauthenticated`,
 `403 forbidden`, `404 project_not_found`.
+
+### `GET /api/v1/clients/:clientId/shoots`
+
+Authentication: required. Added per ADR 0059. Same shape/ordering as the
+project-scoped list above, scoped to a client's owned shoots. Errors:
+`401 unauthenticated`, `403 forbidden`, `404 client_not_found`.
 
 ### `GET /api/v1/shoots/:shootId`
 
@@ -1599,17 +1628,19 @@ comment thread.
 ## Deliverables (Implemented)
 
 Implemented per ADR 0054 (`apps/web/src/server/deliverables/*`) -
-Projects Module Overhaul Phase 4. A `Deliverable` is a versioned
-submission for a project - every draft submitted creates a new row
-(never overwriting a previous version) moving through a
-`draft | review | revision | approved | final` workflow.
+Projects Module Overhaul Phase 4, made owner-polymorphic per ADR 0059. A
+`Deliverable` is a versioned submission for a project or a client -
+every draft submitted creates a new row (never overwriting a previous
+version) moving through a `draft | review | revision | approved | final`
+workflow.
 
 ### `POST /api/v1/projects/:projectId/deliverables`
 
 Authentication: required. Body:
 `{ "fileEntryId": string, "taskId"?: string, "notes"?: string,
-"exportSettings"?: Record<string, string> }`. `version` is computed
-server-side (current count for the project + 1) - not client-supplied.
+"exportSettings"?: Record<string, string> }`. Owner is implicitly
+`{ ownerType: "project", ownerId: projectId }`. `version` is computed
+server-side (current count for that owner + 1) - not client-supplied.
 New deliverables start at `status: "review"` (submitting a draft already
 means "ready for review"). In practice called by `SubmitDraftDialog`
 right after its existing file upload, not directly by users. Response:
@@ -1642,11 +1673,26 @@ Errors: `400 invalid_request` (missing `fileEntryId`, or a `taskId` that
 isn't in this house), `401 unauthenticated`, `403 forbidden`,
 `404 project_not_found`.
 
+### `POST /api/v1/houses/:houseId/deliverables`
+
+Authentication: required. Added per ADR 0059 so a deliverable can be
+created under a `Client`, not only reached through the project-scoped
+route above. Body: same fields as the project-scoped route plus required
+`"ownerType": "project" | "client"` and `"ownerId": string`. Response and
+errors: same as above, plus `404 client_not_found` when `ownerType` is
+`"client"`.
+
 ### `GET /api/v1/projects/:projectId/deliverables`
 
 Authentication: required. Response: `{ "data": Deliverable[] }` (not
 paginated), ordered by `version` ascending. Errors:
 `401 unauthenticated`, `403 forbidden`, `404 project_not_found`.
+
+### `GET /api/v1/clients/:clientId/deliverables`
+
+Authentication: required. Added per ADR 0059. Same shape/ordering as the
+project-scoped list above, scoped to a client's owned deliverables.
+Errors: `401 unauthenticated`, `403 forbidden`, `404 client_not_found`.
 
 ### Deliverable status/assignment transitions
 

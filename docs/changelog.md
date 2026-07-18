@@ -799,3 +799,74 @@ Migration notes:
 
 - New migration `20260717180000_file_media_metadata` adds nullable
   `FileEntry.durationSeconds/width/height` columns.
+
+## 0.27.0 - 2026-07-17
+
+Summary:
+
+- Removed Pause/Resume from the shoot HUD card (crew reported it was
+  confusing next to Finish + Upload). Completed shoot tasks gained an
+  "Upload Shoot Data" quick action so footage can be uploaded again after
+  the initial finish-and-upload step. Removed the Call Sheets feature
+  entirely (nav, pages, components, service functions, and the
+  `call_sheets` database table) - it never got real usage and was cut to
+  simplify the Tasks/Calendar surface.
+
+Breaking changes:
+
+- Call Sheets is gone: any bookmarked `/call-sheets` links now 404, and
+  the `call_sheets` table no longer exists.
+
+Migration notes:
+
+- New migration drops the `call_sheets` table.
+
+## 0.28.0 - 2026-07-18
+
+Summary:
+
+- **Projects & Clients refactor (ADR 0059):** Projects and Clients are now
+  two fully independent top-level entities instead of Client containing
+  Project - a piece of work belongs to either one, never both, and never
+  through a chain. Tasks, Shoots, Deliverables, and Calendar Events are
+  all owner-polymorphic now (`{ ownerType: "project" | "client",
+ownerId }`), replacing the old Client -> Project -> work assumption and
+  the `ProjectClient` link table (removed). Clients can now have their own
+  Shoots, Tasks, Deliverables, and Calendar events directly - not just
+  through a linked project.
+- Drive restructured to two parallel top-level trees, `Projects/` and
+  `Clients/`, each with the identical subfolder set - replacing the old
+  `Clients/client:<id>/project:<id>/...` nesting and its `client:misc`
+  catch-all.
+- Nav renamed "Projects" -> "Projects & Clients". The Projects page now
+  shows two sections (Projects, Clients) with a single New -> Project |
+  Client action, replacing the separate `/projects/clients` page. Clients
+  get a real detail workspace (Tasks/Shoots/Deliverables/Calendar tabs),
+  mirroring the Project workspace.
+- Every picker that used to be Project-only - task creation (shoot +
+  raw-footage linking), draft submission, calendar event creation - now
+  uses a shared Project/Client owner picker. Task cards/rows/kanban/table
+  views and the dashboard focus card show an owner badge (Project or
+  Client, with icon) instead of a Project-only label. The Tasks page
+  filter popover gained an Owner (Project/Client/No Owner) section.
+  Global search and the Analytics stat cards now include Clients
+  alongside Projects.
+
+Breaking changes:
+
+- A client's Drive folder tree has moved from
+  `Clients/client:<id>/project:<id>/...` to `Clients/client:<id>/...` -
+  existing file `driveKey`s are unaffected (stored IDs, not paths), but
+  any external bookmarks into the old Drive path structure are stale.
+- `POST /api/v1/projects/:projectId/clients` (link a client to a project)
+  is removed, along with the `clients` field on `Project` API responses.
+
+Migration notes:
+
+- New migration `20260718120000_polymorphic_owner`: adds nullable
+  `client_id` to `tasks`/`shoots`/`deliverables`/`calendar_events`, makes
+  `shoots.project_id`/`deliverables.project_id` nullable, drops
+  `deliverables`' old `(project_id, version)` unique index, drops the
+  `project_clients` table, and adds `CHECK` constraints enforcing exactly
+  one owner (`shoots`/`deliverables`) or at most one owner
+  (`tasks`/`calendar_events`).

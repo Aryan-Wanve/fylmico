@@ -6440,3 +6440,120 @@ span several chunks, pause/resume/cancel, duplicate-name warning +
 rename, an offline-simulation resume test) before treating Phase 2 as
 fully proven end-to-end. Start Phase 3 (frame-accurate review tooling)
 only after the user explicitly prioritizes it.
+
+## Three small Task System fixes - 2026-07-18
+
+Three unrelated small requests done between Task System Overhaul Phase 2
+and the Projects & Clients refactor below: (1) removed Pause/Resume from
+the shoot HUD card - the crew found it redundant next to Finish + Upload;
+(2) added an "Upload Shoot Data" quick action on completed shoot tasks so
+footage can be re-uploaded after the initial finish-and-upload step; (3)
+removed the Call Sheets feature entirely - nav entry, pages, components,
+service functions, and the `call_sheets` database table (confirmed with
+the user via AskUserQuestion before dropping the table). No live browser
+verification for this batch (small, low-risk UI-only + one table drop);
+`tsc`/`eslint` clean.
+
+## Projects & Clients refactor: independent, co-equal work owners - 2026-07-18
+
+Full architectural refactor per ADR 0059, executed in six phases (A-F),
+each committed and verified independently:
+
+**Phase A (schema):** `clientId`/`client` relation added to `Task`,
+`Shoot`, `Deliverable`, `CalendarEvent`; `Shoot.projectId`/
+`Deliverable.projectId` made nullable; `Deliverable`'s old
+`(projectId, version)` unique index dropped (per-owner version numbering
+moved to application code); `model ProjectClient` and the
+`Project.clients`/`Client.projects` relations removed; `CHECK` constraints
+added enforcing exactly-one-owner (Shoot/Deliverable) or at-most-one-owner
+(Task/CalendarEvent). Migration `20260718120000_polymorphic_owner` applied
+after the user started Docker (initially blocked on Postgres being down).
+
+**Phase B (backend core):** new `owners/owners.util.ts`
+(`resolveOwner`/`ownerWhere`/`toOwnerDto`) as the single shared owner
+abstraction; `tasks`/`deliverables`/`shoots`/`calendar` services and DTOs
+reworked onto `{ ownerType, ownerId }`; `projects.service.ts`'s
+`linkClient`/clients-list machinery deleted entirely;
+`clients.service.ts#getClientStats` rewritten to count the client's own
+tasks/shoots/deliverables directly instead of rolling up linked projects.
+
+**Phase C (Drive):** `ensureClientFolder`/`ensureProjectFolder` collapsed
+into one `ensureOwnerFolder(orgId, ownerType, ownerId, name)`;
+`ensureHouseSkeleton` now creates separate `Projects/`/`Clients/` roots
+(dropping the old `client:misc` catch-all); `moveProjectFolderToClient`
+deleted (nothing to move to anymore).
+
+**Phase D (shared FE primitives):** `types/base.ts` gained `OwnerType`/
+`OwnerRef` and owner fields across `ProductionTask`/`Shoot`/`Deliverable`/
+`ReviewQueueItem`/`CalendarEvent`; new `<OwnerSelect>` (Project/Client
+toggle -> entity picker) and `<OwnerBadge>` (icon + name) in
+`components/owners/`.
+
+**Phase E (FE surfaces, the bulk of the work):** `task-create-dialog.tsx`
+reworked onto `<OwnerSelect>` for both the shoot picker and raw-footage
+linking - which required adding `POST /houses/:houseId/shoots` (generic
+owner, `shootsService.create` was already owner-polymorphic but had no
+reachable route for a client owner) and `createShootForOwner`.
+`SubmitDraftDialog`/`edit-task-card.tsx` switched from a `projectId` prop
+to a task's `ownerType`/`ownerId` - fixing a real bug where submitting a
+draft on a client-owned edit task silently skipped Deliverable creation
+entirely (the old code only created one `if (projectId)`); added
+`POST /houses/:houseId/deliverables` + `createDeliverableForOwner` to make
+that reachable. `projects-page.tsx` merged with the old standalone
+`/projects/clients` page into two sections (Projects, Clients) with a
+unified New -> Project | Client dropdown; the old `clients-page.tsx` and
+its route were deleted. New `client-detail-page.tsx` (Tasks/Shoots/
+Deliverables/Calendar tabs, mirroring `project-detail-page.tsx`) at
+`/projects/clients/:clientId`, backed by new `GET /clients/:clientId/
+shoots` and `/deliverables` routes (client-owned shoots/deliverables had
+no listing route until now). Calendar's `buildCalendarSources` gained
+client calendars alongside project ones; `New Event` now resolves the
+picked calendar to `{ownerType, ownerId}`. Owner badges added to
+`task-row-item`/`task-table-view`/`task-kanban-board`/`focus-task-card`
+(replacing project-only title/color). Analytics stat cards gained a
+"Clients" count; global search now matches and deep-links to Clients too.
+Tasks page filter popover gained an Owner (Project/Client/No Owner)
+section.
+
+**Phase F (verify + docs):** `tsc --noEmit`, `eslint --max-warnings=0`,
+and `next build` all clean (one fix needed: Next's typed-routes checker
+required an explicit `Route` cast on `global-search.tsx`'s dynamically-
+built `router.push` target, since the destination path is chosen at
+runtime). ADR 0059 written; `database.md`/`api.md` updated for the new
+`clients`/`tasks`/`shoots`/`deliverables`/`calendar_events`/`projects`
+table docs and the new/removed API routes.
+
+Known scope cuts (documented in ADR 0059, not oversights): the Review
+page's "other versions" sidebar (`review-detail-panel.tsx`) stays
+project-only - no `listForClient` deliverables view was wired into that
+specific sidebar, though client-owned deliverables still get the full
+approve/reject/comment flow. Storyboard/Scripts and Bookings/TimeEntries
+were not made owner-polymorphic this pass. Files remain folder-owned (no
+new FK) - a Client's Files tab is its Drive subtree, same as before.
+
+Not exercised live (user was away and explicitly asked to skip live
+verification and keep going): creating a Client and a Project, creating a
+task under each via `<OwnerSelect>`, confirming owner badges render
+correctly, opening each workspace's tabs, submitting a client deliverable,
+scheduling a client shoot and confirming its Drive folder lands under
+`Clients/`, confirming dashboard/search/filters all behave as documented.
+`tsc`/`eslint`/`next build` all passed, but a live browser pass through
+this checklist is the natural next step whenever the user is back.
+
+Files created (non-exhaustive, see individual commits for full diffs):
+`server/owners/owners.util.ts`, `components/owners/{owner-select,
+owner-badge}.tsx`, `components/projects/client-detail-page.tsx`,
+`app/(app)/projects/clients/[clientId]/page.tsx`,
+`app/api/v1/houses/[houseId]/{shoots,deliverables}/route.ts`,
+`app/api/v1/clients/[clientId]/{shoots,deliverables}/route.ts`,
+`docs/adr/0059-projects-and-clients-as-independent-owners.md`.
+
+Files deleted: `components/projects/clients-page.tsx`,
+`app/(app)/projects/clients/page.tsx` (old page.tsx, superseded by the
+new `[clientId]` route), `server/projects/dto/link-client.dto.ts`,
+`app/api/v1/projects/[projectId]/clients/route.ts`.
+
+Next task: live browser verification of the checklist above once the
+user is available to log in; then continue with any further Projects &
+Clients polish the user requests (e.g. a Client-owned "other versions"
+review sidebar, if that scope cut turns out to matter in practice).

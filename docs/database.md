@@ -708,14 +708,15 @@ regular task row with this flag set; `Save as Template`/`Use` clone
 between template and real task via a shared `cloneTask` helper, and every
 task-listing query filters `is_template: false` so templates never appear
 as real work),
-`created_at`, `updated_at`. "Linked Client" is derived at read time from
-`task.project.clients[0].client` - no redundant direct `client_id` column,
-since `Project` already owns that relation.
+`client_id` (nullable, added per ADR 0059 - a task's owner is exactly one
+of `project_id`/`client_id`, or neither for an unowned task; enforced by
+`CHECK (num_nonnulls(project_id, client_id) <= 1)`), `created_at`,
+`updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
 `users` via `created_by_id`; belongs to `conversations` (`onDelete:
-SetNull`); belongs to `projects`/`boards`/`scripts`/`calendar_events`/
-`shoots` (all nullable, `onDelete: SetNull`); self-relation via
+SetNull`); belongs to `projects`/`clients`/`boards`/`scripts`/
+`calendar_events`/`shoots` (all nullable, `onDelete: SetNull`); self-relation via
 `parent_task_id` (cascade delete - deleting a parent deletes its
 subtasks); has many `task_assignees`, `task_checklist_items`,
 `task_activity`, `task_time_entries`, `file_entries` (via
@@ -723,10 +724,11 @@ subtasks); has many `task_assignees`, `task_checklist_items`,
 `blocking_task_id` and `blocked_task_id`).
 
 Indexes: indexes on `organization_id`, `conversation_id`, `created_by_id`,
-`project_id`, `board_id`, `script_id`, `shoot_day_event_id`, `shoot_id`,
-`parent_task_id`.
+`project_id`, `client_id`, `board_id`, `script_id`, `shoot_day_event_id`,
+`shoot_id`, `parent_task_id`.
 
-Constraints: none beyond required foreign keys.
+Constraints: `CHECK (num_nonnulls(project_id, client_id) <= 1)` (ADR
+0059).
 
 Permissions: create/update/delete via `POST` / `PATCH` / `DELETE
 /api/v1/tasks(/:taskId)` by any member of the task's house (no
@@ -746,7 +748,8 @@ dropped `assignee_id`/`role`/freeform `project`, added every column above,
 remapped `status` (`done`→`completed`, `on-hold`→`todo`), backfilled
 `task_assignees` from the old `assignee_id`/`role`; `is_template` added in
 `20260716140000_task_templates` (ADR 0049); `shoot_id` added in
-`20260716180000_shoots` (ADR 0052).
+`20260716180000_shoots` (ADR 0052); `client_id` added in
+`20260718120000_polymorphic_owner` (ADR 0059).
 
 ### Table: `task_assignees`
 
@@ -1070,7 +1073,11 @@ only, distinct from the display-facing status derived from `stage`),
 `created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); has many
-`project_clients` (linking to `clients`). `team_ids` is **not** a foreign
+`tasks`, `deliverables`, `shoots`, `calendar_events` (each via a nullable
+`project_id` - see "Polymorphic ownership" under the `clients` table
+above). No relationship to `clients` - the `project_clients` join table
+was dropped per ADR 0059; a project and a client are independent
+top-level entities, neither containing the other. `team_ids` is **not** a foreign
 key or join table - it's a plain array of user ids, validated at the
 service layer (every id must be a current member of the project's house)
 but with no DB-level referential integrity, so a removed member's id can
@@ -1106,8 +1113,10 @@ Migration history: `20260708172602_projects_clients`,
 
 ### Table: `clients`
 
-Purpose: an external client that can be linked to one or more projects
-(ADR 0012).
+Purpose: an external client that work (tasks, shoots, deliverables,
+calendar events) can be owned by directly - a top-level entity independent
+of `projects`, not a container for them (ADR 0059, superseding ADR 0012's
+"linked to one or more projects" framing).
 
 Ownership: belongs to one `organization`.
 
@@ -1120,7 +1129,9 @@ ADR 0051 - same archive-tracking convention as `projects.status`),
 `created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); has many
-`project_clients` (linking to `projects`).
+`tasks`, `deliverables`, `shoots`, `calendar_events` (each via a nullable
+`client_id` - see "Polymorphic ownership" below). No relationship to
+`projects` - the `project_clients` join table was dropped per ADR 0059.
 
 Indexes: index on `organization_id`.
 
@@ -1129,48 +1140,39 @@ unique within a house.
 
 Permissions: created/read/updated/archived/deleted via
 `/api/v1/houses/:houseId/clients` and `/api/v1/clients/:clientId(/archive)`
-routes by any member of the house (ADR 0022, extended per ADR 0051).
-Hard delete (`DELETE /api/v1/clients/:clientId`) is refused with
-`409 client_has_projects` while any `project_clients` row still links to
-it - archive or unlink its projects first.
+routes by any member of the house (ADR 0022, extended per ADR 0051). Hard
+delete (`DELETE /api/v1/clients/:clientId`) no longer checks a linked-
+project count (that concept doesn't exist anymore) - it deletes outright.
 
 Reasoning: originally kept intentionally minimal (no address, billing, or
 portal fields); ADR 0051 added the company-profile fields the Projects
 Module Overhaul's Clients page needed (logo, phone, address, GST, notes)
 plus an archive/delete lifecycle, matching `projects.status`'s existing
-pattern rather than inventing a new one.
+pattern rather than inventing a new one. ADR 0059 then decoupled it from
+`projects` entirely, making it a peer owner rather than a container.
 
 Migration history: `20260708172602_projects_clients`; `logo_url`/`phone`/
 `address`/`gst`/`notes`/`status` added in
-`20260716160000_projects_client_depth` (ADR 0051).
+`20260716160000_projects_client_depth` (ADR 0051); gained `tasks`/
+`deliverables`/`shoots`/`calendar_events` back-relations and lost
+`project_clients` in `20260718120000_polymorphic_owner` (ADR 0059).
 
-### Table: `project_clients`
+### Polymorphic ownership: Projects and Clients (ADR 0059)
 
-Purpose: many-to-many link between `projects` and `clients` (ADR 0012: "a
-project can be linked to many clients").
+`project_clients` (the old many-to-many join table) is **removed**. In its
+place, four tables - `tasks`, `shoots`, `deliverables`, `calendar_events` -
+each carry **both** a nullable `project_id` and a nullable `client_id`,
+with a Postgres `CHECK` constraint enforcing "exactly one is set" for
+`shoots`/`deliverables` (which always need an owner) and "at most one" for
+`tasks`/`calendar_events` (which can be unowned). The API/UI never touch
+the raw dual columns directly - every create/reassign call takes a unified
+`{ ownerType: "project" | "client", ownerId }`, resolved server-side by
+`apps/web/src/server/owners/owners.util.ts` (`resolveOwner`/`ownerWhere`/
+`toOwnerDto`) into whichever FK actually gets set. This is documented once
+here rather than repeated in each table's own section below - see those
+sections for the per-table CHECK constraint name and index list.
 
-Ownership: belongs to one `project` and one `client` (both within the same
-house - enforced at the service layer, not a DB constraint, since a
-project's and a client's `organization_id` living on different rows can't
-be compared by a single foreign key or check constraint without a trigger).
-
-Columns: `id`, `project_id`, `client_id`, `created_at`.
-
-Relationships: belongs to `projects` and `clients` (both cascade delete).
-
-Indexes: unique compound index on `(project_id, client_id)`; indexes on
-`project_id` and `client_id`.
-
-Constraints: `(project_id, client_id)` unique - a client can only be linked
-to the same project once.
-
-Permissions: created via `POST /api/v1/projects/:projectId/clients` by any
-member of the project's house. No unlink endpoint exists yet (ADR 0022).
-
-Reasoning: a plain join table with no extra columns - there's no "role of
-this client on this project" concept yet, just presence/absence of a link.
-
-Migration history: `20260708172602_projects_clients`.
+Migration: `20260718120000_polymorphic_owner`.
 
 ### Table: `shoots`
 
@@ -1178,9 +1180,13 @@ Purpose: a scheduled production day (Projects Module Overhaul Phase 2,
 ADR 0052) - distinct from `Board`/`Shot` (ADR 0041), which are frame-level
 storyboard references, not a schedule/crew/status entity.
 
-Ownership: belongs to one `organization` and one `project`.
+Ownership: belongs to one `organization` and exactly one of `project` or
+`client` (ADR 0059 - `project_id`/`client_id` are both nullable, enforced
+by a `CHECK (num_nonnulls(project_id, client_id) = 1)` constraint; see
+"Polymorphic ownership" under the `clients` table above).
 
-Columns: `id`, `organization_id`, `project_id`, `calendar_event_id`
+Columns: `id`, `organization_id`, `project_id` (nullable), `client_id`
+(nullable, added per ADR 0059), `calendar_event_id`
 (nullable FK - the auto-created `CalendarEvent` for this shoot),
 `created_by_id`, `name`, `scheduled_date`, `call_time` (nullable),
 `location` (nullable), `equipment` (`String[]`), `notes` (nullable),
@@ -1196,18 +1202,23 @@ crew is whoever is assigned (`TaskAssignee`) to the `Task` this shoot
 creates (`Task.shoot_id`).
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
-`projects` (cascade delete); belongs to `calendar_events` (nullable,
-`onDelete: SetNull`); belongs to `users` via `created_by_id`; has many
-`tasks` (via `Task.shoot_id`, in practice exactly one - the shoot's
-linked task).
+`projects` (nullable, cascade delete) and/or `clients` (nullable, cascade
+delete - exactly one per the CHECK constraint); belongs to
+`calendar_events` (nullable, `onDelete: SetNull`); belongs to `users` via
+`created_by_id`; has many `tasks` (via `Task.shoot_id`, in practice
+exactly one - the shoot's linked task).
 
-Indexes: indexes on `organization_id`, `project_id`, `calendar_event_id`.
+Indexes: indexes on `organization_id`, `project_id`, `client_id`,
+`calendar_event_id`.
 
-Constraints: none beyond required foreign keys.
+Constraints: `CHECK (num_nonnulls(project_id, client_id) = 1)`.
 
 Permissions: create via `POST
-/api/v1/houses/:houseId/projects/:projectId/shoots` by any member of the
-project's house; list via `GET /api/v1/projects/:projectId/shoots`;
+/api/v1/houses/:houseId/projects/:projectId/shoots` (project-owned) or the
+generic `POST /api/v1/houses/:houseId/shoots` (either owner, ADR 0059,
+body carries `ownerType`/`ownerId`) by any member of the house; list via
+`GET /api/v1/projects/:projectId/shoots` or
+`GET /api/v1/clients/:clientId/shoots`;
 status transitions via dedicated `POST /api/v1/shoots/:shootId/<action>`
 endpoints (`reached`, `start`, `finish`, `finish-upload`,
 `mark-uploaded`, `ready-for-editing`, `archive`, `cancel`) by any house
@@ -1225,7 +1236,9 @@ Per ADR 0053, `mark-uploaded` also best-effort auto-creates an Editing
 project's `Assets` folder - best-effort because the shoot's own status
 transition must persist even if the Drive-dependent linking step fails.
 
-Migration history: `20260716180000_shoots`.
+Migration history: `20260716180000_shoots`; `client_id` added (and
+`project_id` made nullable) in `20260718120000_polymorphic_owner`
+(ADR 0059).
 
 ### Table: `notifications`
 
@@ -1314,13 +1327,16 @@ Phase 4, ADR 0054) - every draft submitted via `SubmitDraftDialog` creates
 a new row rather than overwriting the previous one, moving through a
 `draft | review | revision | approved | final` workflow.
 
-Ownership: belongs to one `organization` and one `project`.
+Ownership: belongs to one `organization` and exactly one of `project` or
+`client` (ADR 0059 - `project_id`/`client_id` are both nullable, enforced
+by a `CHECK (num_nonnulls(project_id, client_id) = 1)` constraint).
 
-Columns: `id`, `organization_id`, `project_id`, `task_id` (nullable FK -
+Columns: `id`, `organization_id`, `project_id` (nullable), `client_id`
+(nullable, added per ADR 0059), `task_id` (nullable FK -
 the editing task this version was submitted from), `file_entry_id` (the
 submitted file), `created_by_id`, `version` (`Int`, auto-incremented
-**per project** at create time - `count + 1`, never reused or
-overwritten), `status` (default `"review"`; 5-value vocab, validated in
+**per owner** at create time - `count + 1` scoped to whichever FK is set,
+never reused or overwritten), `status` (default `"review"`; 5-value vocab, validated in
 the DTO/service only, not a DB enum, matching every other workflow
 vocabulary in this codebase), `notes` (nullable), `export_settings`
 (nullable `Json`, added per ADR 0056 - freeform key/value metadata like
@@ -1328,22 +1344,27 @@ resolution/codec/frame rate captured from `SubmitDraftDialog`), `created_at`,
 `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
-`projects` (cascade delete); belongs to `tasks` (nullable, `onDelete:
-SetNull`); belongs to `file_entries` (cascade delete - deleting the
-underlying file removes its deliverable record); belongs to `users` via
-`created_by_id`.
+`projects` (nullable, cascade delete) and/or `clients` (nullable, cascade
+delete - exactly one per the CHECK constraint); belongs to `tasks`
+(nullable, `onDelete: SetNull`); belongs to `file_entries` (cascade
+delete - deleting the underlying file removes its deliverable record);
+belongs to `users` via `created_by_id`.
 
-Indexes: indexes on `organization_id`, `project_id`, `task_id`,
-`file_entry_id`; unique compound index on `(project_id, version)` - a
-version number is physically never reused for the same project even if
-the count-based computation ever raced.
+Indexes: indexes on `organization_id`, `project_id`, `client_id`,
+`task_id`, `file_entry_id`. The old `(project_id, version)` unique index
+was dropped per ADR 0059 - it can't express "unique per polymorphic
+owner" as a Prisma composite unique when one side is nullable two
+different ways, so per-owner uniqueness is enforced by application logic
+(the count-then-create above) rather than a DB constraint.
 
-Constraints: `(project_id, version)` unique.
+Constraints: `CHECK (num_nonnulls(project_id, client_id) = 1)`.
 
 Permissions: create via `POST /api/v1/projects/:projectId/deliverables`
-by any member of the project's house (in practice called by
-`SubmitDraftDialog`, not directly by users); list via `GET
-/api/v1/projects/:projectId/deliverables`; the review queue via `GET
+(project-owned) or the generic `POST /api/v1/houses/:houseId/deliverables`
+(either owner, ADR 0059, body carries `ownerType`/`ownerId`) by any member
+of the house (in practice called by `SubmitDraftDialog`, not directly by
+users); list via `GET /api/v1/projects/:projectId/deliverables` or
+`GET /api/v1/clients/:clientId/deliverables`; the review queue via `GET
 /api/v1/houses/:houseId/review-queue` (+ `/metrics`, `/bulk-action`).
 Status/assignment transitions via dedicated `POST`/`PATCH
 /api/v1/deliverables/:deliverableId/<action>` endpoints (`approve`,
@@ -1372,7 +1393,9 @@ editor.
 
 Migration history: `20260716200000_deliverables`;
 `export_settings`/`comments.timestamp_seconds` added in
-`20260717120000_review_pipeline` (ADR 0056).
+`20260717120000_review_pipeline` (ADR 0056); `client_id` added and
+`(project_id, version)` unique index dropped in
+`20260718120000_polymorphic_owner` (ADR 0059).
 
 ### Table: `crew_profiles`
 
@@ -1444,12 +1467,13 @@ Purpose: a scheduled event on a house's calendar - the data the Calendar
 page's designed UI needs (shoot days, meetings, deliveries) with no prior
 backend equivalent (ADR 0030).
 
-Ownership: belongs to one `organization`; optionally belongs to one
-`project` (nullable - an event with no project is a "My Schedule" entry)
-and/or one `conversation` (nullable - set when the event is created from
-within a chat room); records who created it via `created_by_id`.
+Ownership: belongs to one `organization`; optionally belongs to at most
+one of `project`/`client` (nullable - an event with neither is a "My
+Schedule" entry; `CHECK (num_nonnulls(project_id, client_id) <= 1)`, ADR 0059) and/or one `conversation` (nullable - set when the event is created
+from within a chat room); records who created it via `created_by_id`.
 
-Columns: `id`, `organization_id`, `project_id` (nullable), `conversation_id`
+Columns: `id`, `organization_id`, `project_id` (nullable), `client_id`
+(nullable, added per ADR 0059), `conversation_id`
 (nullable, added per the `20260712080000_conversation_links` migration),
 `created_by_id`,
 `title`, `date` (string, `YYYY-MM-DD` - opaque string like
@@ -1461,17 +1485,18 @@ validated as a real time value), `location` (nullable), `category`
 validated at the DTO layer), `created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
-`projects` (`onDelete: SetNull` - deleting a project keeps its past
-calendar events, just detaches them back to "My Schedule" rather than
-deleting event history); belongs to `conversations` (`onDelete: SetNull` -
-an event outlives the chat room it was created from); belongs to `users`
-via `created_by_id` (no cascade rule specified beyond the default
-restrict).
+`projects` and/or `clients` (both `onDelete: SetNull` - deleting a project
+or client keeps its past calendar events, just detaches them back to "My
+Schedule" rather than deleting event history); belongs to `conversations`
+(`onDelete: SetNull` - an event outlives the chat room it was created
+from); belongs to `users` via `created_by_id` (no cascade rule specified
+beyond the default restrict).
 
-Indexes: index on `organization_id`; index on `project_id`; index on
-`conversation_id`.
+Indexes: index on `organization_id`; indexes on `project_id`/`client_id`;
+index on `conversation_id`.
 
-Constraints: none beyond required foreign keys.
+Constraints: `CHECK (num_nonnulls(project_id, client_id) <= 1)` (ADR
+0059).
 
 Permissions: created/read via `POST`/`GET
 /api/v1/houses/:houseId/calendar-events` by any house member; also
@@ -1480,12 +1505,14 @@ creatable/listed room-scoped via `POST`/`GET
 room. No update/delete endpoint yet.
 
 Reasoning: a real "calendar" concept per house isn't a separate table -
-"calendars" in the UI are just "My Schedule" (events with `project_id =
-null`) plus one entry per real `Project`, so filtering by calendar is
-filtering by `project_id`, no additional join table needed (ADR 0030).
+"calendars" in the UI are "My Schedule" (events with no owner) plus one
+entry per `Project` and one per `Client` (ADR 0059 extended this from
+Project-only), so filtering by calendar is filtering by owner, no
+additional join table needed (ADR 0030).
 
 Migration history: `20260710221800_calendar_events` (initial columns);
-`conversation_id` added in `20260712080000_conversation_links`.
+`conversation_id` added in `20260712080000_conversation_links`; `client_id`
+added in `20260718120000_polymorphic_owner` (ADR 0059).
 
 ### Table: `time_entries`
 
