@@ -48,6 +48,7 @@ class AnalyticsService {
 
     const [
       projects,
+      totalClients,
       tasks,
       timeEntries,
       memberships,
@@ -58,6 +59,9 @@ class AnalyticsService {
       taskTimeEntries
     ] = await Promise.all([
       this.prisma.project.findMany({
+        where: { organizationId: houseId, status: { not: "archived" } }
+      }),
+      this.prisma.client.count({
         where: { organizationId: houseId, status: { not: "archived" } }
       }),
       this.prisma.task.findMany({
@@ -225,6 +229,7 @@ class AnalyticsService {
 
     return {
       totalProjects,
+      totalClients,
       activeProjects,
       tasksTotal,
       tasksCompleted,

@@ -2,17 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FolderKanban, ListChecks, Search, Users } from "lucide-react";
+import {
+  Building2,
+  FolderKanban,
+  ListChecks,
+  Search,
+  Users
+} from "lucide-react";
 import { useWorkspace } from "@/lib/workspace-context";
-import { listProjects } from "@/services/base-workspace.service";
-import type { Project } from "@/types/base";
+import { listClients, listProjects } from "@/services/base-workspace.service";
+import type { ClientItem, Project } from "@/types/base";
 
 type SearchResult = {
   id: string;
   label: string;
   sublabel: string;
   icon: typeof FolderKanban;
-  href: "/projects" | "/tasks" | "/crews";
+  href: string;
 };
 
 export function GlobalSearch() {
@@ -21,6 +27,7 @@ export function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [clients, setClients] = useState<ClientItem[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,6 +35,11 @@ export function GlobalSearch() {
       .then(setProjects)
       .catch(() => {
         // Search degrades to tasks/people if projects fail to load.
+      });
+    listClients()
+      .then(setClients)
+      .catch(() => {
+        // Search degrades if clients fail to load.
       });
   }, []);
 
@@ -53,7 +65,17 @@ export function GlobalSearch() {
             label: project.title,
             sublabel: "Project",
             icon: FolderKanban,
-            href: "/projects" as const
+            href: `/projects/${project.id}`
+          })),
+        ...clients
+          .filter((client) => client.name.toLowerCase().includes(trimmed))
+          .slice(0, 4)
+          .map((client) => ({
+            id: `client-${client.id}`,
+            label: client.name,
+            sublabel: "Client",
+            icon: Building2,
+            href: `/projects/clients/${client.id}`
           })),
         ...workspace.tasks
           .filter((task) => task.title.toLowerCase().includes(trimmed))

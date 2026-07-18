@@ -567,6 +567,7 @@ export type ActivityHeatmap = {
 
 export type Analytics = {
   totalProjects: number;
+  totalClients: number;
   activeProjects: number;
   tasksTotal: number;
   tasksCompleted: number;

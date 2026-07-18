@@ -1,4 +1,5 @@
 import {
+  Building2,
   Clapperboard,
   CheckCircle2,
   Clock,
@@ -26,6 +27,14 @@ export function StatCardsRow({ analytics }: { analytics: Analytics }) {
       note: "Currently in progress",
       tone: "blue" as const,
       icon: Clapperboard
+    },
+    {
+      id: "total-clients",
+      title: "Clients",
+      value: String(analytics.totalClients),
+      note: "Companies you produce work for",
+      tone: "green" as const,
+      icon: Building2
     },
     {
       id: "tasks-completed",
