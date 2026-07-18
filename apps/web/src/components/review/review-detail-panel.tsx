@@ -57,15 +57,24 @@ export function ReviewDetailPanel({
   const [compareId, setCompareId] = useState("");
 
   useEffect(() => {
-    listDeliverables(item.projectId)
-      .then((all) =>
-        setVersions(
-          [...all]
-            .filter((d) => d.taskId === item.taskId)
-            .sort((a, b) => b.version - a.version)
+    // Version history is only available for project-owned deliverables
+    // today (listDeliverables is a project-scoped route) - client-owned
+    // ones still get the full approve/reject/comment flow below, just not
+    // this "other versions" sidebar.
+    if (item.projectId) {
+      listDeliverables(item.projectId)
+        .then((all) =>
+          setVersions(
+            [...all]
+              .filter((d) => d.taskId === item.taskId)
+              .sort((a, b) => b.version - a.version)
+          )
         )
-      )
-      .catch(() => setVersions([]));
+        .catch(() => setVersions([]));
+    } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing the version sidebar for client-owned deliverables, not deriving render output
+      setVersions([]);
+    }
     listDeliverableComments(item.id)
       .then(setComments)
       .catch(() => setComments([]));

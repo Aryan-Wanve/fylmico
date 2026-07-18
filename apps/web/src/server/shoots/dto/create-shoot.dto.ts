@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsIn,
   IsISO8601,
   IsOptional,
   IsString,
@@ -47,4 +48,12 @@ export class CreateShootDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsIn(["project", "client"])
+  ownerType?: "project" | "client";
+
+  @IsOptional()
+  @IsString()
+  ownerId?: string;
 }

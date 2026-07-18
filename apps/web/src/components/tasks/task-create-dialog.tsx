@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { OwnerSelect, type OwnerValue } from "@/components/owners/owner-select";
 import { TaskAssigneePicker } from "@/components/tasks/task-assignee-picker";
 import {
   PRIORITY_META,
@@ -27,23 +28,19 @@ import {
   TASK_TYPES
 } from "@/components/tasks/task-data";
 import {
-  createShoot,
+  createShootForOwner,
   getShootUploadFolder,
   linkTaskAttachment,
   listBoards,
-  listClients,
-  listProjects,
   listScripts,
   listShoots,
   resolveFileDestination
 } from "@/services/base-workspace.service";
 import type {
   Board,
-  ClientItem,
   CreateTaskRequest,
   HouseMember,
   ProductionTask,
-  Project,
   ScriptSummary,
   Shoot,
   TaskAssigneeInput,
@@ -89,16 +86,13 @@ export function TaskCreateDialog({
   const [dueDate, setDueDate] = useState("");
   const [callTime, setCallTime] = useState("");
   const [location, setLocation] = useState("");
-  const [clientId, setClientId] = useState("");
-  const [projectId, setProjectId] = useState("");
+  const [owner, setOwner] = useState<OwnerValue | null>(null);
   const [shootId, setShootId] = useState("");
   const [boardId, setBoardId] = useState("");
   const [scriptId, setScriptId] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const [clients, setClients] = useState<ClientItem[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [boards, setBoards] = useState<Board[]>([]);
   const [scripts, setScripts] = useState<ScriptSummary[]>([]);
@@ -109,26 +103,24 @@ export function TaskCreateDialog({
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting form state each time the dialog re-opens, not deriving render output
     setAssignees(defaultAssigneeId ? [{ userId: defaultAssigneeId }] : []);
-    Promise.all([listClients(), listProjects(), listBoards(), listScripts()])
-      .then(([clientList, projectList, boardList, scriptList]) => {
-        setClients(clientList);
-        setProjects(projectList);
+    Promise.all([listBoards(), listScripts()])
+      .then(([boardList, scriptList]) => {
         setBoards(boardList);
         setScripts(scriptList);
       })
       .catch(() => {
-        // Raw-footage/storyboard/script pickers just show fewer options if this fails.
+        // Storyboard/script pickers just show fewer options if this fails.
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
-    if (!projectId) {
+    if (owner?.ownerType !== "project") {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing the shoot picker's options when its parent project selection is cleared, not deriving render output
       setShoots([]);
       return;
     }
-    listShoots(projectId)
+    listShoots(owner.ownerId)
       .then((shootList) =>
         setShoots(
           shootList.filter(
@@ -141,13 +133,7 @@ export function TaskCreateDialog({
       .catch(() => {
         // Shoot picker just shows fewer options if this fails.
       });
-  }, [projectId]);
-
-  const projectsForClient = clientId
-    ? projects.filter((project) =>
-        project.clients.some((client) => client.id === clientId)
-      )
-    : [];
+  }, [owner]);
 
   function handleSelectType(value: TaskType) {
     setType(value);
@@ -167,8 +153,7 @@ export function TaskCreateDialog({
     setDueDate("");
     setCallTime("");
     setLocation("");
-    setClientId("");
-    setProjectId("");
+    setOwner(null);
     setShootId("");
     setBoardId("");
     setScriptId("");
@@ -181,8 +166,8 @@ export function TaskCreateDialog({
       setError("Give the task a name.");
       return;
     }
-    if (type === "shoot" && !projectId) {
-      setError("Pick which client and project this shoot belongs to.");
+    if (type === "shoot" && !owner) {
+      setError("Pick which project or client this shoot belongs to.");
       return;
     }
     if (type === "shoot" && !dueDate) {
@@ -199,7 +184,7 @@ export function TaskCreateDialog({
         // shootsService.create used from the Project detail page, which
         // creates the linked Task in the same transaction, rather than a
         // bare Task with type "shoot" and no Shoot behind it.
-        await createShoot(projectId, {
+        await createShootForOwner(owner!, {
           name: title.trim(),
           scheduledDate: new Date(dueDate).toISOString(),
           callTime: callTime.trim() || undefined,
@@ -214,7 +199,15 @@ export function TaskCreateDialog({
           priority,
           assignees: assignees.length ? assignees : undefined,
           dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-          projectId: type === "edit" ? projectId || undefined : undefined,
+          ownerType: type === "edit" ? owner?.ownerType : undefined,
+          projectId:
+            type === "edit" && owner?.ownerType === "project"
+              ? owner.ownerId
+              : undefined,
+          clientId:
+            type === "edit" && owner?.ownerType === "client"
+              ? owner.ownerId
+              : undefined,
           boardId: type === "storyboarding" ? boardId || undefined : undefined,
           scriptId:
             type === "script-writing" ? scriptId || undefined : undefined
@@ -227,11 +220,11 @@ export function TaskCreateDialog({
           } catch {
             // Task itself was created fine - the footage link is best-effort.
           }
-        } else if (type === "edit" && clientId && projectId) {
+        } else if (type === "edit" && owner) {
           try {
             const { parentId } = await resolveFileDestination({
-              clientId,
-              projectId,
+              ownerType: owner.ownerType,
+              ownerId: owner.ownerId,
               category: "raw"
             });
             await linkTaskAttachment(created.id, parentId);
@@ -380,128 +373,26 @@ export function TaskCreateDialog({
 
           {type === "shoot" ? (
             <div className="grid gap-1.5">
-              <Label>Client & Project</Label>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Select
-                  items={{
-                    none: "Select client",
-                    ...Object.fromEntries(
-                      clients.map((client) => [client.id, client.name])
-                    )
-                  }}
-                  onValueChange={(next) => {
-                    setClientId(next && next !== "none" ? next : "");
-                    setProjectId("");
-                  }}
-                  value={clientId || "none"}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Select client</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  disabled={!clientId}
-                  items={{
-                    none: "Select project",
-                    ...Object.fromEntries(
-                      projectsForClient.map((project) => [
-                        project.id,
-                        project.title
-                      ])
-                    )
-                  }}
-                  onValueChange={(next) =>
-                    setProjectId(next && next !== "none" ? next : "")
-                  }
-                  value={projectId || "none"}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Select project</SelectItem>
-                    {projectsForClient.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Label>Project or Client</Label>
+              <OwnerSelect onChange={setOwner} value={owner} />
             </div>
           ) : null}
 
           {type === "edit" ? (
             <div className="grid gap-1.5">
               <Label>Assign raw footage</Label>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <Select
-                  items={{
-                    none: "No client",
-                    ...Object.fromEntries(
-                      clients.map((client) => [client.id, client.name])
-                    )
-                  }}
-                  onValueChange={(next) => {
-                    const nextId = next && next !== "none" ? next : "";
-                    setClientId(nextId);
-                    setProjectId("");
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <OwnerSelect
+                  onChange={(next) => {
+                    setOwner(next);
                     setShootId("");
                   }}
-                  value={clientId || "none"}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No client</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  value={owner}
+                />
                 <Select
-                  disabled={!clientId}
-                  items={{
-                    none: "Select folder",
-                    ...Object.fromEntries(
-                      projectsForClient.map((project) => [
-                        project.id,
-                        project.title
-                      ])
-                    )
-                  }}
-                  onValueChange={(next) => {
-                    const nextId = next && next !== "none" ? next : "";
-                    setProjectId(nextId);
-                    setShootId("");
-                  }}
-                  value={projectId || "none"}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Select folder</SelectItem>
-                    {projectsForClient.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  disabled={!projectId || shoots.length === 0}
+                  disabled={
+                    owner?.ownerType !== "project" || shoots.length === 0
+                  }
                   items={{
                     none:
                       shoots.length === 0 ? "No shoots ready" : "Whole folder",
