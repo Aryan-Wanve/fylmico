@@ -82,6 +82,7 @@ import type {
   UpdateScriptRequest,
   UpdateShotRequest,
   UpdateTaskRequest,
+  OwnerType,
   UploadCategory,
   UserProfile,
   WorkspaceSnapshot
@@ -714,6 +715,20 @@ export async function createShoot(
   );
 }
 
+export async function createShootForOwner(
+  owner: { ownerType: OwnerType; ownerId: string },
+  request: CreateShootRequest
+): Promise<Shoot> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before scheduling a shoot.");
+  }
+
+  return apiRequest<Shoot>(`/houses/${activeHouseId}/shoots`, {
+    method: "POST",
+    body: { ...request, ownerType: owner.ownerType, ownerId: owner.ownerId }
+  });
+}
+
 export async function markShootReached(shootId: string): Promise<Shoot> {
   return apiRequest<Shoot>(`/shoots/${shootId}/reached`, { method: "POST" });
 }
@@ -1333,8 +1348,8 @@ export async function listFileEntries(
 }
 
 export async function resolveFileDestination(params: {
-  clientId: string;
-  projectId?: string;
+  ownerType: OwnerType;
+  ownerId: string;
   category?: UploadCategory;
 }): Promise<{ parentId: string }> {
   if (!activeHouseId) {

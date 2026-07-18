@@ -195,6 +195,16 @@ export type House = {
   roles: HouseRole[];
 };
 
+// A unit of work belongs to exactly one owner - a Project or a Client
+// (ADR 0059). Surfaced through the API/UI as this unified shape.
+export type OwnerType = "project" | "client";
+
+export type OwnerRef = {
+  ownerType: OwnerType;
+  ownerId: string;
+  ownerName: string;
+};
+
 export type ProductionTask = {
   id: string;
   title: string;
@@ -215,6 +225,9 @@ export type ProductionTask = {
   progress: number;
   createdById: string;
   createdByName: string;
+  ownerType: OwnerType | null;
+  ownerId: string | null;
+  ownerName: string | null;
   projectId: string | null;
   projectTitle: string | null;
   clientId: string | null;
@@ -253,7 +266,6 @@ export type Project = {
   coverIcon: ProjectCoverIcon | null;
   dueDate: string | null;
   teamIds: string[];
-  clients: { id: string; name: string }[];
   taskCount?: number;
   completedTaskCount?: number;
   storageBytes?: number;
@@ -309,8 +321,8 @@ export type ClientItem = {
 };
 
 export type ClientStats = {
-  activeProjects: number;
-  completedProjects: number;
+  activeTasks: number;
+  completedTasks: number;
   totalShoots: number;
   videosDelivered: number;
   storageBytes: number;
@@ -329,7 +341,10 @@ export type ShootStatus =
 
 export type Shoot = {
   id: string;
-  projectId: string;
+  ownerType: OwnerType | null;
+  ownerId: string | null;
+  ownerName: string | null;
+  projectId: string | null;
   taskId: string | null;
   name: string;
   scheduledDate: string;
@@ -351,6 +366,8 @@ export type Shoot = {
 };
 
 export type CreateShootRequest = {
+  ownerType?: OwnerType;
+  ownerId?: string;
   name: string;
   scheduledDate: string;
   callTime?: string;
@@ -365,7 +382,10 @@ export type DeliverableStatus =
 
 export type Deliverable = {
   id: string;
-  projectId: string;
+  ownerType: OwnerType | null;
+  ownerId: string | null;
+  ownerName: string | null;
+  projectId: string | null;
   taskId: string | null;
   version: number;
   status: DeliverableStatus;
@@ -384,6 +404,8 @@ export type Deliverable = {
 };
 
 export type CreateDeliverableRequest = {
+  ownerType?: OwnerType;
+  ownerId?: string;
   fileEntryId: string;
   taskId?: string;
   notes?: string;
@@ -402,7 +424,10 @@ export type Comment = {
 
 export type ReviewQueueItem = {
   id: string;
-  projectId: string;
+  ownerType: OwnerType | null;
+  ownerId: string | null;
+  ownerName: string | null;
+  projectId: string | null;
   projectTitle: string | null;
   clientId: string | null;
   clientName: string | null;
@@ -466,6 +491,9 @@ export type CalendarEvent = {
   time: string;
   location: string | null;
   category: CalendarEventCategory;
+  ownerType: OwnerType | null;
+  ownerId: string | null;
+  ownerName: string | null;
   projectId: string | null;
   organizationId: string;
 };
@@ -686,7 +714,9 @@ export type CreateTaskRequest = {
   estimatedMinutes?: number;
   recurrenceRule?: TaskRecurrenceRule;
   recurrenceEndDate?: string;
+  ownerType?: OwnerType;
   projectId?: string;
+  clientId?: string;
   boardId?: string;
   scriptId?: string;
   shootDayEventId?: string;
@@ -710,7 +740,9 @@ export type UpdateTaskRequest = Partial<{
   estimatedMinutes: number;
   recurrenceRule: TaskRecurrenceRule;
   recurrenceEndDate: string;
+  ownerType: OwnerType;
   projectId: string;
+  clientId: string;
   boardId: string;
   scriptId: string;
   shootDayEventId: string;

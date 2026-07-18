@@ -27,7 +27,6 @@ export function ProjectListRow({
   const router = useRouter();
   const Icon = project.coverIcon ? COVER_ICONS[project.coverIcon] : null;
   const overdue = isProjectOverdue(project);
-  const clientName = project.clients[0]?.name;
 
   return (
     <div
@@ -43,11 +42,6 @@ export function ProjectListRow({
       </div>
 
       <div className="min-w-0 flex-1">
-        {clientName ? (
-          <span className="block truncate text-xs font-bold text-[#654cff]">
-            {clientName}
-          </span>
-        ) : null}
         <strong className="block truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
           {project.title}
         </strong>

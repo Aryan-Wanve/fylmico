@@ -17,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import type { ClientItem, Project, UploadCategory } from "@/types/base";
+import { OwnerSelect, type OwnerValue } from "@/components/owners/owner-select";
+import type { UploadCategory } from "@/types/base";
 
 const CATEGORIES: { value: UploadCategory; label: string }[] = [
   { value: "raw", label: "Raw Footage" },
@@ -29,44 +30,26 @@ const CATEGORIES: { value: UploadCategory; label: string }[] = [
 export function UploadDestinationDialog({
   open,
   onOpenChange,
-  clients,
-  projects,
   onConfirm
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  clients: ClientItem[];
-  projects: Project[];
-  onConfirm: (destination: {
-    clientId: string;
-    projectId?: string;
-    category: UploadCategory;
-  }) => void;
+  onConfirm: (destination: OwnerValue & { category: UploadCategory }) => void;
 }) {
-  const [clientId, setClientId] = useState("misc");
-  const [projectId, setProjectId] = useState("");
+  const [owner, setOwner] = useState<OwnerValue | null>(null);
   const [category, setCategory] = useState<UploadCategory>("project-files");
 
-  const projectsForClient =
-    clientId === "misc"
-      ? []
-      : projects.filter((project) =>
-          project.clients.some((client) => client.id === clientId)
-        );
-
   function reset() {
-    setClientId("misc");
-    setProjectId("");
+    setOwner(null);
     setCategory("project-files");
   }
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    onConfirm({
-      clientId,
-      projectId: clientId === "misc" ? undefined : projectId || undefined,
-      category
-    });
+    if (!owner) {
+      return;
+    }
+    onConfirm({ ...owner, category });
     reset();
     onOpenChange(false);
   }
@@ -84,77 +67,18 @@ export function UploadDestinationDialog({
       <DialogContent className="max-w-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Which client/project does this belong to?</DialogTitle>
+            <DialogTitle>Where should this go?</DialogTitle>
           </DialogHeader>
 
           <div className="mt-4 grid gap-4">
-            <label className="grid gap-1.5">
+            <div className="grid gap-1.5">
               <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-                Client
+                Owner
               </Label>
-              <Select
-                items={{
-                  misc: "Misc",
-                  ...Object.fromEntries(
-                    clients.map((client) => [client.id, client.name])
-                  )
-                }}
-                onValueChange={(next) => {
-                  setClientId(next ?? "misc");
-                  setProjectId("");
-                }}
-                value={clientId}
-              >
-                <SelectTrigger className="h-10 w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="misc">Misc</SelectItem>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </label>
+              <OwnerSelect onChange={setOwner} value={owner} />
+            </div>
 
-            {clientId !== "misc" ? (
-              <label className="grid gap-1.5">
-                <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-                  Project (optional)
-                </Label>
-                <Select
-                  items={{
-                    none: "None",
-                    ...Object.fromEntries(
-                      projectsForClient.map((project) => [
-                        project.id,
-                        project.title
-                      ])
-                    )
-                  }}
-                  onValueChange={(next) =>
-                    setProjectId(next && next !== "none" ? next : "")
-                  }
-                  value={projectId || "none"}
-                >
-                  <SelectTrigger className="h-10 w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {projectsForClient.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </label>
-            ) : null}
-
-            {clientId !== "misc" && projectId ? (
+            {owner ? (
               <label className="grid gap-1.5">
                 <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
                   Type
@@ -191,7 +115,8 @@ export function UploadDestinationDialog({
               Cancel
             </Button>
             <Button
-              className="h-9 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+              className="h-9 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea] disabled:opacity-50"
+              disabled={!owner}
               type="submit"
             >
               Continue

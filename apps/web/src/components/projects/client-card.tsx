@@ -92,7 +92,7 @@ export function ClientCard({
       <div className="grid grid-cols-3 gap-2 border-t border-black/5 pt-3 text-center dark:border-white/[0.06]">
         <div>
           <strong className="block text-base font-black text-[#11142c] dark:text-[#f1f2f8]">
-            {stats?.activeProjects ?? "-"}
+            {stats?.activeTasks ?? "-"}
           </strong>
           <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
             Active
@@ -100,7 +100,7 @@ export function ClientCard({
         </div>
         <div>
           <strong className="block text-base font-black text-[#11142c] dark:text-[#f1f2f8]">
-            {stats?.completedProjects ?? "-"}
+            {stats?.completedTasks ?? "-"}
           </strong>
           <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
             Completed

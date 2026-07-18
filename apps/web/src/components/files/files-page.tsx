@@ -32,9 +32,7 @@ import {
   deleteFileEntry,
   getFileDownloadUrl,
   getFilesSummary,
-  listClients,
   listFileEntries,
-  listProjects,
   resolveFileDestination
 } from "@/services/base-workspace.service";
 import {
@@ -43,13 +41,7 @@ import {
   getDriveStatus,
   type DriveStatus
 } from "@/services/drive.service";
-import type {
-  ClientItem,
-  FileEntryItem,
-  FilesSummary,
-  Project,
-  UploadCategory
-} from "@/types/base";
+import type { FileEntryItem, FilesSummary, UploadCategory } from "@/types/base";
 
 type Crumb = { id: string | null; name: string };
 
@@ -77,8 +69,6 @@ export function FilesPage() {
   });
   const [dragOver, setDragOver] = useState(false);
   const [previewFile, setPreviewFile] = useState<FileEntryItem | null>(null);
-  const [clients, setClients] = useState<ClientItem[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [destinationDialogOpen, setDestinationDialogOpen] = useState(false);
   const [validation, setValidation] = useState<{
     flagged: { file: File; warnings: FileWarning[] }[];
@@ -87,17 +77,6 @@ export function FilesPage() {
   const pendingDropFiles = useRef<File[] | null>(null);
 
   const currentFolderId = path[path.length - 1].id;
-
-  useEffect(() => {
-    Promise.all([listClients(), listProjects()])
-      .then(([clientList, projectList]) => {
-        setClients(clientList);
-        setProjects(projectList);
-      })
-      .catch(() => {
-        // Destination picker just shows fewer options if this fails.
-      });
-  }, []);
 
   useEffect(() => {
     getDriveStatus()
@@ -417,8 +396,8 @@ export function FilesPage() {
   }
 
   async function handleConfirmDestination(destination: {
-    clientId: string;
-    projectId?: string;
+    ownerType: "project" | "client";
+    ownerId: string;
     category: UploadCategory;
   }) {
     try {
@@ -585,11 +564,9 @@ export function FilesPage() {
       </div>
 
       <UploadDestinationDialog
-        clients={clients}
         onConfirm={handleConfirmDestination}
         onOpenChange={setDestinationDialogOpen}
         open={destinationDialogOpen}
-        projects={projects}
       />
 
       <UploadValidationDialog

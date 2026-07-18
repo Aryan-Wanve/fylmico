@@ -336,12 +336,6 @@ export function ProjectDetailPage() {
               Due {project.dueDate ?? "TBD"}
             </span>
             <TeamAvatarStack members={members} teamIds={teamMemberIds} />
-            {project.clients.length > 0 ? (
-              <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
-                Clients:{" "}
-                {project.clients.map((client) => client.name).join(", ")}
-              </span>
-            ) : null}
           </div>
         </div>
       </div>

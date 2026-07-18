@@ -31,7 +31,6 @@ export function ProjectGridCard({
   const router = useRouter();
   const Icon = project.coverIcon ? COVER_ICONS[project.coverIcon] : null;
   const overdue = isProjectOverdue(project);
-  const clientName = project.clients[0]?.name;
   const onlineCount = project.teamIds.filter((id) =>
     onlineUserIds.has(id)
   ).length;
@@ -61,11 +60,6 @@ export function ProjectGridCard({
 
       <div className="flex items-start justify-between gap-2 pt-3">
         <div className="min-w-0">
-          {clientName ? (
-            <span className="block truncate text-xs font-bold text-[#654cff]">
-              {clientName}
-            </span>
-          ) : null}
           <strong className="truncate text-[0.95rem] font-bold text-[#11142c] dark:text-[#f1f2f8]">
             {project.title}
           </strong>
