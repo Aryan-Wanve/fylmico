@@ -238,6 +238,7 @@ model Task {
   conversationId    String?   @map("conversation_id")
   parentTaskId      String?   @map("parent_task_id")
   projectId         String?   @map("project_id")
+  clientId          String?   @map("client_id")
   boardId           String?   @map("board_id")
   scriptId          String?   @map("script_id")
   shootDayEventId   String?   @map("shoot_day_event_id")
@@ -268,6 +269,7 @@ model Task {
   parent              Task?               @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
   subtasks            Task[]              @relation("TaskSubtasks")
   project             Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  client              Client?             @relation(fields: [clientId], references: [id], onDelete: SetNull)
   board               Board?              @relation(fields: [boardId], references: [id], onDelete: SetNull)
   script              Script?             @relation(fields: [scriptId], references: [id], onDelete: SetNull)
   shootDayEvent       CalendarEvent?      @relation(fields: [shootDayEventId], references: [id], onDelete: SetNull)
@@ -286,6 +288,7 @@ model Task {
   @@index([conversationId])
   @@index([parentTaskId])
   @@index([projectId])
+  @@index([clientId])
   @@index([boardId])
   @@index([scriptId])
   @@index([shootDayEventId])
@@ -463,7 +466,6 @@ model Project {
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  clients        ProjectClient[]
   calendarEvents CalendarEvent[]
   timeEntries    TimeEntry[]
   bookings       Booking[]
@@ -495,32 +497,21 @@ model Client {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  projects     ProjectClient[]
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tasks          Task[]
+  deliverables   Deliverable[]
+  shoots         Shoot[]
+  calendarEvents CalendarEvent[]
 
   @@index([organizationId])
   @@map("clients")
 }
 
-model ProjectClient {
-  id        String   @id @default(cuid())
-  projectId String   @map("project_id")
-  clientId  String   @map("client_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, clientId])
-  @@index([projectId])
-  @@index([clientId])
-  @@map("project_clients")
-}
-
 model Shoot {
   id              String    @id @default(cuid())
   organizationId  String    @map("organization_id")
-  projectId       String    @map("project_id")
+  projectId       String?   @map("project_id")
+  clientId        String?   @map("client_id")
   calendarEventId String?   @map("calendar_event_id")
   createdById     String    @map("created_by_id")
   name            String
@@ -541,13 +532,15 @@ model Shoot {
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project       Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  client        Client?        @relation(fields: [clientId], references: [id], onDelete: Cascade)
   calendarEvent CalendarEvent? @relation(fields: [calendarEventId], references: [id], onDelete: SetNull)
   createdBy     User           @relation(fields: [createdById], references: [id])
   tasks         Task[]
 
   @@index([organizationId])
   @@index([projectId])
+  @@index([clientId])
   @@index([calendarEventId])
   @@map("shoots")
 }
@@ -591,7 +584,8 @@ model Comment {
 model Deliverable {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
-  projectId      String   @map("project_id")
+  projectId      String?  @map("project_id")
+  clientId       String?  @map("client_id")
   taskId         String?  @map("task_id")
   fileEntryId    String   @map("file_entry_id")
   createdById    String   @map("created_by_id")
@@ -603,14 +597,15 @@ model Deliverable {
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  client       Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
   task         Task?        @relation(fields: [taskId], references: [id], onDelete: SetNull)
   fileEntry    FileEntry    @relation(fields: [fileEntryId], references: [id], onDelete: Cascade)
   createdBy    User         @relation(fields: [createdById], references: [id])
 
-  @@unique([projectId, version])
   @@index([organizationId])
   @@index([projectId])
+  @@index([clientId])
   @@index([taskId])
   @@index([fileEntryId])
   @@map("deliverables")
@@ -643,6 +638,7 @@ model CalendarEvent {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
   projectId      String?  @map("project_id")
+  clientId       String?  @map("client_id")
   conversationId String?  @map("conversation_id")
   createdById    String   @map("created_by_id")
   title          String
@@ -655,6 +651,7 @@ model CalendarEvent {
 
   organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   project      Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  client       Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
   conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
   createdBy    User          @relation(fields: [createdById], references: [id])
   tasks        Task[]
@@ -662,6 +659,7 @@ model CalendarEvent {
 
   @@index([organizationId])
   @@index([projectId])
+  @@index([clientId])
   @@index([conversationId])
   @@map("calendar_events")
 }
@@ -826,24 +824,24 @@ model Script {
 }
 
 model FileEntry {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  parentId       String?  @map("parent_id")
-  conversationId String?  @map("conversation_id")
-  taskId         String?  @map("task_id")
-  name           String
-  type           String
-  storagePath    String?  @map("storage_path")
-  driveKey       String?  @map("drive_key")
-  sensitive      Boolean  @default(false)
-  size           Int?
-  mimeType       String?  @map("mime_type")
-  durationSeconds Float?  @map("duration_seconds")
-  width          Int?
-  height         Int?
-  uploadedById   String   @map("uploaded_by_id")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(cuid())
+  organizationId  String   @map("organization_id")
+  parentId        String?  @map("parent_id")
+  conversationId  String?  @map("conversation_id")
+  taskId          String?  @map("task_id")
+  name            String
+  type            String
+  storagePath     String?  @map("storage_path")
+  driveKey        String?  @map("drive_key")
+  sensitive       Boolean  @default(false)
+  size            Int?
+  mimeType        String?  @map("mime_type")
+  durationSeconds Float?   @map("duration_seconds")
+  width           Int?
+  height          Int?
+  uploadedById    String   @map("uploaded_by_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   parent       FileEntry?    @relation("FileEntryChildren", fields: [parentId], references: [id], onDelete: Cascade)
