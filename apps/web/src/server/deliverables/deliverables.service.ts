@@ -204,10 +204,16 @@ class DeliverablesService {
       orderBy: { createdAt: "desc" }
     });
 
+    const unresolvedCounts = await this.getUnresolvedCommentCounts(
+      deliverables.map((d) => d.id)
+    );
+
     // Client-owned or task-less deliverables now appear in the queue too -
     // they used to be silently dropped here even though they support the
     // full comment/approve/reject flow.
-    let items = deliverables.map(toQueueItemDto);
+    let items = deliverables.map((d) =>
+      toQueueItemDto(d, unresolvedCounts.get(d.id) ?? 0)
+    );
 
     if (filters.clientId) {
       items = items.filter((item) => item.clientId === filters.clientId);
@@ -271,7 +277,30 @@ class DeliverablesService {
         "view this submission"
       );
     }
-    return toQueueItemDto(deliverable);
+    const unresolvedCount = await this.prisma.comment.count({
+      where: {
+        commentableType: "deliverable",
+        commentableId: deliverableId,
+        resolvedAt: null
+      }
+    });
+    return toQueueItemDto(deliverable, unresolvedCount);
+  }
+
+  private async getUnresolvedCommentCounts(
+    deliverableIds: string[]
+  ): Promise<Map<string, number>> {
+    if (deliverableIds.length === 0) return new Map();
+    const groups = await this.prisma.comment.groupBy({
+      by: ["commentableId"],
+      where: {
+        commentableType: "deliverable",
+        commentableId: { in: deliverableIds },
+        resolvedAt: null
+      },
+      _count: { id: true }
+    });
+    return new Map(groups.map((g) => [g.commentableId, g._count.id]));
   }
 
   async getMetrics(userId: string, houseId: string) {
@@ -923,7 +952,10 @@ function toDeliverableDto(deliverable: DeliverableWithRelations) {
   };
 }
 
-function toQueueItemDto(deliverable: QueueDeliverable) {
+function toQueueItemDto(
+  deliverable: QueueDeliverable,
+  unresolvedCommentCount = 0
+) {
   const task = deliverable.task;
   const owner = toOwnerDto(deliverable);
   const primaryAssignee = task?.assignees?.[0];
@@ -950,6 +982,7 @@ function toQueueItemDto(deliverable: QueueDeliverable) {
     notes: deliverable.notes,
     rejectionReason: deliverable.rejectionReason,
     exportSettings: deliverable.exportSettings,
+    unresolvedCommentCount,
     file: {
       id: deliverable.fileEntry.id,
       name: deliverable.fileEntry.name,

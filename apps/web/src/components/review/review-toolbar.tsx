@@ -12,7 +12,15 @@ import {
 import { PRIORITY_ORDER, PRIORITY_META } from "@/components/tasks/task-data";
 import { REVIEW_STATUS_META } from "@/components/review/review-item-card";
 
-export type ReviewSortBy = "submittedAt" | "priority" | "version";
+export type ReviewSortBy =
+  | "newest"
+  | "oldest"
+  | "dueDate"
+  | "priority"
+  | "version"
+  | "client"
+  | "project"
+  | "editor";
 
 export function ReviewToolbar({
   search,
@@ -194,8 +202,13 @@ export function ReviewToolbar({
 
         <Select
           items={{
-            submittedAt: "Newest first",
+            newest: "Newest",
+            oldest: "Oldest",
+            dueDate: "Due Date",
             priority: "Priority",
+            client: "Client",
+            project: "Project",
+            editor: "Editor",
             version: "Version"
           }}
           onValueChange={(value) => onSortByChange(value as ReviewSortBy)}
@@ -205,8 +218,13 @@ export function ReviewToolbar({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="submittedAt">Newest first</SelectItem>
+            <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="oldest">Oldest</SelectItem>
+            <SelectItem value="dueDate">Due Date</SelectItem>
             <SelectItem value="priority">Priority</SelectItem>
+            <SelectItem value="client">Client</SelectItem>
+            <SelectItem value="project">Project</SelectItem>
+            <SelectItem value="editor">Editor</SelectItem>
             <SelectItem value="version">Version</SelectItem>
           </SelectContent>
         </Select>

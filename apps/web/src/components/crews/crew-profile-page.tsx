@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   createConversation,
+  getEditorStats,
   listBookings,
   listCrew,
   listReviewQueue,
@@ -31,7 +32,19 @@ import {
 import { REVIEW_STATUS_META } from "@/components/review/review-item-card";
 import { formatDateRange } from "@/components/bookings/bookings-data";
 import { formatRelativeTime } from "@/lib/relative-time";
-import type { Booking, CrewMember, ReviewQueueItem } from "@/types/base";
+import type {
+  Booking,
+  CrewMember,
+  EditorStats,
+  ReviewQueueItem
+} from "@/types/base";
+
+function formatRuntime(seconds: number): string {
+  if (!seconds) return "0m";
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.round((seconds % 3600) / 60);
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+}
 
 export function CrewProfilePage() {
   const params = useParams<{ userId: string }>();
@@ -44,6 +57,7 @@ export function CrewProfilePage() {
   const [notFound, setNotFound] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [submissions, setSubmissions] = useState<ReviewQueueItem[]>([]);
+  const [editorStats, setEditorStats] = useState<EditorStats | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +97,14 @@ export function CrewProfilePage() {
       .then((data) => {
         if (!cancelled) {
           setSubmissions(data);
+        }
+      })
+      .catch(() => undefined);
+
+    getEditorStats(params.userId)
+      .then((data) => {
+        if (!cancelled) {
+          setEditorStats(data);
         }
       })
       .catch(() => undefined);
@@ -394,6 +416,53 @@ export function CrewProfilePage() {
           )}
         </div>
       </div>
+
+      {editorStats ? (
+        <div className="rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
+          <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
+            Editing History
+          </strong>
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { label: "Total Edits", value: editorStats.totalEdits },
+              { label: "Total Delivered", value: editorStats.totalDelivered },
+              {
+                label: "Approval Rate",
+                value: `${editorStats.approvalRate}%`
+              },
+              {
+                label: "Avg. Review Iterations",
+                value: editorStats.avgReviewIterations
+              },
+              {
+                label: "Projects Worked On",
+                value: editorStats.projectsWorkedOn
+              },
+              {
+                label: "Clients Worked For",
+                value: editorStats.clientsWorkedFor
+              },
+              {
+                label: "Total Runtime Edited",
+                value: formatRuntime(editorStats.totalRuntimeSeconds)
+              },
+              { label: "Portfolio Pieces", value: editorStats.portfolioPieces }
+            ].map((stat) => (
+              <div
+                className="rounded-xl bg-black/[0.02] p-3 dark:bg-white/[0.03]"
+                key={stat.label}
+              >
+                <span className="block text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+                  {stat.label}
+                </span>
+                <strong className="text-lg font-black text-[#11142c] dark:text-[#f1f2f8]">
+                  {stat.value}
+                </strong>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
         <div className="border-b border-black/5 px-5 py-3.5 dark:border-white/[0.06]">

@@ -52,8 +52,12 @@ const METRIC_CARDS: {
 ];
 
 export function ReviewPage() {
-  const { activeHouse } = useWorkspace();
+  const { activeHouse, workspace } = useWorkspace();
   const router = useRouter();
+  const myRole = activeHouse?.members.find(
+    (member) => member.id === workspace.user.id
+  )?.role;
+  const isManager = myRole === "Owner" || myRole === "Admin";
   const [items, setItems] = useState<ReviewQueueItem[]>([]);
   const [metrics, setMetrics] = useState<ReviewMetrics | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -66,7 +70,7 @@ export function ReviewPage() {
   const [editorId, setEditorId] = useState("all");
   const [status, setStatus] = useState("all");
   const [priority, setPriority] = useState("all");
-  const [sortBy, setSortBy] = useState<ReviewSortBy>("submittedAt");
+  const [sortBy, setSortBy] = useState<ReviewSortBy>("newest");
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [requestChangesTarget, setRequestChangesTarget] =
@@ -83,6 +87,7 @@ export function ReviewPage() {
   }
 
   useEffect(() => {
+    if (!isManager) return;
     let cancelled = false;
 
     Promise.all([
@@ -105,7 +110,7 @@ export function ReviewPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isManager]);
 
   const projectOptions = useMemo(
     () => projects.map((p) => ({ id: p.id, label: p.title })),
@@ -162,6 +167,28 @@ export function ReviewPage() {
       sorted.sort((a, b) => (rank[a.priority] ?? 9) - (rank[b.priority] ?? 9));
     } else if (sortBy === "version") {
       sorted.sort((a, b) => b.version - a.version);
+    } else if (sortBy === "oldest") {
+      sorted.sort(
+        (a, b) =>
+          new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
+      );
+    } else if (sortBy === "dueDate") {
+      sorted.sort((a, b) => {
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      });
+    } else if (sortBy === "client") {
+      sorted.sort((a, b) =>
+        (a.clientName ?? "").localeCompare(b.clientName ?? "")
+      );
+    } else if (sortBy === "project") {
+      sorted.sort((a, b) =>
+        (a.projectTitle ?? "").localeCompare(b.projectTitle ?? "")
+      );
+    } else if (sortBy === "editor") {
+      sorted.sort((a, b) => a.editorName.localeCompare(b.editorName));
     } else {
       sorted.sort(
         (a, b) =>
@@ -205,6 +232,20 @@ export function ReviewPage() {
     await bulkReviewAction("approve", Array.from(selectedIds));
     setSelectedIds(new Set());
     await refresh();
+  }
+
+  if (!isManager) {
+    return (
+      <div className="grid min-h-[60vh] place-items-center gap-2 p-8 text-center">
+        <p className="text-sm font-semibold text-[#4b5268] dark:text-[#c7cad9]">
+          Reviewers and Admins only.
+        </p>
+        <p className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          You&apos;ll see your own submitted work under your crew profile
+          instead.
+        </p>
+      </div>
+    );
   }
 
   return (

@@ -1,5 +1,6 @@
 "use client";
 
+import { MessageSquare, RotateCcw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import { FILE_KIND_META, inferFileKind } from "@/components/files/file-data";
@@ -32,6 +33,13 @@ function formatSize(bytes: number | null): string {
   if (!bytes) return "";
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatDuration(seconds: number | null): string {
+  if (!seconds) return "";
+  const minutes = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  return `${minutes}:${String(secs).padStart(2, "0")}`;
 }
 
 export function ReviewItemCard({
@@ -82,11 +90,29 @@ export function ReviewItemCard({
               Overdue
             </span>
           ) : null}
+          {item.version > 1 ? (
+            <span className="flex items-center gap-1 rounded-md bg-black/[0.04] px-1.5 py-0.5 text-xs font-bold text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]">
+              <RotateCcw className="h-3 w-3" />
+              {item.version - 1}
+            </span>
+          ) : null}
+          {item.unresolvedCommentCount > 0 ? (
+            <span className="flex items-center gap-1 rounded-md bg-[#654cff]/10 px-1.5 py-0.5 text-xs font-bold text-[#654cff]">
+              <MessageSquare className="h-3 w-3" />
+              {item.unresolvedCommentCount}
+            </span>
+          ) : null}
         </div>
         <span className="truncate text-xs text-[#8a90a3] dark:text-[#7d8299]">
           {item.projectTitle ?? "No project"}
           {item.clientName ? ` · ${item.clientName}` : ""} · {item.file.name}
           {item.file.size ? ` · ${formatSize(item.file.size)}` : ""}
+          {item.file.durationSeconds
+            ? ` · ${formatDuration(item.file.durationSeconds)}`
+            : ""}
+          {item.exportSettings?.Resolution
+            ? ` · ${item.exportSettings.Resolution}`
+            : ""}
         </span>
         {item.notes ? (
           <span className="truncate text-xs text-[#5f667d] dark:text-[#a8acbf]">

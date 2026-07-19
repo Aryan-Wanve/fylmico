@@ -515,6 +515,7 @@ export type ReviewQueueItem = {
   notes: string | null;
   rejectionReason?: string | null;
   exportSettings?: Record<string, string> | null;
+  unresolvedCommentCount: number;
   file: {
     id: string;
     name: string;

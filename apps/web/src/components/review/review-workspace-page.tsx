@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { ApiError } from "@/lib/api/client";
 import { useWorkspace } from "@/lib/workspace-context";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import { toInitials } from "@/components/tasks/task-data";
@@ -84,11 +85,10 @@ export function ReviewWorkspacePage() {
   const params = useParams<{ deliverableId: string }>();
   const router = useRouter();
   const { activeHouse, workspace } = useWorkspace();
-  const isManager =
-    activeHouse?.members.find((member) => member.id === workspace.user.id)
-      ?.role === "Owner" ||
-    activeHouse?.members.find((member) => member.id === workspace.user.id)
-      ?.role === "Admin";
+  const myRole = activeHouse?.members.find(
+    (member) => member.id === workspace.user.id
+  )?.role;
+  const isManager = myRole === "Owner" || myRole === "Admin";
 
   const [item, setItem] = useState<ReviewQueueItem | null>(null);
   const [versions, setVersions] = useState<Deliverable[]>([]);
@@ -96,6 +96,7 @@ export function ReviewWorkspacePage() {
   const [activity, setActivity] = useState<DeliverableActivityEntry[]>([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [forbidden, setForbidden] = useState(false);
   const [rightTab, setRightTab] = useState<RightTab>("comments");
   const [needsChangesOpen, setNeedsChangesOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -115,8 +116,12 @@ export function ReviewWorkspacePage() {
         setActivity(data.activity);
         setVersions(data.versions);
       })
-      .catch(() => {
-        if (!cancelled) setItem(null);
+      .catch((error) => {
+        if (cancelled) return;
+        setItem(null);
+        if (error instanceof ApiError && error.status === 403) {
+          setForbidden(true);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -173,7 +178,9 @@ export function ReviewWorkspacePage() {
     return (
       <div className="grid min-h-[60vh] place-items-center gap-3 p-8 text-center">
         <p className="text-sm font-semibold text-[#4b5268] dark:text-[#c7cad9]">
-          This submission couldn&apos;t be loaded.
+          {forbidden
+            ? "Reviewers and Admins only."
+            : "This submission couldn't be loaded."}
         </p>
         <button
           className="text-sm font-bold text-[#654cff] hover:underline"
