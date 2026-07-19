@@ -8,7 +8,6 @@ import { AppTopbar } from "@/components/layout/app-topbar";
 import { PageTransition } from "@/components/layout/page-transition";
 import { VerifyEmailBanner } from "@/components/layout/verify-email-banner";
 import { WaitingForApprovalPage } from "@/components/houses/waiting-for-approval-page";
-import { getFocusMode, setFocusMode } from "@/lib/focus-mode";
 import { setLastPage } from "@/lib/house-last-page";
 import { sendHeartbeat } from "@/services/base-workspace.service";
 import { UploadQueuePanel } from "@/components/uploads/upload-queue-panel";
@@ -25,7 +24,6 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
   const isPending = Boolean(activeHouse && activeHouse.myRole === null);
   const isCompact = !activeHouse;
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [focusMode, setFocusModeState] = useState(false);
   const [welcomeHouseName, setWelcomeHouseName] = useState<string | null>(null);
   const previousRoleRef = useRef<{
     houseId: string;
@@ -37,17 +35,6 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
       router.replace("/dashboard");
     }
   }, [activeHouse, pathname, router]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reading a localStorage-backed toggle on mount, not deriving render output
-    setFocusModeState(getFocusMode());
-    function handleChange() {
-      setFocusModeState(getFocusMode());
-    }
-    window.addEventListener("fylmico:focus-mode-change", handleChange);
-    return () =>
-      window.removeEventListener("fylmico:focus-mode-change", handleChange);
-  }, []);
 
   // Detects a pending member's role flipping from null to assigned (polled
   // by WaitingForApprovalPage) and shows a one-time welcome toast - the
@@ -121,7 +108,7 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f7f7fb] dark:bg-[#0e0f18]">
-      {!isDashboard && !focusMode ? (
+      {!isDashboard ? (
         <AppSidebar
           compact={isCompact}
           enabledModules={activeHouse?.enabledModules ?? null}
@@ -131,7 +118,7 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
         />
       ) : null}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {!isDashboard && !focusMode ? (
+        {!isDashboard ? (
           <AppTopbar
             compact={isCompact}
             onOpenMobileNav={() => setMobileNavOpen(true)}
@@ -144,19 +131,6 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
           <PageTransition>{children}</PageTransition>
         </div>
       </div>
-
-      {focusMode && !isDashboard ? (
-        <button
-          className="fixed top-4 left-4 z-50 rounded-full bg-[#11142c] px-4 py-2 text-xs font-bold text-white shadow-[0_1rem_3rem_rgba(0,0,0,0.25)] dark:bg-white dark:text-[#11142c]"
-          onClick={() => {
-            setFocusMode(false);
-            setFocusModeState(false);
-          }}
-          type="button"
-        >
-          Exit Focus Mode
-        </button>
-      ) : null}
 
       {welcomeHouseName ? (
         <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-[#11142c] px-5 py-3 text-sm font-bold text-white shadow-[0_1rem_3rem_rgba(0,0,0,0.25)] dark:bg-white dark:text-[#11142c]">

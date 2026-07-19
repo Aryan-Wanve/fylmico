@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
-import { FocusModeToggle } from "@/components/layout/focus-mode-toggle";
 import { navItems } from "@/components/layout/nav-items";
 import { SidebarUserFooter } from "@/components/layout/sidebar-user-footer";
 import { ALWAYS_ENABLED_MODULES } from "@/lib/house-types";
@@ -146,7 +145,6 @@ export function AppSidebar({
 
         {!compact ? (
           <div className="grid shrink-0 gap-3">
-            <FocusModeToggle />
             <SidebarUserFooter user={user} />
           </div>
         ) : null}
