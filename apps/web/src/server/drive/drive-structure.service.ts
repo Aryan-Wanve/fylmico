@@ -14,7 +14,7 @@ const RESOURCE_SUBFOLDERS = [
   "Stock Assets",
   "Misc"
 ];
-const PORTFOLIO_CATEGORIES = [
+export const PORTFOLIO_CATEGORIES = [
   "Commercials",
   "Reels",
   "Films",

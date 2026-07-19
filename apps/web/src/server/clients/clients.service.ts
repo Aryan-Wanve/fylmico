@@ -145,7 +145,7 @@ class ClientsService {
         }),
         this.prisma.shoot.count({ where: { clientId } }),
         this.prisma.deliverable.count({
-          where: { clientId, status: { in: ["approved", "final"] } }
+          where: { clientId, status: "approved" }
         })
       ]);
 

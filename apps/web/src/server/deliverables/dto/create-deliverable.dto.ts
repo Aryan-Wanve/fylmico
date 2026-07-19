@@ -11,7 +11,7 @@ export const DELIVERABLE_STATUSES = [
   "review",
   "revision",
   "approved",
-  "final"
+  "rejected"
 ] as const;
 
 export class CreateDeliverableDto {

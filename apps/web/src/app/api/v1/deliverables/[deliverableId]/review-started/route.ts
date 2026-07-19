@@ -1,16 +1,11 @@
 import type { NextRequest } from "next/server";
 import { requireUser } from "@/server/auth/require-user";
 import { deliverablesService } from "@/server/deliverables/deliverables.service";
-import { ApproveDeliverableDto } from "@/server/deliverables/dto/approve-deliverable.dto";
-import { readJsonBody, validateDto, withParamsRoute } from "@/server/http";
+import { withParamsRoute } from "@/server/http";
 
 export const POST = withParamsRoute<{ deliverableId: string }>(
   async (request: NextRequest, { deliverableId }) => {
     const user = requireUser(request);
-    const dto = await validateDto(
-      ApproveDeliverableDto,
-      await readJsonBody(request)
-    );
-    return deliverablesService.approve(user.id, deliverableId, dto);
+    return deliverablesService.markFirstReviewed(user.id, deliverableId);
   }
 );

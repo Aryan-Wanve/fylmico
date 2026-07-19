@@ -16,7 +16,11 @@ export const POST = withParamsRoute<{ houseId: string }>(
       houseId,
       dto.action,
       dto.deliverableIds,
-      { comment: dto.comment, newEditorId: dto.newEditorId }
+      {
+        comment: dto.comment,
+        newEditorId: dto.newEditorId,
+        reason: dto.reason
+      }
     );
   }
 );

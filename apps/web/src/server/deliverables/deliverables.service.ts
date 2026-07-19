@@ -1,4 +1,4 @@
-import type { Prisma } from "@fylmico/database";
+import { Prisma } from "@fylmico/database";
 import { commentsService } from "../comments/comments.service";
 import { driveStructureService } from "../drive/drive-structure.service";
 import { AppException, HttpStatus } from "../http";
@@ -7,6 +7,7 @@ import { organizationsService } from "../organizations/organizations.service";
 import { ownerWhere, resolveOwner, toOwnerDto } from "../owners/owners.util";
 import { prisma } from "../prisma";
 import { tasksService } from "../tasks/tasks.service";
+import type { ApproveDeliverableDto } from "./dto/approve-deliverable.dto";
 import type { CreateDeliverableDto } from "./dto/create-deliverable.dto";
 
 const deliverableInclude = {
@@ -48,7 +49,8 @@ export type ReviewQueueFilters = {
   sortBy?: "submittedAt" | "priority" | "version";
 };
 
-export type ReviewBulkAction = "approve" | "request-revision" | "reassign";
+export type ReviewBulkAction =
+  "approve" | "request-revision" | "reassign" | "reject";
 
 class DeliverablesService {
   private readonly prisma = prisma;
@@ -73,25 +75,57 @@ class DeliverablesService {
       }
     }
 
-    // Version numbering is per-owner (the old @@unique([projectId, version])
-    // is gone, since a client-owned deliverable has no project).
-    const existingCount = await this.prisma.deliverable.count({
-      where: ownerWhere(owner)
-    });
+    // Version numbering is per-owner and, when linked to a task, backstopped
+    // by a partial unique index on (task_id, version) - the Serializable
+    // transaction closes the count-then-create race under normal load, and
+    // the index guarantees no duplicate ever commits even if two submits
+    // land in the same instant.
+    let deliverable: DeliverableWithRelations;
+    try {
+      deliverable = await this.prisma.$transaction(
+        async (tx) => {
+          const existingCount = await tx.deliverable.count({
+            where: ownerWhere(owner)
+          });
+          return tx.deliverable.create({
+            data: {
+              organizationId: houseId,
+              ...ownerWhere(owner),
+              taskId: dto.taskId ?? null,
+              fileEntryId: dto.fileEntryId,
+              createdById: userId,
+              version: existingCount + 1,
+              notes: dto.notes?.trim() || null,
+              exportSettings: dto.exportSettings ?? undefined
+            },
+            include: deliverableInclude
+          });
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+      );
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        throw new AppException(
+          HttpStatus.CONFLICT,
+          "version_conflict",
+          "Another version was just submitted for this task - please retry."
+        );
+      }
+      throw error;
+    }
 
-    const deliverable = await this.prisma.deliverable.create({
-      data: {
-        organizationId: houseId,
-        ...ownerWhere(owner),
-        taskId: dto.taskId ?? null,
-        fileEntryId: dto.fileEntryId,
-        createdById: userId,
-        version: existingCount + 1,
-        notes: dto.notes?.trim() || null,
-        exportSettings: dto.exportSettings ?? undefined
-      },
-      include: deliverableInclude
-    });
+    if (dto.taskId) {
+      await this.logActivity(
+        deliverable.id,
+        userId,
+        "version_uploaded",
+        undefined,
+        `v${deliverable.version}`
+      );
+    }
 
     return toDeliverableDto(deliverable);
   }
@@ -141,7 +175,18 @@ class DeliverablesService {
     houseId: string,
     filters: ReviewQueueFilters
   ) {
-    await organizationsService.requireMembership(houseId, userId);
+    // The Review inbox itself is manager-only, but an editor is always
+    // allowed to see their own submission history (crew profile's
+    // "Submitted Work" panel relies on this self-scoped view).
+    if (filters.editorId === userId) {
+      await organizationsService.requireMembership(houseId, userId);
+    } else {
+      await organizationsService.requireManagerRole(
+        houseId,
+        userId,
+        "view the review queue"
+      );
+    }
 
     const deliverables = await this.prisma.deliverable.findMany({
       where: {
@@ -159,7 +204,10 @@ class DeliverablesService {
       orderBy: { createdAt: "desc" }
     });
 
-    let items = deliverables.map(toQueueItemDto).filter((item) => item.task);
+    // Client-owned or task-less deliverables now appear in the queue too -
+    // they used to be silently dropped here even though they support the
+    // full comment/approve/reject flow.
+    let items = deliverables.map(toQueueItemDto);
 
     if (filters.clientId) {
       items = items.filter((item) => item.clientId === filters.clientId);
@@ -197,7 +245,11 @@ class DeliverablesService {
   }
 
   async getMetrics(userId: string, houseId: string) {
-    await organizationsService.requireMembership(houseId, userId);
+    await organizationsService.requireManagerRole(
+      houseId,
+      userId,
+      "view review metrics"
+    );
 
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
@@ -213,7 +265,7 @@ class DeliverablesService {
         this.prisma.deliverable.count({
           where: {
             organizationId: houseId,
-            status: { in: ["approved", "final"] },
+            status: "approved",
             updatedAt: { gte: startOfToday }
           }
         }),
@@ -236,6 +288,42 @@ class DeliverablesService {
     };
   }
 
+  // Called by the review workspace route the first time a manager opens a
+  // deliverable - logs a one-time "review started" event and pings the
+  // editor, so they know their draft is actually being looked at.
+  async markFirstReviewed(userId: string, deliverableId: string) {
+    const deliverable = await this.findOrThrow(deliverableId);
+    await organizationsService.requireManagerRole(
+      deliverable.organizationId,
+      userId,
+      "review a submission"
+    );
+
+    if (deliverable.firstReviewedAt) {
+      return toDeliverableDto(deliverable);
+    }
+
+    const updated = await this.prisma.deliverable.update({
+      where: { id: deliverableId },
+      data: { firstReviewedAt: new Date() },
+      include: deliverableInclude
+    });
+
+    await this.logActivity(deliverableId, userId, "review_started");
+
+    if (deliverable.createdById !== userId) {
+      await notificationsService.create(
+        deliverable.createdById,
+        "deliverable_review_started",
+        `Review started: v${deliverable.version}`,
+        "A reviewer has started looking at your submission.",
+        deliverable.organizationId
+      );
+    }
+
+    return toDeliverableDto(updated);
+  }
+
   async requestRevision(
     userId: string,
     deliverableId: string,
@@ -251,6 +339,14 @@ class DeliverablesService {
     const updated = await this.transition(userId, deliverableId, {
       status: "revision"
     });
+
+    await this.logActivity(
+      deliverableId,
+      userId,
+      "changes_requested",
+      deliverable.status,
+      "revision"
+    );
 
     if (deliverable.taskId) {
       try {
@@ -287,6 +383,40 @@ class DeliverablesService {
           error
         );
       }
+    }
+
+    return updated;
+  }
+
+  async reject(userId: string, deliverableId: string, reason: string) {
+    const deliverable = await this.findOrThrow(deliverableId);
+    await organizationsService.requireManagerRole(
+      deliverable.organizationId,
+      userId,
+      "reject a submission"
+    );
+
+    const updated = await this.transition(userId, deliverableId, {
+      status: "rejected",
+      rejectionReason: reason.trim()
+    });
+
+    await this.logActivity(
+      deliverableId,
+      userId,
+      "rejected",
+      deliverable.status,
+      "rejected"
+    );
+
+    if (deliverable.createdById !== userId) {
+      await notificationsService.create(
+        deliverable.createdById,
+        "deliverable_rejected",
+        `Rejected: v${deliverable.version}`,
+        `Your submission was rejected: ${reason.trim()}`,
+        deliverable.organizationId
+      );
     }
 
     return updated;
@@ -335,7 +465,11 @@ class DeliverablesService {
     return toDeliverableDto(await this.findOrThrow(deliverableId));
   }
 
-  async approve(userId: string, deliverableId: string) {
+  async approve(
+    userId: string,
+    deliverableId: string,
+    options: ApproveDeliverableDto = {}
+  ) {
     const deliverable = await this.findOrThrow(deliverableId);
     await organizationsService.requireManagerRole(
       deliverable.organizationId,
@@ -344,11 +478,17 @@ class DeliverablesService {
     );
 
     const updated = await this.transition(userId, deliverableId, {
-      status: "final"
+      status: "approved"
     });
 
     try {
-      await this.onApproved(userId, deliverable);
+      await this.onApproved(userId, deliverable, {
+        deliverToClient: options.deliverToClient ?? true,
+        addToPortfolio: options.addToPortfolio ?? false,
+        portfolioCategory: options.portfolioCategory?.trim() || "Misc",
+        finalName: options.finalName?.trim() || undefined,
+        notes: options.notes?.trim() || undefined
+      });
     } catch (error) {
       console.error(
         "[deliverables] could not finalize task / Deliveries copy / stats",
@@ -356,12 +496,22 @@ class DeliverablesService {
       );
     }
 
+    await this.logActivity(
+      deliverableId,
+      userId,
+      "approved",
+      deliverable.status,
+      "approved"
+    );
+
     if (deliverable.createdById !== userId) {
       await notificationsService.create(
         deliverable.createdById,
         "deliverable_approved",
         `Approved: v${deliverable.version}`,
-        "Your submission was approved and delivered to the client.",
+        options.deliverToClient === false
+          ? "Your submission was approved."
+          : "Your submission was approved and delivered to the client.",
         deliverable.organizationId
       );
     }
@@ -369,14 +519,102 @@ class DeliverablesService {
     return updated;
   }
 
-  async markFinal(userId: string, deliverableId: string) {
-    const deliverable = await this.findOrThrow(deliverableId);
-    await organizationsService.requireManagerRole(
-      deliverable.organizationId,
-      userId,
-      "finalize a submission"
+  async getEditorStats(userId: string, houseId: string, editorId: string) {
+    if (editorId !== userId) {
+      await organizationsService.requireManagerRole(
+        houseId,
+        userId,
+        "view another editor's stats"
+      );
+    } else {
+      await organizationsService.requireMembership(houseId, userId);
+    }
+
+    const deliverables = await this.prisma.deliverable.findMany({
+      where: { organizationId: houseId, createdById: editorId },
+      include: {
+        project: true,
+        client: true,
+        fileEntry: { select: { durationSeconds: true } }
+      }
+    });
+
+    const totalEdits = deliverables.length;
+    const approved = deliverables.filter((d) => d.status === "approved");
+    const totalDelivered = approved.length;
+    const approvalRate =
+      totalEdits > 0 ? Math.round((totalDelivered / totalEdits) * 100) : 0;
+    const totalRuntimeSeconds = approved.reduce(
+      (sum, d) => sum + (d.fileEntry.durationSeconds ?? 0),
+      0
     );
-    return this.transition(userId, deliverableId, { status: "final" });
+
+    const projectNames = new Set<string>();
+    const clientNames = new Set<string>();
+    for (const d of deliverables) {
+      if (d.project) projectNames.add(d.project.name);
+      if (d.client) clientNames.add(d.client.name);
+    }
+
+    const versionsByTask = new Map<string, number>();
+    for (const d of deliverables) {
+      if (!d.taskId) continue;
+      versionsByTask.set(
+        d.taskId,
+        Math.max(versionsByTask.get(d.taskId) ?? 0, d.version)
+      );
+    }
+    const avgReviewIterations =
+      versionsByTask.size > 0
+        ? Math.round(
+            ([...versionsByTask.values()].reduce((sum, v) => sum + v, 0) /
+              versionsByTask.size) *
+              10
+          ) / 10
+        : 0;
+
+    const portfolioPieces = await this.prisma.fileEntry.count({
+      where: {
+        organizationId: houseId,
+        uploadedById: editorId,
+        driveKey: { startsWith: "portfolio:" }
+      }
+    });
+
+    return {
+      totalEdits,
+      totalDelivered,
+      projectsWorkedOn: projectNames.size,
+      clientsWorkedFor: clientNames.size,
+      approvalRate,
+      avgReviewIterations,
+      totalRuntimeSeconds,
+      portfolioPieces
+    };
+  }
+
+  async getActivity(userId: string, deliverableId: string) {
+    const deliverable = await this.findOrThrow(deliverableId);
+    await organizationsService.requireMembership(
+      deliverable.organizationId,
+      userId
+    );
+
+    const entries = await this.prisma.deliverableActivity.findMany({
+      where: { deliverableId },
+      include: { actor: true },
+      orderBy: { createdAt: "asc" }
+    });
+
+    return entries.map((entry) => ({
+      id: entry.id,
+      type: entry.type,
+      fromValue: entry.fromValue,
+      toValue: entry.toValue,
+      actorId: entry.actorId,
+      actorName: entry.actor.name,
+      createdAt: entry.createdAt.toISOString()
+    }));
   }
 
   async bulkAction(
@@ -384,7 +622,7 @@ class DeliverablesService {
     houseId: string,
     action: ReviewBulkAction,
     deliverableIds: string[],
-    payload?: { comment?: string; newEditorId?: string }
+    payload?: { comment?: string; newEditorId?: string; reason?: string }
   ) {
     const results: { id: string; ok: boolean; error?: string }[] = [];
     for (const id of deliverableIds) {
@@ -393,6 +631,15 @@ class DeliverablesService {
           await this.approve(userId, id);
         } else if (action === "request-revision") {
           await this.requestRevision(userId, id, payload?.comment);
+        } else if (action === "reject") {
+          if (!payload?.reason) {
+            throw new AppException(
+              HttpStatus.BAD_REQUEST,
+              "invalid_request",
+              "reason is required to reject."
+            );
+          }
+          await this.reject(userId, id, payload.reason);
         } else if (action === "reassign") {
           if (!payload?.newEditorId) {
             throw new AppException(
@@ -417,7 +664,14 @@ class DeliverablesService {
 
   private async onApproved(
     userId: string,
-    deliverable: DeliverableWithRelations
+    deliverable: DeliverableWithRelations,
+    options: {
+      deliverToClient: boolean;
+      addToPortfolio: boolean;
+      portfolioCategory: string;
+      finalName?: string;
+      notes?: string;
+    }
   ): Promise<void> {
     const ownerKey = deliverable.projectId
       ? `project:${deliverable.projectId}`
@@ -429,28 +683,69 @@ class DeliverablesService {
       });
     }
 
-    try {
-      const deliveries = await driveStructureService.getFolderByKey(
-        deliverable.organizationId,
-        `${ownerKey}:Deliveries`
-      );
-      await this.prisma.fileEntry.create({
-        data: {
-          organizationId: deliverable.organizationId,
-          parentId: deliveries.id,
-          name: deliverable.fileEntry.name,
-          type: "file",
-          storagePath: deliverable.fileEntry.storagePath,
-          size: deliverable.fileEntry.size,
-          mimeType: deliverable.fileEntry.mimeType,
-          uploadedById: deliverable.createdById
-        }
+    if (options.notes) {
+      await this.prisma.deliverable.update({
+        where: { id: deliverable.id },
+        data: { notes: options.notes }
       });
-    } catch (error) {
-      console.error(
-        "[deliverables] could not copy final file into Deliveries",
-        error
-      );
+    }
+
+    const finalName = options.finalName || deliverable.fileEntry.name;
+
+    if (options.deliverToClient) {
+      try {
+        const deliveries = await driveStructureService.getFolderByKey(
+          deliverable.organizationId,
+          `${ownerKey}:Deliveries`
+        );
+        await this.prisma.fileEntry.create({
+          data: {
+            organizationId: deliverable.organizationId,
+            parentId: deliveries.id,
+            name: finalName,
+            type: "file",
+            storagePath: deliverable.fileEntry.storagePath,
+            size: deliverable.fileEntry.size,
+            mimeType: deliverable.fileEntry.mimeType,
+            uploadedById: deliverable.createdById
+          }
+        });
+        await this.logActivity(deliverable.id, userId, "delivered");
+      } catch (error) {
+        console.error(
+          "[deliverables] could not copy final file into Deliveries",
+          error
+        );
+      }
+    }
+
+    if (options.addToPortfolio) {
+      try {
+        const portfolioFolder = await driveStructureService.getFolderByKey(
+          deliverable.organizationId,
+          `portfolio:${options.portfolioCategory}`
+        );
+        await this.prisma.fileEntry.create({
+          data: {
+            organizationId: deliverable.organizationId,
+            parentId: portfolioFolder.id,
+            name: finalName,
+            type: "file",
+            storagePath: deliverable.fileEntry.storagePath,
+            size: deliverable.fileEntry.size,
+            mimeType: deliverable.fileEntry.mimeType,
+            // Attributed to the editor (not the approving reviewer) so it
+            // counts toward the editor's portfolio-pieces stat.
+            uploadedById: deliverable.createdById
+          }
+        });
+        await this.logActivity(deliverable.id, userId, "portfolio_added");
+      } catch (error) {
+        console.error(
+          "[deliverables] could not copy final file into Portfolio",
+          error
+        );
+      }
     }
 
     // Project progress only applies to project-owned work; a client
@@ -477,6 +772,28 @@ class DeliverablesService {
       where: { id: deliverable.projectId },
       data: { progress }
     });
+  }
+
+  private async logActivity(
+    deliverableId: string,
+    actorId: string,
+    type: string,
+    fromValue?: string,
+    toValue?: string
+  ): Promise<void> {
+    try {
+      await this.prisma.deliverableActivity.create({
+        data: {
+          deliverableId,
+          actorId,
+          type,
+          fromValue: fromValue ?? null,
+          toValue: toValue ?? null
+        }
+      });
+    } catch (error) {
+      console.error("[deliverables] could not log activity", error);
+    }
   }
 
   private async transition(
@@ -559,6 +876,8 @@ function toDeliverableDto(deliverable: DeliverableWithRelations) {
     version: deliverable.version,
     status: deliverable.status,
     notes: deliverable.notes,
+    rejectionReason: deliverable.rejectionReason,
+    firstReviewedAt: deliverable.firstReviewedAt?.toISOString() ?? null,
     exportSettings: deliverable.exportSettings,
     file: {
       id: deliverable.fileEntry.id,
@@ -598,6 +917,7 @@ function toQueueItemDto(deliverable: QueueDeliverable) {
     priority: task?.priority ?? "medium",
     dueDate: task?.dueDate?.toISOString() ?? null,
     notes: deliverable.notes,
+    rejectionReason: deliverable.rejectionReason,
     exportSettings: deliverable.exportSettings,
     file: {
       id: deliverable.fileEntry.id,

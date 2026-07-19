@@ -9,7 +9,8 @@ import {
 export const REVIEW_BULK_ACTIONS = [
   "approve",
   "request-revision",
-  "reassign"
+  "reassign",
+  "reject"
 ] as const;
 
 export class BulkReviewActionDto {
@@ -28,4 +29,9 @@ export class BulkReviewActionDto {
   @IsString()
   @MinLength(1)
   newEditorId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  reason?: string;
 }
