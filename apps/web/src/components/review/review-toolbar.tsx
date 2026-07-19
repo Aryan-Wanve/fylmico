@@ -149,7 +149,7 @@ export function ReviewToolbar({
             review: REVIEW_STATUS_META.review.label,
             revision: REVIEW_STATUS_META.revision.label,
             approved: REVIEW_STATUS_META.approved.label,
-            final: REVIEW_STATUS_META.final.label
+            rejected: REVIEW_STATUS_META.rejected.label
           }}
           onValueChange={(next) => onStatusChange(next ?? "all")}
           value={status}
@@ -159,7 +159,7 @@ export function ReviewToolbar({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            {(["review", "revision", "approved", "final"] as const).map(
+            {(["review", "revision", "approved", "rejected"] as const).map(
               (value) => (
                 <SelectItem key={value} value={value}>
                   {REVIEW_STATUS_META[value].label}

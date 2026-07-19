@@ -17,7 +17,6 @@ import {
   listCalendarEvents,
   listDeliverablesForOwner,
   listShootsForOwner,
-  markDeliverableFinal,
   requestDeliverableRevision,
   updateClient
 } from "@/services/base-workspace.service";
@@ -371,10 +370,6 @@ export function ClientDetailPage() {
                   key={deliverable.id}
                   onApprove={async () => {
                     await approveDeliverable(deliverable.id);
-                    await refreshDeliverables();
-                  }}
-                  onMarkFinal={async () => {
-                    await markDeliverableFinal(deliverable.id);
                     await refreshDeliverables();
                   }}
                   onRequestRevision={async () => {

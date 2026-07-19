@@ -18,15 +18,15 @@ const STATUS_BADGES: Record<DeliverableStatus, string> = {
   review: "bg-amber-50 text-amber-600",
   revision: "bg-red-50 text-red-600",
   approved: "bg-emerald-50 text-emerald-600",
-  final: "bg-[#654cff]/10 text-[#654cff]"
+  rejected: "bg-red-100 text-red-700"
 };
 
 const STATUS_LABELS: Record<DeliverableStatus, string> = {
   draft: "Draft",
   review: "In Review",
   revision: "Revision Requested",
-  approved: "Approved",
-  final: "Delivered to Client"
+  approved: "Approved & Delivered",
+  rejected: "Rejected"
 };
 
 function formatSize(bytes: number | null): string {
@@ -38,13 +38,11 @@ function formatSize(bytes: number | null): string {
 export function DeliverableRow({
   deliverable,
   onApprove,
-  onRequestRevision,
-  onMarkFinal
+  onRequestRevision
 }: {
   deliverable: Deliverable;
   onApprove: () => Promise<void>;
   onRequestRevision: () => Promise<void>;
-  onMarkFinal: () => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -129,15 +127,6 @@ export function DeliverableRow({
                 Request Revision
               </Button>
             </>
-          ) : null}
-          {deliverable.status === "approved" ? (
-            <Button
-              className="h-8 rounded-lg bg-[#654cff] px-3 text-xs font-bold text-white hover:bg-[#5a41ea]"
-              disabled={busy}
-              onClick={() => void wrap(onMarkFinal)}
-            >
-              Mark Final
-            </Button>
           ) : null}
           <button
             className="grid h-8 w-8 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.03] dark:text-[#7d8299] dark:hover:bg-white/[0.05]"

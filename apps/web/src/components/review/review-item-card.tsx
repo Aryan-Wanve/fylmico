@@ -25,7 +25,7 @@ export const REVIEW_STATUS_META: Record<
     className: "bg-red-50 text-red-600"
   },
   approved: { label: "Approved", className: "bg-emerald-50 text-emerald-600" },
-  final: { label: "Delivered", className: "bg-[#654cff]/10 text-[#654cff]" }
+  rejected: { label: "Rejected", className: "bg-red-100 text-red-700" }
 };
 
 function formatSize(bytes: number | null): string {

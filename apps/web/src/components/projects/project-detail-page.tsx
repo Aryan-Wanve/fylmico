@@ -22,7 +22,6 @@ import {
   listDeliverables,
   listProjectComments,
   listShoots,
-  markDeliverableFinal,
   requestDeliverableRevision,
   updateProject
 } from "@/services/base-workspace.service";
@@ -469,10 +468,6 @@ export function ProjectDetailPage() {
                   key={deliverable.id}
                   onApprove={async () => {
                     await approveDeliverable(deliverable.id);
-                    await refreshDeliverables();
-                  }}
-                  onMarkFinal={async () => {
-                    await markDeliverableFinal(deliverable.id);
                     await refreshDeliverables();
                   }}
                   onRequestRevision={async () => {

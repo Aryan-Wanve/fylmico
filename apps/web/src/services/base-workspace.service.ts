@@ -3,7 +3,9 @@ import { clearSession, setSession } from "@/lib/session";
 import type {
   AccountSession,
   Analytics,
+  Annotation,
   Announcement,
+  ApproveDeliverableOptions,
   AssignRoleRequest,
   Board,
   Booking,
@@ -35,7 +37,9 @@ import type {
   CrewMember,
   DashboardSummary,
   Deliverable,
+  DeliverableActivityEntry,
   EditChatMessageRequest,
+  EditorStats,
   FileEntryItem,
   FilesSummary,
   House,
@@ -867,10 +871,22 @@ export async function createDeliverableForOwner(
 }
 
 export async function approveDeliverable(
-  deliverableId: string
+  deliverableId: string,
+  options?: ApproveDeliverableOptions
 ): Promise<Deliverable> {
   return apiRequest<Deliverable>(`/deliverables/${deliverableId}/approve`, {
-    method: "POST"
+    method: "POST",
+    body: options
+  });
+}
+
+export async function rejectDeliverable(
+  deliverableId: string,
+  reason: string
+): Promise<Deliverable> {
+  return apiRequest<Deliverable>(`/deliverables/${deliverableId}/reject`, {
+    method: "POST",
+    body: { reason }
   });
 }
 
@@ -884,14 +900,6 @@ export async function requestDeliverableRevision(
   );
 }
 
-export async function markDeliverableFinal(
-  deliverableId: string
-): Promise<Deliverable> {
-  return apiRequest<Deliverable>(`/deliverables/${deliverableId}/mark-final`, {
-    method: "POST"
-  });
-}
-
 export async function reassignDeliverable(
   deliverableId: string,
   newEditorId: string
@@ -900,6 +908,32 @@ export async function reassignDeliverable(
     method: "PATCH",
     body: { newEditorId }
   });
+}
+
+export async function markDeliverableFirstReviewed(
+  deliverableId: string
+): Promise<Deliverable> {
+  return apiRequest<Deliverable>(
+    `/deliverables/${deliverableId}/review-started`,
+    { method: "POST" }
+  );
+}
+
+export async function getDeliverableActivity(
+  deliverableId: string
+): Promise<DeliverableActivityEntry[]> {
+  return apiRequest<DeliverableActivityEntry[]>(
+    `/deliverables/${deliverableId}/activity`
+  );
+}
+
+export async function getEditorStats(userId: string): Promise<EditorStats> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before viewing editor stats.");
+  }
+  return apiRequest<EditorStats>(
+    `/houses/${activeHouseId}/crew/${userId}/editor-stats`
+  );
 }
 
 export async function listDeliverableComments(
@@ -913,12 +947,111 @@ export async function listDeliverableComments(
 export async function createDeliverableComment(
   deliverableId: string,
   body: string,
-  timestampSeconds?: number
+  timestampSeconds?: number,
+  extra?: {
+    frameNumber?: number;
+    parentId?: string;
+    mentionedUserIds?: string[];
+  }
 ): Promise<Comment> {
   return apiRequest<Comment>(`/deliverables/${deliverableId}/comments`, {
     method: "POST",
-    body: { body, timestampSeconds }
+    body: { body, timestampSeconds, ...extra }
   });
+}
+
+export async function updateDeliverableComment(
+  deliverableId: string,
+  commentId: string,
+  body: string
+): Promise<Comment> {
+  return apiRequest<Comment>(
+    `/deliverables/${deliverableId}/comments/${commentId}`,
+    { method: "PATCH", body: { body } }
+  );
+}
+
+export async function deleteDeliverableComment(
+  deliverableId: string,
+  commentId: string
+): Promise<void> {
+  await apiRequest(`/deliverables/${deliverableId}/comments/${commentId}`, {
+    method: "DELETE"
+  });
+}
+
+export async function resolveDeliverableComment(
+  deliverableId: string,
+  commentId: string
+): Promise<Comment> {
+  return apiRequest<Comment>(
+    `/deliverables/${deliverableId}/comments/${commentId}/resolve`,
+    { method: "POST" }
+  );
+}
+
+export async function reopenDeliverableComment(
+  deliverableId: string,
+  commentId: string
+): Promise<Comment> {
+  return apiRequest<Comment>(
+    `/deliverables/${deliverableId}/comments/${commentId}/reopen`,
+    { method: "POST" }
+  );
+}
+
+export async function pinDeliverableComment(
+  deliverableId: string,
+  commentId: string
+): Promise<Comment> {
+  return apiRequest<Comment>(
+    `/deliverables/${deliverableId}/comments/${commentId}/pin`,
+    { method: "POST" }
+  );
+}
+
+export async function toggleDeliverableCommentReaction(
+  deliverableId: string,
+  commentId: string,
+  emoji: string
+): Promise<Comment> {
+  return apiRequest<Comment>(
+    `/deliverables/${deliverableId}/comments/${commentId}/reactions`,
+    { method: "POST", body: { emoji } }
+  );
+}
+
+export async function listDeliverableAnnotations(
+  deliverableId: string
+): Promise<Annotation[]> {
+  return apiRequest<Annotation[]>(`/deliverables/${deliverableId}/annotations`);
+}
+
+export async function createDeliverableAnnotation(
+  deliverableId: string,
+  input: {
+    timestampSeconds: number;
+    frameNumber?: number;
+    type: Annotation["type"];
+    color: string;
+    data: Record<string, unknown>;
+    commentId?: string;
+  }
+): Promise<Annotation> {
+  return apiRequest<Annotation>(`/deliverables/${deliverableId}/annotations`, {
+    method: "POST",
+    body: input
+  });
+}
+
+export async function deleteDeliverableAnnotation(
+  deliverableId: string,
+  annotationId: string
+): Promise<void> {
+  await apiRequest(
+    `/deliverables/${deliverableId}/annotations/${annotationId}`,
+    { method: "DELETE" }
+  );
 }
 
 export async function listReviewQueue(filters?: {
@@ -951,7 +1084,7 @@ export async function getReviewMetrics(): Promise<ReviewMetrics> {
 export async function bulkReviewAction(
   action: ReviewBulkAction,
   deliverableIds: string[],
-  payload?: { comment?: string; newEditorId?: string }
+  payload?: { comment?: string; newEditorId?: string; reason?: string }
 ): Promise<{ results: { id: string; ok: boolean; error?: string }[] }> {
   if (!activeHouseId) {
     throw new Error("Join or create a house before reviewing submissions.");

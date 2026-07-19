@@ -365,7 +365,7 @@ export function ReviewDetailPanel({
           </Button>
           <Button
             className="bg-emerald-500 text-white hover:bg-emerald-600"
-            disabled={busy || item.status === "final"}
+            disabled={busy || item.status === "approved"}
             onClick={() => void wrap(onApprove)}
             type="button"
           >

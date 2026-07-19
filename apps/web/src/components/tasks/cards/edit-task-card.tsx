@@ -40,7 +40,7 @@ function computeEditStages(
   if (latest) {
     if (latest.status === "review") activeIndex = 3;
     else if (latest.status === "revision") activeIndex = 3;
-    else if (latest.status === "approved" || latest.status === "final") {
+    else if (latest.status === "approved" || latest.status === "rejected") {
       activeIndex = 4;
       terminal = true;
     } else activeIndex = 2;
@@ -50,7 +50,9 @@ function computeEditStages(
     label:
       latest?.status === "revision" && index === 3
         ? "Changes Requested"
-        : label,
+        : latest?.status === "rejected" && index === 4
+          ? "Rejected"
+          : label,
     state:
       index < activeIndex || (terminal && index === activeIndex)
         ? "done"

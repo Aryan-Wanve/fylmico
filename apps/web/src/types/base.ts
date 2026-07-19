@@ -380,7 +380,7 @@ export type CreateShootRequest = {
 };
 
 export type DeliverableStatus =
-  "draft" | "review" | "revision" | "approved" | "final";
+  "draft" | "review" | "revision" | "approved" | "rejected";
 
 export type Deliverable = {
   id: string;
@@ -392,6 +392,8 @@ export type Deliverable = {
   version: number;
   status: DeliverableStatus;
   notes: string | null;
+  rejectionReason?: string | null;
+  firstReviewedAt?: string | null;
   exportSettings?: Record<string, string> | null;
   file: {
     id: string;
@@ -414,14 +416,80 @@ export type CreateDeliverableRequest = {
   exportSettings?: Record<string, string>;
 };
 
+export type ApproveDeliverableOptions = {
+  deliverToClient?: boolean;
+  addToPortfolio?: boolean;
+  portfolioCategory?: string;
+  finalName?: string;
+  notes?: string;
+};
+
+export type CommentReaction = {
+  emoji: string;
+  userId: string;
+  userName: string;
+};
+
 export type Comment = {
   id: string;
   body: string;
   authorId: string;
   authorName: string;
+  parentId?: string | null;
   timestampSeconds?: number | null;
+  frameNumber?: number | null;
+  mentionedUserIds?: string[];
+  reactions?: CommentReaction[];
+  pinned?: boolean;
+  resolvedAt?: string | null;
+  resolvedById?: string | null;
+  resolvedByName?: string | null;
   createdAt: string;
   updatedAt: string;
+  replies?: Comment[];
+};
+
+export type Annotation = {
+  id: string;
+  deliverableId: string;
+  commentId: string | null;
+  authorId: string;
+  authorName: string;
+  timestampSeconds: number;
+  frameNumber: number | null;
+  type:
+    | "arrow"
+    | "rectangle"
+    | "circle"
+    | "freehand"
+    | "line"
+    | "highlight"
+    | "text"
+    | "blur";
+  color: string;
+  data: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type DeliverableActivityEntry = {
+  id: string;
+  type: string;
+  fromValue: string | null;
+  toValue: string | null;
+  actorId: string;
+  actorName: string;
+  createdAt: string;
+};
+
+export type EditorStats = {
+  totalEdits: number;
+  totalDelivered: number;
+  projectsWorkedOn: number;
+  clientsWorkedFor: number;
+  approvalRate: number;
+  avgReviewIterations: number;
+  totalRuntimeSeconds: number;
+  portfolioPieces: number;
 };
 
 export type ReviewQueueItem = {
@@ -444,6 +512,7 @@ export type ReviewQueueItem = {
   priority: TaskPriority;
   dueDate: string | null;
   notes: string | null;
+  rejectionReason?: string | null;
   exportSettings?: Record<string, string> | null;
   file: {
     id: string;
@@ -462,7 +531,8 @@ export type ReviewMetrics = {
   overdueReviews: number;
 };
 
-export type ReviewBulkAction = "approve" | "request-revision" | "reassign";
+export type ReviewBulkAction =
+  "approve" | "request-revision" | "reassign" | "reject";
 
 export type CrewMember = {
   id: string;
