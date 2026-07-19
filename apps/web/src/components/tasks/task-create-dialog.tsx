@@ -127,8 +127,14 @@ export function TaskCreateDialog({
     listShootsForOwner(owner)
       .then((shootList) =>
         setShoots(
+          // Assignable as soon as footage starts landing in the folder -
+          // "uploading" is set the moment the crew starts the upload, not
+          // once every file finishes, so an editor doesn't have to wait
+          // for the whole batch (or a manual "Mark Ready For Editing")
+          // before picking a shoot that already has clips in it.
           shootList.filter(
             (shoot) =>
+              shoot.status === "uploading" ||
               shoot.status === "uploaded" ||
               shoot.status === "ready-for-editing"
           )
