@@ -32,6 +32,7 @@ import {
   deleteFileEntry,
   getFileDownloadUrl,
   getFilesSummary,
+  getFolderDownloadUrl,
   listFileEntries,
   resolveFileDestination
 } from "@/services/base-workspace.service";
@@ -461,6 +462,19 @@ export function FilesPage() {
     }
   }
 
+  async function handleDownloadFolder(entryId: string) {
+    try {
+      const url = await getFolderDownloadUrl(entryId);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Could not generate a download link."
+      );
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:p-8">
       <FilesHeader
@@ -531,7 +545,7 @@ export function FilesPage() {
                     onDownload={
                       entry.type === "file"
                         ? () => handleDownload(entry.id)
-                        : undefined
+                        : () => handleDownloadFolder(entry.id)
                     }
                     onOpen={() => handleOpenEntry(entry)}
                   />
@@ -548,7 +562,7 @@ export function FilesPage() {
                   onDownload={
                     entry.type === "file"
                       ? () => handleDownload(entry.id)
-                      : undefined
+                      : () => handleDownloadFolder(entry.id)
                   }
                   onOpen={() => handleOpenEntry(entry)}
                 />

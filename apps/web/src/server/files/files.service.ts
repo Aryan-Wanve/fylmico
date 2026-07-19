@@ -1,5 +1,6 @@
 import {
   signDownloadToken,
+  signFolderZipToken,
   signUploadSessionToken,
   verifyUploadSessionToken,
   type UploadSessionClaims
@@ -486,6 +487,73 @@ class FilesService {
     }
 
     return `${getAppUrl()}/api/v1/files/download/${signDownloadToken(entry.id)}`;
+  }
+
+  async getFolderZipUrl(
+    userId: string,
+    houseId: string,
+    entryId: string
+  ): Promise<string> {
+    await organizationsService.requireMembership(houseId, userId);
+    const entry = await this.requireEntry(houseId, entryId, userId);
+
+    if (entry.type !== "folder") {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_request",
+        "Only folders can be downloaded as a zip."
+      );
+    }
+
+    return `${getAppUrl()}/api/v1/files/download-folder/${signFolderZipToken(entry.id)}`;
+  }
+
+  // Called only from the token-authenticated zip-download route below - the
+  // signed token (minted by getFolderZipUrl above, only after a membership
+  // check) is the credential here, so this rebuilds the manifest fresh
+  // without re-checking membership, same trust model as file downloads.
+  async buildFolderZipManifest(entryId: string): Promise<{
+    folderName: string;
+    organizationId: string;
+    files: { path: string; driveFileId: string }[];
+  } | null> {
+    const entry = await this.prisma.fileEntry.findUnique({
+      where: { id: entryId }
+    });
+    if (!entry || entry.type !== "folder") {
+      return null;
+    }
+
+    const files = await this.collectZipEntries(entryId, "");
+    return {
+      folderName: entry.name,
+      organizationId: entry.organizationId,
+      files
+    };
+  }
+
+  // Walks the folder tree building each file's path relative to the
+  // downloaded folder's root (e.g. "Camera A/clip1.mp4"), so the zip
+  // preserves subfolder structure instead of dumping every file flat.
+  private async collectZipEntries(
+    entryId: string,
+    prefix: string
+  ): Promise<{ path: string; driveFileId: string }[]> {
+    const children = await this.prisma.fileEntry.findMany({
+      where: { parentId: entryId },
+      orderBy: { name: "asc" }
+    });
+
+    const entries: { path: string; driveFileId: string }[] = [];
+    for (const child of children) {
+      const path = `${prefix}${child.name}`;
+      if (child.type === "file" && child.storagePath) {
+        entries.push({ path, driveFileId: child.storagePath });
+      } else if (child.type === "folder") {
+        entries.push(...(await this.collectZipEntries(child.id, `${path}/`)));
+      }
+    }
+    return entries;
   }
 
   private async collectDriveFileIds(entryId: string): Promise<string[]> {

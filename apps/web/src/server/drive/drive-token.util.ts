@@ -12,6 +12,11 @@ interface DownloadTokenClaims {
   entryId: string;
 }
 
+interface FolderZipTokenClaims {
+  purpose: "folder_zip_download";
+  entryId: string;
+}
+
 export interface UploadSessionClaims {
   organizationId: string;
   userId: string;
@@ -61,6 +66,24 @@ export function verifyDownloadToken(token: string): string {
   const payload = jwt.verify(token, secret) as unknown as DownloadTokenClaims;
   if (payload.purpose !== "file_download") {
     throw new Error("Invalid download token.");
+  }
+  return payload.entryId;
+}
+
+export function signFolderZipToken(entryId: string): string {
+  const secret = requireEnv("JWT_ACCESS_SECRET");
+  const claims: FolderZipTokenClaims = {
+    purpose: "folder_zip_download",
+    entryId
+  };
+  return jwt.sign(claims, secret, { expiresIn: "10m" });
+}
+
+export function verifyFolderZipToken(token: string): string {
+  const secret = requireEnv("JWT_ACCESS_SECRET");
+  const payload = jwt.verify(token, secret) as unknown as FolderZipTokenClaims;
+  if (payload.purpose !== "folder_zip_download") {
+    throw new Error("Invalid folder download token.");
   }
   return payload.entryId;
 }

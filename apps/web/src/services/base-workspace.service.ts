@@ -1517,6 +1517,17 @@ export async function getFileDownloadUrl(entryId: string): Promise<string> {
   return url;
 }
 
+export async function getFolderDownloadUrl(entryId: string): Promise<string> {
+  if (!activeHouseId) {
+    throw new Error("Join or create a house before downloading files.");
+  }
+
+  const { url } = await apiRequest<{ url: string }>(
+    `/houses/${activeHouseId}/files/${entryId}/download-folder`
+  );
+  return url;
+}
+
 export async function getFilesSummary(): Promise<FilesSummary> {
   if (!activeHouseId) {
     throw new Error("Join or create a house before viewing storage usage.");
