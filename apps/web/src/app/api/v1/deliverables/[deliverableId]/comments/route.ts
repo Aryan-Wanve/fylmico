@@ -22,7 +22,10 @@ export const POST = withParamsRoute<{ deliverableId: string }>(
       user.id,
       deliverableId,
       dto.body,
-      dto.timestampSeconds
+      dto.timestampSeconds,
+      dto.frameNumber,
+      dto.parentId,
+      dto.mentionedUserIds
     );
   }
 );

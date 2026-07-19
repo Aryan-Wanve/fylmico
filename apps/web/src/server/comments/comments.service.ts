@@ -10,7 +10,28 @@ import {
 } from "../pagination";
 import { prisma } from "../prisma";
 
-type CommentDto = ReturnType<typeof toCommentDto>;
+type CommentReaction = { emoji: string; userId: string; userName: string };
+
+interface CommentDto {
+  id: string;
+  body: string;
+  authorId: string;
+  authorName: string;
+  parentId: string | null;
+  timestampSeconds: number | null;
+  frameNumber: number | null;
+  mentionedUserIds: string[];
+  reactions: CommentReaction[];
+  pinned: boolean;
+  resolvedAt: Date | null;
+  resolvedById: string | null;
+  resolvedByName: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  replies: CommentDto[];
+}
+
+const REACTION_EMOJIS = ["👍", "❤️", "😂", "🎉", "😮", "👀"];
 
 function excerpt(body: string, maxLength = 120): string {
   const trimmed = body.trim();
@@ -150,11 +171,18 @@ class CommentsService {
     userId: string,
     deliverableId: string,
     body: string,
-    timestampSeconds?: number
+    timestampSeconds?: number,
+    frameNumber?: number,
+    parentId?: string,
+    mentionedUserIds?: string[]
   ): Promise<CommentDto> {
     const deliverable = await this.prisma.deliverable.findUnique({
       where: { id: deliverableId },
-      include: { project: true, client: true }
+      include: {
+        project: true,
+        client: true,
+        task: { include: { assignees: true } }
+      }
     });
     if (!deliverable) {
       throw new AppException(
@@ -163,31 +191,68 @@ class CommentsService {
         "This deliverable does not exist."
       );
     }
+
+    // Flatten to a single level of nesting - if the target parent is
+    // itself a reply, attach the new comment to its root instead so the
+    // thread UI never has to render more than one indent level.
+    let resolvedParentId = parentId;
+    if (parentId) {
+      const parent = await this.prisma.comment.findUnique({
+        where: { id: parentId }
+      });
+      resolvedParentId = parent?.parentId ?? parentId;
+    }
+
     const comment = await this.create(
       userId,
       deliverable.organizationId,
       "deliverable",
       deliverableId,
       body,
-      timestampSeconds
+      timestampSeconds,
+      { frameNumber, parentId: resolvedParentId, mentionedUserIds }
     );
 
     const ownerName =
       deliverable.project?.name ?? deliverable.client?.name ?? "deliverable";
-    const recipientIds = (deliverable.project?.teamIds ?? []).filter(
-      (id) => id !== userId
-    );
+
+    // Comment notifications go to whoever is actually attached to the
+    // review (editor + task assignees) rather than project.teamIds, since
+    // client-owned deliverables have no team list and would otherwise
+    // silently notify nobody.
+    const recipientIds = new Set<string>();
+    recipientIds.add(deliverable.createdById);
+    for (const assignee of deliverable.task?.assignees ?? []) {
+      recipientIds.add(assignee.userId);
+    }
+    recipientIds.delete(userId);
+
     await Promise.all(
-      recipientIds.map((recipientId) =>
+      [...recipientIds].map((recipientId) =>
         notificationsService.create(
           recipientId,
-          "project_comment",
+          "deliverable_comment",
           `New comment on "${ownerName}" v${deliverable.version}`,
           `${comment.authorName} commented: ${excerpt(body)}`,
           deliverable.organizationId
         )
       )
     );
+
+    if (mentionedUserIds && mentionedUserIds.length > 0) {
+      const mentioned = mentionedUserIds.filter((id) => id !== userId);
+      await Promise.all(
+        mentioned.map((recipientId) =>
+          notificationsService.create(
+            recipientId,
+            "deliverable_mentioned",
+            `You were mentioned on "${ownerName}" v${deliverable.version}`,
+            `${comment.authorName} mentioned you: ${excerpt(body)}`,
+            deliverable.organizationId
+          )
+        )
+      );
+    }
 
     return comment;
   }
@@ -207,13 +272,179 @@ class CommentsService {
         "This deliverable does not exist."
       );
     }
-    return this.list(
-      userId,
+    await organizationsService.requireMembership(
       deliverable.organizationId,
-      "deliverable",
-      deliverableId,
-      pagination
+      userId
     );
+
+    const limit = resolveLimit(pagination);
+    const topLevel = await this.prisma.comment.findMany({
+      where: {
+        commentableType: "deliverable",
+        commentableId: deliverableId,
+        parentId: null
+      },
+      include: { author: true, resolvedBy: true },
+      orderBy: { createdAt: "asc" },
+      take: limit + 1,
+      ...(pagination.cursor
+        ? { cursor: { id: pagination.cursor }, skip: 1 }
+        : {})
+    });
+
+    const page = buildPage(topLevel, limit, pagination.cursor);
+
+    const replies =
+      page.data.length > 0
+        ? await this.prisma.comment.findMany({
+            where: { parentId: { in: page.data.map((c) => c.id) } },
+            include: { author: true, resolvedBy: true },
+            orderBy: { createdAt: "asc" }
+          })
+        : [];
+
+    return {
+      ...page,
+      data: page.data.map((comment) =>
+        toCommentDto(
+          comment,
+          replies
+            .filter((reply) => reply.parentId === comment.id)
+            .map((reply) => toCommentDto(reply))
+        )
+      )
+    };
+  }
+
+  async resolveComment(userId: string, commentId: string): Promise<CommentDto> {
+    const comment = await this.requireDeliverableComment(commentId);
+    await organizationsService.requireMembership(
+      comment.organizationId,
+      userId
+    );
+    const updated = await this.prisma.comment.update({
+      where: { id: commentId },
+      data: { resolvedAt: new Date(), resolvedById: userId },
+      include: { author: true, resolvedBy: true }
+    });
+    return toCommentDto(updated);
+  }
+
+  async reopenComment(userId: string, commentId: string): Promise<CommentDto> {
+    const comment = await this.requireDeliverableComment(commentId);
+    await organizationsService.requireMembership(
+      comment.organizationId,
+      userId
+    );
+    const updated = await this.prisma.comment.update({
+      where: { id: commentId },
+      data: { resolvedAt: null, resolvedById: null },
+      include: { author: true, resolvedBy: true }
+    });
+    return toCommentDto(updated);
+  }
+
+  async toggleCommentReaction(
+    userId: string,
+    commentId: string,
+    emoji: string
+  ): Promise<CommentDto> {
+    if (!REACTION_EMOJIS.includes(emoji)) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "invalid_request",
+        "That's not a supported reaction."
+      );
+    }
+    const comment = await this.requireDeliverableComment(commentId);
+    await organizationsService.requireMembership(
+      comment.organizationId,
+      userId
+    );
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { name: true }
+    });
+    const userName = user.name;
+
+    const existing = Array.isArray(comment.reactions)
+      ? (comment.reactions as unknown as CommentReaction[])
+      : [];
+    const alreadyReacted = existing.some(
+      (r) => r.userId === userId && r.emoji === emoji
+    );
+    const next = alreadyReacted
+      ? existing.filter((r) => !(r.userId === userId && r.emoji === emoji))
+      : [...existing, { emoji, userId, userName }];
+
+    const updated = await this.prisma.comment.update({
+      where: { id: commentId },
+      data: { reactions: next },
+      include: { author: true, resolvedBy: true }
+    });
+    return toCommentDto(updated);
+  }
+
+  async togglePin(userId: string, commentId: string): Promise<CommentDto> {
+    const comment = await this.requireDeliverableComment(commentId);
+    await organizationsService.requireManagerRole(
+      comment.organizationId,
+      userId,
+      "pin a comment"
+    );
+    const updated = await this.prisma.comment.update({
+      where: { id: commentId },
+      data: { pinned: !comment.pinned },
+      include: { author: true, resolvedBy: true }
+    });
+    return toCommentDto(updated);
+  }
+
+  async updateComment(
+    userId: string,
+    commentId: string,
+    body: string
+  ): Promise<CommentDto> {
+    const comment = await this.requireDeliverableComment(commentId);
+    if (comment.authorId !== userId) {
+      throw new AppException(
+        HttpStatus.FORBIDDEN,
+        "not_author",
+        "You can only edit your own comments."
+      );
+    }
+    const updated = await this.prisma.comment.update({
+      where: { id: commentId },
+      data: { body: body.trim() },
+      include: { author: true, resolvedBy: true }
+    });
+    return toCommentDto(updated);
+  }
+
+  async deleteComment(userId: string, commentId: string): Promise<void> {
+    const comment = await this.requireDeliverableComment(commentId);
+    if (comment.authorId !== userId) {
+      throw new AppException(
+        HttpStatus.FORBIDDEN,
+        "not_author",
+        "You can only delete your own comments."
+      );
+    }
+    await this.prisma.comment.delete({ where: { id: commentId } });
+  }
+
+  private async requireDeliverableComment(commentId: string): Promise<Comment> {
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId }
+    });
+    if (!comment) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "comment_not_found",
+        "This comment no longer exists."
+      );
+    }
+    return comment;
   }
 
   private async notifyMentions(
@@ -251,7 +482,12 @@ class CommentsService {
     commentableType: string,
     commentableId: string,
     body: string,
-    timestampSeconds?: number
+    timestampSeconds?: number,
+    extra?: {
+      frameNumber?: number;
+      parentId?: string;
+      mentionedUserIds?: string[];
+    }
   ): Promise<CommentDto> {
     await organizationsService.requireMembership(organizationId, userId);
 
@@ -262,9 +498,12 @@ class CommentsService {
         commentableId,
         authorId: userId,
         body: body.trim(),
-        timestampSeconds: timestampSeconds ?? null
+        timestampSeconds: timestampSeconds ?? null,
+        frameNumber: extra?.frameNumber ?? null,
+        parentId: extra?.parentId ?? null,
+        mentionedUserIds: extra?.mentionedUserIds ?? []
       },
-      include: { author: true }
+      include: { author: true, resolvedBy: true }
     });
 
     return toCommentDto(comment);
@@ -282,7 +521,7 @@ class CommentsService {
     const limit = resolveLimit(pagination);
     const comments = await this.prisma.comment.findMany({
       where: { commentableType, commentableId },
-      include: { author: true },
+      include: { author: true, resolvedBy: true },
       orderBy: { createdAt: "asc" },
       take: limit + 1,
       ...(pagination.cursor
@@ -291,22 +530,37 @@ class CommentsService {
     });
 
     const page = buildPage(comments, limit, pagination.cursor);
-    return { ...page, data: page.data.map(toCommentDto) };
+    return { ...page, data: page.data.map((c) => toCommentDto(c)) };
   }
 }
 
 export const commentsService = new CommentsService();
 
 function toCommentDto(
-  comment: Comment & { author: { id: string; name: string } }
-) {
+  comment: Comment & {
+    author: { id: string; name: string };
+    resolvedBy?: { id: string; name: string } | null;
+  },
+  replies: CommentDto[] = []
+): CommentDto {
   return {
     id: comment.id,
     body: comment.body,
     authorId: comment.authorId,
     authorName: comment.author.name,
+    parentId: comment.parentId,
     timestampSeconds: comment.timestampSeconds,
+    frameNumber: comment.frameNumber,
+    mentionedUserIds: comment.mentionedUserIds,
+    reactions: Array.isArray(comment.reactions)
+      ? (comment.reactions as unknown as CommentReaction[])
+      : [],
+    pinned: comment.pinned,
+    resolvedAt: comment.resolvedAt,
+    resolvedById: comment.resolvedById,
+    resolvedByName: comment.resolvedBy?.name ?? null,
     createdAt: comment.createdAt,
-    updatedAt: comment.updatedAt
+    updatedAt: comment.updatedAt,
+    replies
   };
 }
