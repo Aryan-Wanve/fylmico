@@ -6557,3 +6557,148 @@ Next task: live browser verification of the checklist above once the
 user is available to log in; then continue with any further Projects &
 Clients polish the user requests (e.g. a Client-owned "other versions"
 review sidebar, if that scope cut turns out to matter in practice).
+
+## Frame.io-style review system (ADR 0060)
+
+Rebuilt Review from a queue + modal detail panel into a dedicated
+workspace, in 9 phases (each committed and verified separately -
+`tsc --noEmit`/`eslint --max-warnings=0`/`next build` clean after every
+phase, plus a full-repo pass at the end).
+
+**Phase 1 (schema):** `Comment` gained `parentId`/self-relation replies,
+`resolvedAt`/`resolvedById`, `pinned`, `mentionedUserIds: String[]`,
+`reactions: Json?`, `frameNumber`. New `Annotation` model (geometry as
+`data: Json`, 8 tool types) and `DeliverableActivity` (mirrors
+`TaskActivity` exactly). `Deliverable` gained `rejectionReason`,
+`firstReviewedAt`; status union dropped `"final"` in favor of
+`"approved"`/`"rejected"`. Migration `20260719120000_review_frameio_rework`
+also added a partial unique index `deliverables_task_id_version_key` on
+`(task_id, version) WHERE task_id IS NOT NULL`, closing a version-
+numbering race that existed in `create()` (count-then-create, no
+transaction or constraint).
+
+**Phase 2 (comments backend):** `comments.service.ts` rebuilt around the
+new schema - `resolveComment`/`reopenComment`/`toggleCommentReaction`/
+`togglePin` (manager-only)/`updateComment`/`deleteComment` (author-only),
+threaded `listForDeliverable`. Mentions on deliverable comments now use
+explicit `mentionedUserIds` (from a real autocomplete) instead of the old
+task-comment-only substring-match hack, which stays as-is for tasks.
+Fixed a real gap: deliverable comment notifications used to go to
+`project.teamIds`, so client-owned deliverables got zero notifications
+(`Client` has no `teamIds`) - now notifies the deliverable's creator +
+task assignees directly. New notification types: `deliverable_mentioned`,
+`deliverable_comment`, `deliverable_rejected`, `deliverable_review_started`.
+
+**Phase 3 (annotations + approval rework):** New `annotations.service.ts`
+(create/list/delete, author-or-manager delete). `deliverables.service.ts`:
+`create()` wrapped in a Serializable transaction (P2002 mapped to a
+friendly "please retry" error); `listQueue`/new `getQueueItem` require
+`requireManagerRole` unless `editorId === self` (self-view, e.g. from a
+crew profile, stays membership-gated); new `reject()` (permanent, requires
+a reason, doesn't move files); `approve()` reworked to take
+`{deliverToClient, addToPortfolio, portfolioCategory, finalName, notes}`,
+write the real `"approved"` status (not `"final"`), and log
+`DeliverableActivity` per step; `markFirstReviewed()` fires a one-time
+`deliverable_review_started` notification + activity entry; new
+`getEditorStats()` (aggregates directly over `Deliverable`/`Task`/
+`FileEntry` - no new ledger table) and `getActivity()`. `markFinal()` and
+its route are removed entirely, folded into `approve()`.
+
+**Phase 4 (frontend types + service wiring):** `types/base.ts` and
+`base-workspace.service.ts` extended for every new endpoint. Dropped the
+"Mark Final" button from `deliverable-row.tsx` (approve is now the single
+terminal action) and updated its two callers
+(`project-detail-page.tsx`/`client-detail-page.tsx`); fixed the resulting
+`"final"` -> `"approved"`/`"rejected"` references in `edit-task-card.tsx`'s
+progress tracker and the review components.
+
+**Phase 5 (video player + timeline):** New `components/review/player/`:
+`PlayerProvider` (shared playback state via context - `currentTime`,
+`duration`, `paused`, `playbackRate`, `volume`, `muted`, `fullscreen`,
+`currentFrame`, plus play/pause/seek/stepFrame/etc. actions),
+`ReviewVideoPlayer` (keyboard shortcuts: space, arrows for frame-step,
+shift+arrows for 1s jump, J/K/L transport, F fullscreen, C add-comment),
+`PlayerControlsBar` (play/frame-step/7 speeds/volume/fullscreen/frame
+number+timecode/quality stub), `ReviewTimeline` (zoomable scrub bar,
+comment + annotation markers, client-side hover-preview thumbnails via a
+hidden seeked `<video>` + `<canvas>`, version-switcher chips). fps for
+frame-stepping comes from `exportSettings.frameRate` (fallback 24), not a
+new video-metadata probe.
+
+**Phase 6 (annotation tools + comments UI):** `AnnotationToolProvider`
+context + `AnnotationToolbar` (8 tools, 6 colors) + `AnnotationCanvas` -
+implemented as an SVG overlay for stroke shapes (arrow/rectangle/circle/
+freehand/line/highlight) and HTML overlay for text/blur, not literal
+`<canvas>` pixel drawing, so shapes scale correctly with player size/
+fullscreen without redraw logic; "blur" is a `backdrop-filter` visual
+overlay, not a pixel edit to the video. Coordinates are normalized 0-1.
+New `CommentThreadPanel` (replies, resolve/reopen, reactions, pin,
+edit/delete, timestamp-seek chips) and shared `MentionTextarea`
+(`components/comments/`, "@" autocomplete tracking `mentionedUserIds`
+separately from the body text).
+
+**Phase 7 (workspace page + dialogs):** New route
+`/review/[deliverableId]` -> `review-workspace-page.tsx`, replacing the
+deleted `review-detail-panel.tsx` modal. Player + timeline + annotation
+tools in the main area; a tabbed Comments/Info/Activity side panel
+(`review-info-panel.tsx`, `review-activity-panel.tsx`, both new); the
+three approval actions as full dialogs - reused `request-changes-dialog.tsx`
+as-is for Needs Changes, new `reject-dialog.tsx` (required reason) and
+`approve-dialog.tsx` (deliver-to-client/portfolio-category/final-name/
+notes). Added `GET /deliverables/:id` (`getQueueItem`) since the
+workspace fetches by ID directly rather than only from an already-loaded
+queue list - this also resolves the "Review page's other-versions sidebar
+stays project-only" scope cut noted in ADR 0059, since the new version-
+switcher uses the owner-generic `listDeliverablesForOwner` for both
+Project and Client owners.
+
+**Phase 8 (queue polish + stats + gating):** `review-item-card.tsx` shows
+duration/resolution (from `exportSettings`)/unresolved-comment-count
+(new `getUnresolvedCommentCounts` batched `groupBy` in
+`deliverables.service.ts`, avoiding N+1)/previous-review-count.
+`review-toolbar.tsx` sort expanded to oldest/newest/due date/priority/
+client/project/editor/version. `crew-profile-page.tsx` gained an "Editing
+History" section (total edits/delivered, approval rate, avg review
+iterations, projects/clients worked on, runtime edited, portfolio pieces)
+above the existing "Submitted Work" list. Both `review-page.tsx` and
+`review-workspace-page.tsx` now show a clear "Reviewers and Admins only"
+message for non-managers instead of relying solely on the API's 403 (self-
+view of your own submissions still works without manager role).
+
+**Phase 9 (verify + docs):** Full-repo `tsc --noEmit`, `eslint
+--max-warnings=0 src/`, and `next build` all clean. Live browser check:
+app boots with no console errors; `/review` correctly redirects to login
+when unauthenticated (no credentials available in the sandboxed browser
+for a deeper walkthrough - same limitation as prior phases this session).
+ADR 0060 written; `decisions.md`, `database.md`, `api.md`, `changelog.md`
+updated.
+
+Not exercised live (no login credentials in the sandboxed browser): the
+full review workflow end-to-end (submit a draft, open the workspace,
+frame-step/change speed, add a timestamp comment, draw an annotation,
+reply/resolve/react/pin a comment, mention a teammate, switch versions,
+Needs Changes -> resubmit as v2, Approve with both delivery checkboxes,
+confirm files land under Deliveries/Portfolio, check the crew profile
+stats section, confirm the activity timeline is complete). This is the
+natural next step whenever the user is available to log in.
+
+Files created (non-exhaustive): `server/annotations/{annotations.service,
+dto/create-annotation.dto}.ts`, `components/review/player/{player-context,
+player-format,review-video-player,player-controls-bar,review-timeline}.tsx`,
+`components/review/{annotation-tool-context,annotation-toolbar,
+annotation-canvas,comment-thread-panel,review-info-panel,
+review-activity-panel,review-workspace-page,approve-dialog,
+reject-dialog}.tsx`, `components/comments/mention-textarea.tsx`,
+`app/(app)/review/[deliverableId]/page.tsx`, `app/api/v1/deliverables/
+[deliverableId]/{route,reject/route,activity/route,review-started/route,
+annotations/route,annotations/[annotationId]/route}.ts`, `app/api/v1/
+deliverables/[deliverableId]/comments/[commentId]/{route,resolve/route,
+reopen/route,pin/route,reactions/route}.ts`, `app/api/v1/houses/
+[houseId]/crew/[userId]/editor-stats/route.ts`,
+`docs/adr/0060-frameio-style-review-system.md`.
+
+Files deleted: `components/review/review-detail-panel.tsx`,
+`app/api/v1/deliverables/[deliverableId]/mark-final/route.ts`.
+
+Next task: live browser verification of the full review workflow once
+the user is available to log in.

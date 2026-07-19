@@ -870,3 +870,64 @@ Migration notes:
   `project_clients` table, and adds `CHECK` constraints enforcing exactly
   one owner (`shoots`/`deliverables`) or at most one owner
   (`tasks`/`calendar_events`).
+
+## 0.29.0 - 2026-07-19
+
+Summary:
+
+- **Frame.io-style review system (ADR 0060):** Review is now a dedicated
+  workspace (`/review/:deliverableId`) instead of a queue + modal detail
+  panel. A real video player supports frame-stepping, 7 playback speeds
+  (0.25x-2x), volume/mute, fullscreen, and keyboard shortcuts
+  (space/arrows/J/K/L/F/C). A zoomable timeline shows comment and
+  annotation markers with clickable seek and client-side hover-preview
+  thumbnails; version-switcher chips jump between sibling submissions.
+- Reviewers can draw directly on a paused frame with 8 annotation tools
+  (arrow, rectangle, circle, freehand, line, highlight, text, blur);
+  annotations reappear as playback crosses their timestamp.
+- Comments are now real threads: replies, resolve/reopen, emoji
+  reactions, pin (manager-only), edit/delete (author-only), and `@mention`
+  autocomplete that notifies the mentioned person directly instead of the
+  old task-comment-only substring-match hack.
+- The single Approve button is now three actions - **Needs Changes**,
+  **Reject**, **Approve** - each a full dialog. Approve asks whether to
+  deliver the file to Deliverables, whether to add it to the House
+  Portfolio (attributed to the editor), a final delivery name, and notes;
+  every step is logged to a permanent, timestamped activity history per
+  submission.
+- Crew profiles gained an "Editing History" section: total edits/
+  delivered, approval rate, average review iterations, projects/clients
+  worked on, total runtime edited, and portfolio pieces - computed live
+  from submission history, no separate ledger.
+- The review queue's cards now show duration, resolution, unresolved
+  comment count, and previous-review count; sorting expanded to oldest/
+  newest/due date/priority/client/project/editor/version. Both the queue
+  and the workspace page now show a clear "Reviewers and Admins only"
+  message for non-managers (self-view of your own submissions still
+  works without manager role).
+- Fixed three bugs in the process: a race in deliverable version
+  numbering (now transactional plus a hard unique-index backstop), an
+  inconsistent `approve()`/`markFinal()` status split (approve() now
+  writes the real `approved` status), and the review queue having weaker
+  auth than the actions it gated.
+
+Breaking changes:
+
+- `Deliverable` status `"final"` no longer exists - it's `"approved"`.
+  Any external integration checking for `"final"` will need updating.
+- `POST /api/v1/deliverables/:id/mark-final` is removed (folded into the
+  reworked `POST /api/v1/deliverables/:id/approve`, which now accepts an
+  options body).
+- `POST /api/v1/deliverables/:id/approve` and the bulk-action endpoint's
+  `"approve"` action now take an options body
+  (`deliverToClient`/`addToPortfolio`/`portfolioCategory`/`finalName`/
+  `notes`) instead of no body.
+
+Migration notes:
+
+- New migration `20260719120000_review_frameio_rework`: adds comment
+  threading/resolve/pin/mentions/reactions columns, `rejection_reason`/
+  `first_reviewed_at` on `deliverables`, new `annotations` and
+  `deliverable_activity` tables, and a partial unique index
+  `deliverables_task_id_version_key` on `(task_id, version) WHERE
+task_id IS NOT NULL`.

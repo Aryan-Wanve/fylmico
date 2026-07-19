@@ -1289,43 +1289,128 @@ matching `tasks`/`messages`' pattern) and one `user` (the author).
 
 Columns: `id`, `organization_id`, `commentable_type` (`"task"` |
 `"project"` | `"deliverable"` - the third value added per ADR 0054),
-`commentable_id`, `author_id`, `body`, `timestamp_seconds` (nullable
-`Float`, added per ADR 0056 - an optional video-timestamp a reviewer is
-commenting against, surfaced on any comment thread, not just deliverables),
+`commentable_id`, `author_id`, `parent_id` (nullable self-FK, added per
+ADR 0060 - a reply; flattened to one level of nesting at the service
+layer, so a reply's `parent_id` always points at a top-level comment,
+never another reply), `body`, `timestamp_seconds` (nullable `Float`,
+added per ADR 0056), `frame_number` (nullable `Int`, added per ADR
+0060), `mentioned_user_ids` (`String[]`, added per ADR 0060 - explicit
+picks from a `@`-mention autocomplete, not parsed from `body`),
+`reactions` (nullable `Json`, added per ADR 0060 - array of
+`{emoji, userId, userName}`, denormalized like `Task.equipment` rather
+than a join table), `pinned` (`Boolean`, default `false`, added per ADR
+0060), `resolved_at`/`resolved_by_id` (nullable, added per ADR 0060),
 `created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
-`users` via `author_id` (no cascade, same reasoning as `tasks.assignee_id`).
-No database foreign key on `commentable_id` - it points to a `tasks`,
-`projects`, or `deliverables` row depending on `commentable_type`, so
-validity is enforced at the service layer (404 checks before create/list),
-not a DB constraint.
+`users` via `author_id` (`"CommentAuthor"` relation name) and optionally
+via `resolved_by_id` (`"CommentResolvedBy"`, one-sided - no back-relation
+array needed); self-relation `"CommentReplies"` (`parent_id` -> parent
+comment, cascade delete - deleting a top-level comment deletes its
+replies). No database foreign key on `commentable_id` - it points to a
+`tasks`, `projects`, or `deliverables` row depending on `commentable_type`,
+so validity is enforced at the service layer (404 checks before
+create/list), not a DB constraint.
 
 Indexes: index on `organization_id`; compound index on
-`(commentable_type, commentable_id)` (the actual lookup path for listing a
-target's comments).
+`(commentable_type, commentable_id)`; index on `parent_id`.
 
 Constraints: none beyond required foreign keys.
 
 Permissions: created/read via `POST`/`GET /api/v1/tasks/:taskId/comments`,
 `POST`/`GET /api/v1/projects/:projectId/comments`, and `POST`/`GET
 /api/v1/deliverables/:deliverableId/comments` by any member of the
-target's house. No edit/delete endpoint exists yet.
+target's house. Deliverable comments additionally support `POST
+.../comments/:commentId/{resolve,reopen,reactions}` (any member),
+`.../pin` (manager-only, ADR 0060), and `PATCH`/`DELETE
+.../comments/:commentId` (author-only). Task/project comments still have
+no edit/delete endpoint.
 
 Reasoning: a type+id pair rather than a join table per commentable type
 (`task_comments`, `project_comments`) - adding a new commentable type
 (`deliverable`, ADR 0054, following the exact prediction this doc already
 made about `asset_version`) was a new string value and a thin
-controller/service pair, not a schema migration (ADR 0024).
+controller/service pair, not a schema migration (ADR 0024). Threading/
+reactions/mentions (ADR 0060) extend this same row rather than
+introducing `Thread`/`Reaction` tables, consistent with how lightweight
+per-row data is already modeled elsewhere in this schema.
 
-Migration history: `20260708211532_comments`.
+Migration history: `20260708211532_comments`; `parent_id`/`resolved_at`/
+`resolved_by_id`/`pinned`/`mentioned_user_ids`/`reactions`/`frame_number`
+added in `20260719120000_review_frameio_rework` (ADR 0060).
+
+### Table: `annotations`
+
+Purpose: a drawn markup on a paused video frame during review (arrow,
+rectangle, circle, freehand, line, highlight, text, or blur), added per
+ADR 0060.
+
+Ownership: belongs to one `organization` and one `deliverable`.
+
+Columns: `id`, `organization_id`, `deliverable_id`, `comment_id`
+(nullable - set when drawn alongside a specific comment), `author_id`,
+`timestamp_seconds` (`Float`, required - where in the video this
+annotation appears), `frame_number` (nullable `Int`), `type` (one of the
+8 tool names above, validated in the DTO), `color` (hex string), `data`
+(`Json`, tool-specific shape - e.g. `{x1,y1,x2,y2}` for arrow/line,
+`{x,y,w,h}` for rectangle/highlight/blur, `{x,y,rx,ry}` for circle,
+`{points:[{x,y}...]}` for freehand, `{x,y,text}` for text; all
+coordinates normalized 0-1 so they scale with player size), `created_at`.
+
+Relationships: belongs to `organizations` (cascade delete); belongs to
+`deliverables` (cascade delete); belongs to `comments` (nullable,
+`onDelete: SetNull`); belongs to `users` via `author_id`.
+
+Indexes: index on `deliverable_id`.
+
+Permissions: create/list via `POST`/`GET
+/api/v1/deliverables/:deliverableId/annotations` by any house member;
+delete via `DELETE .../annotations/:annotationId`, author or manager.
+
+Reasoning: a dedicated model rather than folding geometry into `comments`
+
+- an annotation has a type and tool-specific shape a text comment doesn't,
+  and a comment can exist without one ever being drawn. The frontend renders
+  these as an SVG overlay (stroke shapes) plus HTML overlay (text/blur)
+  rather than literal `<canvas>` pixel drawing, so `data`'s normalized
+  coordinates are resolution-independent by design.
+
+Migration history: `20260719120000_review_frameio_rework` (ADR 0060).
+
+### Table: `deliverable_activity`
+
+Purpose: a permanent, timestamped history of everything that happens to a
+deliverable (version uploaded, review started, changes requested,
+rejected, approved, delivered, added to portfolio), added per ADR 0060.
+Mirrors `task_activity`'s shape exactly rather than introducing a generic
+polymorphic activity log for one new use.
+
+Ownership: belongs to one `deliverable`.
+
+Columns: `id`, `deliverable_id`, `actor_id`, `type` (free string, e.g.
+`"version_uploaded"`, `"approved"`), `from_value`/`to_value` (nullable),
+`created_at`.
+
+Relationships: belongs to `deliverables` (cascade delete); belongs to
+`users` via `actor_id`.
+
+Indexes: index on `deliverable_id`.
+
+Permissions: read via `GET /api/v1/deliverables/:deliverableId/activity`
+by any house member; written internally by `deliverables.service.ts`
+(best-effort - a logging failure never fails the underlying action).
+
+Migration history: `20260719120000_review_frameio_rework` (ADR 0060).
 
 ### Table: `deliverables`
 
-Purpose: a versioned submission for a project (Projects Module Overhaul
-Phase 4, ADR 0054) - every draft submitted via `SubmitDraftDialog` creates
-a new row rather than overwriting the previous one, moving through a
-`draft | review | revision | approved | final` workflow.
+Purpose: a versioned submission for a project or client (Projects Module
+Overhaul Phase 4, ADR 0054) - every draft submitted via
+`SubmitDraftDialog` creates a new row rather than overwriting the
+previous one, moving through a
+`draft | review | revision | approved | rejected` workflow (ADR 0060 -
+`"final"` no longer exists as a separate status from `"approved"`, and
+`"rejected"` is new, a permanent terminal state distinct from `"revision"`).
 
 Ownership: belongs to one `organization` and exactly one of `project` or
 `client` (ADR 0059 - `project_id`/`client_id` are both nullable, enforced
@@ -1335,67 +1420,94 @@ Columns: `id`, `organization_id`, `project_id` (nullable), `client_id`
 (nullable, added per ADR 0059), `task_id` (nullable FK -
 the editing task this version was submitted from), `file_entry_id` (the
 submitted file), `created_by_id`, `version` (`Int`, auto-incremented
-**per owner** at create time - `count + 1` scoped to whichever FK is set,
-never reused or overwritten), `status` (default `"review"`; 5-value vocab, validated in
-the DTO/service only, not a DB enum, matching every other workflow
-vocabulary in this codebase), `notes` (nullable), `export_settings`
-(nullable `Json`, added per ADR 0056 - freeform key/value metadata like
-resolution/codec/frame rate captured from `SubmitDraftDialog`), `created_at`,
-`updated_at`.
+**per owner** at create time inside a Serializable transaction, ADR
+0060 - `count + 1` scoped to whichever FK is set, backstopped by a
+partial unique index when `task_id` is set), `status` (default
+`"review"`; 5-value vocab, validated in the DTO/service only, not a DB
+enum), `notes` (nullable), `rejection_reason` (nullable, added per ADR
+0060 - required when transitioning to `"rejected"`), `first_reviewed_at`
+(nullable, added per ADR 0060 - set once, the first time a manager opens
+the review workspace for this deliverable), `export_settings` (nullable
+`Json`, added per ADR 0056 - freeform key/value metadata like
+resolution/codec/frame rate captured from `SubmitDraftDialog`),
+`created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
 `projects` (nullable, cascade delete) and/or `clients` (nullable, cascade
 delete - exactly one per the CHECK constraint); belongs to `tasks`
 (nullable, `onDelete: SetNull`); belongs to `file_entries` (cascade
 delete - deleting the underlying file removes its deliverable record);
-belongs to `users` via `created_by_id`.
+belongs to `users` via `created_by_id`; has many `annotations` (cascade
+delete) and `deliverable_activity` entries (cascade delete), both added
+per ADR 0060.
 
 Indexes: indexes on `organization_id`, `project_id`, `client_id`,
 `task_id`, `file_entry_id`. The old `(project_id, version)` unique index
-was dropped per ADR 0059 - it can't express "unique per polymorphic
-owner" as a Prisma composite unique when one side is nullable two
-different ways, so per-owner uniqueness is enforced by application logic
-(the count-then-create above) rather than a DB constraint.
+was dropped per ADR 0059. Per ADR 0060, a new partial unique index closes
+the version-numbering race that left: `CREATE UNIQUE INDEX
+deliverables_task_id_version_key ON deliverables(task_id, version) WHERE
+task_id IS NOT NULL` - task-less (client/project-only) deliverables have
+no such constraint, since they aren't part of a versioned review cycle.
 
-Constraints: `CHECK (num_nonnulls(project_id, client_id) = 1)`.
+Constraints: `CHECK (num_nonnulls(project_id, client_id) = 1)`; the
+partial unique index above.
 
 Permissions: create via `POST /api/v1/projects/:projectId/deliverables`
 (project-owned) or the generic `POST /api/v1/houses/:houseId/deliverables`
 (either owner, ADR 0059, body carries `ownerType`/`ownerId`) by any member
 of the house (in practice called by `SubmitDraftDialog`, not directly by
 users); list via `GET /api/v1/projects/:projectId/deliverables` or
-`GET /api/v1/clients/:clientId/deliverables`; the review queue via `GET
-/api/v1/houses/:houseId/review-queue` (+ `/metrics`, `/bulk-action`).
-Status/assignment transitions via dedicated `POST`/`PATCH
-/api/v1/deliverables/:deliverableId/<action>` endpoints (`approve`,
-`request-revision`, `mark-final`, `reassign`) gated by the new
-`organizationsService.requireManagerRole` (Owner or Admin - see ADR 0056),
-not the generic membership check the rest of this table used through
-Phase 4. Comments via `POST`/`GET
-/api/v1/deliverables/:deliverableId/comments` (the `comments` table's
-`"deliverable"` commentable type), optionally carrying `timestampSeconds`.
+`GET /api/v1/clients/:clientId/deliverables`; single-item fetch via `GET
+/api/v1/deliverables/:deliverableId` (ADR 0060, backs the review
+workspace's direct-navigation/deep-link case); the review queue via `GET
+/api/v1/houses/:houseId/review-queue` (+ `/metrics`, `/bulk-action`) -
+manager-only unless the caller is asking for their own submissions
+(`editorId === self`, ADR 0060). Status/assignment transitions via
+dedicated `POST`/`PATCH /api/v1/deliverables/:deliverableId/<action>`
+endpoints (`approve`, `reject` [new, ADR 0060], `request-revision`,
+`review-started` [new, ADR 0060], `reassign`) gated by
+`organizationsService.requireManagerRole` (Owner or Admin - see ADR
+0056). `mark-final` is removed (ADR 0060, folded into `approve`).
+Comments via `POST`/`GET /api/v1/deliverables/:deliverableId/comments`
+(the `comments` table's `"deliverable"` commentable type - see that table
+for the ADR 0060 threading/resolve/reactions/pin sub-routes). Annotations
+via `POST`/`GET /api/v1/deliverables/:deliverableId/annotations` and
+`DELETE .../annotations/:annotationId` (ADR 0060). Activity history via
+`GET /api/v1/deliverables/:deliverableId/activity` (ADR 0060). Editor
+aggregate stats via `GET
+/api/v1/houses/:houseId/crew/:userId/editor-stats` (ADR 0060, self-or-
+manager gated).
 
-Reasoning: see ADR 0054 for the original version/status model and ADR
-0056 for the Review & Approval pipeline built on top of it. `approve` now
-sets `status` directly to `"final"` (superseding Phase 4's two-step
-approve→mark-final for this flow; `mark-final` itself is unchanged and
-still available), marks the linked task `completed`, best-effort copies
-the `FileEntry` into the project's `Deliveries` Drive folder, and
-recomputes `Project.progress` as `completedTaskCount / taskCount` -
-replacing the flat `+10` bump Phase 4 shipped as a placeholder.
-`request-revision` now also reverts the linked task to `"in-progress"`,
+Reasoning: see ADR 0054 for the original version/status model, ADR 0056
+for the Review & Approval pipeline, and ADR 0060 for the Frame.io-style
+rework. `approve` now writes the real `"approved"` status (previously it
+wrote `"final"` while a separate, inconsistent `markFinal()` path also
+existed - ADR 0060 removed that split entirely) and takes an options body
+(`deliverToClient`, `addToPortfolio`, `portfolioCategory`, `finalName`,
+`notes`): it marks the linked task `completed`, optionally best-effort
+copies the `FileEntry` into the owner's `Deliveries` Drive folder,
+optionally copies it into the House Portfolio (attributed to the editor,
+not the approving reviewer, so it counts toward that editor's stats), logs
+each step to `deliverable_activity`, and recomputes `Project.progress` as
+`completedTaskCount / taskCount` (project-owned only). `reject` is new:
+permanent, requires a reason, does not move files or touch the linked
+task. `request-revision` reverts the linked task to `"in-progress"`,
 attaches the reviewer's comment to the _task_ (not the deliverable), and
 notifies the assigned editor(s). `reassign` swaps the task's assignee via
 the existing `tasksService.update` assignee-diff path (so
 `TaskActivity`/`Comment`/`Deliverable` history all survive untouched,
 since none of them key off assignee) and notifies both the old and new
-editor.
+editor. `review-started` is new: fires once, the first time a manager
+opens the review workspace, logging activity and notifying the editor.
 
 Migration history: `20260716200000_deliverables`;
 `export_settings`/`comments.timestamp_seconds` added in
 `20260717120000_review_pipeline` (ADR 0056); `client_id` added and
 `(project_id, version)` unique index dropped in
-`20260718120000_polymorphic_owner` (ADR 0059).
+`20260718120000_polymorphic_owner` (ADR 0059);
+`rejection_reason`/`first_reviewed_at` added and the
+`(task_id, version)` partial unique index added in
+`20260719120000_review_frameio_rework` (ADR 0060).
 
 ### Table: `crew_profiles`
 

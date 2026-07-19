@@ -1618,21 +1618,75 @@ exists for either yet.
 
 ### `POST`/`GET /api/v1/deliverables/:deliverableId/comments`
 
-Same shape/error pattern as the endpoints above, scoped to a
-`Deliverable` (`404 deliverable_not_found` instead) - notifies the
-project's `teamIds`, same as project comments. `POST` body optionally
-accepts `"timestampSeconds"?: number` (ADR 0056) - a video-timestamp the
-comment is anchored to, rendered as an `M:SS` badge in the Review page's
-comment thread.
+Scoped to a `Deliverable` (`404 deliverable_not_found`). Per ADR 0060,
+notifications go to the deliverable's creator + task assignees (fixing a
+gap where client-owned deliverables, which have no `teamIds`, previously
+got none), and the response shape gained threading. `POST` body:
+`{ "body": string, "timestampSeconds"?: number, "frameNumber"?: number,
+"parentId"?: string, "mentionedUserIds"?: string[] }` - a reply whose
+`parentId` itself points at a reply is flattened to point at that reply's
+root instead, so threads never nest more than one level. `mentionedUserIds`
+(explicit picks from the frontend's `@`-autocomplete, not parsed from
+`body`) fires `deliverable_mentioned` to each mentioned user; every
+top-level comment also fires `deliverable_comment` to the recipients
+above. `GET` returns top-level comments only, each with a nested
+`replies: Comment[]` array (cursor-paginated on top-level comments; all
+of a page's replies are attached regardless of the cursor).
+
+```json
+{
+  "id": "comment_123",
+  "body": "Logo animation feels slow",
+  "authorId": "user_123",
+  "authorName": "Aryan",
+  "parentId": null,
+  "timestampSeconds": 14.22,
+  "frameNumber": 341,
+  "mentionedUserIds": ["user_456"],
+  "reactions": [{ "emoji": "👍", "userId": "user_456", "userName": "Rehan" }],
+  "pinned": false,
+  "resolvedAt": null,
+  "resolvedById": null,
+  "resolvedByName": null,
+  "createdAt": "2026-07-19T10:00:00.000Z",
+  "updatedAt": "2026-07-19T10:00:00.000Z",
+  "replies": []
+}
+```
+
+Errors: `400 invalid_request` (empty `body`, `POST` only),
+`401 unauthenticated`, `403 forbidden`, `404 deliverable_not_found`.
+
+### Deliverable comment sub-actions (ADR 0060)
+
+All: authentication required, response is the updated `Comment`,
+`404 comment_not_found` if it no longer exists.
+
+- `POST .../comments/:commentId/resolve` /
+  `POST .../comments/:commentId/reopen` → sets/clears
+  `resolvedAt`/`resolvedById`. Any house member.
+- `POST .../comments/:commentId/reactions` → body: `{ "emoji": string }`
+  (one of a fixed 6-emoji set, `400 invalid_request` otherwise). Toggles
+  the caller's reaction for that emoji on/off.
+- `POST .../comments/:commentId/pin` → toggles `pinned`.
+  `403 forbidden` for non-Owner/Admin members (`requireManagerRole`).
+- `PATCH .../comments/:commentId` → body: `{ "body": string }`.
+  `403 not_author` if the caller isn't the comment's author.
+- `DELETE .../comments/:commentId` → `403 not_author` if the caller
+  isn't the comment's author. Response: `{ "success": true }`.
 
 ## Deliverables (Implemented)
 
 Implemented per ADR 0054 (`apps/web/src/server/deliverables/*`) -
-Projects Module Overhaul Phase 4, made owner-polymorphic per ADR 0059. A
+Projects Module Overhaul Phase 4, made owner-polymorphic per ADR 0059,
+and reworked into a Frame.io-style review system per ADR 0060. A
 `Deliverable` is a versioned submission for a project or a client -
 every draft submitted creates a new row (never overwriting a previous
-version) moving through a `draft | review | revision | approved | final`
-workflow.
+version, and never reusing a version number thanks to a Serializable
+transaction plus a DB-level backstop index) moving through a
+`draft | review | revision | approved | rejected` workflow (`"final"` no
+longer exists as a status distinct from `"approved"` - see the
+transitions section below).
 
 ### `POST /api/v1/projects/:projectId/deliverables`
 
@@ -1659,7 +1713,8 @@ right after its existing file upload, not directly by users. Response:
       "id": "file_123",
       "name": "sizzle_reel_v2.mp4",
       "size": 60000000,
-      "mimeType": "video/mp4"
+      "mimeType": "video/mp4",
+      "durationSeconds": 42.5
     },
     "createdById": "user_123",
     "createdByName": "Rehan Patel",
@@ -1694,32 +1749,56 @@ Authentication: required. Added per ADR 0059. Same shape/ordering as the
 project-scoped list above, scoped to a client's owned deliverables.
 Errors: `401 unauthenticated`, `403 forbidden`, `404 client_not_found`.
 
+### `GET /api/v1/deliverables/:deliverableId`
+
+Authentication: required (ADR 0060). Single-item fetch backing the
+review workspace's direct-navigation/deep-link case, where the item
+might not already be present in a loaded queue list. Response: a
+`ReviewQueueItem` (same shape as the review-queue list below, including
+`unresolvedCommentCount`). `403 forbidden` unless the caller is the
+deliverable's `createdById` or the house's Owner/Admin.
+
 ### Deliverable status/assignment transitions
 
 Each is a dedicated action endpoint (matches the Shoot-status-transition
 precedent, ADR 0052/0053) rather than a generic `PATCH status`. All:
 authentication required, response is the updated `Deliverable`, errors
 `401 unauthenticated` / `403 forbidden` / `404 deliverable_not_found`.
-`approve`/`request-revision`/`reassign` additionally return
-`403 forbidden` for members who aren't the house's Owner or Admin
-(`requireManagerRole`, ADR 0056) - `mark-final` keeps the looser
-membership check it shipped with in Phase 4.
+`approve`/`reject`/`request-revision`/`reassign`/`review-started`
+additionally return `403 forbidden` for members who aren't the house's
+Owner or Admin (`requireManagerRole`). `mark-final` and the separate
+`"final"` status are removed (ADR 0060) - `approve` is now the single
+terminal-success action.
 
-- `POST /api/v1/deliverables/:deliverableId/approve` → `status: "final"`
-  directly (Review & Approval pipeline, ADR 0056 - supersedes Phase 4's
-  two-step approve→mark-final for this flow). Also: marks the linked task
-  `completed`; best-effort copies the file into the project's `Deliveries`
-  Drive folder (logged and swallowed on failure, e.g. no Drive connected);
-  recomputes `Project.progress` as `completedTaskCount / taskCount`; and
-  notifies the submitting editor if someone else approved it.
+- `POST /api/v1/deliverables/:deliverableId/approve` → `status:
+"approved"`. Body (all optional): `{ "deliverToClient"?: boolean
+(default true), "addToPortfolio"?: boolean (default false),
+"portfolioCategory"?: string (default "Misc"), "finalName"?: string,
+"notes"?: string }`. Marks the linked task `completed`; if
+  `deliverToClient`, best-effort copies the file into the owner's
+  `Deliveries` Drive folder (named `finalName` if given); if
+  `addToPortfolio`, best-effort copies it into the House Portfolio under
+  `portfolioCategory`, attributed to the editor (`uploadedById:
+deliverable.createdById`, not the approving reviewer, so it counts
+  toward that editor's `editor-stats`); recomputes `Project.progress` as
+  `completedTaskCount / taskCount` (project-owned only); logs each step
+  to the deliverable's activity history; and notifies the submitting
+  editor if someone else approved it.
+- `POST /api/v1/deliverables/:deliverableId/reject` → `status:
+"rejected"`. Body: `{ "reason": string }` (required,
+  `400 invalid_request` if empty). Permanent - does not move files or
+  touch the linked task. Notifies the submitting editor
+  (`deliverable_rejected`).
 - `POST /api/v1/deliverables/:deliverableId/request-revision` → `status:
 "revision"`. Body: `{ "comment"?: string }`. Also reverts the linked
   task to `status: "in-progress"`, attaches the comment (if given) to the
   _task_ via `commentsService.createForTask`, and notifies the assigned
   editor(s) (`deliverable_changes_requested`).
-- `POST /api/v1/deliverables/:deliverableId/mark-final` → `status:
-"final"` (unchanged from Phase 4 - a manual finalize path independent of
-  `approve`).
+- `POST /api/v1/deliverables/:deliverableId/review-started` (ADR 0060) →
+  no body. Idempotent - only the first call sets `firstReviewedAt` and
+  fires `deliverable_review_started` to the submitting editor; later
+  calls are a no-op that just returns the current state. Called by the
+  review workspace on mount when the viewer is a manager.
 - `PATCH /api/v1/deliverables/:deliverableId/reassign` → body:
   `{ "newEditorId": string }`. Swaps the linked task's assignee to
   `newEditorId` via the existing assignee-diff path in
@@ -1728,34 +1807,79 @@ membership check it shipped with in Phase 4.
   previous and new editor. Errors also include `400 invalid_request` if
   the deliverable has no linked task.
 
+### `GET /api/v1/deliverables/:deliverableId/annotations` / `POST` (ADR 0060)
+
+Authentication: required. `POST` body: `{ "timestampSeconds": number,
+"frameNumber"?: number, "type": "arrow" | "rectangle" | "circle" |
+"freehand" | "line" | "highlight" | "text" | "blur", "color": string,
+"data": Record<string, unknown>, "commentId"?: string }` - `data`'s shape
+depends on `type` (see the `annotations` table doc in `database.md`).
+`GET` returns all annotations for the deliverable, ordered by
+`timestampSeconds`. Response/errors: same pattern as comments.
+
+### `DELETE /api/v1/deliverables/:deliverableId/annotations/:annotationId`
+
+Authentication: required. `403 forbidden` unless the caller is the
+annotation's author or the house's Owner/Admin.
+
+### `GET /api/v1/deliverables/:deliverableId/activity` (ADR 0060)
+
+Authentication: required. Response:
+`{ "data": { "id", "type", "fromValue", "toValue", "actorId",
+"actorName", "createdAt" }[] }`, chronological. Permanent history of
+everything that's happened to the deliverable (version uploaded, review
+started, changes requested, rejected, approved, delivered, added to
+portfolio) - never deleted, written best-effort by every action above.
+
 ### `GET /api/v1/houses/:houseId/review-queue`
 
 Authentication: required. The cross-project Review queue (ADR 0056) -
 every `Deliverable` with `status` in `review`/`revision` for the house
 (or a single status via `?status=`, `status=all` for every status),
-joined with its task/project/client/assignee/priority/due-date. Query
-params (all optional): `projectId`, `clientId`, `editorId`, `status`,
-`priority`, `search`, `sortBy` (`submittedAt` | `priority` | `version`).
+joined with its task/project/client/assignee/priority/due-date/
+unresolved-comment-count. Manager-only (`requireManagerRole`) **unless**
+`?editorId=` is the caller's own id, in which case it's membership-gated
+only (ADR 0060 - preserves an editor's ability to see their own
+submission history, e.g. from their crew profile). Query params (all
+optional): `projectId`, `clientId`, `editorId`, `status`, `priority`,
+`search`, `sortBy` (`submittedAt` | `priority` | `version` - the
+frontend additionally offers oldest/newest/due-date/client/project/
+editor sorts computed client-side, not passed through to this param).
 Response: `{ "data": ReviewQueueItem[] }` (not paginated - review queues
-are expected to stay in the tens, not thousands, of items).
+are expected to stay in the tens, not thousands, of items). Each item
+now includes `unresolvedCommentCount: number` (ADR 0060, batch-computed
+via a single `groupBy` to avoid N+1 queries) and client-owned/task-less
+deliverables are included (previously silently filtered out).
 
 ### `GET /api/v1/houses/:houseId/review-queue/metrics`
 
-Authentication: required. Response:
+Authentication: required. Manager-only. Response:
 `{ "data": { "waitingForReview": number, "changesRequested": number,
 "approvedToday": number, "overdueReviews": number } }` - dashboard/Review
-page stat cards. `approvedToday` counts `approved`+`final` deliverables
-updated since local midnight; `overdueReviews` counts `review`-status
+page stat cards. `approvedToday` counts `approved` deliverables updated
+since local midnight; `overdueReviews` counts `review`-status
 deliverables whose linked task's `dueDate` has passed.
 
 ### `POST /api/v1/houses/:houseId/review-queue/bulk-action`
 
 Authentication: required. Body: `{ "action": "approve" |
-"request-revision" | "reassign", "deliverableIds": string[], "comment"?:
-string, "newEditorId"?: string }`. Loops the single-item methods above
-per id (no duplicated transition logic) and never aborts early - each
-id's outcome is independent. Response:
+"request-revision" | "reassign" | "reject", "deliverableIds": string[],
+"comment"?: string, "newEditorId"?: string, "reason"?: string }` (`reason`
+required when `action` is `"reject"`, ADR 0060). Loops the single-item
+methods above per id (no duplicated transition logic) and never aborts
+early - each id's outcome is independent. Response:
 `{ "data": { "results": { "id": string, "ok": boolean, "error"?: string }[] } }`.
+
+### `GET /api/v1/houses/:houseId/crew/:userId/editor-stats` (ADR 0060)
+
+Authentication: required. Self-or-manager gated, same as the review
+queue. Response:
+`{ "data": { "totalEdits": number, "totalDelivered": number,
+"projectsWorkedOn": number, "clientsWorkedFor": number, "approvalRate":
+number, "avgReviewIterations": number, "totalRuntimeSeconds": number,
+"portfolioPieces": number } }`, aggregated live over the editor's
+`Deliverable`/`Task`/`FileEntry` rows (no separate ledger table). Powers
+the "Editing History" section on `crew-profile-page.tsx`.
 
 ## Crews (Implemented)
 

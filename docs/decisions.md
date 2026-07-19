@@ -189,6 +189,21 @@ directory instead of a Node.js startup file.
 
 ADR: [0007-sprint-0-foundation.md](adr/0007-sprint-0-foundation.md)
 
+### 2026-07-19: Frame.io-style review system
+
+Status: Accepted
+
+Decision: Rebuild the Review system into a dedicated workspace (video
+player with frame-stepping, timeline with comment/annotation markers,
+draw-on-frame annotation tools, threaded comments with mentions/
+reactions/resolve, and a three-button Needs Changes/Reject/Approve
+workflow where Approve automates moving the file into Deliverables and
+optionally Portfolio). Fixed three underlying bugs along the way: the
+deliverable version-numbering race, the `approve()`/`markFinal()` status
+inconsistency, and weaker auth on the review queue than its actions.
+
+ADR: [0060-frameio-style-review-system.md](adr/0060-frameio-style-review-system.md)
+
 ## Pending Decisions
 
 - Package manager and build tooling.
