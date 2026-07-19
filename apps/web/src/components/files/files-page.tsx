@@ -8,7 +8,7 @@ import {
   FilesViewControls,
   type FilesViewMode
 } from "@/components/files/files-toolbar";
-import { StorageUsedPanel } from "@/components/files/storage-used-panel";
+import { FileTreePanel } from "@/components/files/file-tree-panel";
 import { FileListColumnHeader } from "@/components/files/file-list-column-header";
 import { FileListRow } from "@/components/files/file-list-row";
 import { FileGridCard } from "@/components/files/file-grid-card";
@@ -71,6 +71,7 @@ export function FilesPage() {
   const [dragOver, setDragOver] = useState(false);
   const [previewFile, setPreviewFile] = useState<FileEntryItem | null>(null);
   const [destinationDialogOpen, setDestinationDialogOpen] = useState(false);
+  const [treeRefreshToken, setTreeRefreshToken] = useState(0);
   const [validation, setValidation] = useState<{
     flagged: { file: File; warnings: FileWarning[] }[];
     batch: PendingBatch;
@@ -223,6 +224,7 @@ export function FilesPage() {
     try {
       const folder = await createFolder(name.trim(), currentFolderId);
       setEntries((current) => [folder, ...current]);
+      setTreeRefreshToken((current) => current + 1);
     } catch (error) {
       window.alert(
         error instanceof Error ? error.message : "Could not create the folder."
@@ -327,6 +329,7 @@ export function FilesPage() {
         const parentId = await resolveFolder(parts.slice(0, -1));
         beginUploadBatch([file], { parentId, category });
       }
+      setTreeRefreshToken((current) => current + 1);
     } catch (error) {
       window.alert(
         error instanceof Error
@@ -416,6 +419,7 @@ export function FilesPage() {
   }) {
     try {
       const { parentId } = await resolveFileDestination(destination);
+      setTreeRefreshToken((current) => current + 1);
       if (pendingDropFiles.current) {
         beginUploadBatch(pendingDropFiles.current, {
           parentId,
@@ -442,6 +446,7 @@ export function FilesPage() {
     try {
       await deleteFileEntry(entryId);
       setEntries((current) => current.filter((entry) => entry.id !== entryId));
+      setTreeRefreshToken((current) => current + 1);
     } catch (error) {
       window.alert(
         error instanceof Error ? error.message : "Could not delete this item."
@@ -495,7 +500,15 @@ export function FilesPage() {
 
       <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[16rem_1fr_20rem]">
         <div className="grid min-h-0 content-start gap-4">
-          <StorageUsedPanel usedBytes={summary?.usedBytes ?? 0} />
+          <FileTreePanel
+            activeFolderId={currentFolderId}
+            onNavigate={(nextPath) => {
+              setPath(nextPath);
+              setPage(1);
+            }}
+            refreshToken={treeRefreshToken}
+            sensitiveView={sensitiveView}
+          />
         </div>
 
         <div
