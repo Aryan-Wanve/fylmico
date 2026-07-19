@@ -59,10 +59,13 @@ async function fetchWorkspaceData(id: string): Promise<{
 }> {
   const item = await getReviewQueueItem(id);
 
+  // Video is essential to the workspace, so its failure still fails the
+  // whole load - but annotations/activity are secondary panels and
+  // shouldn't take the entire page down with them if one hiccups.
   const [videoUrl, annotations, activity] = await Promise.all([
     getFileDownloadUrl(item.file.id),
-    listDeliverableAnnotations(id),
-    getDeliverableActivity(id)
+    listDeliverableAnnotations(id).catch(() => []),
+    getDeliverableActivity(id).catch(() => [])
   ]);
 
   let versions: Deliverable[] = [];
@@ -195,6 +198,7 @@ export function ReviewWorkspacePage() {
 
   const fps = fpsFromExportSettings(item.exportSettings);
   const statusMeta = REVIEW_STATUS_META[item.status];
+  const isFinalized = item.status === "approved" || item.status === "rejected";
 
   return (
     <div className="grid gap-4 bg-[#0d0f1f] p-4 sm:p-6 lg:p-8">
@@ -262,7 +266,7 @@ export function ReviewWorkspacePage() {
       <div className="flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-white/10 bg-[#171a28] p-3">
         <button
           className="rounded-lg border border-red-500/40 px-4 py-2 text-sm font-bold text-red-400 hover:bg-red-500/10 disabled:opacity-50"
-          disabled={busy}
+          disabled={busy || isFinalized}
           onClick={() => setNeedsChangesOpen(true)}
           type="button"
         >
@@ -270,7 +274,7 @@ export function ReviewWorkspacePage() {
         </button>
         <button
           className="rounded-lg bg-red-800 px-4 py-2 text-sm font-bold text-white hover:bg-red-900 disabled:opacity-50"
-          disabled={busy}
+          disabled={busy || isFinalized}
           onClick={() => setRejectOpen(true)}
           type="button"
         >
@@ -278,7 +282,7 @@ export function ReviewWorkspacePage() {
         </button>
         <button
           className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-600 disabled:opacity-50"
-          disabled={busy || item.status === "approved"}
+          disabled={busy || isFinalized}
           onClick={() => setApproveOpen(true)}
           type="button"
         >

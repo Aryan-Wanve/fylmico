@@ -65,6 +65,11 @@ export function CommentThreadPanel({
   const [replyMentions, setReplyMentions] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
+  const [actionError, setActionError] = useState("");
+
+  function describeError(error: unknown, fallback: string): string {
+    return error instanceof Error ? error.message : fallback;
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +122,7 @@ export function CommentThreadPanel({
 
   async function handlePostTopLevel() {
     if (!draft.trim()) return;
+    setActionError("");
     setPosting(true);
     try {
       const comment = await createDeliverableComment(
@@ -131,6 +137,8 @@ export function CommentThreadPanel({
       setComments((current) => [...current, { ...comment, replies: [] }]);
       setDraft("");
       setDraftMentions([]);
+    } catch (error) {
+      setActionError(describeError(error, "Could not post that comment."));
     } finally {
       setPosting(false);
     }
@@ -138,6 +146,7 @@ export function CommentThreadPanel({
 
   async function handlePostReply(parentId: string) {
     if (!replyDraft.trim()) return;
+    setActionError("");
     setPosting(true);
     try {
       const comment = await createDeliverableComment(
@@ -156,48 +165,75 @@ export function CommentThreadPanel({
       setReplyingTo(null);
       setReplyDraft("");
       setReplyMentions([]);
+    } catch (error) {
+      setActionError(describeError(error, "Could not post that reply."));
     } finally {
       setPosting(false);
     }
   }
 
   async function handleToggleResolve(comment: Comment) {
-    const updated = comment.resolvedAt
-      ? await reopenDeliverableComment(deliverableId, comment.id)
-      : await resolveDeliverableComment(deliverableId, comment.id);
-    replaceComment(updated);
+    setActionError("");
+    try {
+      const updated = comment.resolvedAt
+        ? await reopenDeliverableComment(deliverableId, comment.id)
+        : await resolveDeliverableComment(deliverableId, comment.id);
+      replaceComment(updated);
+    } catch (error) {
+      setActionError(describeError(error, "Could not update that comment."));
+    }
   }
 
   async function handleTogglePin(comment: Comment) {
-    const updated = await pinDeliverableComment(deliverableId, comment.id);
-    replaceComment(updated);
+    setActionError("");
+    try {
+      const updated = await pinDeliverableComment(deliverableId, comment.id);
+      replaceComment(updated);
+    } catch (error) {
+      setActionError(describeError(error, "Could not update that comment."));
+    }
   }
 
   async function handleReact(comment: Comment, emoji: string) {
-    const updated = await toggleDeliverableCommentReaction(
-      deliverableId,
-      comment.id,
-      emoji
-    );
-    replaceComment(updated);
+    setActionError("");
+    try {
+      const updated = await toggleDeliverableCommentReaction(
+        deliverableId,
+        comment.id,
+        emoji
+      );
+      replaceComment(updated);
+    } catch (error) {
+      setActionError(describeError(error, "Could not add that reaction."));
+    }
   }
 
   async function handleSaveEdit(commentId: string) {
     if (!editDraft.trim()) return;
-    const updated = await updateDeliverableComment(
-      deliverableId,
-      commentId,
-      editDraft.trim()
-    );
-    replaceComment(updated);
-    setEditingId(null);
-    setEditDraft("");
+    setActionError("");
+    try {
+      const updated = await updateDeliverableComment(
+        deliverableId,
+        commentId,
+        editDraft.trim()
+      );
+      replaceComment(updated);
+      setEditingId(null);
+      setEditDraft("");
+    } catch (error) {
+      setActionError(describeError(error, "Could not save that edit."));
+    }
   }
 
   async function handleDelete(commentId: string) {
     if (!window.confirm("Delete this comment?")) return;
-    await deleteDeliverableComment(deliverableId, commentId);
-    removeComment(commentId);
+    setActionError("");
+    try {
+      await deleteDeliverableComment(deliverableId, commentId);
+      removeComment(commentId);
+    } catch (error) {
+      setActionError(describeError(error, "Could not delete that comment."));
+    }
   }
 
   function renderReactions(comment: Comment) {
@@ -429,6 +465,11 @@ export function CommentThreadPanel({
       </div>
 
       <div className="grid gap-1.5 border-t border-white/10 pt-3">
+        {actionError ? (
+          <p className="text-[11px] font-semibold text-red-400">
+            {actionError}
+          </p>
+        ) : null}
         {currentTimeSeconds != null ? (
           <label className="flex w-fit items-center gap-1.5 text-[11px] text-white/60">
             <input

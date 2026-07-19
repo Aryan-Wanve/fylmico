@@ -161,8 +161,10 @@ export function AnnotationCanvas({
   const [dragStart, setDragStart] = useState<Point | null>(null);
   const [dragCurrent, setDragCurrent] = useState<Point | null>(null);
   const [freehandPoints, setFreehandPoints] = useState<Point[]>([]);
+  const [error, setError] = useState("");
 
   const drawable = paused && activeTool !== null;
+  const MIN_SHAPE_SIZE = 0.01;
 
   function pointFromEvent(event: ReactPointerEvent<HTMLDivElement>): Point {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -174,14 +176,23 @@ export function AnnotationCanvas({
   }
 
   async function persist(type: AnnotationTool, data: Record<string, unknown>) {
-    const annotation = await createDeliverableAnnotation(deliverableId, {
-      timestampSeconds: currentTime,
-      frameNumber: currentFrame,
-      type,
-      color,
-      data
-    });
-    onAnnotationCreated(annotation);
+    try {
+      setError("");
+      const annotation = await createDeliverableAnnotation(deliverableId, {
+        timestampSeconds: currentTime,
+        frameNumber: currentFrame,
+        type,
+        color,
+        data
+      });
+      onAnnotationCreated(annotation);
+    } catch (persistError) {
+      setError(
+        persistError instanceof Error
+          ? persistError.message
+          : "Could not save that annotation."
+      );
+    }
   }
 
   async function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
@@ -215,7 +226,14 @@ export function AnnotationCanvas({
   async function handlePointerUp() {
     if (!dragStart || !dragCurrent || !activeTool) return;
 
-    if (activeTool === "arrow" || activeTool === "line") {
+    // A plain click-without-drag produces a zero-size shape (dragStart ===
+    // dragCurrent) - skip persisting those rather than littering the
+    // timeline/comments with invisible annotations.
+    const dx = Math.abs(dragCurrent.x - dragStart.x);
+    const dy = Math.abs(dragCurrent.y - dragStart.y);
+    const hasSize = dx >= MIN_SHAPE_SIZE || dy >= MIN_SHAPE_SIZE;
+
+    if ((activeTool === "arrow" || activeTool === "line") && hasSize) {
       await persist(activeTool, {
         x1: dragStart.x,
         y1: dragStart.y,
@@ -223,22 +241,23 @@ export function AnnotationCanvas({
         y2: dragCurrent.y
       });
     } else if (
-      activeTool === "rectangle" ||
-      activeTool === "highlight" ||
-      activeTool === "blur"
+      (activeTool === "rectangle" ||
+        activeTool === "highlight" ||
+        activeTool === "blur") &&
+      hasSize
     ) {
       await persist(activeTool, {
         x: Math.min(dragStart.x, dragCurrent.x),
         y: Math.min(dragStart.y, dragCurrent.y),
-        w: Math.abs(dragCurrent.x - dragStart.x),
-        h: Math.abs(dragCurrent.y - dragStart.y)
+        w: dx,
+        h: dy
       });
-    } else if (activeTool === "circle") {
+    } else if (activeTool === "circle" && hasSize) {
       await persist("circle", {
         x: dragStart.x,
         y: dragStart.y,
-        rx: Math.abs(dragCurrent.x - dragStart.x),
-        ry: Math.abs(dragCurrent.y - dragStart.y)
+        rx: dx,
+        ry: dy
       });
     } else if (activeTool === "freehand" && freehandPoints.length > 1) {
       await persist("freehand", { points: freehandPoints });
@@ -317,6 +336,11 @@ export function AnnotationCanvas({
       ref={containerRef}
       style={{ pointerEvents: drawable ? "auto" : "none" }}
     >
+      {error ? (
+        <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 rounded-md bg-red-500/90 px-2.5 py-1 text-[11px] font-semibold text-white">
+          {error}
+        </div>
+      ) : null}
       <svg
         className={`absolute inset-0 h-full w-full ${drawable ? "cursor-crosshair" : ""}`}
         preserveAspectRatio="none"

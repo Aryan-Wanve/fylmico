@@ -31,6 +31,23 @@ class AnnotationsService {
       userId
     );
 
+    if (input.commentId) {
+      const comment = await this.prisma.comment.findUnique({
+        where: { id: input.commentId }
+      });
+      if (
+        !comment ||
+        comment.commentableType !== "deliverable" ||
+        comment.commentableId !== deliverableId
+      ) {
+        throw new AppException(
+          HttpStatus.BAD_REQUEST,
+          "invalid_request",
+          "commentId must belong to this deliverable."
+        );
+      }
+    }
+
     const annotation = await this.prisma.annotation.create({
       data: {
         organizationId: deliverable.organizationId,

@@ -7,17 +7,22 @@ import { readJsonBody, validateDto, withParamsRoute } from "@/server/http";
 export const PATCH = withParamsRoute<{
   deliverableId: string;
   commentId: string;
-}>(async (request: NextRequest, { commentId }) => {
+}>(async (request: NextRequest, { deliverableId, commentId }) => {
   const user = requireUser(request);
   const dto = await validateDto(UpdateCommentDto, await readJsonBody(request));
-  return commentsService.updateComment(user.id, commentId, dto.body);
+  return commentsService.updateComment(
+    user.id,
+    deliverableId,
+    commentId,
+    dto.body
+  );
 });
 
 export const DELETE = withParamsRoute<{
   deliverableId: string;
   commentId: string;
-}>(async (request: NextRequest, { commentId }) => {
+}>(async (request: NextRequest, { deliverableId, commentId }) => {
   const user = requireUser(request);
-  await commentsService.deleteComment(user.id, commentId);
+  await commentsService.deleteComment(user.id, deliverableId, commentId);
   return { success: true };
 });

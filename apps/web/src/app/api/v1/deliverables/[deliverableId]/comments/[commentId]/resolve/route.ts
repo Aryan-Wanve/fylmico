@@ -6,7 +6,7 @@ import { withParamsRoute } from "@/server/http";
 export const POST = withParamsRoute<{
   deliverableId: string;
   commentId: string;
-}>(async (request: NextRequest, { commentId }) => {
+}>(async (request: NextRequest, { deliverableId, commentId }) => {
   const user = requireUser(request);
-  return commentsService.resolveComment(user.id, commentId);
+  return commentsService.resolveComment(user.id, deliverableId, commentId);
 });

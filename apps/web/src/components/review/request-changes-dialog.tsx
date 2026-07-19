@@ -22,13 +22,21 @@ export function RequestChangesDialog({
 }) {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSubmit() {
+    setError("");
     setSubmitting(true);
     try {
       await onSubmit(comment.trim());
       setComment("");
       onOpenChange(false);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Could not request changes on this submission."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -54,6 +62,9 @@ export function RequestChangesDialog({
           <p className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
             This moves the task back to In Progress and notifies the editor.
           </p>
+          {error ? (
+            <p className="text-xs font-semibold text-red-500">{error}</p>
+          ) : null}
         </div>
         <DialogFooter className="mt-3">
           <Button

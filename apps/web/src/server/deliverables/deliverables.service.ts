@@ -106,7 +106,7 @@ class DeliverablesService {
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
+        (error.code === "P2002" || error.code === "P2034")
       ) {
         throw new AppException(
           HttpStatus.CONFLICT,
@@ -362,25 +362,29 @@ class DeliverablesService {
       return toDeliverableDto(deliverable);
     }
 
-    const updated = await this.prisma.deliverable.update({
-      where: { id: deliverableId },
-      data: { firstReviewedAt: new Date() },
-      include: deliverableInclude
+    // Conditional update (not check-then-set) so two managers opening the
+    // same deliverable at once can't both win the "first reviewed" race and
+    // double-log/double-notify.
+    const { count } = await this.prisma.deliverable.updateMany({
+      where: { id: deliverableId, firstReviewedAt: null },
+      data: { firstReviewedAt: new Date() }
     });
 
-    await this.logActivity(deliverableId, userId, "review_started");
+    if (count > 0) {
+      await this.logActivity(deliverableId, userId, "review_started");
 
-    if (deliverable.createdById !== userId) {
-      await notificationsService.create(
-        deliverable.createdById,
-        "deliverable_review_started",
-        `Review started: v${deliverable.version}`,
-        "A reviewer has started looking at your submission.",
-        deliverable.organizationId
-      );
+      if (deliverable.createdById !== userId) {
+        await notificationsService.create(
+          deliverable.createdById,
+          "deliverable_review_started",
+          `Review started: v${deliverable.version}`,
+          "A reviewer has started looking at your submission.",
+          deliverable.organizationId
+        );
+      }
     }
 
-    return toDeliverableDto(updated);
+    return toDeliverableDto(await this.findOrThrow(deliverableId));
   }
 
   async requestRevision(
@@ -394,6 +398,7 @@ class DeliverablesService {
       userId,
       "request changes on a submission"
     );
+    this.assertReviewable(deliverable, "have changes requested");
 
     const updated = await this.transition(userId, deliverableId, {
       status: "revision"
@@ -454,6 +459,7 @@ class DeliverablesService {
       userId,
       "reject a submission"
     );
+    this.assertReviewable(deliverable, "rejected");
 
     const updated = await this.transition(userId, deliverableId, {
       status: "rejected",
@@ -535,6 +541,7 @@ class DeliverablesService {
       userId,
       "approve a submission"
     );
+    this.assertReviewable(deliverable, "approved");
 
     const updated = await this.transition(userId, deliverableId, {
       status: "approved"
@@ -852,6 +859,26 @@ class DeliverablesService {
       });
     } catch (error) {
       console.error("[deliverables] could not log activity", error);
+    }
+  }
+
+  // Approve/reject/request-revision are one-shot terminal-ish transitions -
+  // without this guard a double-click or a duplicate bulk-action retry would
+  // re-run approve's Drive copies / activity log / notifications, or bounce
+  // an already-approved task back to "in-progress".
+  private assertReviewable(
+    deliverable: DeliverableWithRelations,
+    action: string
+  ): void {
+    if (
+      deliverable.status === "approved" ||
+      deliverable.status === "rejected"
+    ) {
+      throw new AppException(
+        HttpStatus.CONFLICT,
+        "deliverable_already_finalized",
+        `This submission was already ${deliverable.status} and can no longer be ${action}.`
+      );
     }
   }
 

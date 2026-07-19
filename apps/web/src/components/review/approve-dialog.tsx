@@ -47,8 +47,10 @@ export function ApproveDialog({
   const [finalName, setFinalName] = useState(defaultFileName);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSubmit() {
+    setError("");
     setSubmitting(true);
     try {
       await onSubmit({
@@ -59,6 +61,12 @@ export function ApproveDialog({
         notes: notes.trim() || undefined
       });
       onOpenChange(false);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Could not approve this submission."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -149,6 +157,10 @@ export function ApproveDialog({
               value={notes}
             />
           </div>
+
+          {error ? (
+            <p className="text-xs font-semibold text-red-500">{error}</p>
+          ) : null}
         </div>
 
         <DialogFooter className="mt-3">

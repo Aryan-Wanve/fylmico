@@ -22,14 +22,22 @@ export function RejectDialog({
 }) {
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSubmit() {
     if (!reason.trim()) return;
+    setError("");
     setSubmitting(true);
     try {
       await onSubmit(reason.trim());
       setReason("");
       onOpenChange(false);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Could not reject this submission."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -56,6 +64,9 @@ export function RejectDialog({
             This is permanent - the submission is marked Rejected and no files
             are moved. This does not affect other versions on this task.
           </p>
+          {error ? (
+            <p className="text-xs font-semibold text-red-500">{error}</p>
+          ) : null}
         </div>
         <DialogFooter className="mt-3">
           <Button

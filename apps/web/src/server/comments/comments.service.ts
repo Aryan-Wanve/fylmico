@@ -1,4 +1,4 @@
-import type { Comment } from "@fylmico/database";
+import { Prisma, type Comment } from "@fylmico/database";
 import { AppException, HttpStatus } from "../http";
 import { notificationsService } from "../notifications/notifications.service";
 import { organizationsService } from "../organizations/organizations.service";
@@ -195,12 +195,23 @@ class CommentsService {
     // Flatten to a single level of nesting - if the target parent is
     // itself a reply, attach the new comment to its root instead so the
     // thread UI never has to render more than one indent level.
-    let resolvedParentId = parentId;
+    let resolvedParentId: string | undefined;
     if (parentId) {
       const parent = await this.prisma.comment.findUnique({
         where: { id: parentId }
       });
-      resolvedParentId = parent?.parentId ?? parentId;
+      // A stale/invalid/cross-deliverable parentId would otherwise hit a
+      // Prisma FK violation (parent doesn't exist) or silently attach a
+      // reply to a different deliverable's thread (parent exists but
+      // belongs elsewhere) - both are just posted as a top-level comment
+      // instead of failing the whole request.
+      if (
+        parent &&
+        parent.commentableType === "deliverable" &&
+        parent.commentableId === deliverableId
+      ) {
+        resolvedParentId = parent.parentId ?? parentId;
+      }
     }
 
     const comment = await this.create(
@@ -316,8 +327,15 @@ class CommentsService {
     };
   }
 
-  async resolveComment(userId: string, commentId: string): Promise<CommentDto> {
-    const comment = await this.requireDeliverableComment(commentId);
+  async resolveComment(
+    userId: string,
+    deliverableId: string,
+    commentId: string
+  ): Promise<CommentDto> {
+    const comment = await this.requireDeliverableComment(
+      deliverableId,
+      commentId
+    );
     await organizationsService.requireMembership(
       comment.organizationId,
       userId
@@ -330,8 +348,15 @@ class CommentsService {
     return toCommentDto(updated);
   }
 
-  async reopenComment(userId: string, commentId: string): Promise<CommentDto> {
-    const comment = await this.requireDeliverableComment(commentId);
+  async reopenComment(
+    userId: string,
+    deliverableId: string,
+    commentId: string
+  ): Promise<CommentDto> {
+    const comment = await this.requireDeliverableComment(
+      deliverableId,
+      commentId
+    );
     await organizationsService.requireMembership(
       comment.organizationId,
       userId
@@ -346,6 +371,7 @@ class CommentsService {
 
   async toggleCommentReaction(
     userId: string,
+    deliverableId: string,
     commentId: string,
     emoji: string
   ): Promise<CommentDto> {
@@ -356,7 +382,10 @@ class CommentsService {
         "That's not a supported reaction."
       );
     }
-    const comment = await this.requireDeliverableComment(commentId);
+    const comment = await this.requireDeliverableComment(
+      deliverableId,
+      commentId
+    );
     await organizationsService.requireMembership(
       comment.organizationId,
       userId
@@ -367,26 +396,64 @@ class CommentsService {
     });
     const userName = user.name;
 
-    const existing = Array.isArray(comment.reactions)
-      ? (comment.reactions as unknown as CommentReaction[])
-      : [];
-    const alreadyReacted = existing.some(
-      (r) => r.userId === userId && r.emoji === emoji
-    );
-    const next = alreadyReacted
-      ? existing.filter((r) => !(r.userId === userId && r.emoji === emoji))
-      : [...existing, { emoji, userId, userName }];
+    // Read-modify-write on a JSON array can't use a WHERE-clause CAS the
+    // way a scalar column update could, so two concurrent toggles (or a
+    // double-click) racing this method could clobber each other. A
+    // Serializable transaction re-reads the row inside the transaction and
+    // has Postgres abort one side of a genuine conflict (mapped to a
+    // retryable 409 below) rather than silently dropping a reaction.
+    let updated;
+    try {
+      updated = await this.prisma.$transaction(
+        async (tx) => {
+          const fresh = await tx.comment.findUniqueOrThrow({
+            where: { id: commentId }
+          });
+          const existing = Array.isArray(fresh.reactions)
+            ? (fresh.reactions as unknown as CommentReaction[])
+            : [];
+          const alreadyReacted = existing.some(
+            (r) => r.userId === userId && r.emoji === emoji
+          );
+          const next = alreadyReacted
+            ? existing.filter(
+                (r) => !(r.userId === userId && r.emoji === emoji)
+              )
+            : [...existing, { emoji, userId, userName }];
 
-    const updated = await this.prisma.comment.update({
-      where: { id: commentId },
-      data: { reactions: next },
-      include: { author: true, resolvedBy: true }
-    });
+          return tx.comment.update({
+            where: { id: commentId },
+            data: { reactions: next },
+            include: { author: true, resolvedBy: true }
+          });
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+      );
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2034"
+      ) {
+        throw new AppException(
+          HttpStatus.CONFLICT,
+          "reaction_conflict",
+          "Someone else just reacted to this comment - please retry."
+        );
+      }
+      throw error;
+    }
     return toCommentDto(updated);
   }
 
-  async togglePin(userId: string, commentId: string): Promise<CommentDto> {
-    const comment = await this.requireDeliverableComment(commentId);
+  async togglePin(
+    userId: string,
+    deliverableId: string,
+    commentId: string
+  ): Promise<CommentDto> {
+    const comment = await this.requireDeliverableComment(
+      deliverableId,
+      commentId
+    );
     await organizationsService.requireManagerRole(
       comment.organizationId,
       userId,
@@ -402,10 +469,14 @@ class CommentsService {
 
   async updateComment(
     userId: string,
+    deliverableId: string,
     commentId: string,
     body: string
   ): Promise<CommentDto> {
-    const comment = await this.requireDeliverableComment(commentId);
+    const comment = await this.requireDeliverableComment(
+      deliverableId,
+      commentId
+    );
     if (comment.authorId !== userId) {
       throw new AppException(
         HttpStatus.FORBIDDEN,
@@ -421,8 +492,15 @@ class CommentsService {
     return toCommentDto(updated);
   }
 
-  async deleteComment(userId: string, commentId: string): Promise<void> {
-    const comment = await this.requireDeliverableComment(commentId);
+  async deleteComment(
+    userId: string,
+    deliverableId: string,
+    commentId: string
+  ): Promise<void> {
+    const comment = await this.requireDeliverableComment(
+      deliverableId,
+      commentId
+    );
     if (comment.authorId !== userId) {
       throw new AppException(
         HttpStatus.FORBIDDEN,
@@ -433,11 +511,23 @@ class CommentsService {
     await this.prisma.comment.delete({ where: { id: commentId } });
   }
 
-  private async requireDeliverableComment(commentId: string): Promise<Comment> {
+  // Also enforces that commentId actually belongs to deliverableId - the
+  // route param used to be accepted but never checked, so any comment id
+  // (including a task/project comment's) could be resolved/pinned/
+  // reacted-to/edited/deleted through the deliverable-scoped routes as
+  // long as the caller belonged to the same organization.
+  private async requireDeliverableComment(
+    deliverableId: string,
+    commentId: string
+  ): Promise<Comment> {
     const comment = await this.prisma.comment.findUnique({
       where: { id: commentId }
     });
-    if (!comment) {
+    if (
+      !comment ||
+      comment.commentableType !== "deliverable" ||
+      comment.commentableId !== deliverableId
+    ) {
       throw new AppException(
         HttpStatus.NOT_FOUND,
         "comment_not_found",

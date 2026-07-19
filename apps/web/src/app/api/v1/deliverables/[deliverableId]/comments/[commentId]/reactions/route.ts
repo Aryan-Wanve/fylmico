@@ -7,11 +7,16 @@ import { readJsonBody, validateDto, withParamsRoute } from "@/server/http";
 export const POST = withParamsRoute<{
   deliverableId: string;
   commentId: string;
-}>(async (request: NextRequest, { commentId }) => {
+}>(async (request: NextRequest, { deliverableId, commentId }) => {
   const user = requireUser(request);
   const dto = await validateDto(
     ToggleCommentReactionDto,
     await readJsonBody(request)
   );
-  return commentsService.toggleCommentReaction(user.id, commentId, dto.emoji);
+  return commentsService.toggleCommentReaction(
+    user.id,
+    deliverableId,
+    commentId,
+    dto.emoji
+  );
 });
