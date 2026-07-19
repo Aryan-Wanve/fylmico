@@ -48,12 +48,17 @@ const SHOOT_STATUS_LABELS: Record<Shoot["status"], string> = {
   cancelled: "Cancelled"
 };
 
+// One label per `Shoot["status"]` value, in the exact order `order` below
+// lists them - these must stay 1:1, index-for-index, with no extra
+// "in-between" labels inserted (a "Travelling" stage used to sit between
+// "Assigned" and "Checked In" with no matching status, which silently
+// shifted every later label one stage off from the real status).
 const SHOOT_STAGE_LABELS = [
   "Assigned",
-  "Travelling",
   "Checked In",
   "Shooting",
   "Shoot Finished",
+  "Uploading Footage",
   "Footage Uploaded",
   "Ready for Editing"
 ];
