@@ -31,7 +31,10 @@ model User {
   taskTimeEntries           TaskTimeEntry[]
   messages                  Message[]
   notifications             Notification[]
-  comments                  Comment[]
+  comments                  Comment[]                @relation("CommentAuthor")
+  resolvedComments          Comment[]                @relation("CommentResolvedBy")
+  annotations               Annotation[]
+  deliverableActivity       DeliverableActivity[]
   crewProfiles              CrewProfile[]
   calendarEvents            CalendarEvent[]
   timeEntries               TimeEntry[]
@@ -71,6 +74,7 @@ model Organization {
   projects        Project[]
   clients         Client[]
   comments        Comment[]
+  annotations     Annotation[]
   crewProfiles    CrewProfile[]
   calendarEvents  CalendarEvent[]
   timeEntries     TimeEntry[]
@@ -564,45 +568,99 @@ model Notification {
 }
 
 model Comment {
-  id               String   @id @default(cuid())
-  organizationId   String   @map("organization_id")
-  commentableType  String   @map("commentable_type")
-  commentableId    String   @map("commentable_id")
-  authorId         String   @map("author_id")
+  id               String    @id @default(cuid())
+  organizationId   String    @map("organization_id")
+  commentableType  String    @map("commentable_type")
+  commentableId    String    @map("commentable_id")
+  authorId         String    @map("author_id")
+  parentId         String?   @map("parent_id")
   body             String
-  timestampSeconds Float?   @map("timestamp_seconds")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  timestampSeconds Float?    @map("timestamp_seconds")
+  frameNumber      Int?      @map("frame_number")
+  mentionedUserIds String[]  @default([]) @map("mentioned_user_ids")
+  reactions        Json?
+  pinned           Boolean   @default(false)
+  resolvedAt       DateTime? @map("resolved_at")
+  resolvedById     String?   @map("resolved_by_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  author       User         @relation(fields: [authorId], references: [id])
+  author       User         @relation("CommentAuthor", fields: [authorId], references: [id])
+  resolvedBy   User?        @relation("CommentResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  parent       Comment?     @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      Comment[]    @relation("CommentReplies")
+  annotations  Annotation[]
 
   @@index([organizationId])
   @@index([commentableType, commentableId])
+  @@index([parentId])
   @@map("comments")
 }
 
-model Deliverable {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  projectId      String?  @map("project_id")
-  clientId       String?  @map("client_id")
-  taskId         String?  @map("task_id")
-  fileEntryId    String   @map("file_entry_id")
-  createdById    String   @map("created_by_id")
-  version        Int
-  status         String   @default("review")
-  notes          String?
-  exportSettings Json?    @map("export_settings")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+model Annotation {
+  id               String   @id @default(cuid())
+  organizationId   String   @map("organization_id")
+  deliverableId    String   @map("deliverable_id")
+  commentId        String?  @map("comment_id")
+  authorId         String   @map("author_id")
+  timestampSeconds Float    @map("timestamp_seconds")
+  frameNumber      Int?     @map("frame_number")
+  type             String
+  color            String
+  data             Json
+  createdAt        DateTime @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  project      Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  client       Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  task         Task?        @relation(fields: [taskId], references: [id], onDelete: SetNull)
-  fileEntry    FileEntry    @relation(fields: [fileEntryId], references: [id], onDelete: Cascade)
-  createdBy    User         @relation(fields: [createdById], references: [id])
+  deliverable  Deliverable  @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  comment      Comment?     @relation(fields: [commentId], references: [id], onDelete: SetNull)
+  author       User         @relation(fields: [authorId], references: [id])
+
+  @@index([deliverableId])
+  @@map("annotations")
+}
+
+model DeliverableActivity {
+  id            String   @id @default(cuid())
+  deliverableId String   @map("deliverable_id")
+  actorId       String   @map("actor_id")
+  type          String
+  fromValue     String?  @map("from_value")
+  toValue       String?  @map("to_value")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  deliverable Deliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  actor       User        @relation(fields: [actorId], references: [id])
+
+  @@index([deliverableId])
+  @@map("deliverable_activity")
+}
+
+model Deliverable {
+  id              String    @id @default(cuid())
+  organizationId  String    @map("organization_id")
+  projectId       String?   @map("project_id")
+  clientId        String?   @map("client_id")
+  taskId          String?   @map("task_id")
+  fileEntryId     String    @map("file_entry_id")
+  createdById     String    @map("created_by_id")
+  version         Int
+  status          String    @default("review")
+  notes           String?
+  rejectionReason String?   @map("rejection_reason")
+  firstReviewedAt DateTime? @map("first_reviewed_at")
+  exportSettings  Json?     @map("export_settings")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  client       Client?               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  task         Task?                 @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  fileEntry    FileEntry             @relation(fields: [fileEntryId], references: [id], onDelete: Cascade)
+  createdBy    User                  @relation(fields: [createdById], references: [id])
+  activity     DeliverableActivity[]
+  annotations  Annotation[]
 
   @@index([organizationId])
   @@index([projectId])
