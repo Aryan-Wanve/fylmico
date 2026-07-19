@@ -244,6 +244,36 @@ class DeliverablesService {
     return items;
   }
 
+  // Single-item fetch for the review workspace route (direct navigation /
+  // deep links, not just opening from an already-loaded queue list) - same
+  // self-or-manager gate as listQueue.
+  async getQueueItem(userId: string, deliverableId: string) {
+    const deliverable = await this.prisma.deliverable.findUnique({
+      where: { id: deliverableId },
+      include: queueInclude
+    });
+    if (!deliverable) {
+      throw new AppException(
+        HttpStatus.NOT_FOUND,
+        "deliverable_not_found",
+        "This deliverable does not exist."
+      );
+    }
+    if (deliverable.createdById === userId) {
+      await organizationsService.requireMembership(
+        deliverable.organizationId,
+        userId
+      );
+    } else {
+      await organizationsService.requireManagerRole(
+        deliverable.organizationId,
+        userId,
+        "view this submission"
+      );
+    }
+    return toQueueItemDto(deliverable);
+  }
+
   async getMetrics(userId: string, houseId: string) {
     await organizationsService.requireManagerRole(
       houseId,
@@ -883,7 +913,8 @@ function toDeliverableDto(deliverable: DeliverableWithRelations) {
       id: deliverable.fileEntry.id,
       name: deliverable.fileEntry.name,
       size: deliverable.fileEntry.size,
-      mimeType: deliverable.fileEntry.mimeType
+      mimeType: deliverable.fileEntry.mimeType,
+      durationSeconds: deliverable.fileEntry.durationSeconds
     },
     createdById: deliverable.createdById,
     createdByName: deliverable.createdBy.name,
@@ -923,7 +954,8 @@ function toQueueItemDto(deliverable: QueueDeliverable) {
       id: deliverable.fileEntry.id,
       name: deliverable.fileEntry.name,
       size: deliverable.fileEntry.size,
-      mimeType: deliverable.fileEntry.mimeType
+      mimeType: deliverable.fileEntry.mimeType,
+      durationSeconds: deliverable.fileEntry.durationSeconds
     },
     submittedAt: deliverable.createdAt.toISOString(),
     updatedAt: deliverable.updatedAt.toISOString(),

@@ -400,6 +400,7 @@ export type Deliverable = {
     name: string;
     size: number | null;
     mimeType: string | null;
+    durationSeconds: number | null;
   };
   createdById: string;
   createdByName: string;
@@ -519,6 +520,7 @@ export type ReviewQueueItem = {
     name: string;
     size: number | null;
     mimeType: string | null;
+    durationSeconds: number | null;
   };
   submittedAt: string;
   updatedAt: string;

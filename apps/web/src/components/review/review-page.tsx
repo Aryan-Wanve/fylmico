@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/lib/workspace-context";
 import {
-  approveDeliverable,
   bulkReviewAction,
   getReviewMetrics,
   listClients,
@@ -17,7 +17,6 @@ import {
   ReviewToolbar,
   type ReviewSortBy
 } from "@/components/review/review-toolbar";
-import { ReviewDetailPanel } from "@/components/review/review-detail-panel";
 import { RequestChangesDialog } from "@/components/review/request-changes-dialog";
 import { ReassignDialog } from "@/components/review/reassign-dialog";
 import type {
@@ -54,6 +53,7 @@ const METRIC_CARDS: {
 
 export function ReviewPage() {
   const { activeHouse } = useWorkspace();
+  const router = useRouter();
   const [items, setItems] = useState<ReviewQueueItem[]>([]);
   const [metrics, setMetrics] = useState<ReviewMetrics | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -69,7 +69,6 @@ export function ReviewPage() {
   const [sortBy, setSortBy] = useState<ReviewSortBy>("submittedAt");
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [openItemId, setOpenItemId] = useState<string | null>(null);
   const [requestChangesTarget, setRequestChangesTarget] =
     useState<Target | null>(null);
   const [reassignTarget, setReassignTarget] = useState<Target | null>(null);
@@ -172,8 +171,6 @@ export function ReviewPage() {
     return sorted;
   }, [items, projectId, clientId, editorId, status, priority, search, sortBy]);
 
-  const openItem = items.find((item) => item.id === openItemId) ?? null;
-
   function toggleSelect(id: string) {
     setSelectedIds((current) => {
       const next = new Set(current);
@@ -184,11 +181,6 @@ export function ReviewPage() {
       }
       return next;
     });
-  }
-
-  async function handleApprove(id: string) {
-    await approveDeliverable(id);
-    await refresh();
   }
 
   async function handleRequestChanges(comment: string) {
@@ -291,27 +283,13 @@ export function ReviewPage() {
             <ReviewItemCard
               item={item}
               key={item.id}
-              onOpen={() => setOpenItemId(item.id)}
+              onOpen={() => router.push(`/review/${item.id}`)}
               onToggleSelect={() => toggleSelect(item.id)}
               selected={selectedIds.has(item.id)}
             />
           ))}
         </div>
       )}
-
-      {openItem ? (
-        <ReviewDetailPanel
-          item={openItem}
-          onApprove={() => handleApprove(openItem.id)}
-          onOpenChange={(open) => {
-            if (!open) setOpenItemId(null);
-          }}
-          onReassign={() => setReassignTarget({ ids: [openItem.id] })}
-          onRequestChanges={() =>
-            setRequestChangesTarget({ ids: [openItem.id] })
-          }
-        />
-      ) : null}
 
       {requestChangesTarget ? (
         <RequestChangesDialog

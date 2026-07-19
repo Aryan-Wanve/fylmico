@@ -1054,6 +1054,12 @@ export async function deleteDeliverableAnnotation(
   );
 }
 
+export async function getReviewQueueItem(
+  deliverableId: string
+): Promise<ReviewQueueItem> {
+  return apiRequest<ReviewQueueItem>(`/deliverables/${deliverableId}`);
+}
+
 export async function listReviewQueue(filters?: {
   projectId?: string;
   clientId?: string;

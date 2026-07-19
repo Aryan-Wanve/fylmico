@@ -42,16 +42,17 @@ export function CommentThreadPanel({
   members,
   currentTimeSeconds,
   currentFrame,
-  onSeek
+  onSeek,
+  onCommentsChange
 }: {
   deliverableId: string;
   currentUserId: string;
-  currentUserName: string;
   isManager: boolean;
   members: { id: string; name: string }[];
   currentTimeSeconds?: number;
   currentFrame?: number;
   onSeek?: (seconds: number) => void;
+  onCommentsChange?: (comments: Comment[]) => void;
 }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +82,10 @@ export function CommentThreadPanel({
       cancelled = true;
     };
   }, [deliverableId]);
+
+  useEffect(() => {
+    onCommentsChange?.(comments);
+  }, [comments, onCommentsChange]);
 
   function replaceComment(updated: Comment) {
     setComments((current) =>
