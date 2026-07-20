@@ -57,7 +57,7 @@ export function HouseSwitcher() {
             <span className="truncate text-sm font-bold sm:text-base">
               {activeHouse.name}
             </span>
-            <ChevronDown className="h-4 w-4 shrink-0 text-[#667085] dark:text-[#7d8299]" />
+            <ChevronDown className="h-4 w-4 shrink-0 text-[#667085] dark:text-[#878ca0]" />
           </button>
         }
       />

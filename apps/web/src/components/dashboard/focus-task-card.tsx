@@ -162,7 +162,7 @@ export function FocusTaskCard({
   return (
     <section className="min-w-0 rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+        <span className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
           Current Task
         </span>
         <span
@@ -178,7 +178,7 @@ export function FocusTaskCard({
 
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
         <div>
-          <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
+          <span className="block text-xs text-[#667085] dark:text-[#878ca0]">
             {task.ownerType === "client" ? "Client" : "Project"}
           </span>
           <strong className="text-[#11142c] dark:text-[#f1f2f8]">
@@ -186,7 +186,7 @@ export function FocusTaskCard({
           </strong>
         </div>
         <div>
-          <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
+          <span className="block text-xs text-[#667085] dark:text-[#878ca0]">
             Deadline
           </span>
           <strong
@@ -200,7 +200,7 @@ export function FocusTaskCard({
           </strong>
         </div>
         <div>
-          <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
+          <span className="block text-xs text-[#667085] dark:text-[#878ca0]">
             Assigned By
           </span>
           <span className="flex items-center gap-1.5">
@@ -268,7 +268,7 @@ export function FocusTaskCard({
 
         <div className="grid grid-cols-2 gap-5 text-sm sm:grid-cols-3">
           <div>
-            <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
+            <span className="block text-xs text-[#667085] dark:text-[#878ca0]">
               Current Session
             </span>
             <strong className="text-base text-[#11142c] dark:text-[#f1f2f8]">
@@ -276,7 +276,7 @@ export function FocusTaskCard({
             </strong>
           </div>
           <div>
-            <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
+            <span className="block text-xs text-[#667085] dark:text-[#878ca0]">
               Today&apos;s Time
             </span>
             <strong className="text-base text-[#11142c] dark:text-[#f1f2f8]">
@@ -284,7 +284,7 @@ export function FocusTaskCard({
             </strong>
           </div>
           <div>
-            <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
+            <span className="block text-xs text-[#667085] dark:text-[#878ca0]">
               Total Time
             </span>
             <strong className="text-base text-[#11142c] dark:text-[#f1f2f8]">
@@ -322,7 +322,7 @@ export function FocusTaskCard({
           <span className="text-xs font-bold text-[#11142c] dark:text-[#f1f2f8]">
             Drive Folder
           </span>
-          <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+          <span className="text-xs text-[#667085] dark:text-[#878ca0]">
             Open in Files
           </span>
         </button>
@@ -335,7 +335,7 @@ export function FocusTaskCard({
           <span className="text-xs font-bold text-[#11142c] dark:text-[#f1f2f8]">
             Checklist
           </span>
-          <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+          <span className="text-xs text-[#667085] dark:text-[#878ca0]">
             {checklistDone} / {task.checklistItems.length} Tasks Completed
           </span>
         </button>
@@ -348,7 +348,7 @@ export function FocusTaskCard({
           <span className="text-xs font-bold text-[#11142c] dark:text-[#f1f2f8]">
             References
           </span>
-          <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+          <span className="text-xs text-[#667085] dark:text-[#878ca0]">
             {attachments.length} Files
           </span>
         </button>
@@ -361,7 +361,7 @@ export function FocusTaskCard({
           <span className="text-xs font-bold text-[#11142c] dark:text-[#f1f2f8]">
             Submit Draft
           </span>
-          <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+          <span className="text-xs text-[#667085] dark:text-[#878ca0]">
             {attachments.length > 0
               ? `Last draft: v${attachments.length}`
               : "Drag & drop or select"}
@@ -383,7 +383,7 @@ export function FocusTaskEmptyState({
       <h2 className="text-lg font-black text-[#11142c] dark:text-[#f1f2f8]">
         No active task assigned.
       </h2>
-      <p className="text-sm text-[#667085] dark:text-[#7d8299]">
+      <p className="text-sm text-[#667085] dark:text-[#878ca0]">
         You&apos;re all caught up. Check upcoming work or browse projects.
       </p>
       <button

@@ -99,7 +99,7 @@ export function ProjectGridCard({
       <div className="mt-3 flex items-center justify-between border-t border-black/5 pt-3 dark:border-white/[0.06]">
         <TeamAvatarStack members={members} teamIds={project.teamIds} />
         <span
-          className={`text-xs font-semibold ${overdue ? "text-red-600" : "text-[#667085] dark:text-[#7d8299]"}`}
+          className={`text-xs font-semibold ${overdue ? "text-red-600" : "text-[#667085] dark:text-[#878ca0]"}`}
         >
           {formatDueIn(project.dueDate)}
         </span>

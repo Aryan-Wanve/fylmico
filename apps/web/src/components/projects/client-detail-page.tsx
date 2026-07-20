@@ -208,7 +208,7 @@ export function ClientDetailPage() {
                   {client.name}
                 </h1>
                 {client.contactName ? (
-                  <span className="text-sm text-[#667085] dark:text-[#7d8299]">
+                  <span className="text-sm text-[#667085] dark:text-[#878ca0]">
                     {client.contactName}
                     {client.contactEmail ? ` • ${client.contactEmail}` : ""}
                   </span>
@@ -262,19 +262,19 @@ export function ClientDetailPage() {
         <TabsContent className="mt-4" value="overview">
           <div className="grid grid-cols-1 gap-4 rounded-2xl border border-black/[0.06] bg-white p-5 text-sm text-[#5f667d] shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] sm:grid-cols-2 dark:border-white/[0.08] dark:bg-[#171a28] dark:text-[#a8acbf]">
             <div>
-              <strong className="block text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+              <strong className="block text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
                 Phone
               </strong>
               {client.phone || "Not set"}
             </div>
             <div>
-              <strong className="block text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+              <strong className="block text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
                 Address
               </strong>
               {client.address || "Not set"}
             </div>
             <div>
-              <strong className="block text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+              <strong className="block text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
                 GST
               </strong>
               {client.gst || "Not set"}
@@ -285,7 +285,7 @@ export function ClientDetailPage() {
         <TabsContent className="mt-4" value="tasks">
           <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             {tasks.length === 0 ? (
-              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
                 No tasks are tagged to this client yet.
               </p>
             ) : (
@@ -306,7 +306,7 @@ export function ClientDetailPage() {
                       <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                         {task.title}
                       </strong>
-                      <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                      <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                         {firstAssignee?.name ?? "Unassigned"} &bull; Due{" "}
                         {task.dueDate ?? "TBD"}
                       </span>
@@ -324,7 +324,7 @@ export function ClientDetailPage() {
         <TabsContent className="mt-4" value="shoots">
           <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             {shoots.length === 0 ? (
-              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
                 No shoots scheduled yet. Schedule one from New Task &gt; Shoot.
               </p>
             ) : (
@@ -338,7 +338,7 @@ export function ClientDetailPage() {
                     <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                       {shoot.name}
                     </strong>
-                    <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                    <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                       {new Date(shoot.scheduledDate).toLocaleDateString()}
                       {shoot.callTime ? ` at ${shoot.callTime}` : ""}
                       {shoot.callTime && shoot.estFinishTime
@@ -359,7 +359,7 @@ export function ClientDetailPage() {
         <TabsContent className="mt-4" value="deliverables">
           <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             {deliverables.length === 0 ? (
-              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
                 No deliverables submitted yet. Submit a draft from an editing
                 task to create the first version.
               </p>
@@ -385,7 +385,7 @@ export function ClientDetailPage() {
         <TabsContent className="mt-4" value="calendar">
           <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             {clientEvents.length === 0 ? (
-              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
                 No calendar events are linked to this client yet.
               </p>
             ) : (
@@ -399,7 +399,7 @@ export function ClientDetailPage() {
                     <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                       {event.title}
                     </strong>
-                    <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                    <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                       {event.date} at {event.time}
                       {event.location ? ` • ${event.location}` : ""}
                     </span>

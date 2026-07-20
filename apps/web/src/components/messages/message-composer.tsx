@@ -60,7 +60,7 @@ export function MessageComposer({
         </div>
       ) : null}
       <textarea
-        className="min-h-[2.75rem] w-full resize-none bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
+        className="min-h-[2.75rem] w-full resize-none bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4] dark:text-[#f1f2f8] dark:placeholder:text-[#878ca0]"
         onChange={(event) => {
           setValue(event.target.value);
           onTyping?.();
@@ -76,7 +76,7 @@ export function MessageComposer({
         value={value}
       />
       <div className="mt-2 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-1 text-[#667085] dark:text-[#7d8299]">
+        <div className="flex items-center gap-1 text-[#667085] dark:text-[#878ca0]">
           <input
             className="hidden"
             onChange={(event) => {

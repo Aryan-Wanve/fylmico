@@ -60,7 +60,7 @@ export function RejectDialog({
             placeholder="Explain why this submission is being rejected."
             value={reason}
           />
-          <p className="text-xs text-[#667085] dark:text-[#7d8299]">
+          <p className="text-xs text-[#667085] dark:text-[#878ca0]">
             This is permanent - the submission is marked Rejected and no files
             are moved. This does not affect other versions on this task.
           </p>

@@ -10,7 +10,7 @@ export function TeamWorkloadPanel({
   return (
     <DashboardPanel title="Team Workload">
       {workload.length === 0 ? (
-        <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+        <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
           No time logged this week yet.
         </p>
       ) : (
@@ -32,7 +32,7 @@ export function TeamWorkloadPanel({
                   </span>
                 </div>
                 {member.jobTitle ? (
-                  <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                  <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                     {member.jobTitle}
                   </span>
                 ) : null}

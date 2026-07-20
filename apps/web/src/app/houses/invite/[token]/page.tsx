@@ -125,7 +125,7 @@ export default function InviteAcceptPage({
               </Button>
             ) : (
               <div className="mt-6 grid gap-2">
-                <p className="text-xs text-[#667085] dark:text-[#7d8299]">
+                <p className="text-xs text-[#667085] dark:text-[#878ca0]">
                   Log in or sign up, then come back to this link to accept.
                 </p>
                 <Link

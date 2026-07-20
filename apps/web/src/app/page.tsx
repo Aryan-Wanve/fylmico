@@ -376,7 +376,7 @@ export default function LandingPage() {
               )}
             </div>
             {isAuthenticated ? null : (
-              <p className="mt-3 text-xs font-medium text-[#7d8299]">
+              <p className="mt-3 text-xs font-medium text-[#878ca0]">
                 No credit card required
               </p>
             )}
@@ -397,7 +397,7 @@ export default function LandingPage() {
                     className={`truncate rounded-lg px-2 py-1.5 text-[0.65rem] font-semibold ${
                       item.id === "projects"
                         ? "bg-[#8b5cf6]/15 text-[#a996ff]"
-                        : "text-[#7d8299]"
+                        : "text-[#878ca0]"
                     }`}
                     key={item.id}
                   >
@@ -409,7 +409,7 @@ export default function LandingPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-black">Projects</span>
                   <div className="flex items-center gap-2">
-                    <Bell className="h-3.5 w-3.5 text-[#7d8299]" />
+                    <Bell className="h-3.5 w-3.5 text-[#878ca0]" />
                     <Image
                       alt=""
                       className="rounded-full object-cover"
@@ -419,7 +419,7 @@ export default function LandingPage() {
                     />
                   </div>
                 </div>
-                <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-[0.65rem] text-[#7d8299]">
+                <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-[0.65rem] text-[#878ca0]">
                   Search projects...
                 </div>
                 <div className="mt-2 flex gap-1.5">
@@ -429,7 +429,7 @@ export default function LandingPage() {
                         className={`rounded-md px-2 py-1 text-[0.6rem] font-bold ${
                           index === 0
                             ? "bg-[#8b5cf6] text-white"
-                            : "bg-white/[0.04] text-[#7d8299]"
+                            : "bg-white/[0.04] text-[#878ca0]"
                         }`}
                         key={tab}
                       >
@@ -455,7 +455,7 @@ export default function LandingPage() {
                       >
                         {project.status}
                       </span>
-                      <p className="mt-1 truncate text-[0.55rem] text-[#7d8299]">
+                      <p className="mt-1 truncate text-[0.55rem] text-[#878ca0]">
                         {project.category}
                       </p>
                       <div className="mt-1.5 flex items-center justify-between">
@@ -496,7 +496,7 @@ export default function LandingPage() {
           {...fadeUp(0.1)}
           className="mx-auto max-w-6xl px-6 pb-16 sm:px-10"
         >
-          <p className="text-center text-xs font-bold tracking-widest text-[#7d8299] uppercase">
+          <p className="text-center text-xs font-bold tracking-widest text-[#878ca0] uppercase">
             Trusted by creative teams at
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-70 grayscale">
@@ -512,7 +512,7 @@ export default function LandingPage() {
                 </span>
               );
             })}
-            <span className="text-sm font-semibold text-[#7d8299]">
+            <span className="text-sm font-semibold text-[#878ca0]">
               &amp; more
             </span>
           </div>
@@ -668,7 +668,7 @@ export default function LandingPage() {
                   />
                   <div>
                     <p className="text-sm font-bold">{item.name}</p>
-                    <p className="text-xs text-[#7d8299]">{item.role}</p>
+                    <p className="text-xs text-[#878ca0]">{item.role}</p>
                   </div>
                 </figcaption>
               </motion.figure>
@@ -737,7 +737,7 @@ export default function LandingPage() {
               <Sparkles className="h-5 w-5 text-[#8b5cf6]" />
               <span className="text-lg font-black">fylmico</span>
             </div>
-            <p className="mt-2 max-w-xs text-sm text-[#7d8299]">
+            <p className="mt-2 max-w-xs text-sm text-[#878ca0]">
               The Operating System for Creative Production.
             </p>
             <div className="mt-5 flex items-center gap-3">
@@ -759,7 +759,7 @@ export default function LandingPage() {
                 {links.map((link) => (
                   <li key={link.label}>
                     <a
-                      className="text-sm text-[#7d8299] hover:text-white"
+                      className="text-sm text-[#878ca0] hover:text-white"
                       href={link.href}
                     >
                       {link.label}
@@ -772,14 +772,14 @@ export default function LandingPage() {
         </div>
 
         <div className="mx-auto mt-10 flex max-w-6xl flex-col items-center justify-between gap-3 border-t border-white/[0.06] pt-6 sm:flex-row">
-          <p className="text-xs text-[#7d8299]">
+          <p className="text-xs text-[#878ca0]">
             &copy; 2026 Fylmico. All rights reserved.
           </p>
           <div className="flex items-center gap-5">
-            <a className="text-xs text-[#7d8299] hover:text-white" href="#">
+            <a className="text-xs text-[#878ca0] hover:text-white" href="#">
               Privacy Policy
             </a>
-            <a className="text-xs text-[#7d8299] hover:text-white" href="#">
+            <a className="text-xs text-[#878ca0] hover:text-white" href="#">
               Terms of Service
             </a>
           </div>

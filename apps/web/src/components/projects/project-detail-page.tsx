@@ -287,7 +287,7 @@ export function ProjectDetailPage() {
               <h1 className="truncate text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
                 {project.title}
               </h1>
-              <span className="text-sm text-[#667085] dark:text-[#7d8299]">
+              <span className="text-sm text-[#667085] dark:text-[#878ca0]">
                 {project.type ?? "No type"} &bull; {project.genre || "No genre"}{" "}
                 &bull; {STATUS_LABELS[project.status]}
               </span>
@@ -330,7 +330,7 @@ export function ProjectDetailPage() {
               </span>
             </div>
             <span
-              className={`text-xs font-semibold ${overdue ? "text-red-600" : "text-[#667085] dark:text-[#7d8299]"}`}
+              className={`text-xs font-semibold ${overdue ? "text-red-600" : "text-[#667085] dark:text-[#878ca0]"}`}
             >
               Due {project.dueDate ?? "TBD"}
             </span>
@@ -372,7 +372,7 @@ export function ProjectDetailPage() {
         <TabsContent className="mt-4" value="tasks">
           <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             {tasks.length === 0 ? (
-              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
                 No tasks are tagged to this project yet.
               </p>
             ) : (
@@ -393,7 +393,7 @@ export function ProjectDetailPage() {
                       <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                         {task.title}
                       </strong>
-                      <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                      <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                         {firstAssignee?.name ?? "Unassigned"} &bull; Due{" "}
                         {task.dueDate ?? "TBD"}
                       </span>
@@ -421,7 +421,7 @@ export function ProjectDetailPage() {
             </div>
             <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
               {shoots.length === 0 ? (
-                <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+                <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
                   No shoots scheduled yet.
                 </p>
               ) : (
@@ -435,7 +435,7 @@ export function ProjectDetailPage() {
                       <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                         {shoot.name}
                       </strong>
-                      <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                      <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                         {new Date(shoot.scheduledDate).toLocaleDateString()}
                         {shoot.callTime ? ` at ${shoot.callTime}` : ""}
                         {shoot.callTime && shoot.estFinishTime
@@ -457,7 +457,7 @@ export function ProjectDetailPage() {
         <TabsContent className="mt-4" value="deliverables">
           <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             {deliverables.length === 0 ? (
-              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
                 No deliverables submitted yet. Submit a draft from an editing
                 task to create the first version.
               </p>
@@ -483,7 +483,7 @@ export function ProjectDetailPage() {
         <TabsContent className="mt-4" value="calendar">
           <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             {projectEvents.length === 0 ? (
-              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+              <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
                 No calendar events are linked to this project yet.
               </p>
             ) : (
@@ -497,7 +497,7 @@ export function ProjectDetailPage() {
                     <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                       {event.title}
                     </strong>
-                    <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                    <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                       {event.date} at {event.time}
                       {event.location ? ` • ${event.location}` : ""}
                     </span>
@@ -511,11 +511,11 @@ export function ProjectDetailPage() {
         <TabsContent className="mt-4" value="comments">
           <div className="grid gap-4 rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             {commentsLoading ? (
-              <p className="text-center text-sm text-[#667085] dark:text-[#7d8299]">
+              <p className="text-center text-sm text-[#667085] dark:text-[#878ca0]">
                 Loading comments...
               </p>
             ) : comments.length === 0 ? (
-              <p className="text-center text-sm text-[#667085] dark:text-[#7d8299]">
+              <p className="text-center text-sm text-[#667085] dark:text-[#878ca0]">
                 No comments yet. Start the discussion below.
               </p>
             ) : (
@@ -532,7 +532,7 @@ export function ProjectDetailPage() {
                         <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                           {comment.authorName}
                         </strong>
-                        <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                        <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                           {formatRelativeTime(comment.createdAt)}
                         </span>
                       </div>

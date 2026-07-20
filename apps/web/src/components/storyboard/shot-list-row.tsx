@@ -34,7 +34,7 @@ export function ShotListRow({
         <strong className="block truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
           Shot {index + 1}
         </strong>
-        <span className="block truncate text-xs text-[#667085] dark:text-[#7d8299]">
+        <span className="block truncate text-xs text-[#667085] dark:text-[#878ca0]">
           {shot.description}
         </span>
       </span>

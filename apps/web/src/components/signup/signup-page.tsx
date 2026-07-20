@@ -89,10 +89,10 @@ export function SignupPage() {
               Full name
             </Label>
             <div className="relative">
-              <User className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e] dark:text-[#7d8299]" />
+              <User className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e] dark:text-[#878ca0]" />
               <Input
                 autoComplete="name"
-                className="h-[3.55rem] rounded-lg border-[#11142c1c] pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
+                className="h-[3.55rem] rounded-lg border-[#11142c1c] pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a] dark:text-[#f1f2f8] dark:placeholder:text-[#878ca0]"
                 id="signup-name"
                 name="name"
                 placeholder="Enter your full name"
@@ -109,10 +109,10 @@ export function SignupPage() {
               Email address
             </Label>
             <div className="relative">
-              <Mail className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e] dark:text-[#7d8299]" />
+              <Mail className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e] dark:text-[#878ca0]" />
               <Input
                 autoComplete="email"
-                className="h-[3.55rem] rounded-lg border-[#11142c1c] pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
+                className="h-[3.55rem] rounded-lg border-[#11142c1c] pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a] dark:text-[#f1f2f8] dark:placeholder:text-[#878ca0]"
                 id="signup-email"
                 name="email"
                 placeholder="Enter your email"
@@ -129,10 +129,10 @@ export function SignupPage() {
               Password
             </Label>
             <div className="relative">
-              <Lock className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e] dark:text-[#7d8299]" />
+              <Lock className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e] dark:text-[#878ca0]" />
               <Input
                 autoComplete="new-password"
-                className="h-[3.55rem] rounded-lg border-[#11142c1c] pr-11 pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
+                className="h-[3.55rem] rounded-lg border-[#11142c1c] pr-11 pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a] dark:text-[#f1f2f8] dark:placeholder:text-[#878ca0]"
                 id="signup-password"
                 name="password"
                 placeholder="Create a password"
@@ -142,7 +142,7 @@ export function SignupPage() {
                 aria-label={
                   isPasswordVisible ? "Hide password" : "Show password"
                 }
-                className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[#8a8e9e] dark:text-[#7d8299]"
+                className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[#8a8e9e] dark:text-[#878ca0]"
                 onClick={() => setIsPasswordVisible((value) => !value)}
                 type="button"
               >
@@ -163,10 +163,10 @@ export function SignupPage() {
               Confirm password
             </Label>
             <div className="relative">
-              <Lock className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e] dark:text-[#7d8299]" />
+              <Lock className="pointer-events-none absolute top-1/2 left-3.5 h-[1.1rem] w-[1.1rem] -translate-y-1/2 text-[#8a8e9e] dark:text-[#878ca0]" />
               <Input
                 autoComplete="new-password"
-                className="h-[3.55rem] rounded-lg border-[#11142c1c] pr-11 pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
+                className="h-[3.55rem] rounded-lg border-[#11142c1c] pr-11 pl-11 text-[#15172b] shadow-[0_0.65rem_1.6rem_rgba(42,39,84,0.04)] placeholder:font-semibold placeholder:text-[#9296a4] focus-visible:border-[#654cff8c] focus-visible:ring-[#654cff1a] dark:text-[#f1f2f8] dark:placeholder:text-[#878ca0]"
                 id="signup-confirm-password"
                 name="confirmPassword"
                 placeholder="Re-enter your password"
@@ -176,7 +176,7 @@ export function SignupPage() {
                 aria-label={
                   isConfirmPasswordVisible ? "Hide password" : "Show password"
                 }
-                className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[#8a8e9e] dark:text-[#7d8299]"
+                className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[#8a8e9e] dark:text-[#878ca0]"
                 onClick={() => setIsConfirmPasswordVisible((value) => !value)}
                 type="button"
               >

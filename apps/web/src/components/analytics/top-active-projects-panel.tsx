@@ -10,7 +10,7 @@ export function TopActiveProjectsPanel({
   return (
     <DashboardPanel title="Top Active Projects">
       {projects.length === 0 ? (
-        <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+        <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
           No active projects yet.
         </p>
       ) : (

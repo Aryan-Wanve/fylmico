@@ -27,7 +27,7 @@ export function UpcomingEventsPanel({ events }: { events: CalendarEvent[] }) {
   return (
     <DashboardPanel title="Upcoming (Next 7 Days)">
       {upcoming.length === 0 ? (
-        <p className="px-6 py-8 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+        <p className="px-6 py-8 text-center text-sm text-[#667085] dark:text-[#878ca0]">
           No events in the next 7 days.
         </p>
       ) : (
@@ -44,7 +44,7 @@ export function UpcomingEventsPanel({ events }: { events: CalendarEvent[] }) {
                 <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                   {event.title}
                 </strong>
-                <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                   {formatRelativeDay(event.date, todayStart)}, {event.time}
                 </span>
               </div>

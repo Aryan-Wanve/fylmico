@@ -35,7 +35,7 @@ export function ProjectAnalyticsPanel({ projectId }: { projectId: string }) {
 
   if (!analytics) {
     return (
-      <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+      <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
         Loading analytics...
       </p>
     );

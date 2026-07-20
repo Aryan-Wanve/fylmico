@@ -13,7 +13,7 @@ export function ProjectProgressPanel({
     <DashboardPanel title="Hours Logged by Project">
       <div className="p-6">
         {series.length === 0 ? (
-          <p className="py-10 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+          <p className="py-10 text-center text-sm text-[#667085] dark:text-[#878ca0]">
             Log time against a project to see it charted here.
           </p>
         ) : (

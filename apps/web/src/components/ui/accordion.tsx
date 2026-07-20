@@ -38,7 +38,7 @@ function AccordionTrigger({
         {...props}
       >
         {children}
-        <ChevronDown className="h-4 w-4 shrink-0 text-[#667085] transition-transform duration-200 group-data-[panel-open]/accordion-trigger:rotate-180 dark:text-[#7d8299]" />
+        <ChevronDown className="h-4 w-4 shrink-0 text-[#667085] transition-transform duration-200 group-data-[panel-open]/accordion-trigger:rotate-180 dark:text-[#878ca0]" />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   );

@@ -19,7 +19,7 @@ export function TaskProgressTracker({
                   ? "bg-[#16c784] text-white"
                   : stage.state === "active"
                     ? "bg-[var(--fylmico-accent)] text-white"
-                    : "bg-black/[0.06] text-[#667085] dark:bg-white/[0.08] dark:text-[#7d8299]"
+                    : "bg-black/[0.06] text-[#667085] dark:bg-white/[0.08] dark:text-[#878ca0]"
               }`}
             >
               {stage.state === "done" ? "✓" : index + 1}
@@ -27,7 +27,7 @@ export function TaskProgressTracker({
             <span
               className={`w-[5.5rem] text-[0.65rem] leading-tight font-semibold ${
                 stage.state === "pending"
-                  ? "text-[#667085] dark:text-[#7d8299]"
+                  ? "text-[#667085] dark:text-[#878ca0]"
                   : "text-[#11142c] dark:text-[#f1f2f8]"
               }`}
             >

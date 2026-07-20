@@ -120,7 +120,7 @@ export function ScriptEditor({
           value={title}
         />
         <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+          <span className="text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
             {status === "saving"
               ? "Saving..."
               : status === "saved"
@@ -128,7 +128,7 @@ export function ScriptEditor({
                 : ""}
           </span>
           <button
-            className="grid h-8 w-8 place-items-center rounded-lg text-[#667085] transition hover:bg-red-50 hover:text-red-600 dark:text-[#7d8299] dark:hover:bg-red-500/10"
+            className="grid h-8 w-8 place-items-center rounded-lg text-[#667085] transition hover:bg-red-50 hover:text-red-600 dark:text-[#878ca0] dark:hover:bg-red-500/10"
             onClick={onDelete}
             title="Delete script"
             type="button"
@@ -139,7 +139,7 @@ export function ScriptEditor({
       </div>
 
       <label className="flex items-center gap-2 text-sm">
-        <span className="font-semibold text-[#667085] dark:text-[#7d8299]">
+        <span className="font-semibold text-[#667085] dark:text-[#878ca0]">
           Project
         </span>
         <Select

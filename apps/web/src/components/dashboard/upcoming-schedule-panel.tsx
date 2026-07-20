@@ -84,17 +84,17 @@ export function UpcomingSchedulePanel() {
                 <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                   {event.title}
                 </strong>
-                <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                   {event.date}
                 </span>
               </div>
-              <span className="text-xs font-medium text-[#667085] dark:text-[#7d8299]">
+              <span className="text-xs font-medium text-[#667085] dark:text-[#878ca0]">
                 {event.location ?? ""}
               </span>
             </button>
           ))
         ) : (
-          <p className="px-6 py-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+          <p className="px-6 py-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
             Nothing scheduled yet.
           </p>
         )}

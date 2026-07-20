@@ -66,7 +66,7 @@ export function StoryboardToolbar({
               >
                 <span className="h-2 w-2 rounded-full bg-[var(--fylmico-accent)]" />
                 {activeProjectTitle}
-                <ChevronDown className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
+                <ChevronDown className="h-4 w-4 text-[#667085] dark:text-[#878ca0]" />
               </button>
             }
           />

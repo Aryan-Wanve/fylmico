@@ -39,7 +39,7 @@ export function BoardsPanel({
           </strong>
           <button
             aria-label="New board"
-            className="grid h-6 w-6 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:bg-white/[0.06] dark:hover:text-[#c7cad9]"
+            className="grid h-6 w-6 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] hover:text-[#4b5268] dark:text-[#878ca0] dark:hover:bg-white/[0.06] dark:hover:text-[#c7cad9]"
             onClick={onNewBoard}
             type="button"
           >
@@ -69,7 +69,7 @@ export function BoardsPanel({
                     className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${
                       selected
                         ? "bg-[var(--fylmico-accent)] text-white"
-                        : "bg-black/[0.04] text-[#667085] dark:bg-white/[0.06] dark:text-[#7d8299]"
+                        : "bg-black/[0.04] text-[#667085] dark:bg-white/[0.06] dark:text-[#878ca0]"
                     }`}
                   >
                     <LayoutGrid className="h-4 w-4" />
@@ -80,7 +80,7 @@ export function BoardsPanel({
                     >
                       {board.name}
                     </strong>
-                    <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                    <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                       {board.shots.length} frames
                     </span>
                   </span>
@@ -90,7 +90,7 @@ export function BoardsPanel({
                     render={
                       <button
                         aria-label="Board actions"
-                        className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[#667085] hover:bg-black/[0.06] dark:text-[#7d8299] dark:hover:bg-white/[0.08]"
+                        className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[#667085] hover:bg-black/[0.06] dark:text-[#878ca0] dark:hover:bg-white/[0.08]"
                         type="button"
                       >
                         <MoreVertical className="h-4 w-4" />
@@ -114,7 +114,7 @@ export function BoardsPanel({
 
       <div className="grid gap-3 rounded-2xl border border-black/[0.06] bg-white p-4 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-[#667085] dark:text-[#7d8299]">
+          <span className="text-[#667085] dark:text-[#878ca0]">
             Total Frames
           </span>
           <strong className="text-[#11142c] dark:text-[#f1f2f8]">
@@ -122,7 +122,7 @@ export function BoardsPanel({
           </strong>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-[#667085] dark:text-[#7d8299]">
+          <span className="text-[#667085] dark:text-[#878ca0]">
             Total Boards
           </span>
           <strong className="text-[#11142c] dark:text-[#f1f2f8]">
@@ -130,7 +130,7 @@ export function BoardsPanel({
           </strong>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-[#667085] dark:text-[#7d8299]">
+          <span className="text-[#667085] dark:text-[#878ca0]">
             Last Updated
           </span>
           <strong className="text-[#11142c] dark:text-[#f1f2f8]">

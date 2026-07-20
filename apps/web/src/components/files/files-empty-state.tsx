@@ -9,7 +9,7 @@ export function FilesEmptyState() {
       <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
         This folder is empty
       </strong>
-      <p className="max-w-xs text-sm text-[#667085] dark:text-[#7d8299]">
+      <p className="max-w-xs text-sm text-[#667085] dark:text-[#878ca0]">
         Upload files or create a new folder to get started.
       </p>
     </div>

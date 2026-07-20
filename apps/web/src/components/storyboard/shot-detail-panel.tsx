@@ -31,7 +31,7 @@ export function ShotDetailPanel({
         </strong>
         <button
           aria-label="Close shot details"
-          className="grid h-7 w-7 place-items-center rounded-full text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+          className="grid h-7 w-7 place-items-center rounded-full text-[#667085] hover:bg-black/[0.04] dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
           onClick={onClose}
           type="button"
         >
@@ -74,7 +74,7 @@ export function ShotDetailPanel({
           </strong>
 
           <label className="mt-3 grid gap-1">
-            <span className="text-xs font-bold text-[#667085] uppercase dark:text-[#7d8299]">
+            <span className="text-xs font-bold text-[#667085] uppercase dark:text-[#878ca0]">
               Camera Angle
             </span>
             <input
@@ -88,7 +88,7 @@ export function ShotDetailPanel({
           </label>
 
           <label className="mt-3 grid gap-1">
-            <span className="text-xs font-bold text-[#667085] uppercase dark:text-[#7d8299]">
+            <span className="text-xs font-bold text-[#667085] uppercase dark:text-[#878ca0]">
               Description
             </span>
             <textarea
@@ -101,7 +101,7 @@ export function ShotDetailPanel({
           </label>
 
           <label className="mt-3 grid gap-1">
-            <span className="text-xs font-bold text-[#667085] uppercase dark:text-[#7d8299]">
+            <span className="text-xs font-bold text-[#667085] uppercase dark:text-[#878ca0]">
               Notes
             </span>
             <textarea

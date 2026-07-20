@@ -54,9 +54,9 @@ export function CrewsToolbar({
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex h-10 items-center gap-2 rounded-lg border border-black/10 bg-white px-3.5 dark:border-white/10 dark:bg-[#171a28]">
-          <Search className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
+          <Search className="h-4 w-4 text-[#667085] dark:text-[#878ca0]" />
           <input
-            className="h-full w-48 bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
+            className="h-full w-48 bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4] dark:text-[#f1f2f8] dark:placeholder:text-[#878ca0]"
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Search crew members..."
             type="search"

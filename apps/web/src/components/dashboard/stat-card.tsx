@@ -42,7 +42,7 @@ export function StatCard({
           {value}
         </span>
         <p
-          className={`mt-1 text-xs font-semibold ${noteTone === "positive" ? "text-emerald-600" : "text-[#667085] dark:text-[#7d8299]"}`}
+          className={`mt-1 text-xs font-semibold ${noteTone === "positive" ? "text-emerald-600" : "text-[#667085] dark:text-[#878ca0]"}`}
         >
           {note}
         </p>

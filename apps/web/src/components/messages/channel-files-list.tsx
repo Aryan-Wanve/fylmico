@@ -23,7 +23,7 @@ export function ChannelFilesList({
 }) {
   if (files.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+      <p className="py-10 text-center text-sm text-[#667085] dark:text-[#878ca0]">
         No files shared in this channel yet.
       </p>
     );
@@ -43,13 +43,13 @@ export function ChannelFilesList({
             <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
               {file.name}
             </strong>
-            <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs text-[#667085] dark:text-[#878ca0]">
               {formatSize(file.size)} &bull; {file.uploadedByName}
             </span>
           </span>
           <button
             aria-label={`Download ${file.name}`}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#667085] hover:bg-black/[0.04] dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
             onClick={() => onDownload(file.id)}
             type="button"
           >

@@ -73,7 +73,7 @@ export function AppSidebar({
           {!compact ? (
             <button
               aria-label="Close menu"
-              className="grid h-8 w-8 place-items-center rounded-lg text-[#667085] hover:bg-black/[0.04] lg:hidden dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+              className="grid h-8 w-8 place-items-center rounded-lg text-[#667085] hover:bg-black/[0.04] lg:hidden dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
               onClick={onCloseMobile}
               type="button"
             >

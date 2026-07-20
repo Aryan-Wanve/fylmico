@@ -97,7 +97,7 @@ export function AnalyticsPage() {
 
   if (!analytics) {
     return (
-      <div className="p-8 text-sm text-[#667085] dark:text-[#7d8299]">
+      <div className="p-8 text-sm text-[#667085] dark:text-[#878ca0]">
         Loading analytics…
       </div>
     );

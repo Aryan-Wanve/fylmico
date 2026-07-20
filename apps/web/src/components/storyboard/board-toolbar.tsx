@@ -38,7 +38,7 @@ export function BoardToolbar({
         <h2 className="text-lg font-black text-[#11142c] dark:text-[#f1f2f8]">
           {board.name}
         </h2>
-        <p className="text-sm text-[#667085] dark:text-[#7d8299]">
+        <p className="text-sm text-[#667085] dark:text-[#878ca0]">
           {board.shots.length} frames &bull; Updated{" "}
           {formatRelativeTime(board.updatedAt)}
         </p>
@@ -85,7 +85,7 @@ export function BoardToolbar({
             className={`grid h-7 w-8 place-items-center rounded-md ${
               viewMode === "grid"
                 ? "bg-white text-[#11142c] shadow-sm dark:bg-[#171a28] dark:text-[#f1f2f8]"
-                : "text-[#667085] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:text-[#c7cad9]"
+                : "text-[#667085] hover:text-[#4b5268] dark:text-[#878ca0] dark:hover:text-[#c7cad9]"
             }`}
             onClick={() => onViewModeChange("grid")}
             type="button"
@@ -97,7 +97,7 @@ export function BoardToolbar({
             className={`grid h-7 w-8 place-items-center rounded-md ${
               viewMode === "list"
                 ? "bg-white text-[#11142c] shadow-sm dark:bg-[#171a28] dark:text-[#f1f2f8]"
-                : "text-[#667085] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:text-[#c7cad9]"
+                : "text-[#667085] hover:text-[#4b5268] dark:text-[#878ca0] dark:hover:text-[#c7cad9]"
             }`}
             onClick={() => onViewModeChange("list")}
             type="button"
@@ -110,7 +110,7 @@ export function BoardToolbar({
           <div className="flex items-center gap-2">
             <button
               aria-label="Zoom out"
-              className="grid h-7 w-7 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] disabled:opacity-40 dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+              className="grid h-7 w-7 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] disabled:opacity-40 dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
               disabled={zoom <= 0}
               onClick={() => onZoomChange(Math.max(0, zoom - 25))}
               type="button"
@@ -129,7 +129,7 @@ export function BoardToolbar({
             />
             <button
               aria-label="Zoom in"
-              className="grid h-7 w-7 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] disabled:opacity-40 dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+              className="grid h-7 w-7 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] disabled:opacity-40 dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
               disabled={zoom >= 100}
               onClick={() => onZoomChange(Math.min(100, zoom + 25))}
               type="button"

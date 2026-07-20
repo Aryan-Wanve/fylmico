@@ -274,7 +274,7 @@ export function ProfileSection() {
           {isEditing ? (
             <div className="grid min-w-[16rem] flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="grid gap-1.5">
-                <Label className="text-xs font-bold text-[#667085] uppercase dark:text-[#7d8299]">
+                <Label className="text-xs font-bold text-[#667085] uppercase dark:text-[#878ca0]">
                   Full Name
                 </Label>
                 <Input
@@ -283,7 +283,7 @@ export function ProfileSection() {
                 />
               </label>
               <label className="grid gap-1.5">
-                <Label className="text-xs font-bold text-[#667085] uppercase dark:text-[#7d8299]">
+                <Label className="text-xs font-bold text-[#667085] uppercase dark:text-[#878ca0]">
                   Username
                 </Label>
                 <Input
@@ -418,14 +418,14 @@ export function ProfileSection() {
                           </Badge>
                         ) : null}
                       </span>
-                      <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                      <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                         IP {session.ipAddress ?? "unknown"}
                       </span>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
                     <span
-                      className={`text-xs font-semibold ${session.current ? "text-emerald-600" : "text-[#667085] dark:text-[#7d8299]"}`}
+                      className={`text-xs font-semibold ${session.current ? "text-emerald-600" : "text-[#667085] dark:text-[#878ca0]"}`}
                     >
                       {session.current
                         ? "Active now"
@@ -445,7 +445,7 @@ export function ProfileSection() {
                         render={
                           <button
                             aria-label="Session actions"
-                            className="grid h-7 w-7 place-items-center rounded-full text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+                            className="grid h-7 w-7 place-items-center rounded-full text-[#667085] hover:bg-black/[0.04] dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
                             type="button"
                           >
                             <MoreVertical className="h-4 w-4" />
@@ -467,7 +467,7 @@ export function ProfileSection() {
               );
             })
           ) : (
-            <p className="py-4 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+            <p className="py-4 text-center text-sm text-[#667085] dark:text-[#878ca0]">
               No active sessions.
             </p>
           )}
@@ -486,7 +486,7 @@ function ProfileField({
 }) {
   return (
     <div className="flex items-center gap-3 text-sm">
-      <span className="w-24 shrink-0 text-[#667085] dark:text-[#7d8299]">
+      <span className="w-24 shrink-0 text-[#667085] dark:text-[#878ca0]">
         {label}
       </span>
       <span className="min-w-0 font-semibold text-[#11142c] dark:text-[#f1f2f8]">

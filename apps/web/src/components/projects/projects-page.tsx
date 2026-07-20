@@ -311,7 +311,7 @@ export function ProjectsPage() {
       </h2>
       {!clientsLoading && clients.length === 0 ? (
         <div className="grid place-items-center gap-2 rounded-2xl border border-black/[0.06] bg-white p-16 text-center dark:border-white/[0.08] dark:bg-[#171a28]">
-          <p className="text-sm text-[#667085] dark:text-[#7d8299]">
+          <p className="text-sm text-[#667085] dark:text-[#878ca0]">
             No clients yet. Add one to start tracking work directly for them.
           </p>
         </div>

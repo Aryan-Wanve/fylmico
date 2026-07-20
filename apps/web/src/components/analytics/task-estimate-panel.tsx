@@ -16,7 +16,7 @@ export function TaskEstimatePanel({
   return (
     <DashboardPanel title="Estimate vs Actual">
       {estimatedMinutes === 0 && actualMinutes === 0 ? (
-        <p className="py-10 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+        <p className="py-10 text-center text-sm text-[#667085] dark:text-[#878ca0]">
           Add estimates and track time on tasks to see this comparison.
         </p>
       ) : (

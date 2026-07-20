@@ -316,7 +316,7 @@ export function TaskDetailPanel({
           </div>
 
           <section className="grid gap-1.5">
-            <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+            <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
               Description
             </h3>
             <TaskDescriptionEditor
@@ -354,7 +354,7 @@ export function TaskDetailPanel({
 
           <section className="grid gap-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+              <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
                 Assignees
               </h3>
               <button
@@ -416,7 +416,7 @@ export function TaskDetailPanel({
 
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+              <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
                 Subtasks
               </h3>
               <div className="grid gap-1">
@@ -448,7 +448,7 @@ export function TaskDetailPanel({
             </div>
 
             <div className="grid gap-1.5">
-              <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+              <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
                 Checklist{" "}
                 {task.checklistItems.length ? `(${task.progress}%)` : ""}
               </h3>
@@ -502,7 +502,7 @@ export function TaskDetailPanel({
           </section>
 
           <section className="grid gap-1.5">
-            <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+            <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
               Blocked by
             </h3>
             <div className="flex flex-wrap gap-1.5">
@@ -571,7 +571,7 @@ export function TaskDetailPanel({
           </section>
 
           <section className="grid gap-1.5">
-            <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+            <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
               Links
             </h3>
             <div className="flex flex-wrap gap-1.5 text-xs">
@@ -639,7 +639,7 @@ export function TaskDetailPanel({
 
           <section className="grid gap-1.5">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+              <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
                 Time Tracking
               </h3>
               <button
@@ -655,7 +655,7 @@ export function TaskDetailPanel({
                 {runningEntry ? "Stop" : "Start"} timer
               </button>
             </div>
-            <p className="text-xs text-[#667085] dark:text-[#7d8299]">
+            <p className="text-xs text-[#667085] dark:text-[#878ca0]">
               {Math.round(totalMinutes)}m logged
               {task.estimatedMinutes
                 ? ` of ${task.estimatedMinutes}m estimated`
@@ -664,7 +664,7 @@ export function TaskDetailPanel({
           </section>
 
           <section className="grid gap-1.5">
-            <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+            <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
               Attachments
             </h3>
             <div className="grid gap-1">
@@ -689,14 +689,14 @@ export function TaskDetailPanel({
           </section>
 
           <section className="grid gap-2">
-            <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+            <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
               Activity &amp; Comments
             </h3>
             <div className="grid gap-2.5">
               {timeline.map((entry) =>
                 entry.kind === "activity" ? (
                   <p
-                    className="text-xs text-[#667085] dark:text-[#7d8299]"
+                    className="text-xs text-[#667085] dark:text-[#878ca0]"
                     key={`a-${entry.item.id}`}
                   >
                     <strong className="text-[#4b5268] dark:text-[#c7cad9]">

@@ -23,7 +23,7 @@ export function TaskGroupHeader({
         type="button"
       >
         <ChevronDown
-          className={`h-4 w-4 text-[#667085] transition-transform dark:text-[#7d8299] ${collapsed ? "-rotate-90" : ""}`}
+          className={`h-4 w-4 text-[#667085] transition-transform dark:text-[#878ca0] ${collapsed ? "-rotate-90" : ""}`}
         />
         <span className={`h-2.5 w-2.5 rounded-full ${dotClassName}`} />
         <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">

@@ -51,7 +51,7 @@ function TaskKanbanCard({
           className={`text-xs font-semibold ${
             due.overdue && task.status !== "completed"
               ? "text-red-600"
-              : "text-[#667085] dark:text-[#7d8299]"
+              : "text-[#667085] dark:text-[#878ca0]"
           }`}
         >
           {due.label}
@@ -60,7 +60,7 @@ function TaskKanbanCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center -space-x-2">
           {task.assignees.length === 0 ? (
-            <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs text-[#667085] dark:text-[#878ca0]">
               Unassigned
             </span>
           ) : (
@@ -77,7 +77,7 @@ function TaskKanbanCard({
           )}
         </div>
         {task.commentCount ? (
-          <span className="flex items-center gap-1 text-xs text-[#667085] dark:text-[#7d8299]">
+          <span className="flex items-center gap-1 text-xs text-[#667085] dark:text-[#878ca0]">
             <MessageSquare className="h-3 w-3" />
             {task.commentCount}
           </span>

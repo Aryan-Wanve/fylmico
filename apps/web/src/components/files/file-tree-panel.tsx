@@ -44,7 +44,7 @@ export function FileTreePanel({
 
   return (
     <div className="grid min-h-0 content-start gap-2 rounded-2xl border border-black/[0.06] bg-white p-3 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
-      <div className="flex items-center gap-2 px-1 pb-1 text-xs font-semibold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+      <div className="flex items-center gap-2 px-1 pb-1 text-xs font-semibold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
         <FolderTree className="h-3.5 w-3.5" />
         Folders
       </div>
@@ -64,11 +64,11 @@ export function FileTreePanel({
 
       <div className="grid gap-0.5">
         {rootFolders === null ? (
-          <p className="px-2 py-1.5 text-xs text-[#667085] dark:text-[#7d8299]">
+          <p className="px-2 py-1.5 text-xs text-[#667085] dark:text-[#878ca0]">
             Loading...
           </p>
         ) : rootFolders.length === 0 ? (
-          <p className="px-2 py-1.5 text-xs text-[#667085] dark:text-[#7d8299]">
+          <p className="px-2 py-1.5 text-xs text-[#667085] dark:text-[#878ca0]">
             No folders yet.
           </p>
         ) : (
@@ -145,7 +145,7 @@ function FileTreeNode({
       >
         <button
           aria-label={expanded ? "Collapse folder" : "Expand folder"}
-          className="grid h-5 w-5 shrink-0 place-items-center text-[#667085] dark:text-[#7d8299]"
+          className="grid h-5 w-5 shrink-0 place-items-center text-[#667085] dark:text-[#878ca0]"
           onClick={() => setExpanded((current) => !current)}
           type="button"
         >
@@ -173,14 +173,14 @@ function FileTreeNode({
       {expanded ? (
         children === null ? (
           <p
-            className="py-1 text-xs text-[#667085] dark:text-[#7d8299]"
+            className="py-1 text-xs text-[#667085] dark:text-[#878ca0]"
             style={{ paddingLeft: `${1.75 + depth * 1}rem` }}
           >
             Loading...
           </p>
         ) : children.length === 0 ? (
           <p
-            className="py-1 text-xs text-[#667085] dark:text-[#7d8299]"
+            className="py-1 text-xs text-[#667085] dark:text-[#878ca0]"
             style={{ paddingLeft: `${1.75 + depth * 1}rem` }}
           >
             No subfolders

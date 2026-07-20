@@ -45,7 +45,7 @@ export function CalendarWeekGrid({
         <div className="flex items-center gap-1">
           <button
             aria-label="Previous week"
-            className="grid h-7 w-7 place-items-center rounded-lg text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            className="grid h-7 w-7 place-items-center rounded-lg text-[#667085] hover:bg-black/[0.04] dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
             onClick={onPrevWeek}
             type="button"
           >
@@ -53,7 +53,7 @@ export function CalendarWeekGrid({
           </button>
           <button
             aria-label="Next week"
-            className="grid h-7 w-7 place-items-center rounded-lg text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            className="grid h-7 w-7 place-items-center rounded-lg text-[#667085] hover:bg-black/[0.04] dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
             onClick={onNextWeek}
             type="button"
           >

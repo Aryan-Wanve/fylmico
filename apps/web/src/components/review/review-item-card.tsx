@@ -103,7 +103,7 @@ export function ReviewItemCard({
             </span>
           ) : null}
         </div>
-        <span className="truncate text-xs text-[#667085] dark:text-[#7d8299]">
+        <span className="truncate text-xs text-[#667085] dark:text-[#878ca0]">
           {item.projectTitle ?? "No project"}
           {item.clientName ? ` · ${item.clientName}` : ""} · {item.file.name}
           {item.file.size ? ` · ${formatSize(item.file.size)}` : ""}
@@ -137,7 +137,7 @@ export function ReviewItemCard({
             <span className="text-xs font-semibold text-[#11142c] dark:text-[#f1f2f8]">
               {item.editorName}
             </span>
-            <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs text-[#667085] dark:text-[#878ca0]">
               {formatRelativeTime(item.submittedAt)}
             </span>
           </div>

@@ -26,7 +26,7 @@ export function ChatHeader({
             {channel.name}
           </strong>
           {channel.kind === "group" ? (
-            <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs text-[#667085] dark:text-[#878ca0]">
               {channel.memberIds.length} members
             </span>
           ) : null}

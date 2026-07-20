@@ -95,7 +95,7 @@ export function ProjectTimelinePanel() {
           <div className="flex items-center gap-1">
             <button
               aria-label="Previous week"
-              className="grid h-7 w-7 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+              className="grid h-7 w-7 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
               onClick={() =>
                 setWeekStart((current) => {
                   const next = new Date(current);
@@ -109,7 +109,7 @@ export function ProjectTimelinePanel() {
             </button>
             <button
               aria-label="Next week"
-              className="grid h-7 w-7 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+              className="grid h-7 w-7 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
               onClick={() =>
                 setWeekStart((current) => {
                   const next = new Date(current);
@@ -167,7 +167,7 @@ export function ProjectTimelinePanel() {
                 <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                   {event.title}
                 </strong>
-                <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                   {event.location ?? "TBD"}
                   {event.projectId && projectTitles[event.projectId]
                     ? ` • ${projectTitles[event.projectId]}`
@@ -180,7 +180,7 @@ export function ProjectTimelinePanel() {
             </div>
           ))
         ) : (
-          <p className="px-6 py-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+          <p className="px-6 py-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
             No shoots scheduled for this day.
           </p>
         )}

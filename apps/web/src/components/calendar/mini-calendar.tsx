@@ -36,7 +36,7 @@ export function MiniCalendar({
         <div className="flex items-center gap-1">
           <button
             aria-label="Previous month"
-            className="grid h-6 w-6 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            className="grid h-6 w-6 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
             onClick={onPrevMonth}
             type="button"
           >
@@ -44,7 +44,7 @@ export function MiniCalendar({
           </button>
           <button
             aria-label="Next month"
-            className="grid h-6 w-6 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            className="grid h-6 w-6 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
             onClick={onNextMonth}
             type="button"
           >

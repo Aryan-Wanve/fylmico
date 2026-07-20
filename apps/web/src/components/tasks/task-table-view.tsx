@@ -23,7 +23,7 @@ export function TaskTableView({
     <div className="min-w-0 overflow-x-auto rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
       <table className="w-full min-w-[52rem] border-collapse text-sm">
         <thead>
-          <tr className="border-b border-black/5 text-left text-xs font-bold tracking-wide text-[#667085] uppercase dark:border-white/[0.06] dark:text-[#7d8299]">
+          <tr className="border-b border-black/5 text-left text-xs font-bold tracking-wide text-[#667085] uppercase dark:border-white/[0.06] dark:text-[#878ca0]">
             <th className="w-10 px-4 py-2.5" />
             <th className="px-2 py-2.5">Task</th>
             <th className="px-2 py-2.5">Type</th>
@@ -102,7 +102,7 @@ export function TaskTableView({
                         style={{ width: `${task.progress}%` }}
                       />
                     </div>
-                    <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+                    <span className="text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
                       {task.progress}%
                     </span>
                   </div>

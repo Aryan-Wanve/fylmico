@@ -25,7 +25,7 @@ export function FilesBreadcrumb({
             className={`truncate ${
               index === path.length - 1
                 ? "font-bold text-[#11142c] dark:text-[#f1f2f8]"
-                : "font-semibold text-[#667085] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:text-[#c7cad9]"
+                : "font-semibold text-[#667085] hover:text-[#4b5268] dark:text-[#878ca0] dark:hover:text-[#c7cad9]"
             }`}
             onClick={() => onNavigate(segment.id)}
             type="button"
@@ -52,7 +52,7 @@ export function FilesViewControls({
         className={`grid h-7 w-8 place-items-center rounded-md ${
           viewMode === "grid"
             ? "bg-white text-[#11142c] shadow-sm dark:bg-[#171a28] dark:text-[#f1f2f8]"
-            : "text-[#667085] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:text-[#c7cad9]"
+            : "text-[#667085] hover:text-[#4b5268] dark:text-[#878ca0] dark:hover:text-[#c7cad9]"
         }`}
         onClick={() => onViewModeChange("grid")}
         type="button"
@@ -64,7 +64,7 @@ export function FilesViewControls({
         className={`grid h-7 w-8 place-items-center rounded-md ${
           viewMode === "list"
             ? "bg-white text-[#11142c] shadow-sm dark:bg-[#171a28] dark:text-[#f1f2f8]"
-            : "text-[#667085] hover:text-[#4b5268] dark:text-[#7d8299] dark:hover:text-[#c7cad9]"
+            : "text-[#667085] hover:text-[#4b5268] dark:text-[#878ca0] dark:hover:text-[#c7cad9]"
         }`}
         onClick={() => onViewModeChange("list")}
         type="button"

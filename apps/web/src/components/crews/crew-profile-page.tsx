@@ -261,7 +261,7 @@ export function CrewProfilePage() {
                 {member.name}
               </h1>
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="flex items-center gap-1.5 text-sm text-[#667085] dark:text-[#7d8299]">
+                <span className="flex items-center gap-1.5 text-sm text-[#667085] dark:text-[#878ca0]">
                   <Mail className="h-3.5 w-3.5" />
                   {member.email}
                 </span>
@@ -301,7 +301,7 @@ export function CrewProfilePage() {
 
         <div className="mt-6 grid grid-cols-1 gap-4 border-t border-black/5 pt-5 sm:grid-cols-2 lg:grid-cols-4 dark:border-white/[0.06]">
           <div>
-            <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
               Job Title
             </span>
             <div className="mt-1 flex items-center gap-1.5">
@@ -316,7 +316,7 @@ export function CrewProfilePage() {
             </div>
           </div>
           <div>
-            <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
               Department
             </span>
             <div className="mt-1 flex items-center gap-1.5">
@@ -331,7 +331,7 @@ export function CrewProfilePage() {
             </div>
           </div>
           <div>
-            <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
               Current Project
             </span>
             <p className="mt-1 text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
@@ -339,7 +339,7 @@ export function CrewProfilePage() {
             </p>
           </div>
           <div>
-            <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
               Availability
             </span>
             <p className="mt-1 text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
@@ -357,7 +357,7 @@ export function CrewProfilePage() {
             </strong>
           </div>
           {memberTasks.length === 0 ? (
-            <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+            <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
               No tasks assigned yet.
             </p>
           ) : (
@@ -370,7 +370,7 @@ export function CrewProfilePage() {
                   <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                     {task.title}
                   </strong>
-                  <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                  <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                     {task.projectTitle ?? "No Project"} &bull; Due{" "}
                     {task.dueDate ?? "TBD"}
                   </span>
@@ -390,7 +390,7 @@ export function CrewProfilePage() {
             </strong>
           </div>
           {memberBookings.length === 0 ? (
-            <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+            <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
               No bookings made yet.
             </p>
           ) : (
@@ -404,7 +404,7 @@ export function CrewProfilePage() {
                   <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                     {booking.resourceName}
                   </strong>
-                  <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                  <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                     {formatDateRange(booking.startDate, booking.endDate)}
                   </span>
                 </div>
@@ -452,7 +452,7 @@ export function CrewProfilePage() {
                 className="rounded-xl bg-black/[0.02] p-3 dark:bg-white/[0.03]"
                 key={stat.label}
               >
-                <span className="block text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+                <span className="block text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
                   {stat.label}
                 </span>
                 <strong className="text-lg font-black text-[#11142c] dark:text-[#f1f2f8]">
@@ -471,7 +471,7 @@ export function CrewProfilePage() {
           </strong>
         </div>
         {submissions.length === 0 ? (
-          <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+          <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
             No drafts submitted yet.
           </p>
         ) : (
@@ -484,7 +484,7 @@ export function CrewProfilePage() {
                 <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                   {item.taskTitle ?? item.file.name} · v{item.version}
                 </strong>
-                <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+                <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                   {item.projectTitle ?? "No Project"} &bull; Submitted{" "}
                   {formatRelativeTime(item.submittedAt)}
                 </span>

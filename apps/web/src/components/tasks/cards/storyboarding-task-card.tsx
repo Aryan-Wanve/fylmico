@@ -110,7 +110,7 @@ export function StoryboardingTaskCard({
       {board ? (
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
           <div>
-            <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
+            <span className="block text-xs text-[#667085] dark:text-[#878ca0]">
               Storyboard
             </span>
             <strong className="text-[#11142c] dark:text-[#f1f2f8]">
@@ -118,7 +118,7 @@ export function StoryboardingTaskCard({
             </strong>
           </div>
           <div>
-            <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
+            <span className="block text-xs text-[#667085] dark:text-[#878ca0]">
               Shots
             </span>
             <strong className="text-[#11142c] dark:text-[#f1f2f8]">
@@ -128,7 +128,7 @@ export function StoryboardingTaskCard({
         </div>
       ) : (
         <div className="grid gap-1.5">
-          <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+          <span className="text-xs text-[#667085] dark:text-[#878ca0]">
             No storyboard linked yet
           </span>
           <Select

@@ -41,7 +41,7 @@ function formatCountdown(dueDate: string): { label: string; overdue: boolean } {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+    <span className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
       {children}
     </span>
   );
@@ -115,7 +115,7 @@ export function TodayPanel({ excludeTaskId }: { excludeTaskId?: string }) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-[#667085] dark:text-[#7d8299]">
+          <p className="text-sm text-[#667085] dark:text-[#878ca0]">
             Nothing scheduled today.
           </p>
         )}
@@ -136,7 +136,7 @@ export function TodayPanel({ excludeTaskId }: { excludeTaskId?: string }) {
                     {task.title}
                   </strong>
                   <span
-                    className={`text-xs font-bold ${countdown.overdue ? "text-red-600" : "text-[#667085] dark:text-[#7d8299]"}`}
+                    className={`text-xs font-bold ${countdown.overdue ? "text-red-600" : "text-[#667085] dark:text-[#878ca0]"}`}
                   >
                     {countdown.label}
                   </span>
@@ -145,7 +145,7 @@ export function TodayPanel({ excludeTaskId }: { excludeTaskId?: string }) {
             })}
           </div>
         ) : (
-          <p className="text-sm text-[#667085] dark:text-[#7d8299]">
+          <p className="text-sm text-[#667085] dark:text-[#878ca0]">
             No upcoming deadlines.
           </p>
         )}

@@ -31,7 +31,7 @@ export function SettingsNav({
               className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${
                 active
                   ? "bg-[var(--fylmico-accent)] text-white"
-                  : "bg-black/[0.04] text-[#667085] dark:bg-white/[0.06] dark:text-[#7d8299]"
+                  : "bg-black/[0.04] text-[#667085] dark:bg-white/[0.06] dark:text-[#878ca0]"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -42,7 +42,7 @@ export function SettingsNav({
               >
                 {section.label}
               </strong>
-              <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+              <span className="text-xs text-[#667085] dark:text-[#878ca0]">
                 {section.description}
               </span>
             </span>

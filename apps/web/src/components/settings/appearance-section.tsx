@@ -160,7 +160,7 @@ export function AppearanceSection() {
                   className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg ${
                     active
                       ? "bg-[var(--fylmico-accent)] text-white"
-                      : "bg-black/[0.04] text-[#667085] dark:bg-white/[0.06] dark:text-[#7d8299]"
+                      : "bg-black/[0.04] text-[#667085] dark:bg-white/[0.06] dark:text-[#878ca0]"
                   }`}
                 >
                   <Rows3 className="h-4 w-4" />
@@ -175,7 +175,7 @@ export function AppearanceSection() {
                   >
                     {option.label}
                   </strong>
-                  <span className="mt-0.5 block text-sm text-[#667085] dark:text-[#7d8299]">
+                  <span className="mt-0.5 block text-sm text-[#667085] dark:text-[#878ca0]">
                     {option.description}
                   </span>
                 </span>

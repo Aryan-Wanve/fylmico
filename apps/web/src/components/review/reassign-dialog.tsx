@@ -80,7 +80,7 @@ export function ReassignDialog({
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-[#667085] dark:text-[#7d8299]">
+          <p className="text-xs text-[#667085] dark:text-[#878ca0]">
             The task, all versions, comments and review history transfer to the
             new editor. Both editors are notified.
           </p>

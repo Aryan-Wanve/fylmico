@@ -10,7 +10,7 @@ export function MessagesEmptyState() {
         <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
           Select a chat to get started
         </strong>
-        <p className="max-w-xs text-sm text-[#667085] dark:text-[#7d8299]">
+        <p className="max-w-xs text-sm text-[#667085] dark:text-[#878ca0]">
           Choose a conversation from the list or start a new chat.
         </p>
       </div>

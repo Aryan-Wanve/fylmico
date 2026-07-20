@@ -41,7 +41,7 @@ export function CalendarMonthGrid({
       <div className="grid min-w-[42rem] grid-cols-7 border-b border-black/5 dark:border-white/[0.06]">
         {WEEKDAY_LABELS.map((label) => (
           <div
-            className="px-3 py-3 text-center text-xs font-bold tracking-wide text-[#667085] dark:text-[#7d8299]"
+            className="px-3 py-3 text-center text-xs font-bold tracking-wide text-[#667085] dark:text-[#878ca0]"
             key={label}
           >
             {label}
@@ -87,7 +87,7 @@ export function CalendarMonthGrid({
                     <CalendarEventPill event={event} key={event.id} />
                   ))}
                   {overflowCount > 0 ? (
-                    <span className="px-2 text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+                    <span className="px-2 text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
                       +{overflowCount} more
                     </span>
                   ) : null}

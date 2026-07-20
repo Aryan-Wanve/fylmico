@@ -129,7 +129,7 @@ export function MembersSection() {
 
         {invitations.length > 0 ? (
           <div className="mt-5 grid gap-2 border-t border-black/[0.06] pt-4 dark:border-white/[0.08]">
-            <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+            <h3 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
               Pending Invitations
             </h3>
             {invitations.map((invitation) => (
@@ -142,7 +142,7 @@ export function MembersSection() {
                 </span>
                 <button
                   aria-label="Revoke invitation"
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] hover:text-red-600 dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] hover:text-red-600 dark:text-[#878ca0] dark:hover:bg-white/[0.06]"
                   onClick={() => handleRevoke(invitation.id)}
                   type="button"
                 >
@@ -174,7 +174,7 @@ export function MembersSection() {
                   <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                     {member.name}
                   </strong>
-                  <span className="text-xs text-[#667085] capitalize dark:text-[#7d8299]">
+                  <span className="text-xs text-[#667085] capitalize dark:text-[#878ca0]">
                     {member.status}
                   </span>
                 </div>
@@ -185,7 +185,7 @@ export function MembersSection() {
             </div>
           ))}
           {members.length === 0 ? (
-            <p className="py-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+            <p className="py-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
               No members yet.
             </p>
           ) : null}
@@ -206,12 +206,12 @@ export function MembersSection() {
                 <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                   {role.name}
                 </strong>
-                <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+                <span className="text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
                   {role.memberCount}{" "}
                   {role.memberCount === 1 ? "member" : "members"}
                 </span>
               </div>
-              <p className="mt-1 text-xs leading-relaxed text-[#667085] dark:text-[#7d8299]">
+              <p className="mt-1 text-xs leading-relaxed text-[#667085] dark:text-[#878ca0]">
                 {role.description}
               </p>
             </div>
@@ -221,7 +221,7 @@ export function MembersSection() {
 
       <section className="rounded-2xl border border-red-100 bg-white p-6 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:bg-[#171a28]">
         <h2 className="text-lg font-bold text-red-600">Danger Zone</h2>
-        <p className="mt-1 text-sm text-[#667085] dark:text-[#7d8299]">
+        <p className="mt-1 text-sm text-[#667085] dark:text-[#878ca0]">
           Leaving a house removes your access to its projects, tasks, and chat.
           You can rejoin later with an invite.
         </p>
@@ -231,7 +231,7 @@ export function MembersSection() {
             <strong className="block text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
               Leave {activeHouse?.name ?? "this house"}
             </strong>
-            <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs text-[#667085] dark:text-[#878ca0]">
               You&apos;ll need a new invite to rejoin.
             </span>
           </div>

@@ -39,7 +39,7 @@ export function GreetingHeader() {
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         <div className="flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-[#4b5268] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9]">
-          <Clock className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
+          <Clock className="h-4 w-4 text-[#667085] dark:text-[#878ca0]" />
           {today}, {time}
         </div>
         <WeatherWidget />

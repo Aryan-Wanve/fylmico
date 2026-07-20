@@ -8,7 +8,7 @@ export function TaskListColumnHeader({
   onToggleSelectAll: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 border-b border-black/5 px-4 py-2.5 text-xs font-bold tracking-wide text-[#667085] uppercase dark:border-white/[0.06] dark:text-[#7d8299]">
+    <div className="flex items-center gap-3 border-b border-black/5 px-4 py-2.5 text-xs font-bold tracking-wide text-[#667085] uppercase dark:border-white/[0.06] dark:text-[#878ca0]">
       <Checkbox
         aria-label="Select all tasks"
         checked={allSelected}

@@ -9,7 +9,7 @@ export function ProjectsEmptyState() {
       <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
         No projects match these filters
       </strong>
-      <p className="max-w-xs text-sm text-[#667085] dark:text-[#7d8299]">
+      <p className="max-w-xs text-sm text-[#667085] dark:text-[#878ca0]">
         Try a different tab or clear the production type filters to see more
         projects.
       </p>

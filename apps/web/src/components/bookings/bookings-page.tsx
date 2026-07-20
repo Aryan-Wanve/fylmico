@@ -118,7 +118,7 @@ export function BookingsPage() {
 
           <div className="min-w-0 rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
             {loading ? (
-              <p className="px-6 py-12 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+              <p className="px-6 py-12 text-center text-sm text-[#667085] dark:text-[#878ca0]">
                 Loading bookings...
               </p>
             ) : (
@@ -129,7 +129,7 @@ export function BookingsPage() {
               />
             )}
             <div className="flex items-center justify-between border-t border-black/5 px-6 py-4 dark:border-white/[0.06]">
-              <span className="text-sm font-medium text-[#667085] dark:text-[#7d8299]">
+              <span className="text-sm font-medium text-[#667085] dark:text-[#878ca0]">
                 Showing{" "}
                 <span className="font-bold text-[#3a3f57] dark:text-[#b4b8cc]">
                   {filteredRows.length}

@@ -18,7 +18,7 @@ export function TimeDistributionPanel({
   return (
     <DashboardPanel title="Time Distribution">
       {total === 0 ? (
-        <p className="py-10 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+        <p className="py-10 text-center text-sm text-[#667085] dark:text-[#878ca0]">
           Log time to see how hours break down by phase.
         </p>
       ) : (
@@ -39,7 +39,7 @@ export function TimeDistributionPanel({
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-[#3a3f57] dark:text-[#b4b8cc]">
                   {segment.label}
                 </span>
-                <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+                <span className="text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
                   {Math.round((segment.value / total) * 100)}% (
                   {formatHours(segment.value)})
                 </span>

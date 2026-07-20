@@ -53,7 +53,7 @@ export function SettingsSidebar({
           <strong className="text-base font-black text-[#11142c] dark:text-[#f1f2f8]">
             Free
           </strong>
-          <p className="text-xs text-[#667085] dark:text-[#7d8299]">
+          <p className="text-xs text-[#667085] dark:text-[#878ca0]">
             Paid plans are coming soon.
           </p>
         </div>
@@ -75,28 +75,28 @@ export function SettingsSidebar({
         <div className="mt-3 grid gap-1">
           <div className="flex items-center justify-between rounded-lg px-2 py-2 text-left opacity-50">
             <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-              <Download className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
+              <Download className="h-4 w-4 text-[#667085] dark:text-[#878ca0]" />
               Download My Data
             </span>
-            <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
               Soon
             </span>
           </div>
           <div className="flex items-center justify-between rounded-lg px-2 py-2 text-left opacity-50">
             <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-              <FileOutput className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
+              <FileOutput className="h-4 w-4 text-[#667085] dark:text-[#878ca0]" />
               Export Workspace Data
             </span>
-            <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
               Soon
             </span>
           </div>
           <div className="flex items-center justify-between rounded-lg px-2 py-2 text-left opacity-50">
             <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-              <ScrollText className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
+              <ScrollText className="h-4 w-4 text-[#667085] dark:text-[#878ca0]" />
               View Audit Logs
             </span>
-            <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
               Soon
             </span>
           </div>
@@ -115,12 +115,12 @@ export function SettingsSidebar({
 
       <div className="rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
         <div className="flex items-center gap-2">
-          <HelpCircle className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
+          <HelpCircle className="h-4 w-4 text-[#667085] dark:text-[#878ca0]" />
           <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
             Need Help?
           </strong>
         </div>
-        <p className="mt-2 text-sm text-[#667085] dark:text-[#7d8299]">
+        <p className="mt-2 text-sm text-[#667085] dark:text-[#878ca0]">
           Visit our Help Center or contact support.
         </p>
       </div>

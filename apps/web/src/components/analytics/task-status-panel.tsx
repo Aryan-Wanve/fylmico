@@ -18,7 +18,7 @@ export function TaskStatusPanel({
     <DashboardPanel title="Task Status">
       <div className="grid gap-4 p-6">
         {total === 0 ? (
-          <p className="py-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+          <p className="py-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
             No tasks yet.
           </p>
         ) : (
@@ -42,7 +42,7 @@ export function TaskStatusPanel({
                   <span className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                     {segment.value}
                   </span>
-                  <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
+                  <span className="text-xs font-semibold text-[#667085] dark:text-[#878ca0]">
                     ({Math.round((segment.value / total) * 100)}%)
                   </span>
                 </div>

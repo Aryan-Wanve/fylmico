@@ -27,7 +27,7 @@ export function ProjectActivityTimeline({ projectId }: { projectId: string }) {
 
   if (loading) {
     return (
-      <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+      <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
         Loading timeline...
       </p>
     );
@@ -35,7 +35,7 @@ export function ProjectActivityTimeline({ projectId }: { projectId: string }) {
 
   if (entries.length === 0) {
     return (
-      <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+      <p className="p-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
         No activity yet.
       </p>
     );
@@ -56,7 +56,7 @@ export function ProjectActivityTimeline({ projectId }: { projectId: string }) {
               ) : null}
               {entry.text}
             </p>
-            <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs text-[#667085] dark:text-[#878ca0]">
               {formatRelativeTime(entry.occurredAt)}
             </span>
           </div>

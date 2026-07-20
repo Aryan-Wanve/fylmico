@@ -35,9 +35,9 @@ export function ChannelsSidebar({
       <div className="grid gap-3 border-b border-black/5 p-3 dark:border-white/[0.06]">
         <div className="flex items-center gap-2">
           <div className="flex h-9 flex-1 items-center gap-2 rounded-lg border border-black/10 px-2.5 dark:border-white/10">
-            <Search className="h-4 w-4 shrink-0 text-[#667085] dark:text-[#7d8299]" />
+            <Search className="h-4 w-4 shrink-0 text-[#667085] dark:text-[#878ca0]" />
             <input
-              className="h-full min-w-0 flex-1 bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
+              className="h-full min-w-0 flex-1 bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4] dark:text-[#f1f2f8] dark:placeholder:text-[#878ca0]"
               onChange={(event) => onSearchChange(event.target.value)}
               placeholder="Search chats..."
               type="search"
@@ -68,7 +68,7 @@ export function ChannelsSidebar({
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
         {pinnedChannels.length > 0 ? (
           <div className="mb-3">
-            <strong className="px-1 text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+            <strong className="px-1 text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
               Pinned
             </strong>
             <div className="mt-1 grid gap-0.5">
@@ -86,7 +86,7 @@ export function ChannelsSidebar({
 
         {recentChannels.length > 0 ? (
           <div>
-            <strong className="px-1 text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
+            <strong className="px-1 text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#878ca0]">
               Recent
             </strong>
             <div className="mt-1 grid gap-0.5">
@@ -103,7 +103,7 @@ export function ChannelsSidebar({
         ) : null}
 
         {pinnedChannels.length === 0 && recentChannels.length === 0 ? (
-          <p className="px-1 py-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+          <p className="px-1 py-6 text-center text-sm text-[#667085] dark:text-[#878ca0]">
             No chats match your search.
           </p>
         ) : null}

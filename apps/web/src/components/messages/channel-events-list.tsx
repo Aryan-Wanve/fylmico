@@ -4,7 +4,7 @@ import type { CalendarEvent } from "@/types/base";
 export function ChannelEventsList({ events }: { events: CalendarEvent[] }) {
   if (events.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-[#667085] dark:text-[#7d8299]">
+      <p className="py-10 text-center text-sm text-[#667085] dark:text-[#878ca0]">
         No events scheduled for this channel yet.
       </p>
     );
@@ -24,7 +24,7 @@ export function ChannelEventsList({ events }: { events: CalendarEvent[] }) {
             <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
               {event.title}
             </strong>
-            <span className="text-xs text-[#667085] dark:text-[#7d8299]">
+            <span className="text-xs text-[#667085] dark:text-[#878ca0]">
               {event.date} &bull; {event.time}
             </span>
           </span>
