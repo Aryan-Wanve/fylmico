@@ -7,6 +7,7 @@ import { Check, ChevronDown, LayoutGrid } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -62,25 +63,27 @@ export function HouseSwitcher() {
         }
       />
       <DropdownMenuContent align="center" className="w-64">
-        <DropdownMenuLabel>Your houses</DropdownMenuLabel>
-        {houses.map((house) => {
-          const active = house.id === activeHouse.id;
-          return (
-            <DropdownMenuItem
-              disabled={switching}
-              key={house.id}
-              onClick={() => void handleSwitch(house.id)}
-            >
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-[var(--fylmico-accent)]/10 text-[11px] font-black text-[var(--fylmico-accent)]">
-                {house.name.slice(0, 1).toUpperCase()}
-              </span>
-              <span className="min-w-0 flex-1 truncate">{house.name}</span>
-              {active ? (
-                <Check className="h-4 w-4 shrink-0 text-[var(--fylmico-accent)]" />
-              ) : null}
-            </DropdownMenuItem>
-          );
-        })}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Your houses</DropdownMenuLabel>
+          {houses.map((house) => {
+            const active = house.id === activeHouse.id;
+            return (
+              <DropdownMenuItem
+                disabled={switching}
+                key={house.id}
+                onClick={() => void handleSwitch(house.id)}
+              >
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-[var(--fylmico-accent)]/10 text-[11px] font-black text-[var(--fylmico-accent)]">
+                  {house.name.slice(0, 1).toUpperCase()}
+                </span>
+                <span className="min-w-0 flex-1 truncate">{house.name}</span>
+                {active ? (
+                  <Check className="h-4 w-4 shrink-0 text-[var(--fylmico-accent)]" />
+                ) : null}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem render={<a href="/dashboard" />}>
           <LayoutGrid className="h-4 w-4" />
