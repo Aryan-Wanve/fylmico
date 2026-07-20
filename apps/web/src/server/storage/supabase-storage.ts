@@ -26,11 +26,33 @@ function getClient(): SupabaseClient {
   return client;
 }
 
+let bucketPublicEnsured = false;
+
+// getPublicUrl() below builds a `/object/public/...` URL, which Supabase
+// only ever resolves if the bucket's own "public" flag is set - an RLS
+// policy on storage.objects (the other thing usually reached for) governs
+// the *authenticated* endpoint, not this one, so it's not a substitute.
+// Rather than depend on someone remembering to flip that toggle in the
+// dashboard, make sure of it here so avatars keep working even if the
+// bucket ever gets recreated or reset to private.
+async function ensureBucketPublic(): Promise<void> {
+  if (bucketPublicEnsured) {
+    return;
+  }
+  const { data } = await getClient().storage.getBucket(BUCKET);
+  if (!data || !data.public) {
+    await getClient().storage.updateBucket(BUCKET, { public: true });
+  }
+  bucketPublicEnsured = true;
+}
+
 export async function uploadObject(
   path: string,
   body: ArrayBuffer,
   contentType: string
 ): Promise<void> {
+  await ensureBucketPublic();
+
   const { error } = await getClient()
     .storage.from(BUCKET)
     .upload(path, body, { contentType, upsert: false });
@@ -77,8 +99,8 @@ export async function getSignedDownloadUrl(path: string): Promise<string> {
 
 // Avatars need to render inline everywhere (topbar, sidebar, etc.) without
 // re-fetching a signed URL on every render, so they're served from a public
-// path instead - the bucket's "avatars/" prefix must have a public read
-// policy configured in Supabase for this URL to actually resolve.
+// path instead - ensureBucketPublic() (called from uploadObject) is what
+// actually makes this URL resolve.
 export function getPublicUrl(path: string): string {
   return getClient().storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
