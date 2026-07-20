@@ -86,7 +86,7 @@ export function NotificationsPreviewPanel() {
                   <p className="truncate text-sm font-semibold text-[#12142b] dark:text-[#f1f2f8]">
                     {notification.title}
                   </p>
-                  <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                  <span className="text-xs text-[#667085] dark:text-[#7d8299]">
                     {formatRelativeTime(notification.createdAt)}
                   </span>
                 </div>
@@ -95,8 +95,8 @@ export function NotificationsPreviewPanel() {
           })
         ) : (
           <div className="grid place-items-center gap-2 py-8 text-center">
-            <Bell className="h-6 w-6 text-[#8a90a3] dark:text-[#7d8299]" />
-            <p className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <Bell className="h-6 w-6 text-[#667085] dark:text-[#7d8299]" />
+            <p className="text-sm text-[#667085] dark:text-[#7d8299]">
               You&apos;re all caught up.
             </p>
           </div>

@@ -541,7 +541,7 @@ export function FilesPage() {
           </div>
 
           {loading ? (
-            <p className="py-16 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="py-16 text-center text-sm text-[#667085] dark:text-[#7d8299]">
               Loading files...
             </p>
           ) : paginated.length === 0 ? (

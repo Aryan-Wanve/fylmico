@@ -35,7 +35,7 @@ export function CalendarDayGrid({
         <div className="flex items-center gap-1">
           <button
             aria-label="Previous day"
-            className="grid h-7 w-7 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            className="grid h-7 w-7 place-items-center rounded-lg text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
             onClick={onPrevDay}
             type="button"
           >
@@ -43,7 +43,7 @@ export function CalendarDayGrid({
           </button>
           <button
             aria-label="Next day"
-            className="grid h-7 w-7 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            className="grid h-7 w-7 place-items-center rounded-lg text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
             onClick={onNextDay}
             type="button"
           >
@@ -54,7 +54,7 @@ export function CalendarDayGrid({
 
       <div className="grid min-h-40 gap-2 p-4">
         {dayEvents.length === 0 ? (
-          <p className="py-8 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="py-8 text-center text-sm text-[#667085] dark:text-[#7d8299]">
             No events scheduled for this day.
           </p>
         ) : (
@@ -80,7 +80,7 @@ export function CalendarDayGrid({
                       {CATEGORY_LABELS[event.category]}
                     </span>
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                  <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[#667085] dark:text-[#7d8299]">
                     <span>{event.time}</span>
                     {event.location ? (
                       <span className="flex items-center gap-1">

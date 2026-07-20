@@ -55,7 +55,7 @@ export function TaskAssigneePicker({
   return (
     <div className="grid gap-2">
       <div className="relative">
-        <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#8a90a3] dark:text-[#7d8299]" />
+        <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#667085] dark:text-[#7d8299]" />
         <Input
           className="h-9 pl-8 text-sm"
           onChange={(event) => setSearch(event.target.value)}
@@ -92,7 +92,7 @@ export function TaskAssigneePicker({
                   <span className="block text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                     {member.name}
                   </span>
-                  <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                  <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
                     {member.role} · {activeTaskCount(member.id)} active
                   </span>
                 </span>

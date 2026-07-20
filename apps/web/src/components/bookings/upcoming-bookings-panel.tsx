@@ -55,12 +55,12 @@ export function UpcomingBookingsPanel({ bookings }: { bookings: Booking[] }) {
                   <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                     {booking.resourceName}
                   </strong>
-                  <span className="block truncate text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                  <span className="block truncate text-xs text-[#667085] dark:text-[#7d8299]">
                     {booking.projectName ?? "No project"}
                   </span>
                 </div>
                 <div className="grid shrink-0 place-items-center rounded-lg bg-black/[0.03] px-2 py-1 text-center dark:bg-white/[0.05]">
-                  <span className="text-[0.65rem] font-bold text-[#8a90a3] dark:text-[#7d8299]">
+                  <span className="text-[0.65rem] font-bold text-[#667085] dark:text-[#7d8299]">
                     {MONTH_LABELS[startDate.getMonth()]}
                   </span>
                   <span className="text-sm font-black text-[#11142c] dark:text-[#f1f2f8]">
@@ -71,7 +71,7 @@ export function UpcomingBookingsPanel({ bookings }: { bookings: Booking[] }) {
             );
           })
         ) : (
-          <p className="px-4 py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="px-4 py-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
             Nothing coming up.
           </p>
         )}

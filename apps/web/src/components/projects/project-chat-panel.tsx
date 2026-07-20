@@ -90,7 +90,7 @@ export function ProjectChatPanel({ projectId }: { projectId: string }) {
     <div className="grid gap-4">
       {pinned.length > 0 ? (
         <div className="rounded-2xl border border-black/[0.06] bg-black/[0.02] p-4 dark:border-white/[0.08] dark:bg-white/[0.02]">
-          <span className="text-xs font-bold tracking-wide text-[#8a90a3] uppercase dark:text-[#7d8299]">
+          <span className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
             Pinned Notes
           </span>
           <div className="mt-2 grid gap-2">
@@ -112,7 +112,7 @@ export function ProjectChatPanel({ projectId }: { projectId: string }) {
       <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
         <div className="grid max-h-[28rem] gap-3 overflow-y-auto p-4">
           {messages.length === 0 ? (
-            <p className="p-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="p-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
               No messages yet. Start the conversation below.
             </p>
           ) : (
@@ -128,7 +128,7 @@ export function ProjectChatPanel({ projectId }: { projectId: string }) {
                     <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                       {message.authorName}
                     </strong>
-                    <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                    <span className="text-xs text-[#667085] dark:text-[#7d8299]">
                       {formatRelativeTime(message.sentAt)}
                     </span>
                   </div>
@@ -137,7 +137,7 @@ export function ProjectChatPanel({ projectId }: { projectId: string }) {
                   </p>
                 </div>
                 <button
-                  className="shrink-0 rounded-lg p-1.5 text-[#8a90a3] hover:bg-black/[0.03] dark:text-[#7d8299] dark:hover:bg-white/[0.05]"
+                  className="shrink-0 rounded-lg p-1.5 text-[#667085] hover:bg-black/[0.03] dark:text-[#7d8299] dark:hover:bg-white/[0.05]"
                   onClick={() => void handleTogglePin(message.id)}
                   title={message.pinned ? "Unpin" : "Pin"}
                   type="button"

@@ -43,7 +43,7 @@ export function UpcomingDeadlinesPanel({ tasks }: { tasks: ProductionTask[] }) {
                 <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                   {task.title}
                 </strong>
-                <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                <span className="text-xs text-[#667085] dark:text-[#7d8299]">
                   {task.projectTitle ?? "No Project"}
                 </span>
               </div>

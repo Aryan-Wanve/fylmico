@@ -83,11 +83,11 @@ export function JoinRequestsDialog({
 
         <div className="mt-4 grid max-h-96 gap-3 overflow-y-auto">
           {loading ? (
-            <p className="py-8 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="py-8 text-center text-sm text-[#667085] dark:text-[#7d8299]">
               Loading requests...
             </p>
           ) : requests.length === 0 ? (
-            <p className="py-8 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="py-8 text-center text-sm text-[#667085] dark:text-[#7d8299]">
               No pending requests.
             </p>
           ) : (
@@ -103,7 +103,7 @@ export function JoinRequestsDialog({
                   <p className="truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                     {request.userName}
                   </p>
-                  <p className="truncate text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                  <p className="truncate text-xs text-[#667085] dark:text-[#7d8299]">
                     {request.userEmail}
                   </p>
                 </div>

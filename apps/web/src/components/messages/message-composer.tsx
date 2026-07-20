@@ -76,7 +76,7 @@ export function MessageComposer({
         value={value}
       />
       <div className="mt-2 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-1 text-[#8a90a3] dark:text-[#7d8299]">
+        <div className="flex items-center gap-1 text-[#667085] dark:text-[#7d8299]">
           <input
             className="hidden"
             onChange={(event) => {

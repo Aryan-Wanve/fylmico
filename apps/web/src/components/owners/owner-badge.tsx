@@ -15,7 +15,7 @@ export function OwnerBadge({
   if (!ownerType || !ownerName) {
     return (
       <span
-        className={`inline-flex items-center gap-1 text-xs text-[#8a90a3] dark:text-[#7d8299] ${className}`}
+        className={`inline-flex items-center gap-1 text-xs text-[#667085] dark:text-[#7d8299] ${className}`}
       >
         No owner
       </span>

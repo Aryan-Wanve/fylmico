@@ -73,7 +73,7 @@ export function ReviewToolbar({
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[12rem] flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#8a90a3]" />
+          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#667085]" />
           <input
             className="h-9 w-full rounded-lg border border-black/10 bg-white pr-3 pl-9 text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#171a28] dark:text-[#f1f2f8]"
             onChange={(event) => onSearchChange(event.target.value)}
@@ -259,7 +259,7 @@ export function ReviewToolbar({
             Bulk Reassign
           </Button>
           <button
-            className="ml-auto text-xs font-bold text-[#8a90a3]"
+            className="ml-auto text-xs font-bold text-[#667085]"
             onClick={onClearSelection}
             type="button"
           >

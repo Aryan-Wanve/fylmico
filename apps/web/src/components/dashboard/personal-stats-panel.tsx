@@ -18,7 +18,7 @@ function StatTile({
 }) {
   return (
     <div className="rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
-      <div className="flex items-center gap-2 text-xs font-bold text-[#8a90a3] dark:text-[#7d8299]">
+      <div className="flex items-center gap-2 text-xs font-bold text-[#667085] dark:text-[#7d8299]">
         <Icon className="h-4 w-4 text-[var(--fylmico-accent)]" />
         {label}
       </div>
@@ -27,7 +27,7 @@ function StatTile({
           {value}
         </span>
       </div>
-      <p className="mt-1 text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+      <p className="mt-1 text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
         {note}
       </p>
     </div>

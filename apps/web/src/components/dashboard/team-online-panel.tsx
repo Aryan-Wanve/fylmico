@@ -35,14 +35,14 @@ export function TeamOnlinePanel() {
                 <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                   {member.name}
                 </strong>
-                <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                <span className="text-xs text-[#667085] dark:text-[#7d8299]">
                   {member.role}
                 </span>
               </div>
             </div>
           ))
         ) : (
-          <p className="py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="py-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
             No crew members yet.
           </p>
         )}

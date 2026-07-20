@@ -69,7 +69,7 @@ export function AuthMarketingPanel() {
 
       <aside
         aria-label="Customer quote"
-        className="absolute bottom-8 left-12 z-10 w-[min(17.7rem,42vw)] rounded-xl border border-white/25 bg-gradient-to-br from-white/15 via-white/5 to-black/25 p-5 text-white shadow-[0_1.2rem_3rem_rgba(10,8,35,0.45)] backdrop-blur-xl backdrop-saturate-150 xl:left-16"
+        className="absolute bottom-8 left-12 z-10 w-[min(17.7rem,42vw)] rounded-xl border border-white/15 bg-gradient-to-br from-black/60 via-black/55 to-black/70 p-5 text-white shadow-[0_1.2rem_3rem_rgba(10,8,35,0.45)] backdrop-blur-xl backdrop-saturate-150 xl:left-16"
       >
         <span className="text-[2.15rem] leading-[0.7] font-black text-white/90">
           &ldquo;

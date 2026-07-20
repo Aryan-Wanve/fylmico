@@ -52,11 +52,11 @@ export function TaskTemplatesPopover({
           Task Templates
         </strong>
         {loading ? (
-          <p className="px-1 py-4 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="px-1 py-4 text-center text-sm text-[#667085] dark:text-[#7d8299]">
             Loading...
           </p>
         ) : templates.length === 0 ? (
-          <p className="px-1 py-4 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="px-1 py-4 text-center text-sm text-[#667085] dark:text-[#7d8299]">
             No templates yet. Save a task as a template from its menu.
           </p>
         ) : (

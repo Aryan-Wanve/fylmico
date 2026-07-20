@@ -49,17 +49,17 @@ function ReadStatusIcon({
   status: "sending" | "sent" | "delivered" | "read";
 }) {
   if (status === "sending") {
-    return <Clock className="h-3 w-3 text-[#8a90a3] dark:text-[#7d8299]" />;
+    return <Clock className="h-3 w-3 text-[#667085] dark:text-[#7d8299]" />;
   }
   if (status === "read") {
     return <CheckCheck className="h-3 w-3 text-[var(--fylmico-accent)]" />;
   }
   if (status === "delivered") {
     return (
-      <CheckCheck className="h-3 w-3 text-[#8a90a3] dark:text-[#7d8299]" />
+      <CheckCheck className="h-3 w-3 text-[#667085] dark:text-[#7d8299]" />
     );
   }
-  return <Check className="h-3 w-3 text-[#8a90a3] dark:text-[#7d8299]" />;
+  return <Check className="h-3 w-3 text-[#667085] dark:text-[#7d8299]" />;
 }
 
 export function MessageBubble({
@@ -116,7 +116,7 @@ export function MessageBubble({
       </div>
       <div className="min-w-0 flex-1">
         {isReply && parentAuthorName ? (
-          <div className="mb-0.5 flex items-center gap-1 text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <div className="mb-0.5 flex items-center gap-1 text-xs text-[#667085] dark:text-[#7d8299]">
             <CornerUpLeft className="h-3 w-3" />
             Replying to {parentAuthorName}
           </div>
@@ -126,7 +126,7 @@ export function MessageBubble({
             <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
               {message.authorName}
             </strong>
-            <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="text-xs text-[#667085] dark:text-[#7d8299]">
               {displayTime}
               {message.editedAt ? " (edited)" : ""}
             </span>
@@ -158,7 +158,7 @@ export function MessageBubble({
                 Save
               </button>
               <button
-                className="text-[#8a90a3] hover:underline dark:text-[#7d8299]"
+                className="text-[#667085] hover:underline dark:text-[#7d8299]"
                 onClick={() => setIsEditing(false)}
                 type="button"
               >
@@ -171,13 +171,13 @@ export function MessageBubble({
             <p className="mt-0.5 text-sm leading-relaxed text-[#3a3f57] dark:text-[#b4b8cc]">
               {renderBody(message.body)}
               {message.editedAt && grouped ? (
-                <span className="ml-1 text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                <span className="ml-1 text-xs text-[#667085] dark:text-[#7d8299]">
                   (edited)
                 </span>
               ) : null}
             </p>
             {grouped ? (
-              <span className="mt-0.5 text-xs whitespace-nowrap text-[#8a90a3] opacity-0 group-hover:opacity-100 dark:text-[#7d8299]">
+              <span className="mt-0.5 text-xs whitespace-nowrap text-[#667085] opacity-0 group-hover:opacity-100 dark:text-[#7d8299]">
                 {displayTime}
               </span>
             ) : null}
@@ -204,7 +204,7 @@ export function MessageBubble({
           <div className="relative">
             <button
               aria-label="Add reaction"
-              className="grid h-6 w-6 place-items-center rounded-full text-[#8a90a3] opacity-0 group-hover:opacity-100 hover:bg-black/[0.05] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+              className="grid h-6 w-6 place-items-center rounded-full text-[#667085] opacity-0 group-hover:opacity-100 hover:bg-black/[0.05] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
               onClick={() => setPickerOpen((current) => !current)}
               type="button"
             >
@@ -230,7 +230,7 @@ export function MessageBubble({
           </div>
 
           <button
-            className="ml-1 flex items-center gap-1 text-xs font-semibold text-[#8a90a3] opacity-0 group-hover:opacity-100 hover:text-[var(--fylmico-accent)] dark:text-[#7d8299]"
+            className="ml-1 flex items-center gap-1 text-xs font-semibold text-[#667085] opacity-0 group-hover:opacity-100 hover:text-[var(--fylmico-accent)] dark:text-[#7d8299]"
             onClick={onReply}
             type="button"
           >
@@ -240,7 +240,7 @@ export function MessageBubble({
 
           {canEdit && !isEditing ? (
             <button
-              className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3] opacity-0 group-hover:opacity-100 hover:text-[var(--fylmico-accent)] dark:text-[#7d8299]"
+              className="flex items-center gap-1 text-xs font-semibold text-[#667085] opacity-0 group-hover:opacity-100 hover:text-[var(--fylmico-accent)] dark:text-[#7d8299]"
               onClick={startEditing}
               type="button"
             >

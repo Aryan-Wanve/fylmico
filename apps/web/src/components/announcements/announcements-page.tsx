@@ -142,13 +142,13 @@ export function AnnouncementsPage() {
 
       <div className="grid max-w-3xl grid-cols-1 gap-4">
         {loading ? (
-          <p className="py-16 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="py-16 text-center text-sm text-[#667085] dark:text-[#7d8299]">
             Loading announcements...
           </p>
         ) : sorted.length === 0 ? (
           <div className="grid place-items-center gap-2 rounded-2xl border border-dashed border-black/10 bg-white/60 p-12 text-center dark:border-white/10 dark:bg-white/[0.02]">
-            <Megaphone className="h-6 w-6 text-[#8a90a3] dark:text-[#7d8299]" />
-            <p className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <Megaphone className="h-6 w-6 text-[#667085] dark:text-[#7d8299]" />
+            <p className="text-sm text-[#667085] dark:text-[#7d8299]">
               No announcements yet.
               {isOwner ? " Post one to reach the whole house." : ""}
             </p>
@@ -179,7 +179,7 @@ export function AnnouncementsPage() {
                         <Pin className="h-3.5 w-3.5 text-[var(--fylmico-accent)]" />
                       ) : null}
                     </div>
-                    <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                    <span className="text-xs text-[#667085] dark:text-[#7d8299]">
                       {formatRelativeTime(announcement.createdAt)}
                     </span>
                   </div>
@@ -191,7 +191,7 @@ export function AnnouncementsPage() {
                       className={`grid h-8 w-8 place-items-center rounded-lg ${
                         announcement.pinned
                           ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
-                          : "text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+                          : "text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
                       }`}
                       onClick={() => handleTogglePin(announcement)}
                       title={announcement.pinned ? "Unpin" : "Pin to top"}
@@ -200,7 +200,7 @@ export function AnnouncementsPage() {
                       <Pin className="h-4 w-4" />
                     </button>
                     <button
-                      className="grid h-8 w-8 place-items-center rounded-lg text-[#8a90a3] hover:bg-red-50 hover:text-red-600 dark:text-[#7d8299] dark:hover:bg-red-500/10"
+                      className="grid h-8 w-8 place-items-center rounded-lg text-[#667085] hover:bg-red-50 hover:text-red-600 dark:text-[#7d8299] dark:hover:bg-red-500/10"
                       onClick={() => handleDelete(announcement)}
                       title="Delete"
                       type="button"

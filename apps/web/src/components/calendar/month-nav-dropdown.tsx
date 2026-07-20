@@ -41,7 +41,7 @@ export function MonthNavDropdown({
             type="button"
           >
             {formatMonthYear(visibleMonth)}
-            <ChevronDown className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
+            <ChevronDown className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
           </button>
         }
       />
@@ -49,7 +49,7 @@ export function MonthNavDropdown({
         <div className="flex items-center justify-between px-1">
           <button
             aria-label="Previous year"
-            className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            className="grid h-7 w-7 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
             onClick={() =>
               onSelectMonth(new Date(year - 1, visibleMonth.getMonth(), 1))
             }
@@ -62,7 +62,7 @@ export function MonthNavDropdown({
           </strong>
           <button
             aria-label="Next year"
-            className="grid h-7 w-7 place-items-center rounded-md text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+            className="grid h-7 w-7 place-items-center rounded-md text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
             onClick={() =>
               onSelectMonth(new Date(year + 1, visibleMonth.getMonth(), 1))
             }

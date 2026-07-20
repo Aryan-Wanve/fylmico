@@ -110,7 +110,7 @@ export function GlobalSearch() {
   return (
     <div className="relative w-full max-w-md" ref={containerRef}>
       <div className="flex h-11 w-full items-center gap-2.5 rounded-xl border border-black/10 bg-white px-3.5 dark:border-white/10 dark:bg-[#171a28]">
-        <Search className="h-4 w-4 shrink-0 text-[#8a90a3] dark:text-[#7d8299]" />
+        <Search className="h-4 w-4 shrink-0 text-[#667085] dark:text-[#7d8299]" />
         <input
           className="h-full flex-1 bg-transparent text-sm text-[#12142b] outline-none placeholder:text-[#9296a4] dark:text-[#f1f2f8] dark:placeholder:text-[#7d8299]"
           onChange={(event) => {
@@ -127,7 +127,7 @@ export function GlobalSearch() {
       {open && trimmed ? (
         <div className="absolute top-full left-0 z-30 mt-2 w-full overflow-hidden rounded-xl border border-black/10 bg-white shadow-[0_1rem_3rem_rgba(53,45,124,0.12)] dark:border-white/10 dark:bg-[#171a28]">
           {results.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="px-4 py-3 text-sm text-[#667085] dark:text-[#7d8299]">
               No matches for &ldquo;{query.trim()}&rdquo;
             </p>
           ) : (
@@ -139,12 +139,12 @@ export function GlobalSearch() {
                     onClick={() => handleSelect(result)}
                     type="button"
                   >
-                    <result.icon className="h-4 w-4 shrink-0 text-[#8a90a3] dark:text-[#7d8299]" />
+                    <result.icon className="h-4 w-4 shrink-0 text-[#667085] dark:text-[#7d8299]" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold text-[#12142b] dark:text-[#f1f2f8]">
                         {result.label}
                       </span>
-                      <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                      <span className="text-xs text-[#667085] dark:text-[#7d8299]">
                         {result.sublabel}
                       </span>
                     </span>

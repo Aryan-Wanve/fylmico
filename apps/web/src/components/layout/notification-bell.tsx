@@ -93,14 +93,14 @@ export const TYPE_STYLES: Record<
   house_join_rejected: {
     icon: Users,
     bg: "bg-[#8a90a3]/10",
-    color: "text-[#8a90a3]"
+    color: "text-[#667085]"
   }
 };
 
 export const DEFAULT_TYPE_STYLE = {
   icon: Bell,
   bg: "bg-[#8a90a3]/10",
-  color: "text-[#8a90a3]"
+  color: "text-[#667085]"
 };
 
 export function NotificationBell() {
@@ -235,7 +235,7 @@ export function NotificationBell() {
         </div>
         <div className="grid max-h-96 gap-1 overflow-y-auto">
           {loading ? (
-            <p className="py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="py-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
               Loading...
             </p>
           ) : notifications.length > 0 ? (
@@ -267,7 +267,7 @@ export function NotificationBell() {
                       </strong>{" "}
                       {notification.body}
                     </p>
-                    <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                    <span className="text-xs text-[#667085] dark:text-[#7d8299]">
                       {formatRelativeTime(notification.createdAt)}
                     </span>
                   </div>
@@ -279,10 +279,10 @@ export function NotificationBell() {
             })
           ) : (
             <div className="grid place-items-center gap-2 py-8 text-center">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-black/[0.04] text-[#8a90a3] dark:bg-white/[0.06] dark:text-[#7d8299]">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-black/[0.04] text-[#667085] dark:bg-white/[0.06] dark:text-[#7d8299]">
                 <Bell className="h-4.5 w-4.5" />
               </span>
-              <p className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
+              <p className="text-sm text-[#667085] dark:text-[#7d8299]">
                 You&apos;re all caught up.
               </p>
             </div>

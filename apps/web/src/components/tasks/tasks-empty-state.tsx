@@ -9,7 +9,7 @@ export function TasksEmptyState() {
       <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
         No tasks match these filters
       </strong>
-      <p className="max-w-xs text-sm text-[#8a90a3] dark:text-[#7d8299]">
+      <p className="max-w-xs text-sm text-[#667085] dark:text-[#7d8299]">
         Try a different tab or clear the priority filters to see more tasks.
       </p>
     </div>

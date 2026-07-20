@@ -42,7 +42,7 @@ export function CrewMemberRow({
           <strong className="block truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
             {member.name}
           </strong>
-          <span className="block truncate text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <span className="block truncate text-xs text-[#667085] dark:text-[#7d8299]">
             {member.email}
           </span>
         </div>
@@ -80,7 +80,7 @@ export function CrewMemberRow({
             <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
               {member.currentProject}
             </strong>
-            <span className="flex items-center gap-1.5 text-xs text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="flex items-center gap-1.5 text-xs text-[#667085] dark:text-[#7d8299]">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--fylmico-accent)]" />
               {member.projectStage}
             </span>
@@ -91,7 +91,7 @@ export function CrewMemberRow({
       </div>
 
       <span className="hidden w-36 shrink-0 items-center gap-1.5 text-xs font-medium text-[#4b5268] xl:flex dark:text-[#c7cad9]">
-        <Calendar className="h-3.5 w-3.5 text-[#8a90a3] dark:text-[#7d8299]" />
+        <Calendar className="h-3.5 w-3.5 text-[#667085] dark:text-[#7d8299]" />
         {member.availability}
       </span>
 

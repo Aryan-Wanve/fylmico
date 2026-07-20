@@ -25,7 +25,7 @@ export function ShotCard({
         onClick={onSelect}
         type="button"
       >
-        <Camera className="h-12 w-12 text-[#8a90a3]/60" strokeWidth={1.25} />
+        <Camera className="h-12 w-12 text-[#667085]/60" strokeWidth={1.25} />
         {shot.cameraAngle ? (
           <span className="absolute top-2 right-2 rounded-md bg-[var(--fylmico-accent)]/85 px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
             {shot.cameraAngle}

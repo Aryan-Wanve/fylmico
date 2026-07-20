@@ -82,7 +82,7 @@ function AppLoadingState() {
           <p className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
             Loading Fylmico
           </p>
-          <p className="mt-1 text-sm text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="mt-1 text-sm text-[#667085] dark:text-[#7d8299]">
             Getting your workspace ready.
           </p>
         </div>

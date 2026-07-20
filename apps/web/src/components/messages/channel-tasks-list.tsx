@@ -10,7 +10,7 @@ export function ChannelTasksList({
 }) {
   if (tasks.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+      <p className="py-10 text-center text-sm text-[#667085] dark:text-[#7d8299]">
         No tasks linked to this channel yet.
       </p>
     );
@@ -36,11 +36,11 @@ export function ChannelTasksList({
               onCheckedChange={() => onToggle(task.id)}
             />
             <span
-              className={`flex-1 text-sm font-semibold ${done ? "text-[#8a90a3] line-through dark:text-[#7d8299]" : "text-[#11142c] dark:text-[#f1f2f8]"}`}
+              className={`flex-1 text-sm font-semibold ${done ? "text-[#667085] line-through dark:text-[#7d8299]" : "text-[#11142c] dark:text-[#f1f2f8]"}`}
             >
               {task.title}
             </span>
-            <span className="shrink-0 text-xs font-medium text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="shrink-0 text-xs font-medium text-[#667085] dark:text-[#7d8299]">
               {assigneeLabel}
             </span>
           </div>

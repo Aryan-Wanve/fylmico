@@ -25,7 +25,7 @@ export function TemplatesGrid({
             {template.description}
           </p>
           <div className="mt-3 flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
               {template.frameCount} frames
             </span>
             <button

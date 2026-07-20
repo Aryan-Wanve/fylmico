@@ -86,7 +86,7 @@ export function MyTasksGroupsPanel() {
             className={`flex items-center gap-1.5 rounded-t-lg px-3 py-2 text-sm font-bold whitespace-nowrap ${
               activeGroup === group.key
                 ? "text-[var(--fylmico-accent)]"
-                : "text-[#8a90a3] dark:text-[#7d8299]"
+                : "text-[#667085] dark:text-[#7d8299]"
             }`}
             key={group.key}
             onClick={() => setActiveGroup(group.key)}
@@ -97,7 +97,7 @@ export function MyTasksGroupsPanel() {
               className={`rounded-full px-1.5 py-0.5 text-xs ${
                 activeGroup === group.key
                   ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
-                  : "bg-black/[0.04] text-[#8a90a3] dark:bg-white/[0.06] dark:text-[#7d8299]"
+                  : "bg-black/[0.04] text-[#667085] dark:bg-white/[0.06] dark:text-[#7d8299]"
               }`}
             >
               {groups[group.key].length}
@@ -118,7 +118,7 @@ export function MyTasksGroupsPanel() {
               />
             ))
         ) : (
-          <p className="px-6 py-8 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="px-6 py-8 text-center text-sm text-[#667085] dark:text-[#7d8299]">
             Nothing here.
           </p>
         )}

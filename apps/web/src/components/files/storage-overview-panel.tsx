@@ -70,7 +70,7 @@ export function StorageOverviewPanel({
               <strong className="block text-lg font-black text-[#11142c] dark:text-[#f1f2f8]">
                 {formatFileSize(usedBytes) || "0 B"}
               </strong>
-              <span className="text-[0.65rem] font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+              <span className="text-[0.65rem] font-semibold text-[#667085] dark:text-[#7d8299]">
                 used
               </span>
             </div>
@@ -99,7 +99,7 @@ export function StorageOverviewPanel({
               </div>
             ))
           ) : (
-            <p className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="text-sm text-[#667085] dark:text-[#7d8299]">
               No files uploaded yet.
             </p>
           )}

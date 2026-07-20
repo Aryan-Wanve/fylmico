@@ -91,7 +91,7 @@ export function ApproveDialog({
               <span className="text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                 Deliver to client deliverables
               </span>
-              <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+              <span className="text-xs text-[#667085] dark:text-[#7d8299]">
                 Copies the approved video into Deliveries.
               </span>
             </span>
@@ -106,7 +106,7 @@ export function ApproveDialog({
               <span className="text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                 Move to Portfolio
               </span>
-              <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+              <span className="text-xs text-[#667085] dark:text-[#7d8299]">
                 Adds it to the House Portfolio, attributed to the editor.
               </span>
             </span>

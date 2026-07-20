@@ -543,7 +543,7 @@ export default function LandingPage() {
                   <Icon className="h-5 w-5" />
                 </span>
                 <h3 className="mt-3 text-sm font-bold">{feature.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-[#8a90a3]">
+                <p className="mt-1.5 text-sm leading-relaxed text-[#667085]">
                   {feature.description}
                 </p>
               </motion.article>
@@ -583,7 +583,7 @@ export default function LandingPage() {
                     {item.step}
                   </span>
                   <h3 className="mt-3 text-base font-bold">{item.title}</h3>
-                  <p className="mt-1.5 max-w-56 text-sm text-[#8a90a3]">
+                  <p className="mt-1.5 max-w-56 text-sm text-[#667085]">
                     {item.description}
                   </p>
                 </motion.div>

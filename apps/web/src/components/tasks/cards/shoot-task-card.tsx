@@ -273,7 +273,7 @@ export function ShootTaskCard({
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
         {shoot.location ? (
           <div>
-            <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
               Location
             </span>
             <a
@@ -289,7 +289,7 @@ export function ShootTaskCard({
         ) : null}
         {shoot.callTime ? (
           <div>
-            <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
               Shoot Time
             </span>
             <strong className="text-[#11142c] dark:text-[#f1f2f8]">
@@ -300,7 +300,7 @@ export function ShootTaskCard({
         ) : null}
         {shoot.equipment.length > 0 ? (
           <div>
-            <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
               Equipment
             </span>
             <span className="flex items-center gap-1 font-semibold text-[#11142c] dark:text-[#f1f2f8]">
@@ -311,7 +311,7 @@ export function ShootTaskCard({
         ) : null}
         {shoot.crew.length > 0 ? (
           <div>
-            <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
               Crew
             </span>
             <span className="flex -space-x-1.5">

@@ -128,7 +128,7 @@ export function ScriptingTaskCard({
         <div className="grid gap-2">
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <div>
-              <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+              <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
                 Script
               </span>
               <strong className="text-[#11142c] dark:text-[#f1f2f8]">
@@ -136,7 +136,7 @@ export function ScriptingTaskCard({
               </strong>
             </div>
             <div>
-              <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+              <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
                 Word Count
               </span>
               <strong className="text-[#11142c] dark:text-[#f1f2f8]">
@@ -152,7 +152,7 @@ export function ScriptingTaskCard({
         </div>
       ) : (
         <div className="grid gap-1.5">
-          <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <span className="text-xs text-[#667085] dark:text-[#7d8299]">
             No script linked yet
           </span>
           <Select

@@ -544,7 +544,7 @@ export function TasksPage() {
               Delete
             </button>
             <button
-              className="ml-auto text-xs font-bold text-[#8a90a3]"
+              className="ml-auto text-xs font-bold text-[#667085]"
               onClick={() => setSelectedIds(new Set())}
               type="button"
             >

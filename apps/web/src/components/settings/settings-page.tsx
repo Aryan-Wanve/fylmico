@@ -66,7 +66,7 @@ export function SettingsPage() {
         <SettingsSidebar onDeleteAccount={handleDeleteAccount} />
       </div>
 
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-t border-black/5 pt-4 text-xs text-[#8a90a3] dark:border-white/[0.06] dark:text-[#7d8299]">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-t border-black/5 pt-4 text-xs text-[#667085] dark:border-white/[0.06] dark:text-[#7d8299]">
         <span>&copy; 2026 Fylmico. All rights reserved.</span>
         <div className="flex items-center gap-4">
           <button

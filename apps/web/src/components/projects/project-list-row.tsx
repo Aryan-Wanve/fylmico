@@ -45,7 +45,7 @@ export function ProjectListRow({
         <strong className="block truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
           {project.title}
         </strong>
-        <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+        <span className="text-xs text-[#667085] dark:text-[#7d8299]">
           {project.completedTaskCount ?? 0}/{project.taskCount ?? 0} tasks
           &bull; {formatFileSize(project.storageBytes ?? 0)}
         </span>
@@ -74,7 +74,7 @@ export function ProjectListRow({
       </div>
 
       <span
-        className={`hidden w-28 shrink-0 text-xs font-semibold sm:block ${overdue ? "text-red-600" : "text-[#8a90a3] dark:text-[#7d8299]"}`}
+        className={`hidden w-28 shrink-0 text-xs font-semibold sm:block ${overdue ? "text-red-600" : "text-[#667085] dark:text-[#7d8299]"}`}
       >
         {formatDueIn(project.dueDate)}
       </span>

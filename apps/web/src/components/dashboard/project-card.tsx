@@ -14,7 +14,7 @@ export function DashboardProjectCard({ project }: { project: Project }) {
       <strong className="mt-2 block truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
         {project.title}
       </strong>
-      <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+      <span className="text-xs text-[#667085] dark:text-[#7d8299]">
         {project.type ?? "Untitled"}
       </span>
       <div className="mt-1.5 flex items-center gap-2">

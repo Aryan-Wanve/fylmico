@@ -9,7 +9,7 @@ export function ComingSoonNotice({ description }: { description: string }) {
       <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
         Coming soon
       </strong>
-      <p className="max-w-sm text-sm text-[#8a90a3] dark:text-[#7d8299]">
+      <p className="max-w-sm text-sm text-[#667085] dark:text-[#7d8299]">
         {description}
       </p>
     </div>

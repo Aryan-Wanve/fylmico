@@ -399,7 +399,7 @@ export function StoryboardPage() {
       />
 
       {loading ? (
-        <p className="py-16 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+        <p className="py-16 text-center text-sm text-[#667085] dark:text-[#7d8299]">
           Loading storyboards...
         </p>
       ) : activeTab === "boards" ? (
@@ -408,7 +408,7 @@ export function StoryboardPage() {
             <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
               No boards yet
             </strong>
-            <p className="max-w-xs text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="max-w-xs text-sm text-[#667085] dark:text-[#7d8299]">
               Create a board to start planning your shots.
             </p>
           </div>
@@ -454,7 +454,7 @@ export function StoryboardPage() {
                     <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                       This board has no shots yet
                     </strong>
-                    <p className="max-w-xs text-sm text-[#8a90a3] dark:text-[#7d8299]">
+                    <p className="max-w-xs text-sm text-[#667085] dark:text-[#7d8299]">
                       Add shots to start planning this sequence.
                     </p>
                     <button

@@ -24,13 +24,13 @@ export function TaskRow({
         <strong
           className={`block truncate text-sm font-semibold ${
             completed
-              ? "text-[#8a90a3] line-through dark:text-[#7d8299]"
+              ? "text-[#667085] line-through dark:text-[#7d8299]"
               : "text-[#11142c] dark:text-[#f1f2f8]"
           }`}
         >
           {task.title}
         </strong>
-        <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+        <span className="text-xs text-[#667085] dark:text-[#7d8299]">
           {task.projectTitle ?? "No Project"}
         </span>
       </div>
@@ -39,7 +39,7 @@ export function TaskRow({
       >
         {task.priority}
       </span>
-      <time className="text-xs font-medium text-[#8a90a3] dark:text-[#7d8299]">
+      <time className="text-xs font-medium text-[#667085] dark:text-[#7d8299]">
         {due.label}
       </time>
     </div>

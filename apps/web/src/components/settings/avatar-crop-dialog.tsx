@@ -174,7 +174,7 @@ export function AvatarCropDialog({
           </div>
 
           <label className="flex w-full items-center gap-3">
-            <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
               Zoom
             </span>
             <input
@@ -187,7 +187,7 @@ export function AvatarCropDialog({
               value={zoom}
             />
           </label>
-          <p className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="text-xs text-[#667085] dark:text-[#7d8299]">
             Drag to reposition, slide to zoom.
           </p>
         </div>

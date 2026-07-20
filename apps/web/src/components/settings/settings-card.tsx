@@ -17,7 +17,7 @@ export function SettingsCard({
             {title}
           </h2>
           {subtitle ? (
-            <p className="mt-1 text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="mt-1 text-sm text-[#667085] dark:text-[#7d8299]">
               {subtitle}
             </p>
           ) : null}

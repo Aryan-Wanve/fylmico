@@ -41,7 +41,7 @@ function DialogContent({
         {children}
         {showCloseButton ? (
           <DialogPrimitive.Close
-            className="absolute top-4 right-4 grid h-7 w-7 place-items-center rounded-lg text-[#8a90a3] transition hover:bg-black/[0.05] hover:text-[#11142c] dark:text-[#7d8299] dark:hover:bg-white/[0.06] dark:hover:text-[#f1f2f8]"
+            className="absolute top-4 right-4 grid h-7 w-7 place-items-center rounded-lg text-[#667085] transition hover:bg-black/[0.05] hover:text-[#11142c] dark:text-[#7d8299] dark:hover:bg-white/[0.06] dark:hover:text-[#f1f2f8]"
             data-slot="dialog-close"
           >
             <X className="h-4 w-4" />
@@ -92,7 +92,7 @@ function DialogDescription({
 }: DialogPrimitive.Description.Props) {
   return (
     <DialogPrimitive.Description
-      className={cn("text-sm text-[#8a90a3] dark:text-[#7d8299]", className)}
+      className={cn("text-sm text-[#667085] dark:text-[#7d8299]", className)}
       data-slot="dialog-description"
       {...props}
     />

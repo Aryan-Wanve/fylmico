@@ -46,14 +46,14 @@ export function RecentActivityPanel() {
                   <strong className="font-semibold">{entry.actorName}</strong>{" "}
                   {entry.text}
                 </p>
-                <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                <span className="text-xs text-[#667085] dark:text-[#7d8299]">
                   {formatRelativeTime(entry.occurredAt)}
                 </span>
               </div>
             </div>
           ))
         ) : (
-          <p className="px-6 py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="px-6 py-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
             No recent activity yet.
           </p>
         )}

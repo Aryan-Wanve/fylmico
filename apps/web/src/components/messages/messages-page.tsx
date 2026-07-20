@@ -663,7 +663,7 @@ export function MessagesPage() {
             Reconnecting…
           </span>
         ) : connectionStatus === "connecting" ? (
-          <span className="shrink-0 rounded-full bg-black/[0.04] px-3 py-1 text-xs font-bold text-[#8a90a3] dark:bg-white/[0.06] dark:text-[#7d8299]">
+          <span className="shrink-0 rounded-full bg-black/[0.04] px-3 py-1 text-xs font-bold text-[#667085] dark:bg-white/[0.06] dark:text-[#7d8299]">
             Connecting…
           </span>
         ) : null}
@@ -717,7 +717,7 @@ export function MessagesPage() {
                   {hasMoreOlder ? (
                     <div className="mb-3 flex justify-center">
                       <button
-                        className="rounded-full bg-black/[0.04] px-3 py-1 text-xs font-semibold text-[#8a90a3] hover:bg-black/[0.07] disabled:opacity-50 dark:bg-white/[0.06] dark:text-[#7d8299] dark:hover:bg-white/[0.1]"
+                        className="rounded-full bg-black/[0.04] px-3 py-1 text-xs font-semibold text-[#667085] hover:bg-black/[0.07] disabled:opacity-50 dark:bg-white/[0.06] dark:text-[#7d8299] dark:hover:bg-white/[0.1]"
                         disabled={loadingOlder}
                         onClick={handleLoadOlder}
                         type="button"
@@ -775,7 +775,7 @@ export function MessagesPage() {
                     })}
                   </div>
                   {typingUsers.length > 0 ? (
-                    <p className="pb-1 text-xs font-semibold text-[#8a90a3] italic dark:text-[#7d8299]">
+                    <p className="pb-1 text-xs font-semibold text-[#667085] italic dark:text-[#7d8299]">
                       {typingUsers.join(", ")}{" "}
                       {typingUsers.length === 1 ? "is" : "are"} typing…
                     </p>

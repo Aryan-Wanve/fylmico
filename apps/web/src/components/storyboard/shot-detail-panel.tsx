@@ -31,7 +31,7 @@ export function ShotDetailPanel({
         </strong>
         <button
           aria-label="Close shot details"
-          className="grid h-7 w-7 place-items-center rounded-full text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+          className="grid h-7 w-7 place-items-center rounded-full text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
           onClick={onClose}
           type="button"
         >
@@ -49,7 +49,7 @@ export function ShotDetailPanel({
               src={shot.imageUrl}
             />
           ) : (
-            <Camera className="h-14 w-14 text-[#8a90a3]/60" strokeWidth={1.1} />
+            <Camera className="h-14 w-14 text-[#667085]/60" strokeWidth={1.1} />
           )}
           <button
             className="absolute right-2 bottom-2 flex h-8 items-center gap-1.5 rounded-lg bg-[#11142c]/80 px-3 text-xs font-bold text-white opacity-0 transition group-hover:opacity-100"
@@ -74,7 +74,7 @@ export function ShotDetailPanel({
           </strong>
 
           <label className="mt-3 grid gap-1">
-            <span className="text-xs font-bold text-[#8a90a3] uppercase dark:text-[#7d8299]">
+            <span className="text-xs font-bold text-[#667085] uppercase dark:text-[#7d8299]">
               Camera Angle
             </span>
             <input
@@ -88,7 +88,7 @@ export function ShotDetailPanel({
           </label>
 
           <label className="mt-3 grid gap-1">
-            <span className="text-xs font-bold text-[#8a90a3] uppercase dark:text-[#7d8299]">
+            <span className="text-xs font-bold text-[#667085] uppercase dark:text-[#7d8299]">
               Description
             </span>
             <textarea
@@ -101,7 +101,7 @@ export function ShotDetailPanel({
           </label>
 
           <label className="mt-3 grid gap-1">
-            <span className="text-xs font-bold text-[#8a90a3] uppercase dark:text-[#7d8299]">
+            <span className="text-xs font-bold text-[#667085] uppercase dark:text-[#7d8299]">
               Notes
             </span>
             <textarea

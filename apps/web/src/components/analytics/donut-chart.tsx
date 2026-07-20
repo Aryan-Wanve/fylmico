@@ -56,7 +56,7 @@ export function DonutChart({
         <strong className="text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
           {centerLabel}
         </strong>
-        <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+        <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
           {centerSublabel}
         </span>
       </div>

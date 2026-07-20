@@ -59,7 +59,7 @@ export function RequestChangesDialog({
             placeholder="e.g. Color grade looks too warm in the interview scene, please adjust."
             value={comment}
           />
-          <p className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="text-xs text-[#667085] dark:text-[#7d8299]">
             This moves the task back to In Progress and notifies the editor.
           </p>
           {error ? (

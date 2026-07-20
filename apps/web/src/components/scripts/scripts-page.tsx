@@ -181,13 +181,13 @@ export function ScriptsPage() {
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
         <div className="grid min-h-0 content-start gap-2 overflow-y-auto rounded-2xl border border-black/[0.06] bg-white p-3 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] lg:max-h-none dark:border-white/[0.08] dark:bg-[#171a28]">
           {loading ? (
-            <p className="px-3 py-6 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="px-3 py-6 text-center text-sm text-[#667085] dark:text-[#7d8299]">
               Loading scripts...
             </p>
           ) : summaries.length === 0 ? (
             <div className="grid place-items-center gap-2 px-3 py-10 text-center">
-              <FileText className="h-6 w-6 text-[#8a90a3] dark:text-[#7d8299]" />
-              <p className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
+              <FileText className="h-6 w-6 text-[#667085] dark:text-[#7d8299]" />
+              <p className="text-sm text-[#667085] dark:text-[#7d8299]">
                 No scripts yet. Create one to get started.
               </p>
             </div>
@@ -206,7 +206,7 @@ export function ScriptsPage() {
                 <span className="truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                   {summary.title}
                 </span>
-                <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                <span className="text-xs text-[#667085] dark:text-[#7d8299]">
                   {summary.wordCount} word{summary.wordCount === 1 ? "" : "s"}
                 </span>
               </button>
@@ -228,7 +228,7 @@ export function ScriptsPage() {
               <p className="text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                 Select a script or create a new one
               </p>
-              <p className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
+              <p className="text-sm text-[#667085] dark:text-[#7d8299]">
                 Your screenplay content lives here.
               </p>
             </div>

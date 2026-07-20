@@ -34,7 +34,7 @@ export function CrewStatCard({
         <span className="mt-1 block text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
           {value}
         </span>
-        <p className="mt-1 text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+        <p className="mt-1 text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
           {note}
         </p>
       </div>

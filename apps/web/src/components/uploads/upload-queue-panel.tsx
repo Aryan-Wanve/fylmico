@@ -71,7 +71,7 @@ function StatusLine({ item }: { item: UploadQueueItem }) {
           style={{ width: `${item.status === "done" ? 100 : percent}%` }}
         />
       </div>
-      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2 text-xs text-[#8a90a3] dark:text-[#7d8299]">
+      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2 text-xs text-[#667085] dark:text-[#7d8299]">
         <span>
           {item.status === "done"
             ? `${formatFileSize(item.fileSize)} uploaded`
@@ -110,7 +110,7 @@ function QueueRow({ item }: { item: UploadQueueItem }) {
             <span className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
               {item.fileName}
             </span>
-            <span className="block truncate text-[0.68rem] text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="block truncate text-[0.68rem] text-[#667085] dark:text-[#7d8299]">
               {item.destinationLabel}
             </span>
           </div>
@@ -118,7 +118,7 @@ function QueueRow({ item }: { item: UploadQueueItem }) {
         <div className="flex shrink-0 items-center gap-1">
           {item.status === "uploading" ? (
             <button
-              className="grid h-6 w-6 place-items-center rounded-full text-[#8a90a3] hover:bg-black/[0.04] hover:text-[#11142c] dark:text-[#7d8299] dark:hover:bg-white/[0.06] dark:hover:text-[#f1f2f8]"
+              className="grid h-6 w-6 place-items-center rounded-full text-[#667085] hover:bg-black/[0.04] hover:text-[#11142c] dark:text-[#7d8299] dark:hover:bg-white/[0.06] dark:hover:text-[#f1f2f8]"
               onClick={() => pause(item.id)}
               title="Pause"
               type="button"
@@ -161,7 +161,7 @@ function QueueRow({ item }: { item: UploadQueueItem }) {
             </>
           ) : null}
           <button
-            className="grid h-6 w-6 place-items-center rounded-full text-[#8a90a3] hover:bg-black/[0.04] hover:text-[#11142c] dark:text-[#7d8299] dark:hover:bg-white/[0.06] dark:hover:text-[#f1f2f8]"
+            className="grid h-6 w-6 place-items-center rounded-full text-[#667085] hover:bg-black/[0.04] hover:text-[#11142c] dark:text-[#7d8299] dark:hover:bg-white/[0.06] dark:hover:text-[#f1f2f8]"
             onClick={() => cancel(item.id)}
             title="Cancel"
             type="button"

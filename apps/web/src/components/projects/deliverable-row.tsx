@@ -100,7 +100,7 @@ export function DeliverableRow({
               {STATUS_LABELS[deliverable.status]}
             </span>
           </div>
-          <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <span className="text-xs text-[#667085] dark:text-[#7d8299]">
             {deliverable.file.name}
             {deliverable.file.size
               ? ` • ${formatSize(deliverable.file.size)}`
@@ -129,7 +129,7 @@ export function DeliverableRow({
             </>
           ) : null}
           <button
-            className="grid h-8 w-8 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.03] dark:text-[#7d8299] dark:hover:bg-white/[0.05]"
+            className="grid h-8 w-8 place-items-center rounded-lg text-[#667085] hover:bg-black/[0.03] dark:text-[#7d8299] dark:hover:bg-white/[0.05]"
             onClick={() => void toggleExpanded()}
             type="button"
           >
@@ -150,7 +150,7 @@ export function DeliverableRow({
             </p>
           ) : null}
           {comments.length === 0 ? (
-            <p className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="text-xs text-[#667085] dark:text-[#7d8299]">
               No comments yet.
             </p>
           ) : (
@@ -166,7 +166,7 @@ export function DeliverableRow({
                     <strong className="text-xs font-bold text-[#11142c] dark:text-[#f1f2f8]">
                       {comment.authorName}
                     </strong>
-                    <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                    <span className="text-xs text-[#667085] dark:text-[#7d8299]">
                       {formatRelativeTime(comment.createdAt)}
                     </span>
                   </div>

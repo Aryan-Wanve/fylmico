@@ -151,7 +151,7 @@ export function EditTaskCard({
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
         {latest ? (
           <div>
-            <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
               Current Version
             </span>
             <span className="flex items-center gap-1.5">
@@ -168,7 +168,7 @@ export function EditTaskCard({
         ) : null}
         {task.boardName ? (
           <div>
-            <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
               Storyboard
             </span>
             <strong className="text-[#11142c] dark:text-[#f1f2f8]">
@@ -178,7 +178,7 @@ export function EditTaskCard({
         ) : null}
         {versions.length > 0 ? (
           <div>
-            <span className="block text-xs text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="block text-xs text-[#667085] dark:text-[#7d8299]">
               Versions
             </span>
             <strong className="text-[#11142c] dark:text-[#f1f2f8]">

@@ -73,7 +73,7 @@ export function ChannelInfoPanel({
         <ul className="mt-3 grid gap-1.5">
           {members.map((member) => (
             <li
-              className="flex items-center justify-between text-xs text-[#8a90a3] dark:text-[#7d8299]"
+              className="flex items-center justify-between text-xs text-[#667085] dark:text-[#7d8299]"
               key={member.id}
             >
               <span className="font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
@@ -94,10 +94,10 @@ export function ChannelInfoPanel({
       <div className="grid gap-1 border-t border-black/5 pt-4 dark:border-white/[0.06]">
         <div className="flex items-center justify-between py-1.5">
           <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-            <Bell className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
+            <Bell className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
             Notifications
           </span>
-          <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+          <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
             All Messages
           </span>
         </div>
@@ -107,10 +107,10 @@ export function ChannelInfoPanel({
           type="button"
         >
           <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-            <FileText className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
+            <FileText className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
             Files
           </span>
-          <ChevronRight className="h-3.5 w-3.5 text-[#8a90a3] dark:text-[#7d8299]" />
+          <ChevronRight className="h-3.5 w-3.5 text-[#667085] dark:text-[#7d8299]" />
         </button>
         <button
           className="flex items-center justify-between py-1.5"
@@ -118,10 +118,10 @@ export function ChannelInfoPanel({
           type="button"
         >
           <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-            <ListChecks className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
+            <ListChecks className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
             Tasks
           </span>
-          <ChevronRight className="h-3.5 w-3.5 text-[#8a90a3] dark:text-[#7d8299]" />
+          <ChevronRight className="h-3.5 w-3.5 text-[#667085] dark:text-[#7d8299]" />
         </button>
         <button
           className="flex items-center justify-between py-1.5"
@@ -129,10 +129,10 @@ export function ChannelInfoPanel({
           type="button"
         >
           <span className="flex items-center gap-2.5 text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-            <CalendarDays className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
+            <CalendarDays className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
             Events
           </span>
-          <ChevronRight className="h-3.5 w-3.5 text-[#8a90a3] dark:text-[#7d8299]" />
+          <ChevronRight className="h-3.5 w-3.5 text-[#667085] dark:text-[#7d8299]" />
         </button>
       </div>
     </div>

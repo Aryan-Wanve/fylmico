@@ -63,7 +63,7 @@ export function TaskOverviewPanel({ tasks }: { tasks: Task[] }) {
               <strong className="block text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
                 {total}
               </strong>
-              <span className="text-[0.65rem] font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+              <span className="text-[0.65rem] font-semibold text-[#667085] dark:text-[#7d8299]">
                 Total Tasks
               </span>
             </div>

@@ -69,7 +69,7 @@ export function ClientCard({
               {client.name}
             </strong>
             {client.contactName ? (
-              <span className="block truncate text-xs text-[#8a90a3] dark:text-[#7d8299]">
+              <span className="block truncate text-xs text-[#667085] dark:text-[#7d8299]">
                 {client.contactName}
               </span>
             ) : null}
@@ -80,7 +80,7 @@ export function ClientCard({
             <DropdownMenuTrigger
               render={
                 <button
-                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
                   type="button"
                 >
                   <MoreHorizontal className="h-4 w-4" />
@@ -101,7 +101,7 @@ export function ClientCard({
           <strong className="block text-base font-black text-[#11142c] dark:text-[#f1f2f8]">
             {stats?.activeTasks ?? "-"}
           </strong>
-          <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <span className="text-xs text-[#667085] dark:text-[#7d8299]">
             Active
           </span>
         </div>
@@ -109,7 +109,7 @@ export function ClientCard({
           <strong className="block text-base font-black text-[#11142c] dark:text-[#f1f2f8]">
             {stats?.completedTasks ?? "-"}
           </strong>
-          <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <span className="text-xs text-[#667085] dark:text-[#7d8299]">
             Completed
           </span>
         </div>
@@ -117,7 +117,7 @@ export function ClientCard({
           <strong className="block text-base font-black text-[#11142c] dark:text-[#f1f2f8]">
             {stats ? formatFileSize(stats.storageBytes) : "-"}
           </strong>
-          <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <span className="text-xs text-[#667085] dark:text-[#7d8299]">
             Storage
           </span>
         </div>

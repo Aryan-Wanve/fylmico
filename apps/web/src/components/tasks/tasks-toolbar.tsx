@@ -108,7 +108,7 @@ export function TasksToolbar({
             className={`grid h-7 w-7 place-items-center rounded-md ${
               viewMode === "list"
                 ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
-                : "text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+                : "text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
             }`}
             onClick={() => onViewModeChange("list")}
             type="button"
@@ -120,7 +120,7 @@ export function TasksToolbar({
             className={`grid h-7 w-7 place-items-center rounded-md ${
               viewMode === "board"
                 ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
-                : "text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+                : "text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
             }`}
             onClick={() => onViewModeChange("board")}
             type="button"
@@ -132,7 +132,7 @@ export function TasksToolbar({
             className={`grid h-7 w-7 place-items-center rounded-md ${
               viewMode === "table"
                 ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
-                : "text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
+                : "text-[#667085] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
             }`}
             onClick={() => onViewModeChange("table")}
             type="button"

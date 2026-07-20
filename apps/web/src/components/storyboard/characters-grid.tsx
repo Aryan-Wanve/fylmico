@@ -14,7 +14,7 @@ export function CharactersGrid({
         <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
           No characters yet
         </strong>
-        <p className="max-w-xs text-sm text-[#8a90a3] dark:text-[#7d8299]">
+        <p className="max-w-xs text-sm text-[#667085] dark:text-[#7d8299]">
           Add characters to keep track of who&apos;s in your story.
         </p>
       </div>
@@ -30,7 +30,7 @@ export function CharactersGrid({
         >
           <button
             aria-label={`Delete ${character.name}`}
-            className="absolute top-3 right-3 hidden h-7 w-7 place-items-center rounded-full text-[#8a90a3] group-hover:grid hover:bg-red-50 hover:text-red-600 dark:text-[#7d8299]"
+            className="absolute top-3 right-3 hidden h-7 w-7 place-items-center rounded-full text-[#667085] group-hover:grid hover:bg-red-50 hover:text-red-600 dark:text-[#7d8299]"
             onClick={() => onDelete(character.id)}
             type="button"
           >

@@ -41,7 +41,7 @@ export function FileGridCard({
       <strong className="line-clamp-2 w-full truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
         {file.name}
       </strong>
-      <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+      <span className="text-xs text-[#667085] dark:text-[#7d8299]">
         {file.type === "folder" ? "Folder" : formatFileSize(file.size)}
       </span>
     </div>

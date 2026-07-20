@@ -244,7 +244,7 @@ export function ReviewPage() {
         <p className="text-sm font-semibold text-[#4b5268] dark:text-[#c7cad9]">
           Reviewers and Admins only.
         </p>
-        <p className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+        <p className="text-xs text-[#667085] dark:text-[#7d8299]">
           You&apos;ll see your own submitted work under your crew profile
           instead.
         </p>
@@ -270,7 +270,7 @@ export function ReviewPage() {
             className="rounded-2xl border border-black/[0.06] bg-white p-4 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]"
             key={card.key}
           >
-            <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+            <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
               {card.label}
             </span>
             <strong className={`block text-2xl font-black ${card.accent}`}>
@@ -310,7 +310,7 @@ export function ReviewPage() {
       />
 
       {loading ? (
-        <p className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
+        <p className="text-sm text-[#667085] dark:text-[#7d8299]">
           Loading review queue...
         </p>
       ) : filtered.length === 0 ? (
@@ -318,7 +318,7 @@ export function ReviewPage() {
           <p className="text-sm font-semibold text-[#4b5268] dark:text-[#c7cad9]">
             Nothing to review right now.
           </p>
-          <p className="mt-1 text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="mt-1 text-xs text-[#667085] dark:text-[#7d8299]">
             Submitted drafts will show up here for approval.
           </p>
         </div>

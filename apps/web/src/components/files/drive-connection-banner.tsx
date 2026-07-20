@@ -25,7 +25,7 @@ export function DriveConnectionBanner({
             <p className="font-bold text-[#11142c] dark:text-[#f1f2f8]">
               House Google Drive connected
             </p>
-            <p className="text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="text-[#667085] dark:text-[#7d8299]">
               Files are organized automatically in{" "}
               {status.email ?? "the connected Drive"}.
             </p>
@@ -54,7 +54,7 @@ export function DriveConnectionBanner({
           <p className="font-bold text-[#11142c] dark:text-[#f1f2f8]">
             Connect this house&apos;s Google Drive
           </p>
-          <p className="text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="text-[#667085] dark:text-[#7d8299]">
             {canManage
               ? "Fylmico will automatically create and manage the folder structure — Clients, Resources, Portfolio, and a private Sensitive folder."
               : "Ask a house Owner to connect Google Drive to unlock uploads."}

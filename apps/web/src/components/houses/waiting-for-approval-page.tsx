@@ -77,7 +77,7 @@ export function WaitingForApprovalPage({ house }: { house: House }) {
 
         {admins.length > 0 ? (
           <div className="mt-6">
-            <p className="text-xs font-bold tracking-wide text-[#8a90a3] uppercase dark:text-[#7d8299]">
+            <p className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
               Admins online
             </p>
             <div className="mt-2 flex justify-center -space-x-2">
@@ -93,7 +93,7 @@ export function WaitingForApprovalPage({ house }: { house: House }) {
           </div>
         ) : null}
 
-        <p className="mt-6 text-xs text-[#8a90a3] dark:text-[#7d8299]">
+        <p className="mt-6 text-xs text-[#667085] dark:text-[#7d8299]">
           Only house admins can grant access. Please contact an administrator if
           this takes too long.
         </p>

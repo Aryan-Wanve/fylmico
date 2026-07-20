@@ -92,14 +92,14 @@ function HouseCard({
           <h3 className="truncate text-base font-bold text-[#11142c] dark:text-[#f1f2f8]">
             {house.name}
           </h3>
-          <p className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
             @{house.handle}
           </p>
           <p className="mt-1.5 line-clamp-2 text-sm text-[#5f667d] dark:text-[#a8acbf]">
             {house.description}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
           <span className="flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5" />
             {house.members.length} member{house.members.length === 1 ? "" : "s"}
@@ -117,7 +117,7 @@ function HouseCard({
       <div className="mt-4 flex items-center gap-1.5">
         <button
           aria-label={house.isFavorite ? "Unfavorite" : "Favorite"}
-          className={`grid h-8 w-8 place-items-center rounded-lg border border-black/10 hover:bg-black/[0.03] dark:border-white/10 dark:hover:bg-white/[0.05] ${house.isFavorite ? "text-amber-500" : "text-[#8a90a3] dark:text-[#7d8299]"}`}
+          className={`grid h-8 w-8 place-items-center rounded-lg border border-black/10 hover:bg-black/[0.03] dark:border-white/10 dark:hover:bg-white/[0.05] ${house.isFavorite ? "text-amber-500" : "text-[#667085] dark:text-[#7d8299]"}`}
           onClick={onToggleFavorite}
           type="button"
         >
@@ -128,7 +128,7 @@ function HouseCard({
         </button>
         <button
           aria-label={house.isPinned ? "Unpin" : "Pin"}
-          className={`grid h-8 w-8 place-items-center rounded-lg border border-black/10 hover:bg-black/[0.03] dark:border-white/10 dark:hover:bg-white/[0.05] ${house.isPinned ? "text-[var(--fylmico-accent)]" : "text-[#8a90a3] dark:text-[#7d8299]"}`}
+          className={`grid h-8 w-8 place-items-center rounded-lg border border-black/10 hover:bg-black/[0.03] dark:border-white/10 dark:hover:bg-white/[0.05] ${house.isPinned ? "text-[var(--fylmico-accent)]" : "text-[#667085] dark:text-[#7d8299]"}`}
           onClick={onTogglePin}
           type="button"
         >
@@ -139,7 +139,7 @@ function HouseCard({
         </button>
         <button
           aria-label={house.isArchived ? "Unarchive" : "Archive"}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-black/10 text-[#8a90a3] hover:bg-black/[0.03] dark:border-white/10 dark:text-[#7d8299] dark:hover:bg-white/[0.05]"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-black/10 text-[#667085] hover:bg-black/[0.03] dark:border-white/10 dark:text-[#7d8299] dark:hover:bg-white/[0.05]"
           onClick={onToggleArchive}
           type="button"
         >
@@ -290,15 +290,15 @@ export function HousesDashboardPage() {
 
         {workspace.houses.length === 0 ? (
           <div className="grid place-items-center gap-2 rounded-2xl border border-dashed border-black/10 bg-white/60 p-12 text-center dark:border-white/10 dark:bg-white/[0.02]">
-            <Home className="h-6 w-6 text-[#8a90a3] dark:text-[#7d8299]" />
-            <p className="text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <Home className="h-6 w-6 text-[#667085] dark:text-[#7d8299]" />
+            <p className="text-sm text-[#667085] dark:text-[#7d8299]">
               You&apos;re not in a house yet. Create or join one to get started.
             </p>
           </div>
         ) : (
           <>
             <div className="relative max-w-sm">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#8a90a3] dark:text-[#7d8299]" />
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#667085] dark:text-[#7d8299]" />
               <Input
                 className="pl-9"
                 onChange={(event) => setSearchTerm(event.target.value)}
@@ -309,7 +309,7 @@ export function HousesDashboardPage() {
 
             {pinnedHouses.length > 0 ? (
               <div className="grid gap-2">
-                <h2 className="text-xs font-bold tracking-wide text-[#8a90a3] uppercase dark:text-[#7d8299]">
+                <h2 className="text-xs font-bold tracking-wide text-[#667085] uppercase dark:text-[#7d8299]">
                   Pinned
                 </h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

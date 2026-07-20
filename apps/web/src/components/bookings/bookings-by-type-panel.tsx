@@ -48,7 +48,7 @@ export function BookingsByTypePanel({ bookings }: { bookings: Booking[] }) {
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-[#3a3f57] dark:text-[#b4b8cc]">
                     {segment.label}
                   </span>
-                  <span className="text-xs font-semibold text-[#8a90a3] dark:text-[#7d8299]">
+                  <span className="text-xs font-semibold text-[#667085] dark:text-[#7d8299]">
                     {segment.value} ({segment.percentage}%)
                   </span>
                 </div>
@@ -56,7 +56,7 @@ export function BookingsByTypePanel({ bookings }: { bookings: Booking[] }) {
             </div>
           </>
         ) : (
-          <p className="py-4 text-center text-sm text-[#8a90a3] dark:text-[#7d8299]">
+          <p className="py-4 text-center text-sm text-[#667085] dark:text-[#7d8299]">
             No bookings yet.
           </p>
         )}

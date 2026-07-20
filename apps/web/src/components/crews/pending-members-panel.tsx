@@ -85,7 +85,7 @@ export function PendingMembersPanel({
                 <p className="truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                   {member.name}
                 </p>
-                <p className="truncate text-xs text-[#8a90a3] dark:text-[#7d8299]">
+                <p className="truncate text-xs text-[#667085] dark:text-[#7d8299]">
                   {member.username ? `@${member.username} · ` : ""}
                   {formatRelativeTime(member.joinedAt)}
                 </p>

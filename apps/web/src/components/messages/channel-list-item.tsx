@@ -28,12 +28,12 @@ export function ChannelListItem({
           >
             {channel.name}
           </strong>
-          <span className="shrink-0 text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <span className="shrink-0 text-xs text-[#667085] dark:text-[#7d8299]">
             {channel.lastMessageTime}
           </span>
         </span>
         <span className="flex items-center justify-between gap-2">
-          <span className="truncate text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <span className="truncate text-xs text-[#667085] dark:text-[#7d8299]">
             {channel.lastMessagePreview}
           </span>
           {channel.unreadCount > 0 ? (

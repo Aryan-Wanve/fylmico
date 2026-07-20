@@ -61,7 +61,7 @@ export function TaskRowItem({
           <strong
             className={`truncate text-sm font-semibold ${
               isDone
-                ? "text-[#8a90a3] line-through dark:text-[#7d8299]"
+                ? "text-[#667085] line-through dark:text-[#7d8299]"
                 : "text-[#11142c] dark:text-[#f1f2f8]"
             }`}
           >
@@ -69,7 +69,7 @@ export function TaskRowItem({
           </strong>
           <TaskIndicatorBadges task={task} />
         </div>
-        <div className="mt-0.5 flex items-center gap-3 text-xs text-[#8a90a3] dark:text-[#7d8299]">
+        <div className="mt-0.5 flex items-center gap-3 text-xs text-[#667085] dark:text-[#7d8299]">
           <span>{TASK_TYPE_LABELS[task.type]}</span>
           {task.subtasks.length ? (
             <span>
@@ -93,7 +93,7 @@ export function TaskRowItem({
 
       <div className="hidden w-28 shrink-0 items-center -space-x-2 sm:flex">
         {task.assignees.length === 0 ? (
-          <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+          <span className="text-xs text-[#667085] dark:text-[#7d8299]">
             Unassigned
           </span>
         ) : (

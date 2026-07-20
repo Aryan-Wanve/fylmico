@@ -42,7 +42,7 @@ export function RecentProjectsPanel() {
               <DashboardProjectCard key={project.id} project={project} />
             ))
           ) : (
-            <p className="py-6 text-sm text-[#8a90a3] dark:text-[#7d8299]">
+            <p className="py-6 text-sm text-[#667085] dark:text-[#7d8299]">
               No projects yet.
             </p>
           )}

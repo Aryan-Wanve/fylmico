@@ -144,10 +144,10 @@ export function WeatherWidget() {
 
   return (
     <div className="flex shrink-0 items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-[#4b5268] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9]">
-      <Icon className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
+      <Icon className="h-4 w-4 text-[#667085] dark:text-[#7d8299]" />
       {weather.tempC}°C
       {weather.place ? (
-        <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
+        <span className="text-xs text-[#667085] dark:text-[#7d8299]">
           {weather.place}
         </span>
       ) : null}
