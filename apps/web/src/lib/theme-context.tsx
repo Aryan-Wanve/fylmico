@@ -9,7 +9,10 @@ import {
   type ReactNode
 } from "react";
 
+// The resolved, in-effect theme that components actually render against.
 export type Theme = "light" | "dark";
+// What the user picked. "system" tracks the device and is the default.
+export type ThemePreference = "system" | "light" | "dark";
 export type AccentColor = "violet" | "blue" | "emerald" | "rose";
 export type Density = "compact" | "default" | "comfortable";
 
@@ -25,6 +28,16 @@ const ACCENT_VALUES: Record<AccentColor, string> = {
   rose: "#e11d48"
 };
 
+function systemTheme(): Theme {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+function resolveTheme(preference: ThemePreference): Theme {
+  return preference === "system" ? systemTheme() : preference;
+}
+
 function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle("dark", theme === "dark");
 }
@@ -37,9 +50,11 @@ function runThemeTransition() {
   }, THEME_TRANSITION_MS);
 }
 
-function readStoredTheme(): Theme | null {
+function readStoredPreference(): ThemePreference {
   const stored = window.localStorage.getItem(STORAGE_KEY);
-  return stored === "light" || stored === "dark" ? stored : null;
+  return stored === "light" || stored === "dark" || stored === "system"
+    ? stored
+    : "system";
 }
 
 function readStoredAccent(): AccentColor {
@@ -72,8 +87,10 @@ function applyDensity(density: Density) {
 
 type ThemeContextValue = {
   theme: Theme;
+  preference: ThemePreference;
   accent: AccentColor;
   density: Density;
+  setPreference: (preference: ThemePreference) => void;
   setTheme: (theme: Theme) => void;
   setAccent: (accent: AccentColor) => void;
   setDensity: (density: Density) => void;
@@ -83,24 +100,22 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [preference, setPreferenceState] = useState<ThemePreference>("system");
   const [theme, setThemeState] = useState<Theme>("light");
   const [accent, setAccentState] = useState<AccentColor>("violet");
   const [density, setDensityState] = useState<Density>("default");
 
   useEffect(() => {
-    const stored = readStoredTheme();
-    const initial =
-      stored ??
-      (window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light");
+    const storedPreference = readStoredPreference();
+    const resolved = resolveTheme(storedPreference);
     // Deliberate mount-time sync: localStorage/matchMedia only exist in the
     // browser, so React state can't know the real theme until after
     // hydration. The blocking <script> in layout.tsx already set the DOM
     // class before paint; this just brings React state in line with it.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setThemeState(initial);
-    applyTheme(initial);
+    setPreferenceState(storedPreference);
+    setThemeState(resolved);
+    applyTheme(resolved);
     const storedAccent = readStoredAccent();
     const storedDensity = readStoredDensity();
     setAccentState(storedAccent);
@@ -109,12 +124,36 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyDensity(storedDensity);
   }, []);
 
-  const setTheme = useCallback((next: Theme) => {
+  // While the preference is "system", follow the OS live so the app flips
+  // the moment the device switches between light and dark.
+  useEffect(() => {
+    if (preference !== "system") {
+      return;
+    }
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      const resolved = systemTheme();
+      runThemeTransition();
+      setThemeState(resolved);
+      applyTheme(resolved);
+    };
+    media.addEventListener("change", handleChange);
+    return () => media.removeEventListener("change", handleChange);
+  }, [preference]);
+
+  const setPreference = useCallback((next: ThemePreference) => {
+    const resolved = resolveTheme(next);
     runThemeTransition();
-    setThemeState(next);
-    applyTheme(next);
+    setPreferenceState(next);
+    setThemeState(resolved);
+    applyTheme(resolved);
     window.localStorage.setItem(STORAGE_KEY, next);
   }, []);
+
+  const setTheme = useCallback(
+    (next: Theme) => setPreference(next),
+    [setPreference]
+  );
 
   const setAccent = useCallback((next: AccentColor) => {
     setAccentState(next);
@@ -129,16 +168,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  }, [theme, setTheme]);
+    // The quick topbar toggle commits to an explicit choice (leaving
+    // "system"); the full System/Light/Dark control lives in Appearance.
+    setPreference(theme === "dark" ? "light" : "dark");
+  }, [theme, setPreference]);
 
   return (
     <ThemeContext.Provider
       value={{
         accent,
         density,
+        preference,
         setAccent,
         setDensity,
+        setPreference,
         setTheme,
         theme,
         toggleTheme

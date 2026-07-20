@@ -16,13 +16,16 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: "light dark",
-  themeColor: "#f7f7fb"
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f7f7fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e0f18" }
+  ]
 };
 
 const THEME_INIT_SCRIPT = `
 try {
   var stored = window.localStorage.getItem("fylmico-theme");
-  var isDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  var isDark = stored === "dark" || (stored !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.classList.toggle("dark", isDark);
   var accent = window.localStorage.getItem("fylmico-accent");
   var accentValues = { blue: "#2563eb", emerald: "#059669", rose: "#e11d48", violet: "#654cff" };

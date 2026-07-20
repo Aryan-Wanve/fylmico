@@ -1,7 +1,21 @@
-import { Check, Moon, Rows3, Sun } from "lucide-react";
+import { Check, Monitor, Moon, Rows3, Sun } from "lucide-react";
 import { SettingsCard } from "@/components/settings/settings-card";
 import { useTheme } from "@/lib/theme-context";
-import type { AccentColor, Density, Theme } from "@/lib/theme-context";
+import type {
+  AccentColor,
+  Density,
+  ThemePreference
+} from "@/lib/theme-context";
+
+const THEME_OPTIONS: Array<{
+  value: ThemePreference;
+  label: string;
+  icon: typeof Sun;
+}> = [
+  { value: "system", label: "System", icon: Monitor },
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon }
+];
 
 function ThemeOption({
   value,
@@ -10,11 +24,11 @@ function ThemeOption({
   active,
   onSelect
 }: {
-  value: Theme;
+  value: ThemePreference;
   label: string;
   icon: typeof Sun;
   active: boolean;
-  onSelect: (value: Theme) => void;
+  onSelect: (value: ThemePreference) => void;
 }) {
   return (
     <button
@@ -66,30 +80,26 @@ const DENSITY_OPTIONS: Array<{
 ];
 
 export function AppearanceSection() {
-  const { accent, density, setAccent, setDensity, setTheme, theme } =
+  const { accent, density, preference, setAccent, setDensity, setPreference } =
     useTheme();
 
   return (
     <div className="grid gap-6">
       <SettingsCard
-        subtitle="Choose how Fylmico looks on your device."
+        subtitle="System follows your device; pick Light or Dark to override it."
         title="Theme"
       >
         <div className="flex gap-3">
-          <ThemeOption
-            active={theme === "light"}
-            icon={Sun}
-            label="Light"
-            onSelect={setTheme}
-            value="light"
-          />
-          <ThemeOption
-            active={theme === "dark"}
-            icon={Moon}
-            label="Dark"
-            onSelect={setTheme}
-            value="dark"
-          />
+          {THEME_OPTIONS.map((option) => (
+            <ThemeOption
+              active={preference === option.value}
+              icon={option.icon}
+              key={option.value}
+              label={option.label}
+              onSelect={setPreference}
+              value={option.value}
+            />
+          ))}
         </div>
       </SettingsCard>
 
