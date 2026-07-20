@@ -2,7 +2,7 @@ import { MessageSquare } from "lucide-react";
 
 export function MessagesEmptyState() {
   return (
-    <div className="grid h-full min-h-[20rem] place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 text-center dark:border-white/10 dark:bg-white/[0.02]">
+    <div className="fylmico-content-in grid h-full min-h-[20rem] place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 text-center dark:border-white/10 dark:bg-white/[0.02]">
       <div className="grid justify-items-center gap-3">
         <div className="grid h-12 w-12 place-items-center rounded-full bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]">
           <MessageSquare className="h-6 w-6" />

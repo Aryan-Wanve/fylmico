@@ -2,7 +2,7 @@ import { FolderKanban } from "lucide-react";
 
 export function ProjectsEmptyState() {
   return (
-    <div className="grid place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 py-16 text-center dark:border-white/10 dark:bg-white/[0.02]">
+    <div className="fylmico-content-in grid place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 py-16 text-center dark:border-white/10 dark:bg-white/[0.02]">
       <div className="grid h-12 w-12 place-items-center rounded-full bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]">
         <FolderKanban className="h-6 w-6" />
       </div>

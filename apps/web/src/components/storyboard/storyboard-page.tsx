@@ -404,7 +404,7 @@ export function StoryboardPage() {
         </p>
       ) : activeTab === "boards" ? (
         visibleBoards.length === 0 ? (
-          <div className="grid place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 py-16 text-center dark:border-white/10 dark:bg-white/[0.02]">
+          <div className="fylmico-content-in grid place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 py-16 text-center dark:border-white/10 dark:bg-white/[0.02]">
             <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
               No boards yet
             </strong>
@@ -450,7 +450,7 @@ export function StoryboardPage() {
                 ) : null}
 
                 {activeBoard.shots.length === 0 ? (
-                  <div className="grid place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 py-16 text-center dark:border-white/10 dark:bg-white/[0.02]">
+                  <div className="fylmico-content-in grid place-items-center gap-3 rounded-2xl border border-dashed border-black/10 bg-white/60 py-16 text-center dark:border-white/10 dark:bg-white/[0.02]">
                     <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                       This board has no shots yet
                     </strong>
