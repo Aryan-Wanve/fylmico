@@ -223,7 +223,7 @@ export function NewBookingDialog({
           </div>
 
           {error ? (
-            <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600">
+            <p className="animate-in fade-in slide-in-from-top-1 mt-3 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600 duration-200">
               {error}
             </p>
           ) : null}

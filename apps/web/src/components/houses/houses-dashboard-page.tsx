@@ -373,7 +373,7 @@ export function HousesDashboardPage() {
           requestSent={requestSent}
         />
         {error ? (
-          <p className="w-full max-w-[30rem] rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-center text-sm font-semibold text-red-600">
+          <p className="animate-in fade-in slide-in-from-top-1 w-full max-w-[30rem] rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-center text-sm font-semibold text-red-600 duration-200">
             {error}
           </p>
         ) : null}

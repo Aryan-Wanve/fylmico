@@ -127,12 +127,12 @@ export function WorkspaceSection() {
         </div>
 
         {error ? (
-          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600">
+          <p className="animate-in fade-in slide-in-from-top-1 mt-3 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600 duration-200">
             {error}
           </p>
         ) : null}
         {saved ? (
-          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm font-semibold text-emerald-700">
+          <p className="animate-in fade-in slide-in-from-top-1 mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm font-semibold text-emerald-700 duration-200">
             Workspace settings saved.
           </p>
         ) : null}

@@ -74,7 +74,7 @@ export function ResetPasswordPage() {
         </header>
 
         {isSubmitted ? (
-          <p className="mt-7 rounded-lg border border-green-200 bg-green-50 px-3.5 py-3 text-sm font-semibold text-green-700">
+          <p className="animate-in fade-in slide-in-from-top-1 mt-7 rounded-lg border border-green-200 bg-green-50 px-3.5 py-3 text-sm font-semibold text-green-700 duration-200">
             Password updated. Redirecting you to log in...
           </p>
         ) : (
@@ -176,7 +176,7 @@ export function ResetPasswordPage() {
             </div>
 
             {error ? (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600">
+              <p className="animate-in fade-in slide-in-from-top-1 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600 duration-200">
                 {error}
               </p>
             ) : null}
