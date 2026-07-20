@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { SettingsSidebar } from "@/components/settings/settings-sidebar";
-import { ProfileSection } from "@/components/settings/profile-section";
 import { WorkspaceSection } from "@/components/settings/workspace-section";
 import { MembersSection } from "@/components/settings/members-section";
 import { NotificationsSection } from "@/components/settings/notifications-section";
@@ -16,7 +15,6 @@ import { AdvancedSection } from "@/components/settings/advanced-section";
 import type { SettingsSectionId } from "@/components/settings/settings-data";
 
 const SECTION_CONTENT: Record<SettingsSectionId, React.ComponentType> = {
-  profile: ProfileSection,
   workspace: WorkspaceSection,
   members: MembersSection,
   notifications: NotificationsSection,
@@ -35,7 +33,7 @@ export function SettingsPage() {
   const searchParams = useSearchParams();
   const requestedSection = searchParams.get("section");
   const [activeSection, setActiveSection] = useState<SettingsSectionId>(
-    isSettingsSectionId(requestedSection) ? requestedSection : "profile"
+    isSettingsSectionId(requestedSection) ? requestedSection : "workspace"
   );
 
   const ActiveSection = SECTION_CONTENT[activeSection];

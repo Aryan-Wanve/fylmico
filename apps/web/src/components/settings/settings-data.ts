@@ -5,13 +5,11 @@ import {
   KeyRound,
   Palette,
   Plug,
-  User,
   Users,
   type LucideIcon
 } from "lucide-react";
 
 export type SettingsSectionId =
-  | "profile"
   | "workspace"
   | "members"
   | "notifications"
@@ -27,12 +25,6 @@ export const SETTINGS_SECTIONS: Array<{
   description: string;
   icon: LucideIcon;
 }> = [
-  {
-    id: "profile",
-    label: "Profile & Account",
-    description: "Personal info and password",
-    icon: User
-  },
   {
     id: "workspace",
     label: "Workspace",

@@ -5,7 +5,7 @@ import { CreateMenu } from "@/components/layout/create-menu";
 import { GlobalSearch } from "@/components/layout/global-search";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
+import { AccountMenu } from "@/components/layout/account-menu";
 import { useWorkspace } from "@/lib/workspace-context";
 
 export function AppTopbar({
@@ -41,12 +41,7 @@ export function AppTopbar({
         <CreateMenu />
         <ThemeToggle compact />
         <NotificationBell />
-        <AvatarWithStatus
-          imageUrl={workspace.user.avatarUrl}
-          label={workspace.user.avatarLabel}
-          status="online"
-          userId={workspace.user.id}
-        />
+        <AccountMenu user={workspace.user} />
       </div>
     </header>
   );
