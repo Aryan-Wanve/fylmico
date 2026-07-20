@@ -42,7 +42,7 @@ export function AuthMarketingPanel() {
             One workspace.
           </span>
         </h1>
-        <p className="mt-7 max-w-[23rem] border-l-2 border-[#6b55ff] pl-5 text-[1.05rem] leading-relaxed font-semibold text-[#4f5265]">
+        <p className="mt-7 max-w-[23rem] border-l-2 border-[#6b55ff] pl-5 text-[1.05rem] leading-relaxed font-semibold text-[#4f5265] dark:text-[#a8acbf]">
           Plan shoots. Manage teams. Track progress. Create stories. Fylmico
           keeps your production in sync, from pre to post.
         </p>
@@ -54,13 +54,13 @@ export function AuthMarketingPanel() {
       >
         {authFeatures.map((feature) => (
           <article className="min-w-0" key={feature.title}>
-            <div className="grid h-[3.2rem] w-[3.2rem] place-items-center rounded-[0.78rem] border border-[#6d52ff14] bg-white/75 shadow-[0_1.1rem_2.5rem_rgba(87,70,180,0.12)] backdrop-blur-md">
+            <div className="grid h-[3.2rem] w-[3.2rem] place-items-center rounded-[0.78rem] border border-[#6d52ff14] bg-white/75 shadow-[0_1.1rem_2.5rem_rgba(87,70,180,0.12)] backdrop-blur-md dark:border-white/10 dark:bg-white/[0.06]">
               <Image alt="" height={26} src={feature.icon} width={26} />
             </div>
             <h2 className="mt-3 text-sm font-extrabold text-[#15172b] dark:text-[#f1f2f8]">
               {feature.title}
             </h2>
-            <p className="mt-1 text-[0.79rem] leading-snug font-semibold text-[#4d5060]">
+            <p className="mt-1 text-[0.79rem] leading-snug font-semibold text-[#4d5060] dark:text-[#a8acbf]">
               {feature.body}
             </p>
           </article>

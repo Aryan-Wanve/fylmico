@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 
 export function HousesGuideHeader() {
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/5 bg-white/80 px-6 py-4 backdrop-blur-xl sm:px-10 dark:border-white/[0.06]">
+    <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/5 bg-white/80 px-6 py-4 backdrop-blur-xl sm:px-10 dark:border-white/[0.06] dark:bg-[#0e0f18]/80">
       <Link className="flex items-center gap-2.5" href="/dashboard">
         <Image
           alt=""
