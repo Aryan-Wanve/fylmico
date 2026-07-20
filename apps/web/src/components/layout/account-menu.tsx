@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Home, LogOut, Settings, UserCog } from "lucide-react";
+import { LogOut, UserCog } from "lucide-react";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import { AccountDialog } from "@/components/layout/account-dialog";
 import {
@@ -43,41 +43,42 @@ export function AccountMenu({ user }: { user: UserProfile }) {
             </button>
           }
         />
-        <DropdownMenuContent align="end" className="w-60">
-          <div className="flex items-center gap-2.5 px-2 py-1.5">
+        <DropdownMenuContent align="end" className="w-72 p-0 pt-1">
+          <div className="grid justify-items-center gap-2 px-4 pt-3 pb-4 text-center">
             <AvatarWithStatus
               imageUrl={user.avatarUrl}
               label={user.avatarLabel}
-              size="sm"
+              size="lg"
+              status="online"
               userId={user.id}
             />
-            <span className="grid min-w-0">
+            <div className="grid justify-items-center gap-0.5">
               <strong className="truncate text-sm font-bold text-[#12142b] dark:text-[#f1f2f8]">
                 {user.name}
               </strong>
-              <span className="truncate text-xs text-[#5f667d] dark:text-[#a8acbf]">
+              <span className="truncate text-xs text-[#667085] dark:text-[#878ca0]">
                 {user.email}
               </span>
-            </span>
+            </div>
+            <button
+              className="mt-1 rounded-full border border-black/10 px-4 py-1.5 text-xs font-bold text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:text-[#c7cad9] dark:hover:bg-white/[0.06]"
+              onClick={() => setAccountOpen(true)}
+              type="button"
+            >
+              Manage your profile
+            </button>
           </div>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setAccountOpen(true)}>
-            <UserCog className="h-4 w-4" />
-            Profile &amp; Account
-          </DropdownMenuItem>
-          <DropdownMenuItem render={<a href="/dashboard" />}>
-            <Home className="h-4 w-4" />
-            Switch house
-          </DropdownMenuItem>
-          <DropdownMenuItem render={<a href="/settings" />}>
-            <Settings className="h-4 w-4" />
-            Settings
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} variant="destructive">
-            <LogOut className="h-4 w-4" />
-            Log out
-          </DropdownMenuItem>
+          <DropdownMenuSeparator className="mx-0" />
+          <div className="p-1.5">
+            <DropdownMenuItem onClick={() => setAccountOpen(true)}>
+              <UserCog className="h-4 w-4" />
+              Profile &amp; account
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout} variant="destructive">
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </DropdownMenuItem>
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
 
