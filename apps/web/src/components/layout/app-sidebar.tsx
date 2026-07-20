@@ -31,7 +31,7 @@ export function AppSidebar({
       {!compact && mobileOpen ? (
         <div
           aria-hidden="true"
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+          className="animate-in fade-in fixed inset-0 z-40 bg-black/40 backdrop-blur-sm duration-200 lg:hidden"
           onClick={onCloseMobile}
         />
       ) : null}
