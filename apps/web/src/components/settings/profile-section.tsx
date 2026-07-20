@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, Laptop, MoreVertical, Smartphone } from "lucide-react";
+import {
+  Camera,
+  KeyRound,
+  Laptop,
+  MoreVertical,
+  Smartphone
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,10 +20,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
 import { AvatarCropDialog } from "@/components/settings/avatar-crop-dialog";
+import { ChangePasswordDialog } from "@/components/settings/change-password-dialog";
 import { SettingsCard } from "@/components/settings/settings-card";
 import { useWorkspace } from "@/lib/workspace-context";
 import {
-  changePassword,
   listSessions,
   revokeSession,
   updateMe,
@@ -91,12 +97,7 @@ export function ProfileSection() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [sessions, setSessions] = useState<AccountSession[]>([]);
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [changingPassword, setChangingPassword] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -160,37 +161,6 @@ export function ProfileSection() {
       );
     } finally {
       setUploadingAvatar(false);
-    }
-  }
-
-  async function handleUpdatePassword() {
-    setPasswordSuccess(false);
-    setPasswordError("");
-
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setPasswordError("Fill in all three fields.");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setPasswordError("New password and confirmation do not match.");
-      return;
-    }
-
-    setChangingPassword(true);
-
-    try {
-      await changePassword({ currentPassword, newPassword });
-      setPasswordSuccess(true);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error) {
-      setPasswordError(
-        error instanceof Error ? error.message : "Could not update password."
-      );
-    } finally {
-      setChangingPassword(false);
     }
   }
 
@@ -328,64 +298,29 @@ export function ProfileSection() {
       </SettingsCard>
 
       <SettingsCard
-        subtitle="Update your password to keep your account secure."
-        title="Change Password"
+        subtitle="Update the password used to log in to your account."
+        title="Password"
       >
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <label className="grid gap-1.5">
-            <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-              Current Password
-            </Label>
-            <Input
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              placeholder="Enter current password"
-              type="password"
-              value={currentPassword}
-            />
-          </label>
-          <label className="grid gap-1.5">
-            <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-              New Password
-            </Label>
-            <Input
-              onChange={(event) => setNewPassword(event.target.value)}
-              placeholder="Enter new password"
-              type="password"
-              value={newPassword}
-            />
-          </label>
-          <label className="grid gap-1.5">
-            <Label className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
-              Confirm New Password
-            </Label>
-            <Input
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              placeholder="Confirm new password"
-              type="password"
-              value={confirmPassword}
-            />
-          </label>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-black/[0.04] text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]">
+              <KeyRound className="h-4.5 w-4.5" />
+            </span>
+            <span className="text-sm text-[#667085] dark:text-[#878ca0]">
+              For security, this happens in a separate step - it&apos;s never
+              shown here directly.
+            </span>
+          </div>
+          <Button onClick={() => setChangePasswordOpen(true)} variant="outline">
+            Change Password
+          </Button>
         </div>
-
-        {passwordError ? (
-          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-red-600">
-            {passwordError}
-          </p>
-        ) : null}
-        {passwordSuccess ? (
-          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm font-semibold text-emerald-700">
-            Password updated successfully.
-          </p>
-        ) : null}
-
-        <Button
-          className="mt-4"
-          disabled={changingPassword}
-          onClick={handleUpdatePassword}
-        >
-          {changingPassword ? "Updating..." : "Update Password"}
-        </Button>
       </SettingsCard>
+
+      <ChangePasswordDialog
+        onOpenChange={setChangePasswordOpen}
+        open={changePasswordOpen}
+      />
 
       <SettingsCard
         subtitle="Manage your active sessions across devices."
