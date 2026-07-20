@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { AvatarWithStatus } from "@/components/layout/avatar-with-status";
+import { AvatarCropDialog } from "@/components/settings/avatar-crop-dialog";
 import { SettingsCard } from "@/components/settings/settings-card";
 import { useWorkspace } from "@/lib/workspace-context";
 import {
@@ -86,6 +87,7 @@ export function ProfileSection() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [sessions, setSessions] = useState<AccountSession[]>([]);
@@ -146,7 +148,8 @@ export function ProfileSection() {
     }
   }
 
-  async function handleAvatarSelected(file: File) {
+  async function handleAvatarConfirmed(file: File) {
+    setCropFile(null);
     setUploadingAvatar(true);
     try {
       await uploadAvatar(file);
@@ -244,7 +247,7 @@ export function ProfileSection() {
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 if (file) {
-                  handleAvatarSelected(file);
+                  setCropFile(file);
                 }
                 event.target.value = "";
               }}
@@ -260,6 +263,12 @@ export function ProfileSection() {
             >
               <Camera className="h-3.5 w-3.5" />
             </button>
+            <AvatarCropDialog
+              file={cropFile}
+              onCancel={() => setCropFile(null)}
+              onConfirm={handleAvatarConfirmed}
+              open={cropFile !== null}
+            />
           </div>
 
           {isEditing ? (

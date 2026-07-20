@@ -28,29 +28,35 @@ export function WorkspaceSection() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [savingModules, setSavingModules] = useState(false);
+  // Optimistic module state: the switch flips instantly on click and only
+  // reverts if the save actually fails, instead of waiting for the round-trip
+  // + full workspace refetch to complete (which is what caused the lag).
+  const [optimisticModules, setOptimisticModules] = useState<string[] | null>(
+    null
+  );
+
+  const enabledModules = optimisticModules ?? activeHouse?.enabledModules ?? [];
 
   async function toggleModule(moduleId: string) {
-    if (!activeHouse || savingModules) {
+    if (!activeHouse) {
       return;
     }
-    const current = activeHouse.enabledModules;
-    const next = current.includes(moduleId)
-      ? current.filter((id) => id !== moduleId)
-      : [...current, moduleId];
+    const previous = enabledModules;
+    const next = previous.includes(moduleId)
+      ? previous.filter((id) => id !== moduleId)
+      : [...previous, moduleId];
 
-    setSavingModules(true);
+    setOptimisticModules(next);
     try {
       await updateHouse({ enabledModules: next });
       await refreshWorkspace();
     } catch (moduleError) {
+      setOptimisticModules(previous);
       window.alert(
         moduleError instanceof Error
           ? moduleError.message
           : "Could not update enabled modules."
       );
-    } finally {
-      setSavingModules(false);
     }
   }
 
@@ -151,8 +157,7 @@ export function WorkspaceSection() {
                   {item.label}
                 </span>
                 <Switch
-                  checked={activeHouse.enabledModules.includes(item.id)}
-                  disabled={savingModules}
+                  checked={enabledModules.includes(item.id)}
                   onCheckedChange={() => toggleModule(item.id)}
                 />
               </div>
