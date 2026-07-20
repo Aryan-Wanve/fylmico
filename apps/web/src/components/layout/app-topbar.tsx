@@ -6,6 +6,7 @@ import { GlobalSearch } from "@/components/layout/global-search";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { AccountMenu } from "@/components/layout/account-menu";
+import { HouseSwitcher } from "@/components/layout/house-switcher";
 import { useWorkspace } from "@/lib/workspace-context";
 
 export function AppTopbar({
@@ -31,13 +32,19 @@ export function AppTopbar({
           </button>
         ) : null}
         {!compact ? (
-          <div className="hidden min-w-0 flex-1 sm:block">
+          <div className="hidden max-w-xs min-w-0 flex-1 lg:block">
             <GlobalSearch />
           </div>
         ) : null}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+      {!compact ? (
+        <div className="flex shrink-0 items-center justify-center">
+          <HouseSwitcher />
+        </div>
+      ) : null}
+
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 sm:gap-3">
         <CreateMenu />
         <ThemeToggle compact />
         <NotificationBell />

@@ -3,21 +3,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
+import { Settings, X } from "lucide-react";
 import { navItems } from "@/components/layout/nav-items";
-import { SidebarUserFooter } from "@/components/layout/sidebar-user-footer";
 import { ALWAYS_ENABLED_MODULES } from "@/lib/house-types";
-import type { UserProfile } from "@/types/base";
 
 export function AppSidebar({
   compact,
-  user,
   enabledModules,
   mobileOpen = false,
   onCloseMobile
 }: {
   compact: boolean;
-  user: UserProfile;
   enabledModules: string[] | null;
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
@@ -143,11 +139,21 @@ export function AppSidebar({
           })}
         </nav>
 
-        {!compact ? (
-          <div className="grid shrink-0 gap-3">
-            <SidebarUserFooter user={user} />
-          </div>
-        ) : null}
+        <Link
+          aria-current={pathname === "/settings" ? "page" : undefined}
+          className={[
+            "flex shrink-0 items-center gap-3 rounded-xl text-sm font-semibold transition-colors",
+            compact ? "h-11 w-11 justify-center" : "h-11 px-3",
+            pathname === "/settings"
+              ? "bg-[#654cff]/10 text-[#654cff]"
+              : "text-[#4b5268] hover:bg-black/[0.03] hover:text-[#12142b] dark:text-[#c7cad9] dark:hover:bg-white/[0.05] dark:hover:text-[#f1f2f8]"
+          ].join(" ")}
+          href="/settings"
+          title={compact ? "Settings" : undefined}
+        >
+          <Settings className="h-[1.15rem] w-[1.15rem] shrink-0" />
+          {!compact ? <span className="flex-1 text-left">Settings</span> : null}
+        </Link>
       </aside>
     </>
   );

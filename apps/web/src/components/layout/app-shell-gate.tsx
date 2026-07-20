@@ -114,7 +114,6 @@ export function AppShellGate({ children }: { children: React.ReactNode }) {
           enabledModules={activeHouse?.enabledModules ?? null}
           mobileOpen={mobileNavOpen}
           onCloseMobile={() => setMobileNavOpen(false)}
-          user={workspace.user}
         />
       ) : null}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">

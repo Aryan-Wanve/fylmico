@@ -11,7 +11,6 @@ import {
   ListChecks,
   Megaphone,
   MessageSquare,
-  Settings,
   Users,
   type LucideIcon
 } from "lucide-react";
@@ -87,6 +86,5 @@ export const navItems: NavItem[] = [
     label: "Analytics",
     href: "/analytics",
     icon: BarChart3
-  },
-  { id: "settings", label: "Settings", href: "/settings", icon: Settings }
+  }
 ];
