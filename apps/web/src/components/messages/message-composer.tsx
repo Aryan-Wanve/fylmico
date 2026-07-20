@@ -101,7 +101,7 @@ export function MessageComposer({
         </div>
         <button
           aria-label="Send message"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#654cff] text-white hover:bg-[#5a41ea] disabled:opacity-40"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[var(--fylmico-accent)] text-white hover:bg-[var(--fylmico-accent-strong)] disabled:opacity-40"
           disabled={!value.trim()}
           onClick={handleSend}
           type="button"

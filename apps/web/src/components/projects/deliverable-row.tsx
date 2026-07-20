@@ -88,7 +88,7 @@ export function DeliverableRow({
   return (
     <div className="border-b border-black/5 last:border-b-0 dark:border-white/[0.06]">
       <div className="flex items-center gap-4 px-4 py-3">
-        <FileText className="h-4 w-4 shrink-0 text-[#654cff]" />
+        <FileText className="h-4 w-4 shrink-0 text-[var(--fylmico-accent)]" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <strong className="text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
@@ -179,7 +179,7 @@ export function DeliverableRow({
           )}
           <div className="flex items-center gap-2">
             <input
-              className="h-9 flex-1 rounded-lg border border-black/10 bg-transparent px-3 text-xs text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
+              className="h-9 flex-1 rounded-lg border border-black/10 bg-transparent px-3 text-xs text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
@@ -191,7 +191,7 @@ export function DeliverableRow({
               value={draft}
             />
             <Button
-              className="h-9 rounded-lg bg-[#654cff] px-3 text-white hover:bg-[#5a41ea]"
+              className="h-9 rounded-lg bg-[var(--fylmico-accent)] px-3 text-white hover:bg-[var(--fylmico-accent-strong)]"
               disabled={posting || !draft.trim()}
               onClick={handlePostComment}
             >

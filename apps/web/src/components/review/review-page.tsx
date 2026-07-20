@@ -48,7 +48,11 @@ const METRIC_CARDS: {
     label: "Approved Today",
     accent: "text-emerald-600"
   },
-  { key: "overdueReviews", label: "Overdue Reviews", accent: "text-[#654cff]" }
+  {
+    key: "overdueReviews",
+    label: "Overdue Reviews",
+    accent: "text-[var(--fylmico-accent)]"
+  }
 ];
 
 export function ReviewPage() {

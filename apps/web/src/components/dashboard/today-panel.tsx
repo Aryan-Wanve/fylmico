@@ -14,7 +14,7 @@ import type {
 } from "@/types/base";
 
 const CATEGORY_DOT: Record<CalendarEventCategory, string> = {
-  shoot: "bg-[#654cff]",
+  shoot: "bg-[var(--fylmico-accent)]",
   "post-production": "bg-[#dc2626]",
   meeting: "bg-[#3b82f6]",
   "pre-production": "bg-[#a8560f]",

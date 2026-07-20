@@ -170,7 +170,7 @@ export function HouseChoiceCard({
             />
           </div>
           <Button
-            className="mt-1 h-12 w-full rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] font-bold text-white hover:opacity-95"
+            className="mt-1 h-12 w-full rounded-lg bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] font-bold text-white hover:opacity-95"
             disabled={!houseName.trim()}
             type="submit"
           >
@@ -240,7 +240,7 @@ export function HouseChoiceCard({
             </p>
           ) : null}
           <Button
-            className="mt-3 h-12 w-full rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] font-bold text-white hover:opacity-95"
+            className="mt-3 h-12 w-full rounded-lg bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] font-bold text-white hover:opacity-95"
             disabled={isSubmitting || !canSubmit}
             type="submit"
           >
@@ -279,7 +279,7 @@ export function HouseChoiceCard({
             />
           </div>
           <Button
-            className="mt-1 h-12 w-full rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] font-bold text-white hover:opacity-95"
+            className="mt-1 h-12 w-full rounded-lg bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] font-bold text-white hover:opacity-95"
             disabled={isSubmitting}
             type="submit"
           >
@@ -326,7 +326,7 @@ export function HouseChoiceCard({
               />
             </div>
             <Button
-              className="mt-1 h-12 w-full rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] font-bold text-white hover:opacity-95"
+              className="mt-1 h-12 w-full rounded-lg bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] font-bold text-white hover:opacity-95"
               disabled={isSubmitting}
               type="submit"
             >
@@ -340,7 +340,7 @@ export function HouseChoiceCard({
 
   return (
     <section className="w-full max-w-[30rem] rounded-3xl border border-black/[0.06] bg-white p-10 text-center shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)] dark:border-white/[0.08] dark:bg-[#171a28]">
-      <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border border-dashed border-[#654cff]/35 text-[#654cff]">
+      <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border border-dashed border-[var(--fylmico-accent)]/35 text-[var(--fylmico-accent)]">
         <UserRoundPlus className="h-8 w-8" />
       </div>
       <h2 className="mt-6 text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
@@ -379,7 +379,7 @@ export function HouseChoiceCard({
       </div>
 
       <Link
-        className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-[#654cff]"
+        className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-[var(--fylmico-accent)]"
         href="/houses/learn"
       >
         Learn more about houses →

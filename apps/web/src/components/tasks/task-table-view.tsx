@@ -98,7 +98,7 @@ export function TaskTableView({
                   <div className="flex items-center gap-2">
                     <div className="h-1.5 w-16 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
                       <div
-                        className="h-full rounded-full bg-[#654cff]"
+                        className="h-full rounded-full bg-[var(--fylmico-accent)]"
                         style={{ width: `${task.progress}%` }}
                       />
                     </div>

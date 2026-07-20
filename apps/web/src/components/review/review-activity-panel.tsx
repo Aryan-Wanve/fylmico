@@ -28,7 +28,7 @@ export function ReviewActivityPanel({
     <div className="grid gap-3">
       {entries.map((entry) => (
         <div className="flex items-start gap-2.5 text-xs" key={entry.id}>
-          <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#654cff]" />
+          <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--fylmico-accent)]" />
           <div>
             <p className="text-white">
               <strong>{entry.actorName}</strong>{" "}

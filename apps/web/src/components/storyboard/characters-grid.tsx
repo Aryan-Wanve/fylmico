@@ -37,14 +37,14 @@ export function CharactersGrid({
             <Trash2 className="h-3.5 w-3.5" />
           </button>
           <div className="flex items-center gap-3">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#654cff]/10 text-[#654cff]">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]">
               <UserCircle2 className="h-6 w-6" />
             </span>
             <div className="min-w-0">
               <strong className="block truncate text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                 {character.name}
               </strong>
-              <span className="text-xs font-semibold text-[#654cff]">
+              <span className="text-xs font-semibold text-[var(--fylmico-accent)]">
                 {character.role}
               </span>
             </div>

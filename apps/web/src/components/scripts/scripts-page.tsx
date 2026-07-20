@@ -169,7 +169,7 @@ export function ScriptsPage() {
           </p>
         </div>
         <button
-          className="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+          className="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
           onClick={handleNewScript}
           type="button"
         >
@@ -196,7 +196,7 @@ export function ScriptsPage() {
               <button
                 className={`grid gap-0.5 rounded-xl px-3 py-2.5 text-left transition ${
                   activeScript?.id === summary.id
-                    ? "bg-[#654cff]/10 text-[#654cff]"
+                    ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                     : "hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
                 }`}
                 key={summary.id}

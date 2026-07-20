@@ -35,7 +35,7 @@ function renderBody(body: string) {
     <span key={index}>
       {part}
       {mentions[index] ? (
-        <span className="rounded bg-[#654cff]/10 px-1 font-semibold text-[#654cff]">
+        <span className="rounded bg-[var(--fylmico-accent)]/10 px-1 font-semibold text-[var(--fylmico-accent)]">
           {mentions[index]}
         </span>
       ) : null}
@@ -52,7 +52,7 @@ function ReadStatusIcon({
     return <Clock className="h-3 w-3 text-[#8a90a3] dark:text-[#7d8299]" />;
   }
   if (status === "read") {
-    return <CheckCheck className="h-3 w-3 text-[#654cff]" />;
+    return <CheckCheck className="h-3 w-3 text-[var(--fylmico-accent)]" />;
   }
   if (status === "delivered") {
     return (
@@ -136,7 +136,7 @@ export function MessageBubble({
           <div className="mt-0.5 grid gap-1.5">
             <textarea
               autoFocus
-              className="w-full resize-none rounded-lg border border-[#654cff]/40 bg-transparent p-2 text-sm text-[#3a3f57] outline-none dark:text-[#b4b8cc]"
+              className="w-full resize-none rounded-lg border border-[var(--fylmico-accent)]/40 bg-transparent p-2 text-sm text-[#3a3f57] outline-none dark:text-[#b4b8cc]"
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey) {
@@ -151,7 +151,7 @@ export function MessageBubble({
             />
             <div className="flex items-center gap-2 text-xs font-semibold">
               <button
-                className="text-[#654cff] hover:underline"
+                className="text-[var(--fylmico-accent)] hover:underline"
                 onClick={saveEdit}
                 type="button"
               >
@@ -189,7 +189,7 @@ export function MessageBubble({
             <button
               className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold ${
                 reaction.reactedByMe
-                  ? "border-[#654cff]/40 bg-[#654cff]/10 text-[#654cff]"
+                  ? "border-[var(--fylmico-accent)]/40 bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                   : "border-black/10 bg-black/[0.02] text-[#5f667d] hover:bg-black/[0.05] dark:border-white/10 dark:bg-white/[0.03] dark:text-[#a8acbf]"
               }`}
               key={reaction.emoji}
@@ -230,7 +230,7 @@ export function MessageBubble({
           </div>
 
           <button
-            className="ml-1 flex items-center gap-1 text-xs font-semibold text-[#8a90a3] opacity-0 group-hover:opacity-100 hover:text-[#654cff] dark:text-[#7d8299]"
+            className="ml-1 flex items-center gap-1 text-xs font-semibold text-[#8a90a3] opacity-0 group-hover:opacity-100 hover:text-[var(--fylmico-accent)] dark:text-[#7d8299]"
             onClick={onReply}
             type="button"
           >
@@ -240,7 +240,7 @@ export function MessageBubble({
 
           {canEdit && !isEditing ? (
             <button
-              className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3] opacity-0 group-hover:opacity-100 hover:text-[#654cff] dark:text-[#7d8299]"
+              className="flex items-center gap-1 text-xs font-semibold text-[#8a90a3] opacity-0 group-hover:opacity-100 hover:text-[var(--fylmico-accent)] dark:text-[#7d8299]"
               onClick={startEditing}
               type="button"
             >
@@ -249,7 +249,7 @@ export function MessageBubble({
           ) : null}
 
           {message.replyCount > 0 ? (
-            <span className="text-xs font-semibold text-[#654cff]">
+            <span className="text-xs font-semibold text-[var(--fylmico-accent)]">
               {message.replyCount}{" "}
               {message.replyCount === 1 ? "reply" : "replies"}
             </span>

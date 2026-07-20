@@ -57,11 +57,11 @@ export function UpcomingBirthdaysPanel({ members }: { members: CrewMember[] }) {
                     {member.jobTitle}
                   </span>
                 </div>
-                <span className="grid shrink-0 place-items-center rounded-lg bg-[#654cff]/[0.08] px-2.5 py-1 text-center">
-                  <span className="text-[0.65rem] font-bold text-[#654cff] uppercase">
+                <span className="grid shrink-0 place-items-center rounded-lg bg-[var(--fylmico-accent)]/[0.08] px-2.5 py-1 text-center">
+                  <span className="text-[0.65rem] font-bold text-[var(--fylmico-accent)] uppercase">
                     {monthLabel}
                   </span>
-                  <span className="text-sm font-black text-[#654cff]">
+                  <span className="text-sm font-black text-[var(--fylmico-accent)]">
                     {day}
                   </span>
                 </span>

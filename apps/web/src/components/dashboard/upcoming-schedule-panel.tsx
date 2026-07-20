@@ -8,7 +8,7 @@ import { toISODate } from "@/lib/calendar-utils";
 import type { CalendarEvent, CalendarEventCategory } from "@/types/base";
 
 const CATEGORY_DOT: Record<CalendarEventCategory, string> = {
-  shoot: "bg-[#654cff]",
+  shoot: "bg-[var(--fylmico-accent)]",
   "post-production": "bg-[#dc2626]",
   meeting: "bg-[#3b82f6]",
   "pre-production": "bg-[#a8560f]",
@@ -66,7 +66,9 @@ export function UpcomingSchedulePanel() {
           events.map((event, index) => (
             <button
               className={`grid grid-cols-[5rem_auto_1fr_auto] items-center gap-4 border-b border-black/5 px-6 py-3.5 text-left last:border-b-0 hover:bg-black/[0.02] dark:border-white/[0.06] dark:hover:bg-white/[0.04] ${
-                index === selectedIndex ? "bg-[#654cff]/[0.04]" : ""
+                index === selectedIndex
+                  ? "bg-[var(--fylmico-accent)]/[0.04]"
+                  : ""
               }`}
               key={event.id}
               onClick={() => setSelectedIndex(index)}
@@ -98,7 +100,7 @@ export function UpcomingSchedulePanel() {
         )}
       </div>
       {selected ? (
-        <div className="m-4 rounded-xl bg-[#654cff]/[0.06] p-3.5">
+        <div className="m-4 rounded-xl bg-[var(--fylmico-accent)]/[0.06] p-3.5">
           <strong className="block text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
             {selected.title}
           </strong>

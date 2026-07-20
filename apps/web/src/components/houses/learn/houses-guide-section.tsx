@@ -12,7 +12,7 @@ export function HousesGuideSection({
   return (
     <section className="px-6 py-10 sm:px-10">
       <div className="mx-auto max-w-5xl">
-        <span className="text-xs font-bold tracking-wide text-[#654cff] uppercase">
+        <span className="text-xs font-bold tracking-wide text-[var(--fylmico-accent)] uppercase">
           {eyebrow}
         </span>
         <h2 className="mt-2 text-2xl font-black text-[#11142c] sm:text-3xl dark:text-[#f1f2f8]">

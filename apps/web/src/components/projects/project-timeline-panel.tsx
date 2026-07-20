@@ -142,9 +142,9 @@ export function ProjectTimelinePanel() {
                 <span
                   className={`grid h-9 place-items-center rounded-xl text-sm font-bold ${
                     isSelected
-                      ? "bg-[#654cff] text-white"
+                      ? "bg-[var(--fylmico-accent)] text-white"
                       : isToday
-                        ? "bg-[#654cff]/10 text-[#654cff]"
+                        ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                         : "text-[#4b5268] hover:bg-black/[0.04] dark:text-[#c7cad9] dark:hover:bg-white/[0.06]"
                   }`}
                 >
@@ -174,7 +174,7 @@ export function ProjectTimelinePanel() {
                     : ""}
                 </span>
               </div>
-              <span className="shrink-0 rounded-md bg-[#654cff]/10 px-2 py-0.5 text-xs font-bold text-[#654cff]">
+              <span className="shrink-0 rounded-md bg-[var(--fylmico-accent)]/10 px-2 py-0.5 text-xs font-bold text-[var(--fylmico-accent)]">
                 {event.category}
               </span>
             </div>

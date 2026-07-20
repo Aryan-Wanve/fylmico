@@ -31,7 +31,7 @@ export function QuickActionsPanel() {
             onClick={() => router.push(action.href)}
             type="button"
           >
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-[#654cff]/10 text-[#654cff]">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]">
               <action.icon className="h-4 w-4" />
             </span>
             <span className="text-xs font-bold text-[#4b5268] dark:text-[#c7cad9]">

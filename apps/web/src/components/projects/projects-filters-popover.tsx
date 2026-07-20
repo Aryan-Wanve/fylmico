@@ -30,7 +30,7 @@ export function ProjectsFiltersPopover({
             <SlidersHorizontal className="h-4 w-4" />
             Filters
             {activeCount > 0 ? (
-              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[#654cff]/10 px-1 text-xs font-bold text-[#654cff]">
+              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[var(--fylmico-accent)]/10 px-1 text-xs font-bold text-[var(--fylmico-accent)]">
                 {activeCount}
               </span>
             ) : null}

@@ -60,7 +60,7 @@ export function ShootCancelDialog({
             <Label>Reason</Label>
             <textarea
               autoFocus
-              className="min-h-16 w-full rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
+              className="min-h-16 w-full rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
               onChange={(event) => setReason(event.target.value)}
               value={reason}
             />
@@ -69,7 +69,7 @@ export function ShootCancelDialog({
           <label className="grid gap-1.5">
             <Label>Notes (optional)</Label>
             <textarea
-              className="min-h-16 w-full rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
+              className="min-h-16 w-full rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
               onChange={(event) => setNotes(event.target.value)}
               value={notes}
             />

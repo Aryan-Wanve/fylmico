@@ -122,7 +122,7 @@ export function TaskKanbanBoard({
           <div
             className={`grid min-w-0 content-start gap-3 rounded-2xl border p-3 transition-colors ${
               dragOverColumn === status
-                ? "border-[#654cff] bg-[#654cff]/5"
+                ? "border-[var(--fylmico-accent)] bg-[var(--fylmico-accent)]/5"
                 : "border-black/[0.06] bg-[#fafafd] dark:border-white/[0.08] dark:bg-[#11142c]"
             }`}
             key={status}

@@ -82,9 +82,9 @@ export function MiniCalendar({
                 <span
                   className={`relative grid h-6 w-6 place-items-center rounded-full text-xs font-semibold ${
                     isToday
-                      ? "bg-[#654cff] text-white"
+                      ? "bg-[var(--fylmico-accent)] text-white"
                       : isSelected
-                        ? "bg-[#654cff]/10 text-[#654cff]"
+                        ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                         : inCurrentMonth
                           ? "text-[#4b5268] hover:bg-black/[0.04] dark:text-[#c7cad9] dark:hover:bg-white/[0.06]"
                           : "text-[#d8dae3]"
@@ -92,7 +92,7 @@ export function MiniCalendar({
                 >
                   {day.getDate()}
                   {hasEvents && !isToday ? (
-                    <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-[#654cff]" />
+                    <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-[var(--fylmico-accent)]" />
                   ) : null}
                 </span>
               </button>

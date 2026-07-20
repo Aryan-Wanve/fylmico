@@ -71,12 +71,12 @@ export function HouseSwitcher() {
               key={house.id}
               onClick={() => void handleSwitch(house.id)}
             >
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-[#654cff]/10 text-[11px] font-black text-[#654cff]">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-[var(--fylmico-accent)]/10 text-[11px] font-black text-[var(--fylmico-accent)]">
                 {house.name.slice(0, 1).toUpperCase()}
               </span>
               <span className="min-w-0 flex-1 truncate">{house.name}</span>
               {active ? (
-                <Check className="h-4 w-4 shrink-0 text-[#654cff]" />
+                <Check className="h-4 w-4 shrink-0 text-[var(--fylmico-accent)]" />
               ) : null}
             </DropdownMenuItem>
           );

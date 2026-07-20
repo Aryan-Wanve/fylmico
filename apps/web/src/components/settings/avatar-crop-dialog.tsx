@@ -178,7 +178,7 @@ export function AvatarCropDialog({
               Zoom
             </span>
             <input
-              className="flex-1 accent-[#654cff]"
+              className="flex-1 accent-[var(--fylmico-accent)]"
               max={MAX_ZOOM}
               min={MIN_ZOOM}
               onChange={(event) => setZoom(Number(event.target.value))}

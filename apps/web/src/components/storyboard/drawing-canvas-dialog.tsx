@@ -148,7 +148,7 @@ export function DrawingCanvasDialog({
               <button
                 className={`h-6 w-6 rounded-full border-2 transition ${
                   tool === "pen" && color === swatch
-                    ? "scale-110 border-[#654cff]"
+                    ? "scale-110 border-[var(--fylmico-accent)]"
                     : "border-black/10 dark:border-white/20"
                 }`}
                 key={swatch}
@@ -165,7 +165,7 @@ export function DrawingCanvasDialog({
           <button
             className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-bold ${
               tool === "pen"
-                ? "border-[#654cff] bg-[#654cff]/10 text-[#654cff]"
+                ? "border-[var(--fylmico-accent)] bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                 : "border-black/10 text-[#4b5268] dark:border-white/10 dark:text-[#c7cad9]"
             }`}
             onClick={() => setTool("pen")}
@@ -177,7 +177,7 @@ export function DrawingCanvasDialog({
           <button
             className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-bold ${
               tool === "eraser"
-                ? "border-[#654cff] bg-[#654cff]/10 text-[#654cff]"
+                ? "border-[var(--fylmico-accent)] bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                 : "border-black/10 text-[#4b5268] dark:border-white/10 dark:text-[#c7cad9]"
             }`}
             onClick={() => setTool("eraser")}
@@ -189,7 +189,7 @@ export function DrawingCanvasDialog({
 
           <input
             aria-label="Brush size"
-            className="w-20 accent-[#654cff]"
+            className="w-20 accent-[var(--fylmico-accent)]"
             max={16}
             min={2}
             onChange={(event) => setLineWidth(Number(event.target.value))}
@@ -234,7 +234,7 @@ export function DrawingCanvasDialog({
             Cancel
           </Button>
           <Button
-            className="h-9 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+            className="h-9 rounded-lg bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
             onClick={handleSave}
             type="button"
           >

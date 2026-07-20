@@ -20,7 +20,7 @@ function ThemeOption({
     <button
       className={`flex flex-1 flex-col items-center gap-2 rounded-xl border p-4 text-sm font-semibold transition-colors ${
         active
-          ? "border-[#654cff] bg-[#654cff]/[0.06] text-[#654cff]"
+          ? "border-[var(--fylmico-accent)] bg-[var(--fylmico-accent)]/[0.06] text-[var(--fylmico-accent)]"
           : "border-black/10 text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:text-[#c7cad9] dark:hover:bg-white/[0.06]"
       }`}
       onClick={() => onSelect(value)}

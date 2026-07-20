@@ -38,7 +38,9 @@ export function AuthMarketingPanel() {
           id="login-heading"
         >
           All your production.
-          <span className="block text-[#654cff]">One workspace.</span>
+          <span className="block text-[var(--fylmico-accent)]">
+            One workspace.
+          </span>
         </h1>
         <p className="mt-7 max-w-[23rem] border-l-2 border-[#6b55ff] pl-5 text-[1.05rem] leading-relaxed font-semibold text-[#4f5265]">
           Plan shoots. Manage teams. Track progress. Create stories. Fylmico

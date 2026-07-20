@@ -251,7 +251,7 @@ export function CommentThreadPanel({
           <button
             className={`rounded-full border px-1.5 py-0.5 text-[11px] ${
               reacted
-                ? "border-[#654cff]/40 bg-[#654cff]/10 text-[#654cff]"
+                ? "border-[var(--fylmico-accent)]/40 bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                 : "border-white/10 bg-white/5 text-white/70"
             }`}
             key={emoji}
@@ -288,7 +288,7 @@ export function CommentThreadPanel({
               </strong>
               {chip ? (
                 <button
-                  className="rounded-md bg-[#654cff]/15 px-1.5 py-0.5 font-mono text-[11px] font-bold text-[#a996ff] hover:bg-[#654cff]/25"
+                  className="rounded-md bg-[var(--fylmico-accent)]/15 px-1.5 py-0.5 font-mono text-[11px] font-bold text-[#a996ff] hover:bg-[var(--fylmico-accent)]/25"
                   onClick={() => onSeek?.(comment.timestampSeconds ?? 0)}
                   type="button"
                 >
@@ -311,7 +311,7 @@ export function CommentThreadPanel({
             {isEditing ? (
               <div className="mt-1 flex items-center gap-1.5">
                 <input
-                  className="h-8 flex-1 rounded-lg border border-white/10 bg-white/5 px-2 text-xs text-white outline-none focus:border-[#654cff]"
+                  className="h-8 flex-1 rounded-lg border border-white/10 bg-white/5 px-2 text-xs text-white outline-none focus:border-[var(--fylmico-accent)]"
                   onChange={(event) => setEditDraft(event.target.value)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") void handleSaveEdit(comment.id);
@@ -422,7 +422,7 @@ export function CommentThreadPanel({
               <div className="mt-2 flex items-end gap-1.5">
                 <MentionTextarea
                   candidates={members}
-                  className="min-h-8 flex-1 resize-none rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white outline-none focus:border-[#654cff]"
+                  className="min-h-8 flex-1 resize-none rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white outline-none focus:border-[var(--fylmico-accent)]"
                   mentionedUserIds={replyMentions}
                   onChange={setReplyDraft}
                   onMentionedUserIdsChange={setReplyMentions}
@@ -431,7 +431,7 @@ export function CommentThreadPanel({
                   value={replyDraft}
                 />
                 <button
-                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#654cff] text-white hover:bg-[#5a41ea] disabled:opacity-50"
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[var(--fylmico-accent)] text-white hover:bg-[var(--fylmico-accent-strong)] disabled:opacity-50"
                   disabled={posting || !replyDraft.trim()}
                   onClick={() => void handlePostReply(comment.id)}
                   type="button"
@@ -483,7 +483,7 @@ export function CommentThreadPanel({
         <div className="flex items-end gap-1.5">
           <MentionTextarea
             candidates={members}
-            className="min-h-9 flex-1 resize-none rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-xs text-white outline-none focus:border-[#654cff]"
+            className="min-h-9 flex-1 resize-none rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-xs text-white outline-none focus:border-[var(--fylmico-accent)]"
             mentionedUserIds={draftMentions}
             onChange={setDraft}
             onKeyDown={(event) => {
@@ -498,7 +498,7 @@ export function CommentThreadPanel({
             value={draft}
           />
           <button
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#654cff] text-white hover:bg-[#5a41ea] disabled:opacity-50"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[var(--fylmico-accent)] text-white hover:bg-[var(--fylmico-accent-strong)] disabled:opacity-50"
             disabled={posting || !draft.trim()}
             onClick={() => void handlePostTopLevel()}
             type="button"

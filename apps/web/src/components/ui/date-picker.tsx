@@ -81,7 +81,7 @@ export function DatePicker({
         render={
           <button
             className={cn(
-              "flex h-10 w-full items-center gap-2 rounded-lg border border-black/10 bg-transparent px-3 text-left text-sm text-[#11142c] outline-none focus:border-[#654cff] disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]",
+              "flex h-10 w-full items-center gap-2 rounded-lg border border-black/10 bg-transparent px-3 text-left text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]",
               className
             )}
             disabled={disabled}
@@ -153,7 +153,7 @@ export function DatePicker({
                     className={cn(
                       "grid h-6 w-6 place-items-center rounded-full text-xs font-semibold",
                       isSelected
-                        ? "bg-[#654cff] text-white"
+                        ? "bg-[var(--fylmico-accent)] text-white"
                         : isDisabled
                           ? "text-[#d8dae3] dark:text-[#3a3f57]"
                           : inCurrentMonth
@@ -171,7 +171,7 @@ export function DatePicker({
 
         {withTime ? (
           <input
-            className="mt-2 h-9 w-full rounded-lg border border-black/10 bg-transparent px-2.5 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
+            className="mt-2 h-9 w-full rounded-lg border border-black/10 bg-transparent px-2.5 text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
             onChange={(event) => changeTime(event.target.value)}
             type="time"
             value={timePart || "00:00"}

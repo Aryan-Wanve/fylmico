@@ -65,7 +65,7 @@ export function CalendarMonthGrid({
                   inCurrentMonth
                     ? "bg-white dark:bg-[#171a28]"
                     : "bg-black/[0.015] dark:bg-white/[0.03]"
-                } ${isSelected ? "ring-2 ring-[#654cff]/40 ring-inset" : ""} hover:bg-black/[0.02] dark:hover:bg-white/[0.04]`}
+                } ${isSelected ? "ring-2 ring-[var(--fylmico-accent)]/40 ring-inset" : ""} hover:bg-black/[0.02] dark:hover:bg-white/[0.04]`}
                 key={day.toISOString()}
                 onClick={() => onSelectDate(day)}
                 type="button"
@@ -73,7 +73,7 @@ export function CalendarMonthGrid({
                 <span
                   className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold ${
                     isToday
-                      ? "bg-[#654cff] text-white"
+                      ? "bg-[var(--fylmico-accent)] text-white"
                       : inCurrentMonth
                         ? "text-[#11142c] dark:text-[#f1f2f8]"
                         : "text-[#c3c7d4] dark:text-[#5c6178]"

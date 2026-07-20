@@ -60,7 +60,7 @@ export function ProjectListRow({
       <div className="hidden w-32 shrink-0 items-center gap-2 md:flex">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
           <div
-            className="h-full rounded-full bg-[#654cff]"
+            className="h-full rounded-full bg-[var(--fylmico-accent)]"
             style={{ width: `${project.progress}%` }}
           />
         </div>

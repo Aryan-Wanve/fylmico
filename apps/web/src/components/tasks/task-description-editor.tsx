@@ -93,7 +93,7 @@ export function TaskDescriptionEditor({
           <LinkIcon className="h-3.5 w-3.5" />
         </button>
         <button
-          className="ml-auto text-xs font-bold text-[#654cff]"
+          className="ml-auto text-xs font-bold text-[var(--fylmico-accent)]"
           onClick={() => setPreview((current) => !current)}
           type="button"
         >
@@ -103,12 +103,12 @@ export function TaskDescriptionEditor({
 
       {preview ? (
         <div
-          className="min-h-24 rounded-lg border border-black/10 p-3 text-sm leading-relaxed text-[#11142c] dark:border-white/10 dark:text-[#f1f2f8] [&_a]:text-[#654cff]"
+          className="min-h-24 rounded-lg border border-black/10 p-3 text-sm leading-relaxed text-[#11142c] dark:border-white/10 dark:text-[#f1f2f8] [&_a]:text-[var(--fylmico-accent)]"
           dangerouslySetInnerHTML={{ __html: renderMarkdownLite(value) }}
         />
       ) : (
         <textarea
-          className="min-h-24 w-full resize-none rounded-lg border border-black/10 bg-transparent p-3 text-sm leading-relaxed text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:text-[#f1f2f8]"
+          className="min-h-24 w-full resize-none rounded-lg border border-black/10 bg-transparent p-3 text-sm leading-relaxed text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:text-[#f1f2f8]"
           onChange={(event) => onChange(event.target.value)}
           placeholder="Add a description... supports **bold**, *italic*, - lists, [links](url)"
           ref={textareaRef}

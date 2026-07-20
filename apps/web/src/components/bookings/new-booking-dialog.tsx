@@ -214,7 +214,7 @@ export function NewBookingDialog({
                 Notes (optional)
               </Label>
               <textarea
-                className="min-h-20 w-full rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
+                className="min-h-20 w-full rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
                 onChange={(event) => setNotes(event.target.value)}
                 placeholder="Anything the team should know about this booking."
                 value={notes}
@@ -238,7 +238,7 @@ export function NewBookingDialog({
               Cancel
             </Button>
             <Button
-              className="h-9 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+              className="h-9 rounded-lg bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
               disabled={saving}
               type="submit"
             >

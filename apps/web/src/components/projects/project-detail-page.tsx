@@ -232,7 +232,7 @@ export function ProjectDetailPage() {
   if (loading) {
     return (
       <div className="grid min-h-[24rem] place-items-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-[#654cff]" />
+        <Loader2 className="h-6 w-6 animate-spin text-[var(--fylmico-accent)]" />
       </div>
     );
   }
@@ -321,7 +321,7 @@ export function ProjectDetailPage() {
             <div className="flex min-w-40 flex-1 items-center gap-2">
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
                 <div
-                  className="h-full rounded-full bg-[#654cff]"
+                  className="h-full rounded-full bg-[var(--fylmico-accent)]"
                   style={{ width: `${project.progress}%` }}
                 />
               </div>
@@ -412,7 +412,7 @@ export function ProjectDetailPage() {
           <div className="grid gap-3">
             <div className="flex justify-end">
               <Button
-                className="h-9 rounded-lg bg-[#654cff] px-3.5 text-sm font-bold text-white hover:bg-[#5a41ea]"
+                className="h-9 rounded-lg bg-[var(--fylmico-accent)] px-3.5 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
                 onClick={() => setShootCreateOpen(true)}
               >
                 <Camera className="h-3.5 w-3.5" />
@@ -430,7 +430,7 @@ export function ProjectDetailPage() {
                     className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 dark:border-white/[0.06]"
                     key={shoot.id}
                   >
-                    <Camera className="h-4 w-4 shrink-0 text-[#654cff]" />
+                    <Camera className="h-4 w-4 shrink-0 text-[var(--fylmico-accent)]" />
                     <div className="min-w-0 flex-1">
                       <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                         {shoot.name}
@@ -492,7 +492,7 @@ export function ProjectDetailPage() {
                   className="flex items-center gap-3 border-b border-black/5 px-4 py-3 last:border-b-0 dark:border-white/[0.06]"
                   key={event.id}
                 >
-                  <CalendarIcon className="h-4 w-4 shrink-0 text-[#654cff]" />
+                  <CalendarIcon className="h-4 w-4 shrink-0 text-[var(--fylmico-accent)]" />
                   <div className="min-w-0 flex-1">
                     <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                       {event.title}
@@ -547,7 +547,7 @@ export function ProjectDetailPage() {
 
             <div className="flex items-center gap-2 border-t border-black/5 pt-4 dark:border-white/[0.06]">
               <input
-                className="h-10 flex-1 rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
+                className="h-10 flex-1 rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
                 onChange={(event) => setCommentDraft(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
@@ -559,7 +559,7 @@ export function ProjectDetailPage() {
                 value={commentDraft}
               />
               <Button
-                className="h-10 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+                className="h-10 rounded-lg bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
                 disabled={postingComment || !commentDraft.trim()}
                 onClick={handlePostComment}
               >

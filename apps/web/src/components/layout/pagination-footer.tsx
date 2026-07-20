@@ -70,7 +70,7 @@ export function PaginationFooter({
             <button
               className={`grid h-8 w-8 place-items-center rounded-lg text-sm font-semibold ${
                 entry === page
-                  ? "bg-[#654cff] text-white"
+                  ? "bg-[var(--fylmico-accent)] text-white"
                   : "text-[#4b5268] hover:bg-black/[0.04] dark:text-[#c7cad9] dark:hover:bg-white/[0.06]"
               }`}
               key={entry}

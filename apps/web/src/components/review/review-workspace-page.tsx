@@ -186,7 +186,7 @@ export function ReviewWorkspacePage() {
             : "This submission couldn't be loaded."}
         </p>
         <button
-          className="text-sm font-bold text-[#654cff] hover:underline"
+          className="text-sm font-bold text-[var(--fylmico-accent)] hover:underline"
           onClick={() => router.push("/review")}
           type="button"
         >
@@ -412,7 +412,7 @@ function WorkspaceBody({
             <button
               className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-bold ${
                 rightTab === tab.id
-                  ? "bg-[#654cff] text-white"
+                  ? "bg-[var(--fylmico-accent)] text-white"
                   : "text-white/50 hover:text-white"
               }`}
               key={tab.id}

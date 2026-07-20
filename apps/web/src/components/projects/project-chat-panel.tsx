@@ -96,7 +96,7 @@ export function ProjectChatPanel({ projectId }: { projectId: string }) {
           <div className="mt-2 grid gap-2">
             {pinned.map((message) => (
               <div className="flex items-start gap-2" key={message.id}>
-                <Pin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#654cff]" />
+                <Pin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--fylmico-accent)]" />
                 <p className="text-sm text-[#11142c] dark:text-[#f1f2f8]">
                   <strong className="font-semibold">
                     {message.authorName}:
@@ -156,7 +156,7 @@ export function ProjectChatPanel({ projectId }: { projectId: string }) {
 
         <div className="flex items-center gap-2 border-t border-black/5 p-4 dark:border-white/[0.06]">
           <input
-            className="h-10 flex-1 rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
+            className="h-10 flex-1 rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
             disabled={!roomId}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={(event) => {
@@ -173,7 +173,7 @@ export function ProjectChatPanel({ projectId }: { projectId: string }) {
             value={draft}
           />
           <button
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#654cff] text-white disabled:opacity-50"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[var(--fylmico-accent)] text-white disabled:opacity-50"
             disabled={sending || !draft.trim() || !roomId}
             onClick={() => void handleSend()}
             type="button"

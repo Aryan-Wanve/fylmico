@@ -29,7 +29,7 @@ export function TemplatesGrid({
               {template.frameCount} frames
             </span>
             <button
-              className="text-sm font-bold text-[#654cff]"
+              className="text-sm font-bold text-[var(--fylmico-accent)]"
               onClick={() => onUseTemplate(template)}
               type="button"
             >

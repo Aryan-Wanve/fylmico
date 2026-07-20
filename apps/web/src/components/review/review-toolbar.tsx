@@ -75,7 +75,7 @@ export function ReviewToolbar({
         <div className="relative min-w-[12rem] flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#8a90a3]" />
           <input
-            className="h-9 w-full rounded-lg border border-black/10 bg-white pr-3 pl-9 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#171a28] dark:text-[#f1f2f8]"
+            className="h-9 w-full rounded-lg border border-black/10 bg-white pr-3 pl-9 text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#171a28] dark:text-[#f1f2f8]"
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Search project, task, client, editor..."
             value={search}
@@ -231,8 +231,8 @@ export function ReviewToolbar({
       </div>
 
       {selectedCount > 0 ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#654cff]/20 bg-[#654cff]/5 px-4 py-2.5">
-          <span className="text-sm font-bold text-[#654cff]">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--fylmico-accent)]/20 bg-[var(--fylmico-accent)]/5 px-4 py-2.5">
+          <span className="text-sm font-bold text-[var(--fylmico-accent)]">
             {selectedCount} selected
           </span>
           <Button

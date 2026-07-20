@@ -93,7 +93,7 @@ export function PendingMembersPanel({
             </div>
             <div className="flex gap-1.5">
               <button
-                className="flex-1 rounded-lg bg-[#654cff] py-1.5 text-xs font-bold text-white hover:bg-[#5a41ea]"
+                className="flex-1 rounded-lg bg-[var(--fylmico-accent)] py-1.5 text-xs font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
                 disabled={busyId === member.membershipId}
                 onClick={() => setAssigning(member)}
                 type="button"

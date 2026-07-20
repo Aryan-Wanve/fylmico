@@ -64,7 +64,9 @@ function StatusLine({ item }: { item: UploadQueueItem }) {
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
         <div
           className={`h-full rounded-full transition-[width] duration-150 ${
-            item.status === "done" ? "bg-[#16c784]" : "bg-[#654cff]"
+            item.status === "done"
+              ? "bg-[#16c784]"
+              : "bg-[var(--fylmico-accent)]"
           }`}
           style={{ width: `${item.status === "done" ? 100 : percent}%` }}
         />
@@ -128,7 +130,7 @@ function QueueRow({ item }: { item: UploadQueueItem }) {
           item.status === "error" ||
           item.status === "waiting-for-connection" ? (
             <button
-              className="grid h-6 w-6 place-items-center rounded-full text-[#654cff] hover:bg-[#654cff]/10"
+              className="grid h-6 w-6 place-items-center rounded-full text-[var(--fylmico-accent)] hover:bg-[var(--fylmico-accent)]/10"
               onClick={() => resume(item.id)}
               title={item.status === "paused" ? "Resume" : "Retry"}
               type="button"
@@ -143,7 +145,7 @@ function QueueRow({ item }: { item: UploadQueueItem }) {
           {item.status === "needs-reselect" ? (
             <>
               <button
-                className="grid h-6 w-6 place-items-center rounded-full text-[#654cff] hover:bg-[#654cff]/10"
+                className="grid h-6 w-6 place-items-center rounded-full text-[var(--fylmico-accent)] hover:bg-[var(--fylmico-accent)]/10"
                 onClick={() => reselectInputRef.current?.click()}
                 title="Re-select file"
                 type="button"
@@ -197,7 +199,7 @@ export function UploadQueuePanel() {
         type="button"
       >
         <span className="flex items-center gap-1.5">
-          <Upload className="h-3.5 w-3.5 text-[#654cff]" />
+          <Upload className="h-3.5 w-3.5 text-[var(--fylmico-accent)]" />
           {activeCount > 0
             ? `Uploading ${activeCount} file${activeCount === 1 ? "" : "s"}`
             : `${queue.length} upload${queue.length === 1 ? "" : "s"}`}

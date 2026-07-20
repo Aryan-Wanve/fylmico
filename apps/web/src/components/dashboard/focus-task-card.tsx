@@ -204,7 +204,7 @@ export function FocusTaskCard({
             Assigned By
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="grid h-5 w-5 place-items-center rounded-full bg-[#654cff]/10 text-[0.6rem] font-bold text-[#654cff]">
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-[var(--fylmico-accent)]/10 text-[0.6rem] font-bold text-[var(--fylmico-accent)]">
               {toInitials(task.createdByName)}
             </span>
             <strong className="text-[#11142c] dark:text-[#f1f2f8]">
@@ -296,7 +296,7 @@ export function FocusTaskCard({
         {!task.shootId ? (
           <div className="ml-auto flex flex-wrap justify-end gap-2">
             <button
-              className="flex items-center gap-2 rounded-xl bg-[#654cff] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-[var(--fylmico-accent)] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
               disabled={busy}
               onClick={() => void handleToggleTimer()}
               type="button"
@@ -318,7 +318,7 @@ export function FocusTaskCard({
           onClick={() => router.push("/files")}
           type="button"
         >
-          <FolderOpen className="h-4 w-4 text-[#654cff]" />
+          <FolderOpen className="h-4 w-4 text-[var(--fylmico-accent)]" />
           <span className="text-xs font-bold text-[#11142c] dark:text-[#f1f2f8]">
             Drive Folder
           </span>
@@ -331,7 +331,7 @@ export function FocusTaskCard({
           onClick={onOpenDetail}
           type="button"
         >
-          <ListChecks className="h-4 w-4 text-[#654cff]" />
+          <ListChecks className="h-4 w-4 text-[var(--fylmico-accent)]" />
           <span className="text-xs font-bold text-[#11142c] dark:text-[#f1f2f8]">
             Checklist
           </span>
@@ -344,7 +344,7 @@ export function FocusTaskCard({
           onClick={onOpenDetail}
           type="button"
         >
-          <Paperclip className="h-4 w-4 text-[#654cff]" />
+          <Paperclip className="h-4 w-4 text-[var(--fylmico-accent)]" />
           <span className="text-xs font-bold text-[#11142c] dark:text-[#f1f2f8]">
             References
           </span>
@@ -357,7 +357,7 @@ export function FocusTaskCard({
           onClick={onSubmitDraft}
           type="button"
         >
-          <Upload className="h-4 w-4 text-[#654cff]" />
+          <Upload className="h-4 w-4 text-[var(--fylmico-accent)]" />
           <span className="text-xs font-bold text-[#11142c] dark:text-[#f1f2f8]">
             Submit Draft
           </span>
@@ -387,7 +387,7 @@ export function FocusTaskEmptyState({
         You&apos;re all caught up. Check upcoming work or browse projects.
       </p>
       <button
-        className="rounded-xl bg-[#654cff] px-4 py-2.5 text-sm font-bold text-white"
+        className="rounded-xl bg-[var(--fylmico-accent)] px-4 py-2.5 text-sm font-bold text-white"
         onClick={onBrowseProjects}
         type="button"
       >

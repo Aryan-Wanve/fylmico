@@ -38,7 +38,7 @@ export function ChannelInfoPanel({
           {channel.name}
         </strong>
         <button
-          className="text-sm font-bold text-[#654cff]"
+          className="text-sm font-bold text-[var(--fylmico-accent)]"
           onClick={onRename}
           type="button"
         >

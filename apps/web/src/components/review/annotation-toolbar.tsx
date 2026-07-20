@@ -40,7 +40,7 @@ export function AnnotationToolbar({ disabled }: { disabled?: boolean }) {
         aria-pressed={activeTool === null}
         className={`grid h-8 w-8 place-items-center rounded-lg ${
           activeTool === null
-            ? "bg-[#654cff] text-white"
+            ? "bg-[var(--fylmico-accent)] text-white"
             : "text-white/60 hover:bg-white/10 hover:text-white"
         }`}
         onClick={() => setActiveTool(null)}
@@ -60,7 +60,7 @@ export function AnnotationToolbar({ disabled }: { disabled?: boolean }) {
             aria-pressed={activeTool === tool}
             className={`grid h-8 w-8 place-items-center rounded-lg disabled:cursor-not-allowed disabled:opacity-30 ${
               activeTool === tool
-                ? "bg-[#654cff] text-white"
+                ? "bg-[var(--fylmico-accent)] text-white"
                 : "text-white/60 hover:bg-white/10 hover:text-white"
             }`}
             disabled={disabled}

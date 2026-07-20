@@ -140,7 +140,7 @@ export function ApproveDialog({
               Final delivery name
             </Label>
             <input
-              className="h-9 w-full rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
+              className="h-9 w-full rounded-lg border border-black/10 bg-transparent px-3 text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
               onChange={(event) => setFinalName(event.target.value)}
               value={finalName}
             />
@@ -151,7 +151,7 @@ export function ApproveDialog({
               Notes (optional)
             </Label>
             <textarea
-              className="min-h-20 w-full rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
+              className="min-h-20 w-full rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
               onChange={(event) => setNotes(event.target.value)}
               placeholder="Anything worth noting about this approval."
               value={notes}

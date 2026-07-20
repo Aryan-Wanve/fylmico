@@ -64,7 +64,7 @@ export function StoryboardToolbar({
                 className="flex h-9 items-center gap-2 rounded-lg border border-black/10 bg-white px-3 text-sm font-bold text-[#11142c] hover:bg-black/[0.03] dark:border-white/10 dark:bg-[#171a28] dark:text-[#f1f2f8] dark:hover:bg-white/[0.05]"
                 type="button"
               >
-                <span className="h-2 w-2 rounded-full bg-[#654cff]" />
+                <span className="h-2 w-2 rounded-full bg-[var(--fylmico-accent)]" />
                 {activeProjectTitle}
                 <ChevronDown className="h-4 w-4 text-[#8a90a3] dark:text-[#7d8299]" />
               </button>
@@ -136,7 +136,7 @@ export function StoryboardToolbar({
 
         {createLabel ? (
           <button
-            className="flex h-9 items-center gap-2 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+            className="flex h-9 items-center gap-2 rounded-lg bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
             onClick={onCreate}
             type="button"
           >

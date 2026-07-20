@@ -35,7 +35,7 @@ export function TaskGroupHeader({
       </button>
       {onAddTask ? (
         <button
-          className="flex items-center gap-1 text-xs font-bold text-[#654cff] hover:text-[#5a41ea]"
+          className="flex items-center gap-1 text-xs font-bold text-[var(--fylmico-accent)] hover:text-[var(--fylmico-accent-strong)]"
           onClick={onAddTask}
           type="button"
         >

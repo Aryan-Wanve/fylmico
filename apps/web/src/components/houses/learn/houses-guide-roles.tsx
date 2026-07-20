@@ -14,7 +14,7 @@ export function HousesGuideRoles() {
             className="flex items-start gap-3 rounded-xl border border-black/[0.06] bg-white px-4 py-3.5 dark:border-white/[0.08] dark:bg-[#171a28]"
             key={role.name}
           >
-            <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#654cff]" />
+            <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[var(--fylmico-accent)]" />
             <div>
               <strong className="block text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
                 {role.name}

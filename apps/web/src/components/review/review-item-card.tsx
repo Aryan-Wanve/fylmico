@@ -97,7 +97,7 @@ export function ReviewItemCard({
             </span>
           ) : null}
           {item.unresolvedCommentCount > 0 ? (
-            <span className="flex items-center gap-1 rounded-md bg-[#654cff]/10 px-1.5 py-0.5 text-xs font-bold text-[#654cff]">
+            <span className="flex items-center gap-1 rounded-md bg-[var(--fylmico-accent)]/10 px-1.5 py-0.5 text-xs font-bold text-[var(--fylmico-accent)]">
               <MessageSquare className="h-3 w-3" />
               {item.unresolvedCommentCount}
             </span>

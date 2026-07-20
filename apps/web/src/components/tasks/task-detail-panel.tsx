@@ -324,7 +324,7 @@ export function TaskDetailPanel({
               value={task.description ?? ""}
             />
             <button
-              className="justify-self-start text-xs font-bold text-[#654cff]"
+              className="justify-self-start text-xs font-bold text-[var(--fylmico-accent)]"
               onClick={() =>
                 void patch({ description: task.description ?? "" })
               }
@@ -358,7 +358,7 @@ export function TaskDetailPanel({
                 Assignees
               </h3>
               <button
-                className="text-xs font-bold text-[#654cff]"
+                className="text-xs font-bold text-[var(--fylmico-accent)]"
                 onClick={() => {
                   setDraftAssignees(
                     task.assignees.map((a) => ({
@@ -382,7 +382,7 @@ export function TaskDetailPanel({
                   tasks={tasks}
                 />
                 <button
-                  className="justify-self-start text-xs font-bold text-[#654cff]"
+                  className="justify-self-start text-xs font-bold text-[var(--fylmico-accent)]"
                   onClick={async () => {
                     await patch({ assignees: draftAssignees });
                     setEditingAssignees(false);
@@ -402,7 +402,7 @@ export function TaskDetailPanel({
                       className="flex items-center gap-1.5 rounded-full bg-black/[0.04] px-2.5 py-1 text-xs font-semibold text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]"
                       key={a.userId}
                     >
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[#654cff]/10 text-[0.6rem] font-bold text-[#654cff]">
+                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[var(--fylmico-accent)]/10 text-[0.6rem] font-bold text-[var(--fylmico-accent)]">
                         {toInitials(a.name)}
                       </span>
                       {a.name}
@@ -460,7 +460,7 @@ export function TaskDetailPanel({
                   >
                     <input
                       checked={item.done}
-                      className="h-3.5 w-3.5 accent-[#654cff]"
+                      className="h-3.5 w-3.5 accent-[var(--fylmico-accent)]"
                       onChange={async (event) => {
                         await updateChecklistItem(taskId, item.id, {
                           done: event.target.checked
@@ -554,7 +554,7 @@ export function TaskDetailPanel({
                 </SelectContent>
               </Select>
               <button
-                className="text-xs font-bold text-[#654cff]"
+                className="text-xs font-bold text-[var(--fylmico-accent)]"
                 onClick={async () => {
                   if (!dependencyPickerId) {
                     return;
@@ -628,7 +628,7 @@ export function TaskDetailPanel({
               ))}
               {task.tags.map((tag) => (
                 <span
-                  className="rounded-full bg-[#654cff]/10 px-2.5 py-1 font-semibold text-[#654cff]"
+                  className="rounded-full bg-[var(--fylmico-accent)]/10 px-2.5 py-1 font-semibold text-[var(--fylmico-accent)]"
                   key={tag}
                 >
                   #{tag}
@@ -643,7 +643,7 @@ export function TaskDetailPanel({
                 Time Tracking
               </h3>
               <button
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${runningEntry ? "bg-red-50 text-red-600" : "bg-[#654cff]/10 text-[#654cff]"}`}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${runningEntry ? "bg-red-50 text-red-600" : "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"}`}
                 onClick={() => void handleToggleTimer()}
                 type="button"
               >
@@ -733,7 +733,7 @@ export function TaskDetailPanel({
                 value={newComment}
               />
               <button
-                className="rounded-lg bg-[#654cff] px-3 text-xs font-bold text-white"
+                className="rounded-lg bg-[var(--fylmico-accent)] px-3 text-xs font-bold text-white"
                 onClick={() => void handleAddComment()}
                 type="button"
               >

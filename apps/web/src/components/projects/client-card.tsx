@@ -60,7 +60,7 @@ export function ClientCard({
               src={client.logoUrl}
             />
           ) : (
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#654cff]/10 text-sm font-bold text-[#654cff]">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--fylmico-accent)]/10 text-sm font-bold text-[var(--fylmico-accent)]">
               {client.name.slice(0, 2).toUpperCase()}
             </span>
           )}

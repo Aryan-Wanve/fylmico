@@ -72,7 +72,9 @@ export function CalendarWeekGrid({
             return (
               <button
                 className={`flex min-h-40 flex-col gap-1 border-r border-black/5 p-2 text-left last:border-r-0 dark:border-white/[0.06] ${
-                  isSelected ? "ring-2 ring-[#654cff]/40 ring-inset" : ""
+                  isSelected
+                    ? "ring-2 ring-[var(--fylmico-accent)]/40 ring-inset"
+                    : ""
                 } hover:bg-black/[0.02] dark:hover:bg-white/[0.04]`}
                 key={day.toISOString()}
                 onClick={() => onSelectDate(day)}
@@ -81,7 +83,7 @@ export function CalendarWeekGrid({
                 <span
                   className={`grid h-6 w-fit min-w-6 place-items-center rounded-full px-1.5 text-xs font-bold ${
                     isToday
-                      ? "bg-[#654cff] text-white"
+                      ? "bg-[var(--fylmico-accent)] text-white"
                       : "text-[#11142c] dark:text-[#f1f2f8]"
                   }`}
                 >

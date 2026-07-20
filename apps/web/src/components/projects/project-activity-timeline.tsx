@@ -48,7 +48,7 @@ export function ProjectActivityTimeline({ projectId }: { projectId: string }) {
           className="flex items-start gap-3 border-b border-black/5 px-4 py-3 last:border-b-0 dark:border-white/[0.06]"
           key={entry.id}
         >
-          <History className="mt-0.5 h-4 w-4 shrink-0 text-[#654cff]" />
+          <History className="mt-0.5 h-4 w-4 shrink-0 text-[var(--fylmico-accent)]" />
           <div className="min-w-0 flex-1">
             <p className="text-sm text-[#11142c] dark:text-[#f1f2f8]">
               {entry.actorName ? (

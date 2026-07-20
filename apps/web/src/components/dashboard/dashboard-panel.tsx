@@ -19,7 +19,7 @@ export function DashboardPanel({
         </h2>
         {action ? (
           <button
-            className="text-sm font-bold text-[#654cff]"
+            className="text-sm font-bold text-[var(--fylmico-accent)]"
             onClick={action.onClick}
             type="button"
           >

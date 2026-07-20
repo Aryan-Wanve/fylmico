@@ -41,7 +41,7 @@ export function SettingsSidebar({
     <aside className="grid content-start gap-6">
       <div className="rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]">
         <div className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#654cff]/10 text-[#654cff]">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]">
             <Sparkles className="h-4.5 w-4.5" />
           </span>
           <strong className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">

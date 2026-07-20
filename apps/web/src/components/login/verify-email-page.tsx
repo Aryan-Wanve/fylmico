@@ -139,7 +139,7 @@ export function VerifyEmailPage() {
           ) : null}
 
           <Button
-            className="h-[3.25rem] w-full rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] text-base font-bold text-white shadow-[0_1rem_2.1rem_rgba(101,76,255,0.28)] hover:opacity-95"
+            className="h-[3.25rem] w-full rounded-lg bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] text-base font-bold text-white shadow-[0_1rem_2.1rem_rgba(101,76,255,0.28)] hover:opacity-95"
             disabled={isSubmitting}
             type="submit"
           >
@@ -151,7 +151,7 @@ export function VerifyEmailPage() {
         <p className="mt-5 text-center text-[0.9rem] font-semibold text-[#6d7080] dark:text-[#8b8fa3]">
           Didn&apos;t get a code?{" "}
           <button
-            className="font-extrabold text-[#654cff] disabled:opacity-60"
+            className="font-extrabold text-[var(--fylmico-accent)] disabled:opacity-60"
             disabled={isResending || !email.trim()}
             onClick={handleResend}
             type="button"
@@ -161,7 +161,10 @@ export function VerifyEmailPage() {
         </p>
 
         <p className="mt-2 text-center text-[0.9rem] font-semibold text-[#6d7080] dark:text-[#8b8fa3]">
-          <Link className="font-extrabold text-[#654cff]" href="/login">
+          <Link
+            className="font-extrabold text-[var(--fylmico-accent)]"
+            href="/login"
+          >
             Back to log in
           </Link>
         </p>

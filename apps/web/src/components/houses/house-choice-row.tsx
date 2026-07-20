@@ -17,7 +17,7 @@ export function HouseChoiceRow({
 }) {
   return (
     <button
-      className="flex w-full items-center gap-4 rounded-2xl border border-black/10 bg-white p-4 text-left transition hover:-translate-y-px hover:border-[#654cff]/25 hover:shadow-[0_1rem_2.6rem_rgba(53,45,124,0.08)] disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-[#171a28]"
+      className="flex w-full items-center gap-4 rounded-2xl border border-black/10 bg-white p-4 text-left transition hover:-translate-y-px hover:border-[var(--fylmico-accent)]/25 hover:shadow-[0_1rem_2.6rem_rgba(53,45,124,0.08)] disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-[#171a28]"
       disabled={disabled}
       onClick={onClick}
       type="button"
@@ -26,7 +26,7 @@ export function HouseChoiceRow({
         className={
           tone === "solid"
             ? "grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#7257ff] to-[#563df0] text-white"
-            : "grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[#654cff]/10 text-[#654cff]"
+            : "grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
         }
       >
         <Icon className="h-5 w-5" />

@@ -264,7 +264,7 @@ export function ShootTaskCard({
       <TaskProgressTracker stages={computeShootStages(shoot.status)} />
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-[#654cff]/10 px-2.5 py-1 text-xs font-bold text-[#654cff]">
+        <span className="rounded-full bg-[var(--fylmico-accent)]/10 px-2.5 py-1 text-xs font-bold text-[var(--fylmico-accent)]">
           {SHOOT_STATUS_LABELS[shoot.status]}
         </span>
         <WeatherWidget />
@@ -277,7 +277,7 @@ export function ShootTaskCard({
               Location
             </span>
             <a
-              className="flex items-center gap-1 font-semibold text-[#654cff] hover:underline"
+              className="flex items-center gap-1 font-semibold text-[var(--fylmico-accent)] hover:underline"
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shoot.location)}`}
               rel="noreferrer"
               target="_blank"
@@ -317,7 +317,7 @@ export function ShootTaskCard({
             <span className="flex -space-x-1.5">
               {shoot.crew.map((member) => (
                 <span
-                  className="grid h-5 w-5 place-items-center rounded-full border border-white bg-[#654cff]/10 text-[0.6rem] font-bold text-[#654cff] dark:border-[#171a28]"
+                  className="grid h-5 w-5 place-items-center rounded-full border border-white bg-[var(--fylmico-accent)]/10 text-[0.6rem] font-bold text-[var(--fylmico-accent)] dark:border-[#171a28]"
                   key={member.userId}
                   title={member.name}
                 >
@@ -356,7 +356,7 @@ export function ShootTaskCard({
       <div className="flex flex-wrap gap-2">
         {shoot.status === "scheduled" ? (
           <button
-            className="flex items-center gap-2 rounded-xl bg-[#654cff] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl bg-[var(--fylmico-accent)] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
             disabled={shootBusy}
             onClick={() => void handleReachedLocation()}
             type="button"
@@ -366,7 +366,7 @@ export function ShootTaskCard({
         ) : null}
         {shoot.status === "crew-reached" ? (
           <button
-            className="flex items-center gap-2 rounded-xl bg-[#654cff] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl bg-[var(--fylmico-accent)] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
             disabled={shootBusy}
             onClick={() => void handleStartShoot()}
             type="button"
@@ -408,7 +408,7 @@ export function ShootTaskCard({
         ) : null}
         {shoot.status === "uploaded" ? (
           <button
-            className="rounded-xl bg-[#654cff] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+            className="rounded-xl bg-[var(--fylmico-accent)] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
             disabled={shootBusy}
             onClick={() => void handleMarkReadyForEditing()}
             type="button"

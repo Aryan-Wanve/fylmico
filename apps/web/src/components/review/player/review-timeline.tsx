@@ -81,7 +81,7 @@ export function ReviewTimeline({
             <button
               className={`rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${
                 version.id === activeVersionId
-                  ? "bg-[#654cff] text-white"
+                  ? "bg-[var(--fylmico-accent)] text-white"
                   : "bg-white/10 text-white/70 hover:bg-white/20"
               }`}
               key={version.id}
@@ -150,14 +150,14 @@ export function ReviewTimeline({
                   }}
                   type="button"
                 >
-                  <PenTool className="h-3 w-3 text-[#654cff]" />
+                  <PenTool className="h-3 w-3 text-[var(--fylmico-accent)]" />
                 </button>
               ) : null
             )}
 
             {duration > 0 ? (
               <div
-                className="pointer-events-none absolute top-0 h-full w-0.5 bg-[#654cff]"
+                className="pointer-events-none absolute top-0 h-full w-0.5 bg-[var(--fylmico-accent)]"
                 style={{ left: `${(currentTime / duration) * 100}%` }}
               />
             ) : null}

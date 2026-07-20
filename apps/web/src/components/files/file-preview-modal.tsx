@@ -72,7 +72,7 @@ export function FilePreviewModal({
 
         <div className="grid min-h-[20rem] place-items-center overflow-hidden rounded-xl bg-black/[0.02] dark:bg-white/[0.03]">
           {loading ? (
-            <Loader2 className="h-6 w-6 animate-spin text-[#654cff]" />
+            <Loader2 className="h-6 w-6 animate-spin text-[var(--fylmico-accent)]" />
           ) : error ? (
             <p className="p-8 text-center text-sm text-red-600">{error}</p>
           ) : kind === "image" && url ? (
@@ -104,7 +104,7 @@ export function FilePreviewModal({
                 {file.size ? ` (${formatFileSize(file.size)})` : ""}
               </p>
               <button
-                className="flex h-9 items-center gap-2 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+                className="flex h-9 items-center gap-2 rounded-lg bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
                 onClick={() => onDownload(file.id)}
                 type="button"
               >

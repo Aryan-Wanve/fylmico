@@ -782,7 +782,7 @@ export function MessagesPage() {
                   ) : null}
                   {newMessagesBelow ? (
                     <button
-                      className="sticky bottom-2 left-1/2 mx-auto flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-[#654cff] px-3 py-1.5 text-xs font-bold text-white shadow-lg"
+                      className="sticky bottom-2 left-1/2 mx-auto flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-[var(--fylmico-accent)] px-3 py-1.5 text-xs font-bold text-white shadow-lg"
                       onClick={() => {
                         scrollToBottom(true);
                         setNewMessagesBelow(false);
@@ -814,7 +814,7 @@ export function MessagesPage() {
             ) : activeTab === "tasks" ? (
               <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
                 <button
-                  className="mb-2 flex items-center gap-1.5 text-xs font-bold text-[#654cff] hover:underline"
+                  className="mb-2 flex items-center gap-1.5 text-xs font-bold text-[var(--fylmico-accent)] hover:underline"
                   onClick={handleAddTask}
                   type="button"
                 >
@@ -828,7 +828,7 @@ export function MessagesPage() {
             ) : (
               <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
                 <button
-                  className="mb-2 flex items-center gap-1.5 text-xs font-bold text-[#654cff] hover:underline"
+                  className="mb-2 flex items-center gap-1.5 text-xs font-bold text-[var(--fylmico-accent)] hover:underline"
                   onClick={handleAddEvent}
                   type="button"
                 >

@@ -2,10 +2,10 @@ import type { ActivityHeatmap as ActivityHeatmapData } from "@/types/base";
 
 const INTENSITY_CLASSES = [
   "bg-black/[0.04] dark:bg-white/[0.06]",
-  "bg-[#654cff]/20",
-  "bg-[#654cff]/40",
-  "bg-[#654cff]/65",
-  "bg-[#654cff]/90"
+  "bg-[var(--fylmico-accent)]/20",
+  "bg-[var(--fylmico-accent)]/40",
+  "bg-[var(--fylmico-accent)]/65",
+  "bg-[var(--fylmico-accent)]/90"
 ];
 
 export function ActivityHeatmap({ heatmap }: { heatmap: ActivityHeatmapData }) {

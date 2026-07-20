@@ -93,7 +93,7 @@ export function AppSidebar({
                   <span className="flex-1 text-left">{item.label}</span>
                 ) : null}
                 {item.badge && !compact ? (
-                  <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[#654cff] px-1 text-[0.68rem] font-bold text-white">
+                  <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[var(--fylmico-accent)] px-1 text-[0.68rem] font-bold text-white">
                     {item.badge}
                   </span>
                 ) : null}
@@ -104,7 +104,7 @@ export function AppSidebar({
               "flex items-center gap-3 rounded-xl text-sm font-semibold transition-colors",
               compact ? "h-11 w-11 justify-center" : "h-11 px-3",
               isActive
-                ? "bg-[#654cff]/10 text-[#654cff]"
+                ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                 : "text-[#4b5268] dark:text-[#c7cad9] hover:bg-black/[0.03] dark:hover:bg-white/[0.05] hover:text-[#12142b] dark:hover:text-[#f1f2f8]",
               item.href === null
                 ? "cursor-default opacity-60 hover:bg-transparent hover:text-[#4b5268] dark:hover:text-[#c7cad9]"
@@ -145,7 +145,7 @@ export function AppSidebar({
             "flex shrink-0 items-center gap-3 rounded-xl text-sm font-semibold transition-colors",
             compact ? "h-11 w-11 justify-center" : "h-11 px-3",
             pathname === "/settings"
-              ? "bg-[#654cff]/10 text-[#654cff]"
+              ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
               : "text-[#4b5268] hover:bg-black/[0.03] hover:text-[#12142b] dark:text-[#c7cad9] dark:hover:bg-white/[0.05] dark:hover:text-[#f1f2f8]"
           ].join(" ")}
           href="/settings"

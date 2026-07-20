@@ -121,7 +121,7 @@ export function PlayerControlsBar() {
         </button>
         <input
           aria-label="Volume"
-          className="h-1 w-16 accent-[#654cff]"
+          className="h-1 w-16 accent-[var(--fylmico-accent)]"
           max={1}
           min={0}
           onChange={(event) => setVolume(Number(event.target.value))}

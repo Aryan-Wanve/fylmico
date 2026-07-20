@@ -36,7 +36,7 @@ export function TopActiveProjectsPanel({
                   </strong>
                   <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
                     <div
-                      className="h-full rounded-full bg-[#654cff]"
+                      className="h-full rounded-full bg-[var(--fylmico-accent)]"
                       style={{ width: `${project.progress}%` }}
                     />
                   </div>

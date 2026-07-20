@@ -191,7 +191,7 @@ export function EditTaskCard({
       {latest &&
       (latest.status === "review" || latest.status === "revision") ? (
         <Link
-          className="w-fit text-xs font-bold text-[#654cff] hover:underline"
+          className="w-fit text-xs font-bold text-[var(--fylmico-accent)] hover:underline"
           href="/review"
         >
           View in Review Queue →
@@ -200,7 +200,7 @@ export function EditTaskCard({
 
       <div className="flex flex-wrap gap-2">
         <button
-          className="flex items-center gap-2 rounded-xl bg-[#654cff] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+          className="flex items-center gap-2 rounded-xl bg-[var(--fylmico-accent)] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
           disabled={busy}
           onClick={() => setSubmitDraftOpen(true)}
           type="button"

@@ -18,7 +18,7 @@ export function TaskProgressTracker({
                 stage.state === "done"
                   ? "bg-[#16c784] text-white"
                   : stage.state === "active"
-                    ? "bg-[#654cff] text-white"
+                    ? "bg-[var(--fylmico-accent)] text-white"
                     : "bg-black/[0.06] text-[#8a90a3] dark:bg-white/[0.08] dark:text-[#7d8299]"
               }`}
             >

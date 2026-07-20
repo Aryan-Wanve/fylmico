@@ -514,7 +514,7 @@ export function FilesPage() {
         <div
           className={`grid min-w-0 grid-cols-1 content-start gap-4 rounded-2xl transition-colors ${
             dragOver
-              ? "bg-[#654cff]/[0.03] outline outline-2 -outline-offset-2 outline-[#654cff]"
+              ? "bg-[var(--fylmico-accent)]/[0.03] outline outline-2 -outline-offset-2 outline-[var(--fylmico-accent)]"
               : ""
           }`}
           onDragLeave={(event) => {

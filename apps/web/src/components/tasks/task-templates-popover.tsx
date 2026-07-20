@@ -70,7 +70,7 @@ export function TaskTemplatesPopover({
               <span className="truncate text-[#3a3f57] dark:text-[#b4b8cc]">
                 {template.title}
               </span>
-              <span className="shrink-0 text-xs font-bold text-[#654cff]">
+              <span className="shrink-0 text-xs font-bold text-[var(--fylmico-accent)]">
                 Use
               </span>
             </button>

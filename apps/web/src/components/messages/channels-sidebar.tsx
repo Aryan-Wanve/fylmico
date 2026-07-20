@@ -55,7 +55,7 @@ export function ChannelsSidebar({
             <TabsTrigger className="group" value="unread">
               Unread
               {unreadCount > 0 ? (
-                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-black/[0.06] px-1 text-xs font-bold text-[#4b5268] group-data-active:bg-[#654cff]/10 group-data-active:text-[#654cff] dark:bg-white/[0.08] dark:text-[#c7cad9]">
+                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-black/[0.06] px-1 text-xs font-bold text-[#4b5268] group-data-active:bg-[var(--fylmico-accent)]/10 group-data-active:text-[var(--fylmico-accent)] dark:bg-white/[0.08] dark:text-[#c7cad9]">
                   {unreadCount}
                 </span>
               ) : null}
@@ -111,7 +111,7 @@ export function ChannelsSidebar({
 
       <div className="border-t border-black/5 p-3 dark:border-white/[0.06]">
         <button
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#654cff] py-2.5 text-sm font-bold text-white hover:bg-[#5a41ea]"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--fylmico-accent)] py-2.5 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
           onClick={onNewChat}
           type="button"
         >

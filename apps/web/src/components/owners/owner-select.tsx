@@ -63,7 +63,7 @@ export function OwnerSelect({
             <button
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold ${
                 active
-                  ? "bg-[#654cff] text-white"
+                  ? "bg-[var(--fylmico-accent)] text-white"
                   : "bg-black/[0.04] text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]"
               }`}
               disabled={disabled}

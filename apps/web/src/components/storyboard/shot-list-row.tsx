@@ -18,7 +18,7 @@ export function ShotListRow({
     <button
       className={`flex w-full items-center gap-4 border-b border-black/5 text-left last:border-b-0 hover:bg-black/[0.015] dark:border-white/[0.06] dark:hover:bg-white/[0.03] ${
         dense ? "px-3 py-1.5" : "px-4 py-3"
-      } ${selected ? "bg-[#654cff]/[0.05]" : ""}`}
+      } ${selected ? "bg-[var(--fylmico-accent)]/[0.05]" : ""}`}
       onClick={onSelect}
       type="button"
     >
@@ -39,7 +39,7 @@ export function ShotListRow({
         </span>
       </span>
       {shot.cameraAngle ? (
-        <span className="shrink-0 rounded-md bg-[#654cff]/85 px-2 py-0.5 text-xs font-bold text-white">
+        <span className="shrink-0 rounded-md bg-[var(--fylmico-accent)]/85 px-2 py-0.5 text-xs font-bold text-white">
           {shot.cameraAngle}
         </span>
       ) : null}

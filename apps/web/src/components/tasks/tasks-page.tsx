@@ -89,7 +89,7 @@ function buildGroups(list: ProductionTask[], groupBy: GroupByOption): Group[] {
     return TASK_TYPES.map((type) => ({
       key: type,
       label: TASK_TYPE_LABELS[type],
-      dotClassName: "bg-[#654cff]",
+      dotClassName: "bg-[var(--fylmico-accent)]",
       tasks: list.filter((task) => task.type === type)
     })).filter((group) => group.tasks.length > 0);
   }
@@ -118,7 +118,7 @@ function buildGroups(list: ProductionTask[], groupBy: GroupByOption): Group[] {
     return clientNames.map((client) => ({
       key: client,
       label: client,
-      dotClassName: "bg-[#654cff]",
+      dotClassName: "bg-[var(--fylmico-accent)]",
       tasks: list.filter((task) => (task.clientName ?? "No Client") === client)
     }));
   }
@@ -133,7 +133,7 @@ function buildGroups(list: ProductionTask[], groupBy: GroupByOption): Group[] {
       list.find(
         (task) => (task.assignees[0]?.userId ?? "unassigned") === assigneeId
       )?.assignees[0]?.name ?? "Unassigned",
-    dotClassName: "bg-[#654cff]",
+    dotClassName: "bg-[var(--fylmico-accent)]",
     tasks: list.filter(
       (task) => (task.assignees[0]?.userId ?? "unassigned") === assigneeId
     )
@@ -498,8 +498,8 @@ export function TasksPage() {
         ) : null}
 
         {selectedIds.size > 0 ? (
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#654cff]/20 bg-[#654cff]/5 px-4 py-2.5">
-            <span className="text-sm font-bold text-[#654cff]">
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--fylmico-accent)]/20 bg-[var(--fylmico-accent)]/5 px-4 py-2.5">
+            <span className="text-sm font-bold text-[var(--fylmico-accent)]">
               {selectedIds.size} selected
             </span>
             <Select

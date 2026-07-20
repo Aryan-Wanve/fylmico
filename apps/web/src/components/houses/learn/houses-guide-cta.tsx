@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 export function HousesGuideCta() {
   return (
     <section className="px-6 py-14 sm:px-10">
-      <div className="mx-auto grid max-w-3xl gap-5 rounded-3xl bg-gradient-to-br from-[#654cff] to-[#5b3ff0] p-10 text-center text-white shadow-[0_1.5rem_4rem_rgba(101,76,255,0.28)]">
+      <div className="mx-auto grid max-w-3xl gap-5 rounded-3xl bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] p-10 text-center text-white shadow-[0_1.5rem_4rem_rgba(101,76,255,0.28)]">
         <h2 className="text-2xl font-black sm:text-3xl">
           Ready to bring your crew together?
         </h2>
@@ -14,7 +14,7 @@ export function HousesGuideCta() {
         </p>
         <div className="mx-auto flex flex-wrap items-center justify-center gap-3">
           <Link
-            className="flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-[#654cff] hover:bg-white/90 dark:bg-[#171a28]"
+            className="flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-[var(--fylmico-accent)] hover:bg-white/90 dark:bg-[#171a28]"
             href="/dashboard"
           >
             Create a House

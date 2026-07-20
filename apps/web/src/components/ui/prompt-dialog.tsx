@@ -102,7 +102,7 @@ export function PromptDialogProvider({ children }: { children: ReactNode }) {
                   Cancel
                 </Button>
                 <Button
-                  className="h-9 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+                  className="h-9 rounded-lg bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
                   type="submit"
                 >
                   Continue

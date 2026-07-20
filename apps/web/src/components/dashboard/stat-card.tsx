@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import { Sparkline } from "@/components/dashboard/sparkline";
 
 const TONE_STYLES: Record<"violet" | "blue" | "green" | "orange", string> = {
-  violet: "bg-[#654cff]/12 text-[#654cff]",
+  violet: "bg-[var(--fylmico-accent)]/12 text-[var(--fylmico-accent)]",
   blue: "bg-[#3b82f6]/12 text-[#2563eb]",
   green: "bg-[#16c784]/12 text-[#0baa6d]",
   orange: "bg-[#f97316]/12 text-[#ea580c]"

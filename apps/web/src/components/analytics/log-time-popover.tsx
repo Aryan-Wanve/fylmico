@@ -32,7 +32,7 @@ export type LogTimeInput = {
 function pillClassName(active: boolean): string {
   return `rounded-lg px-2.5 py-1 text-xs font-semibold ${
     active
-      ? "bg-[#654cff] text-white"
+      ? "bg-[var(--fylmico-accent)] text-white"
       : "bg-black/[0.04] dark:bg-white/[0.06] text-[#4b5268] dark:text-[#c7cad9] hover:bg-black/[0.07] dark:hover:bg-white/[0.09]"
   }`;
 }
@@ -178,7 +178,7 @@ export function LogTimePopover({
           ) : null}
 
           <button
-            className="h-9 rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] text-sm font-bold text-white hover:opacity-95 disabled:opacity-60"
+            className="h-9 rounded-lg bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] text-sm font-bold text-white hover:opacity-95 disabled:opacity-60"
             disabled={submitting}
             onClick={handleSubmit}
             type="button"

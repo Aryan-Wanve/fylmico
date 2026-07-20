@@ -17,7 +17,7 @@ export function HousesGuideFeatures() {
               className="rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:border-white/[0.08] dark:bg-[#171a28]"
               key={feature.id}
             >
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#654cff]/10 text-[#654cff]">
+              <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]">
                 <Icon className="h-5 w-5" />
               </span>
               <h3 className="mt-3 text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">

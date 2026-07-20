@@ -72,7 +72,7 @@ export function ProjectGridCard({
       <div className="mt-3 flex items-center gap-2">
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
           <div
-            className="h-full rounded-full bg-[#654cff]"
+            className="h-full rounded-full bg-[var(--fylmico-accent)]"
             style={{ width: `${project.progress}%` }}
           />
         </div>
@@ -83,15 +83,15 @@ export function ProjectGridCard({
 
       <div className="mt-3 grid grid-cols-3 gap-1.5 text-xs font-semibold text-[#5f667d] dark:text-[#a8acbf]">
         <span className="flex items-center gap-1">
-          <CheckSquare className="h-3.5 w-3.5 text-[#654cff]" />
+          <CheckSquare className="h-3.5 w-3.5 text-[var(--fylmico-accent)]" />
           {project.completedTaskCount ?? 0}/{project.taskCount ?? 0} Tasks
         </span>
         <span className="flex items-center gap-1">
-          <HardDrive className="h-3.5 w-3.5 text-[#654cff]" />
+          <HardDrive className="h-3.5 w-3.5 text-[var(--fylmico-accent)]" />
           {formatFileSize(project.storageBytes ?? 0)}
         </span>
         <span className="flex items-center gap-1">
-          <Users className="h-3.5 w-3.5 text-[#654cff]" />
+          <Users className="h-3.5 w-3.5 text-[var(--fylmico-accent)]" />
           {onlineCount} Online
         </span>
       </div>

@@ -85,7 +85,7 @@ export default function JoinHousePage({
               {error}
             </p>
             <Link
-              className="mt-6 inline-block text-sm font-bold text-[#654cff]"
+              className="mt-6 inline-block text-sm font-bold text-[var(--fylmico-accent)]"
               href="/login"
             >
               Back to login
@@ -114,7 +114,7 @@ export default function JoinHousePage({
 
             {hasSession() ? (
               <Button
-                className="mt-6 h-12 w-full rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] font-bold text-white hover:opacity-95"
+                className="mt-6 h-12 w-full rounded-lg bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] font-bold text-white hover:opacity-95"
                 disabled={state === "joining"}
                 onClick={handleJoin}
               >
@@ -126,7 +126,7 @@ export default function JoinHousePage({
                   Log in or sign up, then come back to this link to join.
                 </p>
                 <Link
-                  className="flex h-12 w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] font-bold text-white hover:opacity-95"
+                  className="flex h-12 w-full items-center justify-center rounded-lg bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] font-bold text-white hover:opacity-95"
                   href={`/login?redirectTo=${encodeURIComponent(`/houses/join/${code}`)}`}
                 >
                   Log in

@@ -16,7 +16,7 @@ export function ShotCard({
     <article
       className={`overflow-hidden rounded-xl border bg-white shadow-[0_0.6rem_1.8rem_rgba(53,45,124,0.06)] dark:bg-[#171a28] ${
         selected
-          ? "border-[#654cff] ring-2 ring-[#654cff]/30"
+          ? "border-[var(--fylmico-accent)] ring-2 ring-[var(--fylmico-accent)]/30"
           : "border-black/[0.06] dark:border-white/[0.08]"
       }`}
     >
@@ -27,7 +27,7 @@ export function ShotCard({
       >
         <Camera className="h-12 w-12 text-[#8a90a3]/60" strokeWidth={1.25} />
         {shot.cameraAngle ? (
-          <span className="absolute top-2 right-2 rounded-md bg-[#654cff]/85 px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
+          <span className="absolute top-2 right-2 rounded-md bg-[var(--fylmico-accent)]/85 px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
             {shot.cameraAngle}
           </span>
         ) : null}

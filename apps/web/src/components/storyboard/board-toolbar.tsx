@@ -119,7 +119,7 @@ export function BoardToolbar({
             </button>
             <input
               aria-label="Zoom level"
-              className="w-24 accent-[#654cff]"
+              className="w-24 accent-[var(--fylmico-accent)]"
               max={100}
               min={0}
               onChange={(event) => onZoomChange(Number(event.target.value))}

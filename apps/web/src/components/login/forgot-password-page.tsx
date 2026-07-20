@@ -64,7 +64,7 @@ export function ForgotPasswordPage() {
               Check your inbox.
             </p>
             <Link
-              className="flex h-12 w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] text-sm font-bold text-white hover:opacity-95"
+              className="flex h-12 w-full items-center justify-center rounded-lg bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] text-sm font-bold text-white hover:opacity-95"
               href={`/reset-password?email=${encodeURIComponent(email)}`}
             >
               Enter the code
@@ -100,7 +100,7 @@ export function ForgotPasswordPage() {
             ) : null}
 
             <Button
-              className="h-[3.25rem] w-full rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] text-base font-bold text-white shadow-[0_1rem_2.1rem_rgba(101,76,255,0.28)] hover:opacity-95"
+              className="h-[3.25rem] w-full rounded-lg bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] text-base font-bold text-white shadow-[0_1rem_2.1rem_rgba(101,76,255,0.28)] hover:opacity-95"
               disabled={isSubmitting}
               type="submit"
             >
@@ -112,7 +112,10 @@ export function ForgotPasswordPage() {
 
         <p className="mt-5 text-center text-[0.9rem] font-semibold text-[#6d7080] dark:text-[#8b8fa3]">
           Remembered your password?{" "}
-          <Link className="font-extrabold text-[#654cff]" href="/login">
+          <Link
+            className="font-extrabold text-[var(--fylmico-accent)]"
+            href="/login"
+          >
             Log in
           </Link>
         </p>

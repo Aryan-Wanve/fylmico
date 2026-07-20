@@ -68,9 +68,9 @@ export function WaitingForApprovalPage({ house }: { house: House }) {
           files.
         </p>
 
-        <div className="mt-6 flex items-center justify-center gap-2 rounded-2xl border border-[#654cff]/20 bg-[#654cff]/5 px-4 py-3">
-          <Clock3 className="h-4 w-4 text-[#654cff]" />
-          <span className="text-sm font-bold text-[#654cff]">
+        <div className="mt-6 flex items-center justify-center gap-2 rounded-2xl border border-[var(--fylmico-accent)]/20 bg-[var(--fylmico-accent)]/5 px-4 py-3">
+          <Clock3 className="h-4 w-4 text-[var(--fylmico-accent)]" />
+          <span className="text-sm font-bold text-[var(--fylmico-accent)]">
             Current Status: Waiting for Role Assignment
           </span>
         </div>
@@ -108,7 +108,7 @@ export function WaitingForApprovalPage({ house }: { house: House }) {
             {copied ? "Copied" : "Copy Invite Info"}
           </Button>
           <Button
-            className="h-10 flex-1 rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] text-sm font-bold text-white hover:opacity-95"
+            className="h-10 flex-1 rounded-lg bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] text-sm font-bold text-white hover:opacity-95"
             disabled={refreshing}
             onClick={handleRefresh}
           >

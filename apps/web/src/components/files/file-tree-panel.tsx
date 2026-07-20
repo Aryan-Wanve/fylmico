@@ -52,7 +52,7 @@ export function FileTreePanel({
       <button
         className={`flex w-full items-center gap-1.5 truncate rounded-lg px-2 py-1.5 text-left text-sm font-semibold ${
           activeFolderId === null
-            ? "bg-[#654cff]/10 text-[#654cff]"
+            ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
             : "text-[#4b5268] hover:bg-black/[0.03] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
         }`}
         onClick={() => onNavigate([rootCrumb])}
@@ -138,7 +138,7 @@ function FileTreeNode({
       <div
         className={`flex items-center gap-0.5 rounded-lg py-1.5 pr-2 text-sm ${
           isActive
-            ? "bg-[#654cff]/10 font-semibold text-[#654cff]"
+            ? "bg-[var(--fylmico-accent)]/10 font-semibold text-[var(--fylmico-accent)]"
             : "text-[#4b5268] hover:bg-black/[0.03] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
         }`}
         style={{ paddingLeft: `${0.375 + depth * 1}rem` }}

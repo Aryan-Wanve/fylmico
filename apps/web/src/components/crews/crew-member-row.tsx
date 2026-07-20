@@ -81,7 +81,7 @@ export function CrewMemberRow({
               {member.currentProject}
             </strong>
             <span className="flex items-center gap-1.5 text-xs text-[#8a90a3] dark:text-[#7d8299]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#654cff]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--fylmico-accent)]" />
               {member.projectStage}
             </span>
           </>

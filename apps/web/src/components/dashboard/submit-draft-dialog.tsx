@@ -100,7 +100,7 @@ export function SubmitDraftDialog({
           <label
             className={`grid cursor-pointer place-items-center gap-2 rounded-xl border-2 border-dashed p-8 text-center ${
               dragOver
-                ? "border-[#654cff] bg-[#654cff]/[0.04]"
+                ? "border-[var(--fylmico-accent)] bg-[var(--fylmico-accent)]/[0.04]"
                 : "border-black/10 dark:border-white/10"
             }`}
             onDragLeave={() => setDragOver(false)}
@@ -114,7 +114,7 @@ export function SubmitDraftDialog({
               handlePick(event.dataTransfer.files?.[0]);
             }}
           >
-            <Upload className="h-6 w-6 text-[#654cff]" />
+            <Upload className="h-6 w-6 text-[var(--fylmico-accent)]" />
             <span className="text-sm font-bold text-[#11142c] dark:text-[#f1f2f8]">
               {file ? file.name : "Drag & drop or click to browse"}
             </span>
@@ -130,7 +130,7 @@ export function SubmitDraftDialog({
               Notes (optional)
             </Label>
             <textarea
-              className="min-h-16 w-full rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
+              className="min-h-16 w-full rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
               onChange={(event) => setNotes(event.target.value)}
               placeholder="What changed in this version?"
               value={notes}

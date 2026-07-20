@@ -28,7 +28,7 @@ export function ProjectsHeader({
           <DropdownMenuTrigger
             render={
               <button
-                className="flex h-10 items-center gap-2 rounded-xl bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+                className="flex h-10 items-center gap-2 rounded-xl bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
                 type="button"
               >
                 <Plus className="h-4 w-4" />

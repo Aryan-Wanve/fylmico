@@ -38,7 +38,7 @@ export function FilesHeader({
           <button
             className={`flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-bold ${
               sensitiveView
-                ? "border-[#654cff]/40 bg-[#654cff]/10 text-[#654cff]"
+                ? "border-[var(--fylmico-accent)]/40 bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                 : "border-black/10 bg-white text-[#4b5268] hover:bg-black/[0.03] dark:border-white/10 dark:bg-[#171a28] dark:text-[#c7cad9] dark:hover:bg-white/[0.05]"
             }`}
             onClick={onToggleSensitive}
@@ -68,7 +68,7 @@ export function FilesHeader({
           <DropdownMenuTrigger
             render={
               <button
-                className="flex h-10 items-center gap-2 rounded-xl bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+                className="flex h-10 items-center gap-2 rounded-xl bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
                 type="button"
               >
                 New

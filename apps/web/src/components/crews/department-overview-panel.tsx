@@ -54,7 +54,7 @@ export function DepartmentOverviewPanel({
 
         {rows.length > COLLAPSED_COUNT ? (
           <button
-            className="mt-1 flex items-center justify-center gap-1 rounded-lg py-1.5 text-sm font-bold text-[#654cff] hover:bg-black/[0.02] dark:hover:bg-white/[0.04]"
+            className="mt-1 flex items-center justify-center gap-1 rounded-lg py-1.5 text-sm font-bold text-[var(--fylmico-accent)] hover:bg-black/[0.02] dark:hover:bg-white/[0.04]"
             onClick={() => setExpanded((value) => !value)}
             type="button"
           >

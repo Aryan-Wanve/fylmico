@@ -83,7 +83,7 @@ function HouseCard({
               Waiting for Approval
             </span>
           ) : isActive ? (
-            <span className="rounded-full bg-[#654cff]/10 px-2 py-0.5 text-[0.65rem] font-bold text-[#654cff]">
+            <span className="rounded-full bg-[var(--fylmico-accent)]/10 px-2 py-0.5 text-[0.65rem] font-bold text-[var(--fylmico-accent)]">
               Active
             </span>
           ) : null}
@@ -128,7 +128,7 @@ function HouseCard({
         </button>
         <button
           aria-label={house.isPinned ? "Unpin" : "Pin"}
-          className={`grid h-8 w-8 place-items-center rounded-lg border border-black/10 hover:bg-black/[0.03] dark:border-white/10 dark:hover:bg-white/[0.05] ${house.isPinned ? "text-[#654cff]" : "text-[#8a90a3] dark:text-[#7d8299]"}`}
+          className={`grid h-8 w-8 place-items-center rounded-lg border border-black/10 hover:bg-black/[0.03] dark:border-white/10 dark:hover:bg-white/[0.05] ${house.isPinned ? "text-[var(--fylmico-accent)]" : "text-[#8a90a3] dark:text-[#7d8299]"}`}
           onClick={onTogglePin}
           type="button"
         >
@@ -340,7 +340,7 @@ export function HousesDashboardPage() {
             {archivedHouses.length > 0 ? (
               <div className="grid gap-2">
                 <button
-                  className="justify-self-start text-xs font-bold text-[#654cff]"
+                  className="justify-self-start text-xs font-bold text-[var(--fylmico-accent)]"
                   onClick={() => setShowArchived((current) => !current)}
                   type="button"
                 >

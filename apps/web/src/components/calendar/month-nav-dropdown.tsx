@@ -83,7 +83,7 @@ export function MonthNavDropdown({
               <button
                 className={`rounded-lg py-2 text-sm font-semibold ${
                   isActive
-                    ? "bg-[#654cff] text-white"
+                    ? "bg-[var(--fylmico-accent)] text-white"
                     : "text-[#4b5268] hover:bg-black/[0.04] dark:text-[#c7cad9] dark:hover:bg-white/[0.06]"
                 }`}
                 key={label}

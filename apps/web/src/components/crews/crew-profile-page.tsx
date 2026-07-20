@@ -216,7 +216,7 @@ export function CrewProfilePage() {
   if (loading) {
     return (
       <div className="grid min-h-[24rem] place-items-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-[#654cff]" />
+        <Loader2 className="h-6 w-6 animate-spin text-[var(--fylmico-accent)]" />
       </div>
     );
   }
@@ -399,7 +399,7 @@ export function CrewProfilePage() {
                 className="flex items-center gap-3 border-b border-black/5 px-5 py-3 last:border-b-0 dark:border-white/[0.06]"
                 key={booking.id}
               >
-                <Calendar className="h-4 w-4 shrink-0 text-[#654cff]" />
+                <Calendar className="h-4 w-4 shrink-0 text-[var(--fylmico-accent)]" />
                 <div className="min-w-0 flex-1">
                   <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                     {booking.resourceName}

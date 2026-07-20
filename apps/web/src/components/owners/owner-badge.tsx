@@ -29,7 +29,7 @@ export function OwnerBadge({
     <span
       className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ${
         isProject
-          ? "bg-[#654cff]/10 text-[#654cff]"
+          ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
           : "bg-[#16c784]/10 text-[#0f9d63] dark:text-[#16c784]"
       } ${className}`}
       title={`${ownerName} · ${isProject ? "Project" : "Client"}`}

@@ -44,7 +44,7 @@ export function CrewsToolbar({
           {TABS.map((tab) => (
             <TabsTrigger className="group" key={tab.value} value={tab.value}>
               {tab.label}
-              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-black/[0.06] px-1 text-xs font-bold text-[#4b5268] group-data-active:bg-[#654cff]/10 group-data-active:text-[#654cff] dark:bg-white/[0.08] dark:text-[#c7cad9]">
+              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-black/[0.06] px-1 text-xs font-bold text-[#4b5268] group-data-active:bg-[var(--fylmico-accent)]/10 group-data-active:text-[var(--fylmico-accent)] dark:bg-white/[0.08] dark:text-[#c7cad9]">
                 {counts[tab.value]}
               </span>
             </TabsTrigger>

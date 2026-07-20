@@ -299,7 +299,7 @@ export function TaskCreateDialog({
                 <button
                   className={`rounded-full px-3 py-1.5 text-xs font-bold ${
                     type === value
-                      ? "bg-[#654cff] text-white"
+                      ? "bg-[var(--fylmico-accent)] text-white"
                       : "bg-black/[0.04] text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]"
                   }`}
                   key={value}
@@ -314,7 +314,7 @@ export function TaskCreateDialog({
                     <button
                       className={`rounded-full px-3 py-1.5 text-xs font-bold ${
                         type === value
-                          ? "bg-[#654cff] text-white"
+                          ? "bg-[var(--fylmico-accent)] text-white"
                           : "bg-black/[0.04] text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]"
                       }`}
                       key={value}
@@ -326,7 +326,7 @@ export function TaskCreateDialog({
                   ))
                 : null}
               <button
-                className="rounded-full px-3 py-1.5 text-xs font-bold text-[#654cff]"
+                className="rounded-full px-3 py-1.5 text-xs font-bold text-[var(--fylmico-accent)]"
                 onClick={() => setShowMoreTypes((current) => !current)}
                 type="button"
               >

@@ -130,7 +130,7 @@ export function AnnouncementsPage() {
         </div>
         {isOwner ? (
           <button
-            className="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+            className="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
             onClick={() => setCreateOpen(true)}
             type="button"
           >
@@ -158,7 +158,7 @@ export function AnnouncementsPage() {
             <div
               className={`rounded-2xl border bg-white p-5 shadow-[0_1rem_3rem_rgba(53,45,124,0.05)] dark:bg-[#171a28] ${
                 announcement.pinned
-                  ? "border-[#654cff]/40"
+                  ? "border-[var(--fylmico-accent)]/40"
                   : "border-black/[0.06] dark:border-white/[0.08]"
               }`}
               key={announcement.id}
@@ -176,7 +176,7 @@ export function AnnouncementsPage() {
                         {announcement.authorName}
                       </strong>
                       {announcement.pinned ? (
-                        <Pin className="h-3.5 w-3.5 text-[#654cff]" />
+                        <Pin className="h-3.5 w-3.5 text-[var(--fylmico-accent)]" />
                       ) : null}
                     </div>
                     <span className="text-xs text-[#8a90a3] dark:text-[#7d8299]">
@@ -190,7 +190,7 @@ export function AnnouncementsPage() {
                     <button
                       className={`grid h-8 w-8 place-items-center rounded-lg ${
                         announcement.pinned
-                          ? "bg-[#654cff]/10 text-[#654cff]"
+                          ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                           : "text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
                       }`}
                       onClick={() => handleTogglePin(announcement)}

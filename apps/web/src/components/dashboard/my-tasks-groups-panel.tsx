@@ -85,7 +85,7 @@ export function MyTasksGroupsPanel() {
           <button
             className={`flex items-center gap-1.5 rounded-t-lg px-3 py-2 text-sm font-bold whitespace-nowrap ${
               activeGroup === group.key
-                ? "text-[#654cff]"
+                ? "text-[var(--fylmico-accent)]"
                 : "text-[#8a90a3] dark:text-[#7d8299]"
             }`}
             key={group.key}
@@ -96,7 +96,7 @@ export function MyTasksGroupsPanel() {
             <span
               className={`rounded-full px-1.5 py-0.5 text-xs ${
                 activeGroup === group.key
-                  ? "bg-[#654cff]/10 text-[#654cff]"
+                  ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                   : "bg-black/[0.04] text-[#8a90a3] dark:bg-white/[0.06] dark:text-[#7d8299]"
               }`}
             >

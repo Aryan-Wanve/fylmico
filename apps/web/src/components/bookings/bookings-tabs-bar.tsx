@@ -45,7 +45,7 @@ export function BookingsTabsBar({
 
       <div className="flex items-center gap-2">
         <button
-          className="flex h-10 items-center gap-1.5 rounded-xl bg-gradient-to-br from-[#654cff] to-[#5b3ff0] px-4 text-sm font-bold text-white hover:opacity-95"
+          className="flex h-10 items-center gap-1.5 rounded-xl bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] px-4 text-sm font-bold text-white hover:opacity-95"
           onClick={onNewBooking}
           type="button"
         >

@@ -55,7 +55,7 @@ export function BoardsPanel({
               <div
                 className={`flex items-center gap-2 rounded-xl px-2 py-2 ${
                   selected
-                    ? "bg-[#654cff]/[0.08] text-[#654cff]"
+                    ? "bg-[var(--fylmico-accent)]/[0.08] text-[var(--fylmico-accent)]"
                     : "hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
                 }`}
                 key={board.id}
@@ -68,7 +68,7 @@ export function BoardsPanel({
                   <span
                     className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${
                       selected
-                        ? "bg-[#654cff] text-white"
+                        ? "bg-[var(--fylmico-accent)] text-white"
                         : "bg-black/[0.04] text-[#8a90a3] dark:bg-white/[0.06] dark:text-[#7d8299]"
                     }`}
                   >
@@ -76,7 +76,7 @@ export function BoardsPanel({
                   </span>
                   <span className="min-w-0">
                     <strong
-                      className={`block truncate text-sm font-bold ${selected ? "text-[#654cff]" : "text-[#11142c] dark:text-[#f1f2f8]"}`}
+                      className={`block truncate text-sm font-bold ${selected ? "text-[var(--fylmico-accent)]" : "text-[#11142c] dark:text-[#f1f2f8]"}`}
                     >
                       {board.name}
                     </strong>

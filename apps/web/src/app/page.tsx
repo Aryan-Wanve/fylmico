@@ -34,8 +34,8 @@ const MOCK_PROJECTS = [
     title: "The Horizon",
     category: "Short Film",
     status: "In Progress",
-    statusClass: "bg-[#654cff]/20 text-[#b0a1ff]",
-    barClass: "from-[#38bdf8] to-[#654cff]",
+    statusClass: "bg-[var(--fylmico-accent)]/20 text-[#b0a1ff]",
+    barClass: "from-[#38bdf8] to-[var(--fylmico-accent)]",
     percent: 72,
     extra: 8,
     avatars: [
@@ -334,7 +334,7 @@ export default function LandingPage() {
               </Link>
             )}
             <Link
-              className="flex h-9 items-center gap-1.5 rounded-lg bg-gradient-to-br from-[#8b5cf6] to-[#654cff] px-4 text-sm font-bold text-white hover:opacity-90"
+              className="flex h-9 items-center gap-1.5 rounded-lg bg-gradient-to-br from-[#8b5cf6] to-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:opacity-90"
               href={primaryCtaHref}
             >
               {primaryCtaLabel}
@@ -350,7 +350,7 @@ export default function LandingPage() {
           <motion.div {...fadeUp()}>
             <h1 className="max-w-xl text-[2.6rem] leading-[1.08] font-black tracking-tight sm:text-[3.4rem]">
               The Operating System for{" "}
-              <span className="bg-gradient-to-r from-[#8b5cf6] to-[#654cff] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#8b5cf6] to-[var(--fylmico-accent)] bg-clip-text text-transparent">
                 Creative Production.
               </span>
             </h1>
@@ -360,7 +360,7 @@ export default function LandingPage() {
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
-                className="flex h-12 items-center gap-2 rounded-xl bg-gradient-to-br from-[#8b5cf6] to-[#654cff] px-6 text-sm font-bold text-white shadow-[0_1rem_2.5rem_rgba(139,92,246,0.35)] hover:opacity-90"
+                className="flex h-12 items-center gap-2 rounded-xl bg-gradient-to-br from-[#8b5cf6] to-[var(--fylmico-accent)] px-6 text-sm font-bold text-white shadow-[0_1rem_2.5rem_rgba(139,92,246,0.35)] hover:opacity-90"
                 href={primaryCtaHref}
               >
                 {primaryCtaLabel}
@@ -444,7 +444,7 @@ export default function LandingPage() {
                       className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-2"
                       key={project.title}
                     >
-                      <div className="grid h-6 w-6 place-items-center rounded-md bg-gradient-to-br from-[#8b5cf6]/30 to-[#654cff]/30">
+                      <div className="grid h-6 w-6 place-items-center rounded-md bg-gradient-to-br from-[#8b5cf6]/30 to-[var(--fylmico-accent)]/30">
                         <Clapperboard className="h-3 w-3 text-[#c7bbff]" />
                       </div>
                       <p className="mt-1.5 truncate text-[0.62rem] font-bold">
@@ -690,7 +690,7 @@ export default function LandingPage() {
 
       <section className="mx-auto max-w-5xl px-6 py-16 sm:px-10">
         <motion.div
-          className="relative flex flex-col items-center justify-between gap-6 overflow-hidden rounded-3xl bg-gradient-to-br from-[#8b5cf6] to-[#654cff] px-8 py-10 text-center shadow-[0_2rem_5rem_rgba(139,92,246,0.35)] sm:flex-row sm:text-left"
+          className="relative flex flex-col items-center justify-between gap-6 overflow-hidden rounded-3xl bg-gradient-to-br from-[#8b5cf6] to-[var(--fylmico-accent)] px-8 py-10 text-center shadow-[0_2rem_5rem_rgba(139,92,246,0.35)] sm:flex-row sm:text-left"
           {...fadeUp()}
         >
           <div
@@ -712,7 +712,7 @@ export default function LandingPage() {
           </div>
           <div className="relative flex shrink-0 items-center gap-3">
             <Link
-              className="flex h-11 items-center gap-1.5 rounded-xl bg-white px-5 text-sm font-bold text-[#654cff] hover:opacity-90"
+              className="flex h-11 items-center gap-1.5 rounded-xl bg-white px-5 text-sm font-bold text-[var(--fylmico-accent)] hover:opacity-90"
               href={primaryCtaHref}
             >
               {primaryCtaLabel}

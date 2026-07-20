@@ -173,7 +173,7 @@ export function ScriptEditor({
       <ScriptFormatToolbar onApply={handleApplyFormat} />
 
       <textarea
-        className="min-h-0 w-full resize-none rounded-xl border border-black/10 bg-transparent p-4 font-mono text-sm leading-relaxed text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:text-[#f1f2f8]"
+        className="min-h-0 w-full resize-none rounded-xl border border-black/10 bg-transparent p-4 font-mono text-sm leading-relaxed text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:text-[#f1f2f8]"
         onBlur={() => flushSave({ content })}
         onChange={(event) => {
           setContent(event.target.value);

@@ -55,7 +55,7 @@ export function UpcomingDeadlinesPanel({ tasks }: { tasks: ProductionTask[] }) {
                       ? "bg-red-50 text-red-600"
                       : due.label === "Tomorrow"
                         ? "bg-orange-50 text-orange-600"
-                        : "bg-[#654cff]/10 text-[#654cff]"
+                        : "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                 }`}
               >
                 {due.label}

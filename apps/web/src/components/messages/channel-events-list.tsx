@@ -17,7 +17,7 @@ export function ChannelEventsList({ events }: { events: CalendarEvent[] }) {
           className="flex items-center gap-3 rounded-xl border border-black/[0.06] bg-white px-3.5 py-2.5 dark:border-white/[0.08] dark:bg-[#171a28]"
           key={event.id}
         >
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#654cff]/10 text-[#654cff]">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]">
             <CalendarDays className="h-4 w-4" />
           </span>
           <span className="min-w-0 flex-1">

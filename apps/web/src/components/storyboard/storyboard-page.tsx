@@ -458,7 +458,7 @@ export function StoryboardPage() {
                       Add shots to start planning this sequence.
                     </p>
                     <button
-                      className="mt-1 rounded-lg bg-[#654cff] px-4 py-2 text-sm font-bold text-white hover:bg-[#5a41ea]"
+                      className="mt-1 rounded-lg bg-[var(--fylmico-accent)] px-4 py-2 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
                       onClick={handleAddShot}
                       type="button"
                     >

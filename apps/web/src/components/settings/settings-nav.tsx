@@ -20,7 +20,7 @@ export function SettingsNav({
           <button
             className={`flex items-start gap-3 rounded-xl px-3 py-2.5 text-left ${
               active
-                ? "bg-[#654cff]/[0.08]"
+                ? "bg-[var(--fylmico-accent)]/[0.08]"
                 : "hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
             }`}
             key={section.id}
@@ -30,7 +30,7 @@ export function SettingsNav({
             <span
               className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${
                 active
-                  ? "bg-[#654cff] text-white"
+                  ? "bg-[var(--fylmico-accent)] text-white"
                   : "bg-black/[0.04] text-[#8a90a3] dark:bg-white/[0.06] dark:text-[#7d8299]"
               }`}
             >
@@ -38,7 +38,7 @@ export function SettingsNav({
             </span>
             <span className="min-w-0">
               <strong
-                className={`block text-sm font-bold ${active ? "text-[#654cff]" : "text-[#11142c] dark:text-[#f1f2f8]"}`}
+                className={`block text-sm font-bold ${active ? "text-[var(--fylmico-accent)]" : "text-[#11142c] dark:text-[#f1f2f8]"}`}
               >
                 {section.label}
               </strong>

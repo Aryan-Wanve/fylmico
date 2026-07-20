@@ -115,7 +115,7 @@ export function UploadDestinationDialog({
               Cancel
             </Button>
             <Button
-              className="h-9 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea] disabled:opacity-50"
+              className="h-9 rounded-lg bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)] disabled:opacity-50"
               disabled={!owner}
               type="submit"
             >

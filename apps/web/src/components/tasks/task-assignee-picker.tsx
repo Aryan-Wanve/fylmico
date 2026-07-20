@@ -78,7 +78,7 @@ export function TaskAssigneePicker({
                 onClick={() => toggle(member.id)}
                 type="button"
               >
-                <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#654cff]/10 text-xs font-bold text-[#654cff]">
+                <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--fylmico-accent)]/10 text-xs font-bold text-[var(--fylmico-accent)]">
                   {toInitials(member.name)}
                   <span
                     className={`absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-[#171a28] ${
@@ -98,14 +98,14 @@ export function TaskAssigneePicker({
                 </span>
                 <input
                   checked={isSelected}
-                  className="h-4 w-4 shrink-0 accent-[#654cff]"
+                  className="h-4 w-4 shrink-0 accent-[var(--fylmico-accent)]"
                   readOnly
                   type="checkbox"
                 />
               </button>
               {isSelected ? (
                 <input
-                  className="h-8 rounded-md border border-black/10 bg-transparent px-2 text-xs outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c]"
+                  className="h-8 rounded-md border border-black/10 bg-transparent px-2 text-xs outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#11142c]"
                   onChange={(event) =>
                     setResponsibility(member.id, event.target.value)
                   }

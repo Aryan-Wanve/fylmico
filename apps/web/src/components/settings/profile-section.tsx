@@ -256,7 +256,7 @@ export function ProfileSection() {
             />
             <button
               aria-label="Change avatar"
-              className="absolute -right-1 -bottom-1 grid h-7 w-7 place-items-center rounded-full border-2 border-white bg-[#654cff] text-white hover:bg-[#5a41ea] disabled:opacity-60 dark:border-[#171a28]"
+              className="absolute -right-1 -bottom-1 grid h-7 w-7 place-items-center rounded-full border-2 border-white bg-[var(--fylmico-accent)] text-white hover:bg-[var(--fylmico-accent-strong)] disabled:opacity-60 dark:border-[#171a28]"
               disabled={uploadingAvatar}
               onClick={() => avatarInputRef.current?.click()}
               type="button"

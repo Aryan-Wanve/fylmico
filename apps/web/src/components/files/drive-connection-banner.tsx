@@ -45,9 +45,9 @@ export function DriveConnectionBanner({
   }
 
   return (
-    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#654cff]/20 bg-[#654cff]/5 px-5 py-4 text-sm">
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--fylmico-accent)]/20 bg-[var(--fylmico-accent)]/5 px-5 py-4 text-sm">
       <div className="flex items-center gap-3">
-        <div className="grid h-9 w-9 place-items-center rounded-full bg-[#654cff]/10 text-[#654cff]">
+        <div className="grid h-9 w-9 place-items-center rounded-full bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]">
           <HardDrive className="h-4 w-4" />
         </div>
         <div>
@@ -63,7 +63,7 @@ export function DriveConnectionBanner({
       </div>
       {canManage ? (
         <button
-          className="h-9 rounded-xl bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+          className="h-9 rounded-xl bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
           onClick={onConnect}
           type="button"
         >

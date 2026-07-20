@@ -97,7 +97,7 @@ export function CreateMenu() {
       <DropdownMenuTrigger
         render={
           <Button
-            className="h-10 gap-1.5 rounded-xl bg-gradient-to-br from-[#654cff] to-[#5b3ff0] px-4 font-bold text-white hover:opacity-95"
+            className="h-10 gap-1.5 rounded-xl bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] px-4 font-bold text-white hover:opacity-95"
             type="button"
           >
             <Plus className="h-4 w-4" />

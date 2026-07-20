@@ -31,7 +31,7 @@ export function AccountMenu({ user }: { user: UserProfile }) {
           render={
             <button
               aria-label="Account menu"
-              className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#654cff]/50"
+              className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[var(--fylmico-accent)]/50"
               type="button"
             >
               <AvatarWithStatus

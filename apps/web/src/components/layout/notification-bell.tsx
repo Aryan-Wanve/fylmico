@@ -52,8 +52,8 @@ export const TYPE_STYLES: Record<
 > = {
   task_assigned: {
     icon: CheckCheck,
-    bg: "bg-[#654cff]/10",
-    color: "text-[#654cff]"
+    bg: "bg-[var(--fylmico-accent)]/10",
+    color: "text-[var(--fylmico-accent)]"
   },
   task_comment: {
     icon: MessageSquare,
@@ -82,8 +82,8 @@ export const TYPE_STYLES: Record<
   },
   house_join_request: {
     icon: UserPlus,
-    bg: "bg-[#654cff]/10",
-    color: "text-[#654cff]"
+    bg: "bg-[var(--fylmico-accent)]/10",
+    color: "text-[var(--fylmico-accent)]"
   },
   house_join_approved: {
     icon: Users,
@@ -225,7 +225,7 @@ export function NotificationBell() {
           </strong>
           {unreadCount > 0 ? (
             <button
-              className="text-xs font-semibold text-[#654cff]"
+              className="text-xs font-semibold text-[var(--fylmico-accent)]"
               onClick={handleMarkAllRead}
               type="button"
             >
@@ -247,7 +247,9 @@ export function NotificationBell() {
               return (
                 <button
                   className={`flex items-start gap-2.5 rounded-lg p-2 text-left hover:bg-black/[0.03] dark:hover:bg-white/[0.05] ${
-                    notification.readAt ? "" : "bg-[#654cff]/[0.04]"
+                    notification.readAt
+                      ? ""
+                      : "bg-[var(--fylmico-accent)]/[0.04]"
                   }`}
                   key={notification.id}
                   onClick={() => handleSelect(notification)}
@@ -270,7 +272,7 @@ export function NotificationBell() {
                     </span>
                   </div>
                   {!notification.readAt ? (
-                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#654cff]" />
+                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--fylmico-accent)]" />
                   ) : null}
                 </button>
               );

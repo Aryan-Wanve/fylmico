@@ -179,7 +179,7 @@ export function MembersSection() {
                   </span>
                 </div>
               </div>
-              <span className="shrink-0 rounded-full bg-[#654cff]/10 px-2.5 py-1 text-xs font-bold text-[#654cff]">
+              <span className="shrink-0 rounded-full bg-[var(--fylmico-accent)]/10 px-2.5 py-1 text-xs font-bold text-[var(--fylmico-accent)]">
                 {member.role}
               </span>
             </div>

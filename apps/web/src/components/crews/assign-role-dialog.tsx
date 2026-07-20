@@ -168,7 +168,7 @@ export function AssignRoleDialog({
             <div className="flex flex-wrap gap-1.5">
               {Object.keys(PERMISSION_PRESETS).map((preset) => (
                 <button
-                  className="rounded-full bg-[#654cff]/10 px-2.5 py-1 text-xs font-bold text-[#654cff] hover:bg-[#654cff]/20"
+                  className="rounded-full bg-[var(--fylmico-accent)]/10 px-2.5 py-1 text-xs font-bold text-[var(--fylmico-accent)] hover:bg-[var(--fylmico-accent)]/20"
                   key={preset}
                   onClick={() => applyPreset(preset)}
                   type="button"

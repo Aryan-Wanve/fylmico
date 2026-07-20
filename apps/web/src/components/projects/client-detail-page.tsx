@@ -158,7 +158,7 @@ export function ClientDetailPage() {
   if (loading) {
     return (
       <div className="grid min-h-[24rem] place-items-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-[#654cff]" />
+        <Loader2 className="h-6 w-6 animate-spin text-[var(--fylmico-accent)]" />
       </div>
     );
   }
@@ -199,7 +199,7 @@ export function ClientDetailPage() {
                   src={client.logoUrl}
                 />
               ) : (
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[#654cff]/10 text-base font-bold text-[#654cff]">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[var(--fylmico-accent)]/10 text-base font-bold text-[var(--fylmico-accent)]">
                   {client.name.slice(0, 2).toUpperCase()}
                 </span>
               )}
@@ -333,7 +333,7 @@ export function ClientDetailPage() {
                   className="flex items-center gap-4 border-b border-black/5 px-4 py-3 last:border-b-0 dark:border-white/[0.06]"
                   key={shoot.id}
                 >
-                  <Camera className="h-4 w-4 shrink-0 text-[#654cff]" />
+                  <Camera className="h-4 w-4 shrink-0 text-[var(--fylmico-accent)]" />
                   <div className="min-w-0 flex-1">
                     <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                       {shoot.name}
@@ -394,7 +394,7 @@ export function ClientDetailPage() {
                   className="flex items-center gap-3 border-b border-black/5 px-4 py-3 last:border-b-0 dark:border-white/[0.06]"
                   key={event.id}
                 >
-                  <CalendarIcon className="h-4 w-4 shrink-0 text-[#654cff]" />
+                  <CalendarIcon className="h-4 w-4 shrink-0 text-[var(--fylmico-accent)]" />
                   <div className="min-w-0 flex-1">
                     <strong className="block truncate text-sm font-semibold text-[#11142c] dark:text-[#f1f2f8]">
                       {event.title}

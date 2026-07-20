@@ -77,7 +77,7 @@ export function TasksToolbar({
           {TABS.map((tab) => (
             <TabsTrigger className="group" key={tab.value} value={tab.value}>
               {tab.label}
-              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-black/[0.06] px-1 text-xs font-bold text-[#4b5268] group-data-active:bg-[#654cff]/10 group-data-active:text-[#654cff] dark:bg-white/[0.08] dark:text-[#c7cad9]">
+              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-black/[0.06] px-1 text-xs font-bold text-[#4b5268] group-data-active:bg-[var(--fylmico-accent)]/10 group-data-active:text-[var(--fylmico-accent)] dark:bg-white/[0.08] dark:text-[#c7cad9]">
                 {counts[tab.value]}
               </span>
             </TabsTrigger>
@@ -107,7 +107,7 @@ export function TasksToolbar({
             aria-label="List view"
             className={`grid h-7 w-7 place-items-center rounded-md ${
               viewMode === "list"
-                ? "bg-[#654cff]/10 text-[#654cff]"
+                ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                 : "text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
             }`}
             onClick={() => onViewModeChange("list")}
@@ -119,7 +119,7 @@ export function TasksToolbar({
             aria-label="Board view"
             className={`grid h-7 w-7 place-items-center rounded-md ${
               viewMode === "board"
-                ? "bg-[#654cff]/10 text-[#654cff]"
+                ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                 : "text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
             }`}
             onClick={() => onViewModeChange("board")}
@@ -131,7 +131,7 @@ export function TasksToolbar({
             aria-label="Table view"
             className={`grid h-7 w-7 place-items-center rounded-md ${
               viewMode === "table"
-                ? "bg-[#654cff]/10 text-[#654cff]"
+                ? "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
                 : "text-[#8a90a3] hover:bg-black/[0.04] dark:text-[#7d8299] dark:hover:bg-white/[0.06]"
             }`}
             onClick={() => onViewModeChange("table")}
@@ -141,7 +141,7 @@ export function TasksToolbar({
           </button>
         </div>
         <button
-          className="flex h-9 items-center gap-2 rounded-lg bg-[#654cff] px-4 text-sm font-bold text-white hover:bg-[#5a41ea]"
+          className="flex h-9 items-center gap-2 rounded-lg bg-[var(--fylmico-accent)] px-4 text-sm font-bold text-white hover:bg-[var(--fylmico-accent-strong)]"
           onClick={onNewTask}
           type="button"
         >

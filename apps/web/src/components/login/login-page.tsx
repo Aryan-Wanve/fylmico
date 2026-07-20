@@ -95,7 +95,7 @@ export function LoginPage({ authState, error, onLogin }: LoginPageProps) {
           </div>
 
           <Link
-            className="-mt-1 justify-self-end text-[0.86rem] font-extrabold text-[#654cff] no-underline"
+            className="-mt-1 justify-self-end text-[0.86rem] font-extrabold text-[var(--fylmico-accent)] no-underline"
             href="/forgot-password"
           >
             Forgot password?
@@ -108,7 +108,7 @@ export function LoginPage({ authState, error, onLogin }: LoginPageProps) {
           ) : null}
 
           <Button
-            className="h-[3.25rem] w-full rounded-lg bg-gradient-to-br from-[#654cff] to-[#5b3ff0] text-base font-bold text-white shadow-[0_1rem_2.1rem_rgba(101,76,255,0.28)] hover:opacity-95"
+            className="h-[3.25rem] w-full rounded-lg bg-gradient-to-br from-[var(--fylmico-accent)] to-[#5b3ff0] text-base font-bold text-white shadow-[0_1rem_2.1rem_rgba(101,76,255,0.28)] hover:opacity-95"
             data-testid="login-submit"
             disabled={authState === "loading"}
             type="submit"
@@ -122,7 +122,10 @@ export function LoginPage({ authState, error, onLogin }: LoginPageProps) {
 
         <p className="mt-5 text-center text-[0.9rem] font-semibold text-[#6d7080] dark:text-[#8b8fa3]">
           Not a member yet?{" "}
-          <Link className="font-extrabold text-[#654cff]" href="/signup">
+          <Link
+            className="font-extrabold text-[var(--fylmico-accent)]"
+            href="/signup"
+          >
             Sign up now
           </Link>
         </p>

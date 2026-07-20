@@ -9,8 +9,8 @@ export function InsightBanner({ analytics }: { analytics: Analytics }) {
       : `Your team has completed ${analytics.tasksCompleted} of ${analytics.tasksTotal} tasks (${analytics.teamEfficiency}%) and logged ${formatHours(analytics.hoursLoggedTotal)} across ${analytics.totalProjects} project${analytics.totalProjects === 1 ? "" : "s"}.`;
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-[#654cff]/15 bg-[#654cff]/[0.06] px-5 py-4">
-      <Sparkles className="h-5 w-5 shrink-0 text-[#654cff]" />
+    <div className="flex items-center gap-3 rounded-2xl border border-[var(--fylmico-accent)]/15 bg-[var(--fylmico-accent)]/[0.06] px-5 py-4">
+      <Sparkles className="h-5 w-5 shrink-0 text-[var(--fylmico-accent)]" />
       <p className="text-sm font-semibold text-[#3a3f57] dark:text-[#b4b8cc]">
         {message}
       </p>

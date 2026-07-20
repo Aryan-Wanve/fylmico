@@ -54,7 +54,7 @@ export function RequestChangesDialog({
           </Label>
           <textarea
             autoFocus
-            className="min-h-28 w-full rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-[#11142c] outline-none focus:border-[#654cff] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
+            className="min-h-28 w-full rounded-lg border border-black/10 bg-transparent px-3 py-2 text-sm text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:bg-[#11142c] dark:text-[#f1f2f8]"
             onChange={(event) => setComment(event.target.value)}
             placeholder="e.g. Color grade looks too warm in the interview scene, please adjust."
             value={comment}

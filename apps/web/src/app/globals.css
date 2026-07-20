@@ -13,6 +13,9 @@
   --color-muted: rgb(95 102 125 / 0.88);
   --color-accent: var(--fylmico-accent, #654cff);
   --fylmico-accent: #654cff;
+  /* Derived from the accent so hover/pressed shades track any accent choice
+     instead of staying locked to the old hardcoded violet. */
+  --fylmico-accent-strong: color-mix(in oklab, var(--fylmico-accent), #000 14%);
   --fylmico-density-scale: 1;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
