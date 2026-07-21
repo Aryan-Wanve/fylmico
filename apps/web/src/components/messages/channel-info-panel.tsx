@@ -60,6 +60,7 @@ export function ChannelInfoPanel({
         <AvatarGroup className="mt-2">
           {visibleMembers.map((member) => (
             <AvatarWithStatus
+              imageUrl={member.avatarUrl}
               key={member.id}
               label={getInitials(member.name)}
               status={onlineUserIds.has(member.id) ? "online" : "offline"}

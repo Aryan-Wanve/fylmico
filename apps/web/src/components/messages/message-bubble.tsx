@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check, CheckCheck, Clock, CornerUpLeft, Plus } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   formatMessageTime,
   getInitials,
@@ -110,6 +110,9 @@ export function MessageBubble({
       <div className="w-8 shrink-0">
         {grouped ? null : (
           <Avatar>
+            {message.authorAvatarUrl ? (
+              <AvatarImage alt="" src={message.authorAvatarUrl} />
+            ) : null}
             <AvatarFallback>{getInitials(message.authorName)}</AvatarFallback>
           </Avatar>
         )}

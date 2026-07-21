@@ -119,6 +119,7 @@ export function ProjectChatPanel({ projectId }: { projectId: string }) {
             messages.map((message) => (
               <div className="flex items-start gap-3" key={message.id}>
                 <AvatarWithStatus
+                  imageUrl={message.authorAvatarUrl}
                   label={toInitials(message.authorName)}
                   size="sm"
                   userId={message.authorId}
