@@ -42,6 +42,7 @@ export type TaskRecurrenceRule = "daily" | "weekly" | "monthly";
 export type TaskAssigneeItem = {
   userId: string;
   name: string;
+  avatarUrl: string | null;
   responsibility: string | null;
 };
 
@@ -161,6 +162,8 @@ export type HouseRole = {
 export type HouseMember = {
   id: string;
   name: string;
+  avatarUrl: string | null;
+  avatarLabel: string;
   role: RoleName;
   status: "online" | "away" | "offline";
   lastSeenAt: string | null;
@@ -225,6 +228,7 @@ export type ProductionTask = {
   progress: number;
   createdById: string;
   createdByName: string;
+  createdByAvatarUrl: string | null;
   ownerType: OwnerType | null;
   ownerId: string | null;
   ownerName: string | null;
@@ -361,7 +365,7 @@ export type Shoot = {
   finishedAt: string | null;
   uploadedAt: string | null;
   cancelledAt: string | null;
-  crew: { userId: string; name: string }[];
+  crew: { userId: string; name: string; avatarUrl: string | null }[];
   createdAt: string;
   updatedAt: string;
 };
@@ -679,6 +683,7 @@ export type ChatMessage = {
   conversationId: string;
   authorId: string;
   authorName: string;
+  authorAvatarUrl: string | null;
   sentAt: string;
   body: string;
   editedAt: string | null;

@@ -508,6 +508,7 @@ class ChatService {
       assignees: task.assignees.map((a) => ({
         userId: a.userId,
         name: a.user.name,
+        avatarUrl: a.user.avatarUrl,
         responsibility: a.responsibility
       })),
       dueDate: task.dueDate?.toISOString() ?? null,
@@ -680,6 +681,7 @@ function toMessageDto(
     conversationId: message.conversationId,
     authorId: message.authorId,
     authorName: message.author.name,
+    authorAvatarUrl: message.author.avatarUrl,
     sentAt: message.createdAt.toISOString(),
     body: message.body,
     editedAt: message.editedAt?.toISOString() ?? null,

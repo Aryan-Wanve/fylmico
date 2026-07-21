@@ -829,6 +829,7 @@ function toTaskDto(task: TaskWithRelations) {
     progress: task.progress,
     createdById: task.createdById,
     createdByName: task.createdBy.name,
+    createdByAvatarUrl: task.createdBy.avatarUrl,
     ownerType: owner?.ownerType ?? null,
     ownerId: owner?.ownerId ?? null,
     ownerName: owner?.ownerName ?? null,
@@ -847,6 +848,7 @@ function toTaskDto(task: TaskWithRelations) {
     assignees: task.assignees.map((a) => ({
       userId: a.userId,
       name: a.user.name,
+      avatarUrl: a.user.avatarUrl,
       responsibility: a.responsibility
     })),
     checklistItems: task.checklistItems.map(toChecklistItemDto),

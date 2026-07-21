@@ -506,7 +506,8 @@ function toShootDto(shoot: ShootWithRelations) {
     cancelledAt: shoot.cancelledAt?.toISOString() ?? null,
     crew: (task?.assignees ?? []).map((assignee) => ({
       userId: assignee.userId,
-      name: assignee.user.name
+      name: assignee.user.name,
+      avatarUrl: assignee.user.avatarUrl
     })),
     createdAt: shoot.createdAt.toISOString(),
     updatedAt: shoot.updatedAt.toISOString()

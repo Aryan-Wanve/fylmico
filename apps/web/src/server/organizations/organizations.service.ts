@@ -1209,6 +1209,8 @@ function toHouseDto(
     members: activeMemberships.map((membership) => ({
       id: membership.user.id,
       name: membership.user.name,
+      avatarUrl: membership.user.avatarUrl,
+      avatarLabel: toAvatarLabel(membership.user.name),
       role: membership.role!.name,
       status: membership.user.id === requestingUserId ? "online" : "offline",
       lastSeenAt: membership.user.lastSeenAt?.toISOString() ?? null
