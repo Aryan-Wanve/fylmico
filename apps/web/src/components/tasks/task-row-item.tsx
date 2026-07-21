@@ -101,6 +101,7 @@ export function TaskRowItem({
             .slice(0, 3)
             .map((assignee) => (
               <AvatarWithStatus
+                imageUrl={assignee.avatarUrl}
                 key={assignee.userId}
                 label={toInitials(assignee.name)}
                 size="sm"

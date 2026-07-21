@@ -402,8 +402,17 @@ export function TaskDetailPanel({
                       className="flex items-center gap-1.5 rounded-full bg-black/[0.04] px-2.5 py-1 text-xs font-semibold text-[#4b5268] dark:bg-white/[0.06] dark:text-[#c7cad9]"
                       key={a.userId}
                     >
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-[var(--fylmico-accent)]/10 text-[0.6rem] font-bold text-[var(--fylmico-accent)]">
-                        {toInitials(a.name)}
+                      <span className="grid h-5 w-5 shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--fylmico-accent)]/10 text-[0.6rem] font-bold text-[var(--fylmico-accent)]">
+                        {a.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, not worth next/image's overhead here
+                          <img
+                            alt=""
+                            className="h-full w-full object-cover"
+                            src={a.avatarUrl}
+                          />
+                        ) : (
+                          toInitials(a.name)
+                        )}
                       </span>
                       {a.name}
                       {a.responsibility ? ` · ${a.responsibility}` : ""}

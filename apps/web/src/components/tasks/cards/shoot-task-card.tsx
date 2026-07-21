@@ -317,11 +317,20 @@ export function ShootTaskCard({
             <span className="flex -space-x-1.5">
               {shoot.crew.map((member) => (
                 <span
-                  className="grid h-5 w-5 place-items-center rounded-full border border-white bg-[var(--fylmico-accent)]/10 text-[0.6rem] font-bold text-[var(--fylmico-accent)] dark:border-[#171a28]"
+                  className="grid h-5 w-5 place-items-center overflow-hidden rounded-full border border-white bg-[var(--fylmico-accent)]/10 text-[0.6rem] font-bold text-[var(--fylmico-accent)] dark:border-[#171a28]"
                   key={member.userId}
                   title={member.name}
                 >
-                  {toInitials(member.name)}
+                  {member.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, not worth next/image's overhead here
+                    <img
+                      alt=""
+                      className="h-full w-full object-cover"
+                      src={member.avatarUrl}
+                    />
+                  ) : (
+                    toInitials(member.name)
+                  )}
                 </span>
               ))}
             </span>

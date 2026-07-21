@@ -204,8 +204,17 @@ export function FocusTaskCard({
             Assigned By
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="grid h-5 w-5 place-items-center rounded-full bg-[var(--fylmico-accent)]/10 text-[0.6rem] font-bold text-[var(--fylmico-accent)]">
-              {toInitials(task.createdByName)}
+            <span className="grid h-5 w-5 shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--fylmico-accent)]/10 text-[0.6rem] font-bold text-[var(--fylmico-accent)]">
+              {task.createdByAvatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, not worth next/image's overhead here
+                <img
+                  alt=""
+                  className="h-full w-full object-cover"
+                  src={task.createdByAvatarUrl}
+                />
+              ) : (
+                toInitials(task.createdByName)
+              )}
             </span>
             <strong className="text-[#11142c] dark:text-[#f1f2f8]">
               {task.createdByName}

@@ -36,6 +36,7 @@ export function UpcomingDeadlinesPanel({ tasks }: { tasks: ProductionTask[] }) {
               key={task.id}
             >
               <AvatarWithStatus
+                imageUrl={firstAssignee?.avatarUrl}
                 label={toInitials(firstAssignee?.name ?? "?")}
                 userId={firstAssignee?.userId ?? ""}
               />

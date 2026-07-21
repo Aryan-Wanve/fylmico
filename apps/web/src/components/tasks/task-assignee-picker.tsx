@@ -78,8 +78,17 @@ export function TaskAssigneePicker({
                 onClick={() => toggle(member.id)}
                 type="button"
               >
-                <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--fylmico-accent)]/10 text-xs font-bold text-[var(--fylmico-accent)]">
-                  {toInitials(member.name)}
+                <span className="relative grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--fylmico-accent)]/10 text-xs font-bold text-[var(--fylmico-accent)]">
+                  {member.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- small avatar thumbnail, not worth next/image's overhead here
+                    <img
+                      alt=""
+                      className="h-full w-full object-cover"
+                      src={member.avatarUrl}
+                    />
+                  ) : (
+                    toInitials(member.name)
+                  )}
                   <span
                     className={`absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-[#171a28] ${
                       member.status === "online"
