@@ -26,6 +26,7 @@ export function TeamOnlinePanel() {
           members.map((member) => (
             <div className="flex items-center gap-2.5" key={member.id}>
               <AvatarWithStatus
+                imageUrl={member.avatarUrl}
                 label={member.name.slice(0, 2).toUpperCase()}
                 size="sm"
                 status={onlineUserIds.has(member.id) ? "online" : "offline"}

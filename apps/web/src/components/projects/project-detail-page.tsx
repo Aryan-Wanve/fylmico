@@ -385,6 +385,7 @@ export function ProjectDetailPage() {
                     key={task.id}
                   >
                     <AvatarWithStatus
+                      imageUrl={firstAssignee?.avatarUrl}
                       label={toInitials(firstAssignee?.name ?? "?")}
                       size="sm"
                       userId={firstAssignee?.userId ?? ""}

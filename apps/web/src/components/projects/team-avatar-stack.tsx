@@ -2,7 +2,8 @@ import {
   Avatar,
   AvatarFallback,
   AvatarGroup,
-  AvatarGroupCount
+  AvatarGroupCount,
+  AvatarImage
 } from "@/components/ui/avatar";
 import type { HouseMember } from "@/types/base";
 
@@ -34,6 +35,9 @@ export function TeamAvatarStack({
         const member = members.find((candidate) => candidate.id === memberId);
         return (
           <Avatar key={memberId} size="sm">
+            {member?.avatarUrl ? (
+              <AvatarImage alt="" src={member.avatarUrl} />
+            ) : null}
             <AvatarFallback>{toInitials(member?.name ?? "?")}</AvatarFallback>
           </Avatar>
         );

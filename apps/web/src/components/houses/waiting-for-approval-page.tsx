@@ -83,6 +83,7 @@ export function WaitingForApprovalPage({ house }: { house: House }) {
             <div className="mt-2 flex justify-center -space-x-2">
               {admins.map((admin) => (
                 <AvatarWithStatus
+                  imageUrl={admin.avatarUrl}
                   key={admin.id}
                   label={toInitials(admin.name)}
                   status={admin.status}

@@ -166,6 +166,7 @@ export function MembersSection() {
             >
               <div className="flex min-w-0 items-center gap-3">
                 <AvatarWithStatus
+                  imageUrl={member.avatarUrl}
                   label={member.name.slice(0, 2).toUpperCase()}
                   status={member.status}
                   userId={member.id}
