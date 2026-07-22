@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import Link from "next/link";
 import {
   ArrowLeft,
   Building2,
@@ -379,13 +378,6 @@ export function HouseChoiceCard({
           tone="blue"
         />
       </div>
-
-      <Link
-        className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-[var(--fylmico-accent)]"
-        href="/houses/learn"
-      >
-        Learn more about houses →
-      </Link>
     </section>
   );
 }
