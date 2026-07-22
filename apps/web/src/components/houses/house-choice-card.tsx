@@ -9,10 +9,11 @@ import {
   GraduationCap,
   Hash,
   Heart,
+  Home,
   Plus,
   Settings2,
+  Sparkles,
   User,
-  UserRoundPlus,
   Users,
   X
 } from "lucide-react";
@@ -339,26 +340,27 @@ export function HouseChoiceCard({
   }
 
   return (
-    <section className="w-full max-w-[30rem] rounded-3xl border border-black/[0.06] bg-white p-10 text-center shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)] dark:border-white/[0.08] dark:bg-[#171a28]">
-      <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border border-dashed border-[var(--fylmico-accent)]/35 text-[var(--fylmico-accent)]">
-        <UserRoundPlus className="h-8 w-8" />
+    <section className="w-full max-w-[26rem] rounded-3xl border border-black/[0.06] bg-white p-8 text-center shadow-[0_1.5rem_5rem_rgba(53,45,124,0.08)] dark:border-white/[0.08] dark:bg-[#171a28]">
+      <div className="relative mx-auto grid h-16 w-16 place-items-center rounded-full border border-dashed border-[var(--fylmico-accent)]/35 text-[var(--fylmico-accent)]">
+        <Home className="h-7 w-7" />
+        <Sparkles className="absolute -top-1.5 -right-1.5 h-3.5 w-3.5 text-pink-400" />
+        <Sparkles className="absolute -bottom-1 -left-2 h-3 w-3 text-[var(--fylmico-accent)]/70" />
       </div>
-      <h2 className="mt-6 text-2xl font-black text-[#11142c] dark:text-[#f1f2f8]">
+      <h2 className="mt-5 text-xl font-black text-[#11142c] dark:text-[#f1f2f8]">
         Create or join a house
       </h2>
-      <p className="mx-auto mt-2 max-w-xs text-[0.95rem] leading-relaxed text-[#5f667d] dark:text-[#a8acbf]">
-        Join an existing house if you have an invite or create your own to get
-        started.
+      <p className="mx-auto mt-1.5 max-w-xs text-sm leading-relaxed text-[#5f667d] dark:text-[#a8acbf]">
+        Start fresh or join an existing creative hub.
       </p>
 
-      <div className="mt-7 grid gap-3 text-left">
+      <div className="mt-6 grid gap-3 text-left">
         <HouseChoiceRow
           description="Build your own space. Invite your team and start collaborating."
           disabled={isSubmitting}
           icon={Plus}
           onClick={() => setMode("create-type")}
           title="Create a house"
-          tone="solid"
+          tone="purple"
         />
         <HouseChoiceRow
           description="Enter an invite code to join your team house."
@@ -366,7 +368,7 @@ export function HouseChoiceCard({
           icon={Users}
           onClick={() => setMode("join")}
           title="Join a house"
-          tone="soft"
+          tone="pink"
         />
         <HouseChoiceRow
           description="Know a house tag? Request to join and the owner will approve it."
@@ -374,7 +376,7 @@ export function HouseChoiceCard({
           icon={Hash}
           onClick={() => setMode("request")}
           title="Request to join by tag"
-          tone="soft"
+          tone="blue"
         />
       </div>
 

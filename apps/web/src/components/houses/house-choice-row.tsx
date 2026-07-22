@@ -1,17 +1,24 @@
 import { ArrowRight, type LucideIcon } from "lucide-react";
 
+const ICON_TONE_CLASSES = {
+  purple: "bg-gradient-to-br from-[#7257ff] to-[#563df0] text-white",
+  pink: "bg-gradient-to-br from-[#ff5fa8] to-[#e0257a] text-white",
+  blue: "bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white",
+  soft: "bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
+} as const;
+
 export function HouseChoiceRow({
   icon: Icon,
   title,
   description,
-  tone = "solid",
+  tone = "purple",
   disabled,
   onClick
 }: {
   icon: LucideIcon;
   title: string;
   description: string;
-  tone?: "solid" | "soft";
+  tone?: keyof typeof ICON_TONE_CLASSES;
   disabled?: boolean;
   onClick: () => void;
 }) {
@@ -23,11 +30,7 @@ export function HouseChoiceRow({
       type="button"
     >
       <span
-        className={
-          tone === "solid"
-            ? "grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#7257ff] to-[#563df0] text-white"
-            : "grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[var(--fylmico-accent)]/10 text-[var(--fylmico-accent)]"
-        }
+        className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${ICON_TONE_CLASSES[tone]}`}
       >
         <Icon className="h-5 w-5" />
       </span>
