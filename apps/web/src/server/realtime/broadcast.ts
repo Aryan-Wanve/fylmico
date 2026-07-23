@@ -58,3 +58,7 @@ export function houseChatTopic(organizationId: string): string {
 export function housePresenceTopic(organizationId: string): string {
   return `house:${organizationId}:presence`;
 }
+
+export function deliverableReviewTopic(deliverableId: string): string {
+  return `deliverable:${deliverableId}:review`;
+}
