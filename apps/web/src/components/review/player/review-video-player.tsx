@@ -15,6 +15,7 @@ export function ReviewVideoPlayer({
   const {
     videoRef,
     containerRef,
+    aspectRatio,
     togglePlay,
     stepFrame,
     seek,
@@ -83,10 +84,16 @@ export function ReviewVideoPlayer({
 
   return (
     <div
-      className="relative grid aspect-video w-full place-items-center overflow-hidden rounded-2xl bg-black"
+      className="relative grid max-h-[75vh] w-full place-items-center overflow-hidden rounded-2xl bg-black"
       ref={containerRef}
+      style={{ aspectRatio }}
     >
-      <video className="h-full w-full" playsInline ref={videoRef} src={src} />
+      <video
+        className="h-full w-full object-contain"
+        playsInline
+        ref={videoRef}
+        src={src}
+      />
       {overlay}
     </div>
   );

@@ -19,6 +19,7 @@ interface PlayerContextValue {
   containerRef: RefObject<HTMLDivElement | null>;
   src: string;
   fps: number;
+  aspectRatio: number;
   currentTime: number;
   duration: number;
   paused: boolean;
@@ -65,6 +66,7 @@ export function PlayerProvider({
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [aspectRatio, setAspectRatio] = useState(16 / 9);
   const [paused, setPaused] = useState(true);
   const [playbackRate, setPlaybackRateState] = useState<PlaybackSpeed>(1);
   const [volume, setVolumeState] = useState(1);
@@ -75,8 +77,14 @@ export function PlayerProvider({
     const video = videoRef.current;
     if (!video) return;
 
+    setAspectRatio(16 / 9);
     const onTimeUpdate = () => setCurrentTime(video.currentTime);
-    const onLoadedMetadata = () => setDuration(video.duration || 0);
+    const onLoadedMetadata = () => {
+      setDuration(video.duration || 0);
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        setAspectRatio(video.videoWidth / video.videoHeight);
+      }
+    };
     const onPlay = () => setPaused(false);
     const onPause = () => setPaused(true);
 
@@ -168,6 +176,7 @@ export function PlayerProvider({
         containerRef,
         src,
         fps,
+        aspectRatio,
         currentTime,
         duration,
         paused,
