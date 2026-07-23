@@ -521,6 +521,59 @@ export type SendClientReviewRequest = {
   password?: string;
 };
 
+// Everything below this line is served to the public, unauthenticated
+// /client-review/[token] page - shapes deliberately mirror what
+// review-client-actions.service.ts actually returns (no internal ids,
+// no organization/deliverable identifiers).
+export type ReviewPublicPreview = {
+  subject: string;
+  message: string | null;
+  status: ReviewSessionStatus;
+  expiresAt: string;
+  requiresPassword: boolean;
+  projectName: string | null;
+  videoTitle: string;
+  version: number | null;
+  clientEmailMasked: string;
+};
+
+export type ReviewClientCommentReaction = {
+  emoji: string;
+  label: string;
+  count: number;
+};
+
+export type ReviewClientComment = {
+  id: string;
+  body: string;
+  authorName: string;
+  authorType: string;
+  timestampSeconds: number | null;
+  parentId: string | null;
+  reactions: ReviewClientCommentReaction[];
+  createdAt: string;
+  replies: ReviewClientComment[];
+};
+
+export type ReviewClientVersion = {
+  version: number;
+  createdAt: string;
+};
+
+export type ReviewContent = {
+  status: ReviewSessionStatus;
+  videoUrl: string;
+  videoTitle: string;
+  version: number;
+  isCurrentVersion: boolean;
+  allowDownload: boolean;
+  allowFullscreen: boolean;
+  allowVersionSwitch: boolean;
+  remainingSeconds: number;
+  comments: ReviewClientComment[];
+  versions: ReviewClientVersion[];
+};
+
 export type EditorStats = {
   totalEdits: number;
   totalDelivered: number;
