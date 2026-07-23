@@ -205,8 +205,17 @@ export default function ClientReviewPage({
           <ReviewCountdown initialRemainingSeconds={content.remainingSeconds} />
         </header>
 
+        {!content.isCurrentVersion ? (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-300">
+            You&apos;re previewing v{content.version}. Approve and Request
+            Changes always apply to the version sent for your review, not
+            whichever version is currently on screen.
+          </div>
+        ) : null}
+
         <PlayerProvider fps={24} src={content.videoUrl}>
           <ClientReviewBody
+            activeVersion={content.version}
             allowDownload={content.allowDownload}
             allowFullscreen={content.allowFullscreen}
             comments={content.comments}
@@ -266,6 +275,7 @@ export default function ClientReviewPage({
 function ClientReviewBody({
   token,
   videoUrl,
+  activeVersion,
   comments,
   locked,
   allowDownload,
@@ -276,6 +286,7 @@ function ClientReviewBody({
 }: {
   token: string;
   videoUrl: string;
+  activeVersion: number;
   comments: ReviewClientComment[];
   locked: boolean;
   allowDownload: boolean;
@@ -293,7 +304,11 @@ function ClientReviewBody({
           <div className="flex flex-wrap items-center gap-1.5">
             {versions.map((v) => (
               <button
-                className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-white/70 hover:bg-white/20"
+                className={`rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${
+                  v.version === activeVersion
+                    ? "bg-[var(--fylmico-accent)] text-white"
+                    : "bg-white/10 text-white/70 hover:bg-white/20"
+                }`}
                 key={v.version}
                 onClick={() => onSelectVersion(v.version)}
                 type="button"
