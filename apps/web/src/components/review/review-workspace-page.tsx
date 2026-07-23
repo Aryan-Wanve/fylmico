@@ -24,6 +24,9 @@ import { ReviewActivityPanel } from "@/components/review/review-activity-panel";
 import { RequestChangesDialog } from "@/components/review/request-changes-dialog";
 import { RejectDialog } from "@/components/review/reject-dialog";
 import { ApproveDialog } from "@/components/review/approve-dialog";
+import { DraftApprovedDialog } from "@/components/review/draft-approved-dialog";
+import { ClientDeliveryDialog } from "@/components/review/client-delivery-dialog";
+import { ClientReviewStatusPanel } from "@/components/review/client-review-status-panel";
 import { REVIEW_STATUS_META } from "@/components/review/review-item-card";
 import {
   approveDeliverable,
@@ -34,7 +37,8 @@ import {
   listDeliverablesForOwner,
   markDeliverableFirstReviewed,
   rejectDeliverable,
-  requestDeliverableRevision
+  requestDeliverableRevision,
+  sendClientReview
 } from "@/services/base-workspace.service";
 import type {
   Annotation,
@@ -42,7 +46,8 @@ import type {
   Comment,
   Deliverable,
   DeliverableActivityEntry,
-  ReviewQueueItem
+  ReviewQueueItem,
+  SendClientReviewRequest
 } from "@/types/base";
 
 type RightTab = "comments" | "info" | "activity";
@@ -104,6 +109,8 @@ export function ReviewWorkspacePage() {
   const [needsChangesOpen, setNeedsChangesOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [approveOpen, setApproveOpen] = useState(false);
+  const [draftApprovedOpen, setDraftApprovedOpen] = useState(false);
+  const [clientDeliveryOpen, setClientDeliveryOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const deliverableId = params.deliverableId;
@@ -147,6 +154,13 @@ export function ReviewWorkspacePage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function handleSendClientReview(request: SendClientReviewRequest) {
+    await sendClientReview(deliverableId, request);
+    // Unlike approve/reject/request-changes, sending to a client doesn't
+    // finalize anything yet - stay on the workspace so the manager can
+    // watch ClientReviewStatusPanel update live as the client opens it.
   }
 
   async function handleRequestChanges(comment: string) {
@@ -263,6 +277,8 @@ export function ReviewWorkspacePage() {
         </PlayerProvider>
       ) : null}
 
+      <ClientReviewStatusPanel deliverableId={deliverableId} />
+
       <div className="flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-white/10 bg-[#171a28] p-3">
         <button
           className="rounded-lg border border-red-500/40 px-4 py-2 text-sm font-bold text-red-400 hover:bg-red-500/10 disabled:opacity-50"
@@ -283,7 +299,7 @@ export function ReviewWorkspacePage() {
         <button
           className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-600 disabled:opacity-50"
           disabled={busy || isFinalized}
-          onClick={() => setApproveOpen(true)}
+          onClick={() => setDraftApprovedOpen(true)}
           type="button"
         >
           Approve
@@ -299,6 +315,24 @@ export function ReviewWorkspacePage() {
         onOpenChange={setRejectOpen}
         onSubmit={handleReject}
         open={rejectOpen}
+      />
+      <DraftApprovedDialog
+        onMarkFinalInternally={() => {
+          setDraftApprovedOpen(false);
+          setApproveOpen(true);
+        }}
+        onOpenChange={setDraftApprovedOpen}
+        onSendToClient={() => {
+          setDraftApprovedOpen(false);
+          setClientDeliveryOpen(true);
+        }}
+        open={draftApprovedOpen}
+      />
+      <ClientDeliveryDialog
+        defaultSubject={`${item.file.name} is ready for your review`}
+        onOpenChange={setClientDeliveryOpen}
+        onSubmit={handleSendClientReview}
+        open={clientDeliveryOpen}
       />
       <ApproveDialog
         defaultFileName={item.file.name}
