@@ -1289,33 +1289,46 @@ matching `tasks`/`messages`' pattern) and one `user` (the author).
 
 Columns: `id`, `organization_id`, `commentable_type` (`"task"` |
 `"project"` | `"deliverable"` - the third value added per ADR 0054),
-`commentable_id`, `author_id`, `parent_id` (nullable self-FK, added per
-ADR 0060 - a reply; flattened to one level of nesting at the service
-layer, so a reply's `parent_id` always points at a top-level comment,
-never another reply), `body`, `timestamp_seconds` (nullable `Float`,
-added per ADR 0056), `frame_number` (nullable `Int`, added per ADR
-0060), `mentioned_user_ids` (`String[]`, added per ADR 0060 - explicit
-picks from a `@`-mention autocomplete, not parsed from `body`),
-`reactions` (nullable `Json`, added per ADR 0060 - array of
-`{emoji, userId, userName}`, denormalized like `Task.equipment` rather
-than a join table), `pinned` (`Boolean`, default `false`, added per ADR
-0060), `resolved_at`/`resolved_by_id` (nullable, added per ADR 0060),
+`commentable_id`, `author_id` (nullable since ADR 0061 - null when
+`author_type = "client"`), `author_type` (`"user"` | `"client"`, default
+`"user"`, added per ADR 0061), `guest_name`/`guest_email` (nullable,
+added per ADR 0061 - set instead of `author_id` for a client-portal
+comment), `review_session_id` (nullable FK, added per ADR 0061 - which
+`review_sessions` row a client comment was left through, if any),
+`parent_id` (nullable self-FK, added per ADR 0060 - a reply; flattened
+to one level of nesting at the service layer, so a reply's `parent_id`
+always points at a top-level comment, never another reply), `body`,
+`timestamp_seconds` (nullable `Float`, added per ADR 0056), `frame_number`
+(nullable `Int`, added per ADR 0060), `mentioned_user_ids` (`String[]`,
+added per ADR 0060 - explicit picks from a `@`-mention autocomplete, not
+parsed from `body`), `reactions` (nullable `Json`, added per ADR 0060 -
+array of `{emoji, userId, userName}`, denormalized like `Task.equipment`
+rather than a join table), `pinned` (`Boolean`, default `false`, added per
+ADR 0060), `resolved_at`/`resolved_by_id` (nullable, added per ADR 0060),
 `created_at`, `updated_at`.
 
 Relationships: belongs to `organizations` (cascade delete); belongs to
-`users` via `author_id` (`"CommentAuthor"` relation name) and optionally
-via `resolved_by_id` (`"CommentResolvedBy"`, one-sided - no back-relation
-array needed); self-relation `"CommentReplies"` (`parent_id` -> parent
-comment, cascade delete - deleting a top-level comment deletes its
-replies). No database foreign key on `commentable_id` - it points to a
-`tasks`, `projects`, or `deliverables` row depending on `commentable_type`,
-so validity is enforced at the service layer (404 checks before
-create/list), not a DB constraint.
+`users` via `author_id` (`"CommentAuthor"` relation name, nullable,
+`onDelete: SetNull` since ADR 0061) and optionally via `resolved_by_id`
+(`"CommentResolvedBy"`, one-sided - no back-relation array needed);
+belongs to `review_sessions` via `review_session_id` (nullable,
+`onDelete: SetNull`, added per ADR 0061); self-relation
+`"CommentReplies"` (`parent_id` -> parent comment, cascade delete -
+deleting a top-level comment deletes its replies). No database foreign
+key on `commentable_id` - it points to a `tasks`, `projects`, or
+`deliverables` row depending on `commentable_type`, so validity is
+enforced at the service layer (404 checks before create/list), not a DB
+constraint.
 
 Indexes: index on `organization_id`; compound index on
-`(commentable_type, commentable_id)`; index on `parent_id`.
+`(commentable_type, commentable_id)`; index on `parent_id`; index on
+`review_session_id` (ADR 0061).
 
-Constraints: none beyond required foreign keys.
+Constraints: `author_id`/`guest_email` are mutually exclusive in
+practice (enforced at the service layer via `author_type`, not a DB
+CHECK constraint - same pattern as `deliverables`' owner-type columns
+before its CHECK was added, kept simple here since only the service ever
+writes this row).
 
 Permissions: created/read via `POST`/`GET /api/v1/tasks/:taskId/comments`,
 `POST`/`GET /api/v1/projects/:projectId/comments`, and `POST`/`GET
@@ -1324,7 +1337,11 @@ target's house. Deliverable comments additionally support `POST
 .../comments/:commentId/{resolve,reopen,reactions}` (any member),
 `.../pin` (manager-only, ADR 0060), and `PATCH`/`DELETE
 .../comments/:commentId` (author-only). Task/project comments still have
-no edit/delete endpoint.
+no edit/delete endpoint. Client-portal comments are created via the
+public, token-gated `POST /api/v1/review-sessions/:token/comments`
+(ADR 0061) instead - the client is never a Fylmico `User`, so those rows
+carry `author_type = "client"` + `guest_name`/`guest_email` and appear in
+the same thread as internal comments.
 
 Reasoning: a type+id pair rather than a join table per commentable type
 (`task_comments`, `project_comments`) - adding a new commentable type
@@ -1333,11 +1350,17 @@ made about `asset_version`) was a new string value and a thin
 controller/service pair, not a schema migration (ADR 0024). Threading/
 reactions/mentions (ADR 0060) extend this same row rather than
 introducing `Thread`/`Reaction` tables, consistent with how lightweight
-per-row data is already modeled elsewhere in this schema.
+per-row data is already modeled elsewhere in this schema. Client comments
+(ADR 0061) reuse this same model with a nullable author + guest fields
+rather than a parallel `ClientComment` table, so internal reviewers see
+client feedback in the exact same thread instead of a second UI surface.
 
 Migration history: `20260708211532_comments`; `parent_id`/`resolved_at`/
 `resolved_by_id`/`pinned`/`mentioned_user_ids`/`reactions`/`frame_number`
-added in `20260719120000_review_frameio_rework` (ADR 0060).
+added in `20260719120000_review_frameio_rework` (ADR 0060);
+`author_id` made nullable and `author_type`/`guest_name`/`guest_email`/
+`review_session_id` added in `20260723080000_client_review_system`
+(ADR 0061).
 
 ### Table: `annotations`
 
@@ -1387,20 +1410,28 @@ polymorphic activity log for one new use.
 
 Ownership: belongs to one `deliverable`.
 
-Columns: `id`, `deliverable_id`, `actor_id`, `type` (free string, e.g.
-`"version_uploaded"`, `"approved"`), `from_value`/`to_value` (nullable),
-`created_at`.
+Columns: `id`, `deliverable_id`, `actor_id` (nullable since ADR 0061 -
+null when `actor_type = "client"`), `actor_type` (`"user"` | `"client"`,
+default `"user"`, added per ADR 0061), `actor_label` (nullable, added per
+ADR 0061 - the client's email, since a client actor has no `User` row to
+join for a display name), `type` (free string, e.g.
+`"version_uploaded"`, `"approved"`, and per ADR 0061 `"review_sent"`,
+`"review_viewed"`, `"review_changes_requested"`, `"review_approved"`),
+`from_value`/`to_value` (nullable), `created_at`.
 
 Relationships: belongs to `deliverables` (cascade delete); belongs to
-`users` via `actor_id`.
+`users` via `actor_id` (nullable, `onDelete: SetNull` since ADR 0061).
 
 Indexes: index on `deliverable_id`.
 
 Permissions: read via `GET /api/v1/deliverables/:deliverableId/activity`
-by any house member; written internally by `deliverables.service.ts`
-(best-effort - a logging failure never fails the underlying action).
+by any house member; written internally by `deliverables.service.ts` and
+`review-sessions.service.ts`/`review-client-actions.service.ts` (ADR
+0061, best-effort - a logging failure never fails the underlying action).
 
-Migration history: `20260719120000_review_frameio_rework` (ADR 0060).
+Migration history: `20260719120000_review_frameio_rework` (ADR 0060);
+`actor_id` made nullable and `actor_type`/`actor_label` added in
+`20260723080000_client_review_system` (ADR 0061).
 
 ### Table: `deliverables`
 
@@ -1508,6 +1539,96 @@ Migration history: `20260716200000_deliverables`;
 `rejection_reason`/`first_reviewed_at` added and the
 `(task_id, version)` partial unique index added in
 `20260719120000_review_frameio_rework` (ADR 0060).
+
+### Table: `review_sessions`
+
+Purpose: a single client-facing review invite for one specific
+`deliverable` version - the secure, tokenized, unauthenticated link a
+client opens to watch, comment on, and approve/request-changes on a
+draft, added per ADR 0061 (Client Review & Approval System).
+
+Ownership: belongs to one `deliverable` (i.e. one specific version - the
+existing `(task_id, version)` uniqueness already scopes a `Deliverable`
+row to exactly one version, so this table needs no separate version
+column) and one `organization`.
+
+Columns: `id`, `deliverable_id`, `organization_id`, `client_email`,
+`token_hash` (unique - the raw token is never persisted, only ever
+appears in the emailed URL, mirroring `house_invitations.token_hash`),
+`subject`, `message` (nullable), `include_project_name`/
+`include_video_version`/`include_notes` (`Boolean`, what the invite email
+mentions), `allow_download`/`allow_fullscreen`/`allow_version_switch`
+(`Boolean`, gates the public player's controls), `password_hash`
+(nullable, optional extra gate beyond the token+OTP), `status` (default
+`"pending"`; vocab `pending | viewed | reviewing | changes_requested |
+approved | expired | revoked`, validated in the service only), `expires_at`,
+`first_viewed_at`/`last_activity_at`/`approved_at`/`changes_requested_at`
+(nullable timestamps for the internal live-status panel), `sent_by_id`
+(the staff member who sent it), `created_at`, `updated_at`.
+
+Relationships: belongs to `deliverables` (cascade delete - deleting the
+deliverable removes its review sessions); belongs to `organizations`
+(cascade delete); belongs to `users` via `sent_by_id` (required, default
+`onDelete: Restrict` - a sender can't be deleted while their sent
+sessions still reference them); has many `review_otp_tokens` (cascade
+delete) and `comments` (the client's own comments reference this row via
+`comments.review_session_id`, `onDelete: SetNull`).
+
+Indexes: unique index on `token_hash`; indexes on `deliverable_id` and
+`organization_id`.
+
+Constraints: none beyond required foreign keys.
+
+Permissions: created via authenticated `POST
+/api/v1/deliverables/:deliverableId/review-sessions` (manager-only,
+same gate as `approve`); read via the fully public, no-auth `GET
+/api/v1/review-sessions/:token` (masked preview only - never returns
+`deliverableId`/`organizationId`/storage paths, only opaque
+session-scoped data) and `GET .../content` (post-OTP-verification,
+returns the playback URL/comments/version list); the client's own
+actions (`comments`, `approve`, `request-changes`) are all public routes
+gated by `requireVerifiedSession` (a short-lived signed cookie set after
+OTP verification), never by `requireUser`.
+
+Reasoning: a dedicated model rather than reusing `house_invitations`
+(the shapes diverge heavily - review sessions carry sender-configured
+delivery options and a richer status lifecycle) or bolting fields onto
+`deliverables` (a deliverable can be sent to a client, resent, or
+superseded independently of its own status). Token generation reuses the
+exact `generateOpaqueToken`/`hashOpaqueToken` helpers `house_invitations`
+already established (ADR 0043) rather than introducing a second scheme.
+
+Migration history: `20260723080000_client_review_system` (ADR 0061).
+
+### Table: `review_otp_tokens`
+
+Purpose: the one-time email code a client enters to verify a new browser
+before it can access a `review_sessions` link, added per ADR 0061.
+Mirrors `email_verification_tokens` exactly rather than inventing a new
+OTP shape.
+
+Ownership: belongs to one `review_session`.
+
+Columns: `id`, `review_session_id`, `code_hash` (SHA-256 of the 6-digit
+code, never the raw code), `attempts` (default `0`, locks out at 5 per
+the same `MAX_OTP_ATTEMPTS` constant `auth.service.ts` already defines),
+`expires_at`, `consumed_at` (nullable - set once verified, making the
+code single-use), `created_at`.
+
+Relationships: belongs to `review_sessions` (cascade delete).
+
+Indexes: index on `review_session_id`.
+
+Permissions: created/verified only via the public `POST
+/api/v1/review-sessions/:token/otp/{request,verify}` routes - no direct
+read/list endpoint exists.
+
+Reasoning: kept as its own table rather than columns on `review_sessions`
+so a client can request a fresh code (e.g. after the first expires)
+without losing the session's own state, exactly mirroring why
+`email_verification_tokens` is separate from `users`.
+
+Migration history: `20260723080000_client_review_system` (ADR 0061).
 
 ### Table: `crew_profiles`
 
