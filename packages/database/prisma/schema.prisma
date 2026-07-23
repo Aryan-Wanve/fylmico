@@ -51,6 +51,7 @@ model User {
   conversationReads         ConversationRead[]
   createdShoots             Shoot[]
   createdDeliverables       Deliverable[]
+  reviewSessionsSent        ReviewSession[]
 
   @@map("users")
 }
@@ -92,6 +93,7 @@ model Organization {
   driveConnection DriveConnection?
   shoots          Shoot[]
   deliverables    Deliverable[]
+  reviewSessions  ReviewSession[]
 
   @@map("organizations")
 }
@@ -572,7 +574,11 @@ model Comment {
   organizationId   String    @map("organization_id")
   commentableType  String    @map("commentable_type")
   commentableId    String    @map("commentable_id")
-  authorId         String    @map("author_id")
+  authorId         String?   @map("author_id")
+  authorType       String    @default("user") @map("author_type")
+  guestName        String?   @map("guest_name")
+  guestEmail       String?   @map("guest_email")
+  reviewSessionId  String?   @map("review_session_id")
   parentId         String?   @map("parent_id")
   body             String
   timestampSeconds Float?    @map("timestamp_seconds")
@@ -585,16 +591,18 @@ model Comment {
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  author       User         @relation("CommentAuthor", fields: [authorId], references: [id])
-  resolvedBy   User?        @relation("CommentResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
-  parent       Comment?     @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies      Comment[]    @relation("CommentReplies")
-  annotations  Annotation[]
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  author        User?          @relation("CommentAuthor", fields: [authorId], references: [id])
+  resolvedBy    User?          @relation("CommentResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  reviewSession ReviewSession? @relation(fields: [reviewSessionId], references: [id], onDelete: SetNull)
+  parent        Comment?       @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       Comment[]      @relation("CommentReplies")
+  annotations   Annotation[]
 
   @@index([organizationId])
   @@index([commentableType, commentableId])
   @@index([parentId])
+  @@index([reviewSessionId])
   @@map("comments")
 }
 
@@ -623,14 +631,16 @@ model Annotation {
 model DeliverableActivity {
   id            String   @id @default(cuid())
   deliverableId String   @map("deliverable_id")
-  actorId       String   @map("actor_id")
+  actorId       String?  @map("actor_id")
+  actorType     String   @default("user") @map("actor_type")
+  actorLabel    String?  @map("actor_label")
   type          String
   fromValue     String?  @map("from_value")
   toValue       String?  @map("to_value")
   createdAt     DateTime @default(now()) @map("created_at")
 
   deliverable Deliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
-  actor       User        @relation(fields: [actorId], references: [id])
+  actor       User?       @relation(fields: [actorId], references: [id])
 
   @@index([deliverableId])
   @@map("deliverable_activity")
@@ -653,14 +663,15 @@ model Deliverable {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  project      Project?              @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  client       Client?               @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  task         Task?                 @relation(fields: [taskId], references: [id], onDelete: SetNull)
-  fileEntry    FileEntry             @relation(fields: [fileEntryId], references: [id], onDelete: Cascade)
-  createdBy    User                  @relation(fields: [createdById], references: [id])
-  activity     DeliverableActivity[]
-  annotations  Annotation[]
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project?              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  client         Client?               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  task           Task?                 @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  fileEntry      FileEntry             @relation(fields: [fileEntryId], references: [id], onDelete: Cascade)
+  createdBy      User                  @relation(fields: [createdById], references: [id])
+  activity       DeliverableActivity[]
+  annotations    Annotation[]
+  reviewSessions ReviewSession[]
 
   @@index([organizationId])
   @@index([projectId])
@@ -668,6 +679,57 @@ model Deliverable {
   @@index([taskId])
   @@index([fileEntryId])
   @@map("deliverables")
+}
+
+model ReviewSession {
+  id                  String    @id @default(cuid())
+  deliverableId       String    @map("deliverable_id")
+  organizationId      String    @map("organization_id")
+  clientEmail         String    @map("client_email")
+  tokenHash           String    @unique @map("token_hash")
+  subject             String
+  message             String?
+  includeProjectName  Boolean   @default(true) @map("include_project_name")
+  includeVideoVersion Boolean   @default(true) @map("include_video_version")
+  includeNotes        Boolean   @default(false) @map("include_notes")
+  allowDownload       Boolean   @default(false) @map("allow_download")
+  allowFullscreen     Boolean   @default(true) @map("allow_fullscreen")
+  allowVersionSwitch  Boolean   @default(false) @map("allow_version_switch")
+  passwordHash        String?   @map("password_hash")
+  status              String    @default("pending")
+  expiresAt           DateTime  @map("expires_at")
+  firstViewedAt       DateTime? @map("first_viewed_at")
+  lastActivityAt      DateTime? @map("last_activity_at")
+  approvedAt          DateTime? @map("approved_at")
+  changesRequestedAt  DateTime? @map("changes_requested_at")
+  sentById            String    @map("sent_by_id")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  deliverable  Deliverable      @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sentBy       User             @relation(fields: [sentById], references: [id])
+  otpTokens    ReviewOtpToken[]
+  comments     Comment[]
+
+  @@index([deliverableId])
+  @@index([organizationId])
+  @@map("review_sessions")
+}
+
+model ReviewOtpToken {
+  id              String    @id @default(cuid())
+  reviewSessionId String    @map("review_session_id")
+  codeHash        String    @map("code_hash")
+  attempts        Int       @default(0)
+  expiresAt       DateTime  @map("expires_at")
+  consumedAt      DateTime? @map("consumed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  reviewSession ReviewSession @relation(fields: [reviewSessionId], references: [id], onDelete: Cascade)
+
+  @@index([reviewSessionId])
+  @@map("review_otp_tokens")
 }
 
 model CrewProfile {
