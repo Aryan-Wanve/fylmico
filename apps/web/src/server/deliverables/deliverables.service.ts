@@ -678,7 +678,7 @@ class DeliverablesService {
       fromValue: entry.fromValue,
       toValue: entry.toValue,
       actorId: entry.actorId,
-      actorName: entry.actor.name,
+      actorName: entry.actor?.name ?? entry.actorLabel ?? "Client",
       createdAt: entry.createdAt.toISOString()
     }));
   }

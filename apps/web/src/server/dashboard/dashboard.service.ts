@@ -113,7 +113,7 @@ class DashboardService {
       })),
       ...recentComments.map((comment) => ({
         id: `comment-${comment.id}`,
-        actorName: comment.author.name,
+        actorName: comment.author?.name ?? comment.guestName ?? "Client",
         text: "left a comment",
         occurredAt: comment.createdAt
       })),

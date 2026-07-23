@@ -15,8 +15,9 @@ type CommentReaction = { emoji: string; userId: string; userName: string };
 interface CommentDto {
   id: string;
   body: string;
-  authorId: string;
+  authorId: string | null;
   authorName: string;
+  authorType: string;
   parentId: string | null;
   timestampSeconds: number | null;
   frameNumber: number | null;
@@ -628,7 +629,7 @@ export const commentsService = new CommentsService();
 
 function toCommentDto(
   comment: Comment & {
-    author: { id: string; name: string };
+    author?: { id: string; name: string } | null;
     resolvedBy?: { id: string; name: string } | null;
   },
   replies: CommentDto[] = []
@@ -637,7 +638,8 @@ function toCommentDto(
     id: comment.id,
     body: comment.body,
     authorId: comment.authorId,
-    authorName: comment.author.name,
+    authorName: comment.author?.name ?? comment.guestName ?? "Client",
+    authorType: comment.authorType,
     parentId: comment.parentId,
     timestampSeconds: comment.timestampSeconds,
     frameNumber: comment.frameNumber,
