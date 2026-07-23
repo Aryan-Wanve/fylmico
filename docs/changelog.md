@@ -931,3 +931,49 @@ Migration notes:
   `deliverable_activity` tables, and a partial unique index
   `deliverables_task_id_version_key` on `(task_id, version) WHERE
 task_id IS NOT NULL`.
+
+## 0.30.0 - 2026-07-23
+
+Summary:
+
+- **Client Review & Approval System (ADR 0061):** Approving a draft
+  internally no longer immediately finalizes it. A "Draft Approved" step
+  now offers **Send to Client** or **Mark as Final Internally** (the old
+  flow, unchanged). Sending to a client generates a secure, tokenized,
+  unauthenticated link (`/client-review/:token`) with configurable
+  subject/message, include-project-name/version/notes toggles, expiry,
+  optional password protection, and allow-download/fullscreen/
+  version-switch toggles.
+- The client-facing page requires a one-time email access code (verified
+  once per browser via a signed cookie) plus an optional password before
+  showing anything - a completely standalone page with no houses/
+  dashboard/tasks/chat chrome. It reuses the same video player, controls,
+  and scrubber as the internal Review workspace, with a simplified
+  timestamped-comment thread (no mentions/pins/edit/delete), a live
+  countdown to link expiry, and Approve / Request Changes actions.
+- Client Approve/Request Changes sync back into the internal workspace in
+  real time: a new status panel on the Review page shows Client Viewed /
+  Reviewing / Changes Requested / Approved / Expired as they happen, and
+  the deliverable's creator gets notified on every client action.
+- Client-authored comments and activity entries now appear in the same
+  threads/audit-trail as internal ones (the client has no Fylmico account -
+  comments/activity attribute to a guest email instead of a user id).
+- Version switching (when enabled) lets a client compare cuts without
+  losing which version each comment belongs to; a warning banner appears
+  when previewing a version other than the one actually awaiting approval,
+  since Approve/Request Changes always target that original version.
+
+Breaking changes:
+
+- None. The internal "Mark as Final Internally" path is the pre-existing
+  Approve flow, unchanged.
+
+Migration notes:
+
+- New migration `20260723080000_client_review_system`: new `review_sessions`
+  and `review_otp_tokens` tables; `comments.author_id` and
+  `deliverable_activity.actor_id` become nullable with new `author_type`/
+  `actor_type`/guest-attribution columns (default `"user"`, so every
+  existing row is unaffected).
+- New required env var for production: `REVIEW_SESSION_COOKIE_SECRET`
+  (see `.env.example`).

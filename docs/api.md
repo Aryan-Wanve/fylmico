@@ -1881,6 +1881,164 @@ number, "avgReviewIterations": number, "totalRuntimeSeconds": number,
 `Deliverable`/`Task`/`FileEntry` rows (no separate ledger table). Powers
 the "Editing History" section on `crew-profile-page.tsx`.
 
+## Client Review & Approval System (Implemented)
+
+Implemented per ADR 0061 (`apps/web/src/server/review-sessions/*`). Lets
+staff send a `Deliverable` to a client via a secure, tokenized,
+unauthenticated link (`/client-review/:token`) instead of finalizing it
+internally. See ADR 0061 for the full design; below are the routes.
+
+### `POST /api/v1/deliverables/:deliverableId/review-sessions`
+
+Authentication: required, manager-only (`requireManagerRole`). Body:
+`{ "clientEmail": string, "subject": string, "message"?: string,
+"includeProjectName"?: boolean, "includeVideoVersion"?: boolean,
+"includeNotes"?: boolean, "allowDownload"?: boolean,
+"allowFullscreen"?: boolean, "allowVersionSwitch"?: boolean,
+"expiresIn": string (duration, e.g. "7d"), "password"?: string }`. Revokes
+any still-pending/viewed/reviewing prior session for the same deliverable
+first (one live link at a time), generates an opaque token (hashed at
+rest, same pattern as `HouseInvitation`), and emails the client the invite.
+Response: `{ "data": ReviewSessionSummary }`.
+
+### `GET /api/v1/deliverables/:deliverableId/review-sessions`
+
+Authentication: required, membership-gated. Response:
+`{ "data": ReviewSessionSummary[] }`, newest first - powers
+`ClientReviewStatusPanel` in the internal workspace.
+
+```
+ReviewSessionSummary = {
+  id: string
+  clientEmail: string
+  status: "pending" | "viewed" | "reviewing" | "changes_requested" |
+    "approved" | "expired" | "revoked"
+  expiresAt: string
+  firstViewedAt: string | null
+  lastActivityAt: string | null
+  approvedAt: string | null
+  changesRequestedAt: string | null
+  createdAt: string
+}
+```
+
+The remaining routes are all **public - no authentication, no membership
+check**. Access is gated entirely by the opaque `:token` plus (after OTP
+verification) a per-session signed cookie
+(`fylmico_review_<reviewSessionId>`) that `requireVerifiedSession()`
+checks internally. None of these responses ever include an internal id,
+organization id, or storage path.
+
+### `GET /api/v1/review-sessions/:token`
+
+Public preview shown before OTP verification. Response:
+`{ "data": { "subject": string, "message": string | null, "status": ...,
+"expiresAt": string, "requiresPassword": boolean, "projectName": string |
+null, "videoTitle": string, "version": number | null,
+"clientEmailMasked": string } }`. 404 if the token doesn't exist, 410
+(`Gone`) if revoked/expired.
+
+### `POST /api/v1/review-sessions/:token/password/verify`
+
+Body: `{ "password": string }`. Checked only when `requiresPassword` was
+true - has no server-side session effect (no cookie), it's a client-side
+gate ahead of the OTP step. Response: `{ "data": { "verified": true } }` or
+`401 invalid_password`.
+
+### `POST /api/v1/review-sessions/:token/otp/request`
+
+Rate-limited (5 per 15 minutes per session+IP). Creates a
+`ReviewOtpToken`, emails a 6-digit code, invalidating any prior
+un-consumed code for the session first. Response:
+`{ "data": { "sent": true } }`.
+
+### `POST /api/v1/review-sessions/:token/otp/verify`
+
+Body: `{ "code": string }`. 5-attempt lockout per code, same shape as
+`auth.service.ts`'s email verification. On success, sets the per-session
+signed cookie (`httpOnly`, `secure` in production, `sameSite: "lax"`,
+30-day `maxAge`) and marks the session `"viewed"` on first access (fires
+`review_client_viewed` to the deliverable's creator + a realtime
+broadcast). Response: `{ "data": { "verified": true } }`, or
+`400 invalid_or_expired_code`.
+
+### `GET /api/v1/review-sessions/:token/content`
+
+Requires the verified cookie (`401 otp_required` otherwise). Query param
+`?version=` (only honored when the session's `allowVersionSwitch` is
+true - `403 version_switch_disabled` otherwise). Response:
+`{ "data": ReviewContent }`:
+
+```
+ReviewContent = {
+  status: ReviewSessionStatus
+  videoUrl: string          // signed download-token URL, same as internal
+  videoTitle: string
+  version: number
+  isCurrentVersion: boolean // false when viewing a switched-to version
+  allowDownload: boolean
+  allowFullscreen: boolean
+  allowVersionSwitch: boolean
+  remainingSeconds: number  // until expiresAt, for the countdown UI
+  comments: ReviewClientComment[]
+  versions: { version: number; createdAt: string }[]
+}
+```
+
+### `POST /api/v1/review-sessions/:token/comments`
+
+Body: `{ "body": string, "timestampSeconds"?: number, "version"?: number }`.
+Locked (`409 review_locked`) once status is
+`approved`/`expired`/`revoked`. Flips status to `"reviewing"` on first
+comment/reply and notifies the editor (`review_client_commented`).
+Response: `{ "data": ReviewClientComment }`, `201`.
+
+### `POST /api/v1/review-sessions/:token/comments/:commentId/replies`
+
+Body: `{ "body": string }`. Same locking/notification behavior as above.
+Response: `{ "data": ReviewClientComment }`, `201`.
+
+### `POST /api/v1/review-sessions/:token/comments/:commentId/reactions`
+
+Body: `{ "emoji": string }` (must be one of `REACTION_EMOJIS`, shared with
+the internal comment thread). Toggles the client's own reaction. Response:
+`{ "data": ReviewClientComment }`.
+
+```
+ReviewClientComment = {
+  id: string
+  body: string
+  authorName: string   // guest name/email for a client row, "Team" for staff
+  authorType: "user" | "client"
+  timestampSeconds: number | null
+  parentId: string | null
+  reactions: { emoji: string; label: string; count: number }[]
+  createdAt: string
+  replies: ReviewClientComment[]
+}
+```
+
+### `POST /api/v1/review-sessions/:token/approve`
+
+No body. Idempotent if already `"approved"`; `410 review_link_expired` if
+expired/revoked. Calls `deliverablesService.approveViaClientReview()` (the
+deliverable's own name, no portfolio addition - unlike the internal
+`ApproveDialog`'s options), flips the session to `"approved"`, broadcasts,
+and notifies the editor (`review_client_approved`). Response:
+`{ "data": { "approved": true } }`.
+
+### `POST /api/v1/review-sessions/:token/request-changes`
+
+Body: `{ "feedback": string, "priority"?: "low" | "medium" | "high" |
+"urgent", "deadline"?: string }`. `priority`/`deadline` aren't separate
+columns on the revision flow - they're folded into the feedback text
+rather than widening `deliverablesService`'s API for two optional extras.
+Calls `requestRevisionViaClientReview()` (reverts the task to
+`"in-progress"`, adds a task comment, notifies all assignees), flips the
+session to `"changes_requested"`, broadcasts, and notifies the editor
+(`review_changes_requested`). `409 already_approved` if already approved.
+Response: `{ "data": { "submitted": true } }`.
+
 ## Crews (Implemented)
 
 Implemented per ADR 0028 (`apps/web/src/server/crews/*`). A "crew member" is a

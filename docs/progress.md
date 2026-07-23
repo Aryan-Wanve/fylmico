@@ -6702,3 +6702,92 @@ Files deleted: `components/review/review-detail-panel.tsx`,
 
 Next task: live browser verification of the full review workflow once
 the user is available to log in.
+
+## Client Review & Approval System (ADR 0061)
+
+Built the full client-facing review loop in 9 phases (each committed
+separately with `tsc --noEmit`/`eslint --max-warnings=0`/`next build`
+clean after every phase).
+
+**Phase 1 (schema):** new `ReviewSession` (client email, token hash,
+subject/message, six include/allow toggles, optional password hash,
+status machine, expiry/activity timestamps) and `ReviewOtpToken` (mirrors
+`EmailVerificationToken`). `Comment`/`DeliverableActivity` gained nullable
+`authorId`/`actorId` plus `authorType`/`actorType` and guest fields, so a
+client with no Fylmico `User` row can drive the same comment threads and
+audit trail as staff. Migration `20260723080000_client_review_system`
+hand-written (Prisma's shadow database hit a pre-existing, unrelated bug
+in an older migration) and applied via `prisma migrate deploy`.
+
+**Phase 2 (send + OTP backend):** `review-sessions.service.ts`
+(`createAndSend`, `listForDeliverable`, `getPublicPreview`,
+`verifyPassword`, `requestOtp`, `verifyOtp`, `requireVerifiedSession`,
+`findValidSession`, `logActivity`), new mail templates
+(`buildClientReviewInviteEmail`, `buildReviewOtpEmail`), a dedicated
+`REVIEW_SESSION_COOKIE_SECRET` env var, and 5 routes (1 authenticated
+send/list, 4 public).
+
+**Phase 3 (public client actions + actor refactor):** `deliverablesService`
+gained a `DeliverableActor` union (`{type:"user",id}` |
+`{type:"client",label}`) threaded through `transition()`/`logActivity()` -
+every existing internal call site updated to wrap `{type:"user",id:userId}`.
+New `approveViaClientReview()`/`requestRevisionViaClientReview()`. New
+`review-client-actions.service.ts` (`getContent`, `addComment`, `addReply`,
+`toggleReaction`, `approve`, `requestChanges`) and 6 public routes, all
+gated by `requireVerifiedSession`, never `requireUser`.
+
+**Phase 4 (notifications + realtime):** `deliverableReviewTopic(id)`
+broadcast helper; 5 new notification types (`review_client_viewed`,
+`review_client_commented`, `review_changes_requested`,
+`review_client_approved`, `review_link_expired`); wired into both review
+services; new frontend hook `use-deliverable-review-channel.ts`.
+
+**Phase 5 (internal workspace UI):** `DraftApprovedDialog` (Send to
+Client / Mark as Final Internally / Cancel) now gates the existing
+`ApproveDialog` behind a choice; `ClientDeliveryDialog` collects every
+send-time field (email, subject, message, include/allow toggles, expiry
+preset, optional password); `ClientReviewStatusPanel` shows the sent
+session's live status (avatar, last-active, status badge) via the new
+realtime hook, refetching on every broadcast rather than trying to
+reconstruct state from the broadcast payload.
+
+**Phase 6 (public page + player reuse):** New standalone route
+`app/client-review/[token]/page.tsx` (outside the `(app)` shell, same
+pattern as `houses/invite/[token]`) - a state machine: preview → optional
+password gate → OTP gate → content. Reused `PlayerProvider`/
+`ReviewVideoPlayer`/`PlayerControlsBar`/`ReviewTimeline` verbatim (they
+already took `src`/`fps` as props with no baked-in auth calls); two small
+non-breaking extensions: `PlayerControlsBar` gained `hideFullscreen`
+(default off), `ReviewTimeline`'s `comments` prop loosened to a minimal
+structural `TimelineComment` type so the public page's differently-shaped
+`ReviewClientComment` passes through without an adapter. New isolated
+public fetch client (`services/review-session-public.service.ts`) -
+deliberately not built on `apiRequest()`, since its 401 handling calls
+`clearSession()`, which would wrong-headedly log out a staff member
+opening a client link while signed in.
+
+**Phase 7 (OTP + password gates):** `OtpGate` (masked email, 6-digit
+input, resend, 5-attempt lockout messaging) and `PasswordGate` (a
+client-side-only check ahead of OTP - `verifyPassword()` has no session
+side effect) built alongside the public page in Phase 6's commits.
+
+**Phase 8 (polish):** Fixed a real route collision caught while building
+Phase 6 - the invite email's link was `/review/<token>`, which is also the
+internal workspace's route shape (`/review/[deliverableId]`); moved the
+public link to `/client-review/<token>`. Added `ReviewCountdown` (ticking
+expiry readout), a warning banner + highlighted version pill for when a
+client is previewing a non-current version (Approve/Request Changes
+always act on the version that was actually sent, not whichever one is on
+screen), and confirmed no internal ids/paths/staff names leak across the
+public API boundary (staff-authored comments render as "Team").
+
+**Phase 9 (verify):** Full `tsc --noEmit`/`eslint --max-warnings=0`/
+`next build` pass. Live browser walkthrough using a seeded `ReviewSession`
+(local Postgres, no real org needed): OTP request → code read from the
+console-logged mailer fallback → verify → content loads (player, controls,
+timeline, comment composer, action buttons) → posted a comment (rendered
+correctly as the client's email, no internal names) → confirmed Approve →
+session flipped to `"approved"`, comments locked, action bar replaced with
+a thank-you message, no console errors. Docs: this entry, `docs/adr/
+0061-client-review-approval-system.md`, `docs/api.md`, `docs/database.md`
+(done in Phase 1), `docs/changelog.md`.
