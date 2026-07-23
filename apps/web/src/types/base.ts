@@ -481,9 +481,44 @@ export type DeliverableActivityEntry = {
   type: string;
   fromValue: string | null;
   toValue: string | null;
-  actorId: string;
+  actorId: string | null;
   actorName: string;
   createdAt: string;
+};
+
+export type ReviewSessionStatus =
+  | "pending"
+  | "viewed"
+  | "reviewing"
+  | "changes_requested"
+  | "approved"
+  | "expired"
+  | "revoked";
+
+export type ReviewSessionSummary = {
+  id: string;
+  clientEmail: string;
+  status: ReviewSessionStatus;
+  expiresAt: string;
+  firstViewedAt: string | null;
+  lastActivityAt: string | null;
+  approvedAt: string | null;
+  changesRequestedAt: string | null;
+  createdAt: string;
+};
+
+export type SendClientReviewRequest = {
+  clientEmail: string;
+  subject: string;
+  message?: string;
+  includeProjectName?: boolean;
+  includeVideoVersion?: boolean;
+  includeNotes?: boolean;
+  allowDownload?: boolean;
+  allowFullscreen?: boolean;
+  allowVersionSwitch?: boolean;
+  expiresIn: string;
+  password?: string;
 };
 
 export type EditorStats = {

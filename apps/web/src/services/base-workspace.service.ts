@@ -63,12 +63,14 @@ import type {
   ReviewBulkAction,
   ReviewMetrics,
   ReviewQueueItem,
+  ReviewSessionSummary,
   TaskActivityItem,
   TaskChecklistItemDto,
   TaskTimeEntryItem,
   Script,
   ScriptSummary,
   SendChatMessageRequest,
+  SendClientReviewRequest,
   Shoot,
   Shot,
   SignupRequest,
@@ -924,6 +926,24 @@ export async function getDeliverableActivity(
 ): Promise<DeliverableActivityEntry[]> {
   return apiRequest<DeliverableActivityEntry[]>(
     `/deliverables/${deliverableId}/activity`
+  );
+}
+
+export async function sendClientReview(
+  deliverableId: string,
+  request: SendClientReviewRequest
+): Promise<ReviewSessionSummary> {
+  return apiRequest<ReviewSessionSummary>(
+    `/deliverables/${deliverableId}/review-sessions`,
+    { method: "POST", body: request }
+  );
+}
+
+export async function listReviewSessions(
+  deliverableId: string
+): Promise<ReviewSessionSummary[]> {
+  return apiRequest<ReviewSessionSummary[]>(
+    `/deliverables/${deliverableId}/review-sessions`
   );
 }
 
