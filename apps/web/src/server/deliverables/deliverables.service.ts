@@ -52,6 +52,13 @@ export type ReviewQueueFilters = {
 export type ReviewBulkAction =
   "approve" | "request-revision" | "reassign" | "reject";
 
+// A deliverable's status transitions and activity log can now be driven by
+// either a Fylmico staff member or a client acting through a review session
+// (which has no User row at all) - every internal call site below wraps a
+// plain userId as { type: "user", id }.
+export type DeliverableActor =
+  { type: "user"; id: string } | { type: "client"; label: string };
+
 class DeliverablesService {
   private readonly prisma = prisma;
 
@@ -120,7 +127,7 @@ class DeliverablesService {
     if (dto.taskId) {
       await this.logActivity(
         deliverable.id,
-        userId,
+        { type: "user", id: userId },
         "version_uploaded",
         undefined,
         `v${deliverable.version}`
@@ -371,7 +378,11 @@ class DeliverablesService {
     });
 
     if (count > 0) {
-      await this.logActivity(deliverableId, userId, "review_started");
+      await this.logActivity(
+        deliverableId,
+        { type: "user", id: userId },
+        "review_started"
+      );
 
       if (deliverable.createdById !== userId) {
         await notificationsService.create(
@@ -400,13 +411,15 @@ class DeliverablesService {
     );
     this.assertReviewable(deliverable, "have changes requested");
 
-    const updated = await this.transition(userId, deliverableId, {
-      status: "revision"
-    });
+    const updated = await this.transition(
+      { type: "user", id: userId },
+      deliverableId,
+      { status: "revision" }
+    );
 
     await this.logActivity(
       deliverableId,
-      userId,
+      { type: "user", id: userId },
       "changes_requested",
       deliverable.status,
       "revision"
@@ -461,14 +474,15 @@ class DeliverablesService {
     );
     this.assertReviewable(deliverable, "rejected");
 
-    const updated = await this.transition(userId, deliverableId, {
-      status: "rejected",
-      rejectionReason: reason.trim()
-    });
+    const updated = await this.transition(
+      { type: "user", id: userId },
+      deliverableId,
+      { status: "rejected", rejectionReason: reason.trim() }
+    );
 
     await this.logActivity(
       deliverableId,
-      userId,
+      { type: "user", id: userId },
       "rejected",
       deliverable.status,
       "rejected"
@@ -543,12 +557,13 @@ class DeliverablesService {
     );
     this.assertReviewable(deliverable, "approved");
 
-    const updated = await this.transition(userId, deliverableId, {
+    const actor: DeliverableActor = { type: "user", id: userId };
+    const updated = await this.transition(actor, deliverableId, {
       status: "approved"
     });
 
     try {
-      await this.onApproved(userId, deliverable, {
+      await this.onApproved(userId, actor, deliverable, {
         deliverToClient: options.deliverToClient ?? true,
         addToPortfolio: options.addToPortfolio ?? false,
         portfolioCategory: options.portfolioCategory?.trim() || "Misc",
@@ -564,7 +579,7 @@ class DeliverablesService {
 
     await this.logActivity(
       deliverableId,
-      userId,
+      actor,
       "approved",
       deliverable.status,
       "approved"
@@ -580,6 +595,121 @@ class DeliverablesService {
           : "Your submission was approved and delivered to the client.",
         deliverable.organizationId
       );
+    }
+
+    return updated;
+  }
+
+  // The client-review counterparts of approve()/requestRevision(). There is
+  // no Fylmico userId for a client actor, so internal calls that themselves
+  // require membership (tasksService.update) run as `sentById` - the staff
+  // member who sent the review link, already verified as a manager at send
+  // time - while the audit trail and notifications correctly attribute the
+  // action to the client.
+  async approveViaClientReview(
+    deliverableId: string,
+    sentById: string,
+    clientEmail: string
+  ) {
+    const deliverable = await this.findOrThrow(deliverableId);
+    this.assertReviewable(deliverable, "approved");
+
+    const actor: DeliverableActor = { type: "client", label: clientEmail };
+    const updated = await this.transition(actor, deliverableId, {
+      status: "approved"
+    });
+
+    try {
+      await this.onApproved(sentById, actor, deliverable, {
+        deliverToClient: true,
+        addToPortfolio: false,
+        portfolioCategory: "Misc",
+        finalName: undefined,
+        notes: undefined
+      });
+    } catch (error) {
+      console.error(
+        "[deliverables] could not finalize task / Deliveries copy / stats (client approval)",
+        error
+      );
+    }
+
+    await this.logActivity(
+      deliverableId,
+      actor,
+      "approved",
+      deliverable.status,
+      "approved"
+    );
+
+    if (deliverable.createdById !== sentById) {
+      await notificationsService.create(
+        deliverable.createdById,
+        "deliverable_approved",
+        `Approved by client: v${deliverable.version}`,
+        `${clientEmail} approved your submission and it was delivered to the client.`,
+        deliverable.organizationId
+      );
+    }
+
+    return updated;
+  }
+
+  async requestRevisionViaClientReview(
+    deliverableId: string,
+    sentById: string,
+    clientEmail: string,
+    feedback: string
+  ) {
+    const deliverable = await this.findOrThrow(deliverableId);
+    this.assertReviewable(deliverable, "have changes requested");
+
+    const actor: DeliverableActor = { type: "client", label: clientEmail };
+    const updated = await this.transition(actor, deliverableId, {
+      status: "revision"
+    });
+
+    await this.logActivity(
+      deliverableId,
+      actor,
+      "changes_requested",
+      deliverable.status,
+      "revision"
+    );
+
+    if (deliverable.taskId) {
+      try {
+        await tasksService.update(sentById, deliverable.taskId, {
+          status: "in-progress"
+        });
+        if (feedback.trim()) {
+          await commentsService.createForTask(
+            sentById,
+            deliverable.taskId,
+            `Client feedback (${clientEmail}): ${feedback.trim()}`
+          );
+        }
+        const task = await this.prisma.task.findUnique({
+          where: { id: deliverable.taskId },
+          include: { assignees: true }
+        });
+        for (const assignee of task?.assignees ?? []) {
+          await notificationsService.create(
+            assignee.userId,
+            "deliverable_changes_requested",
+            `Changes requested by client: v${deliverable.version}`,
+            feedback.trim()
+              ? `${clientEmail} asked for changes: ${feedback.trim()}`
+              : `${clientEmail} asked for changes on your submission.`,
+            deliverable.organizationId
+          );
+        }
+      } catch (error) {
+        console.error(
+          "[deliverables] could not revert task / notify on client request-revision",
+          error
+        );
+      }
     }
 
     return updated;
@@ -730,6 +860,7 @@ class DeliverablesService {
 
   private async onApproved(
     userId: string,
+    actor: DeliverableActor,
     deliverable: DeliverableWithRelations,
     options: {
       deliverToClient: boolean;
@@ -776,7 +907,7 @@ class DeliverablesService {
             uploadedById: deliverable.createdById
           }
         });
-        await this.logActivity(deliverable.id, userId, "delivered");
+        await this.logActivity(deliverable.id, actor, "delivered");
       } catch (error) {
         console.error(
           "[deliverables] could not copy final file into Deliveries",
@@ -805,7 +936,7 @@ class DeliverablesService {
             uploadedById: deliverable.createdById
           }
         });
-        await this.logActivity(deliverable.id, userId, "portfolio_added");
+        await this.logActivity(deliverable.id, actor, "portfolio_added");
       } catch (error) {
         console.error(
           "[deliverables] could not copy final file into Portfolio",
@@ -842,7 +973,7 @@ class DeliverablesService {
 
   private async logActivity(
     deliverableId: string,
-    actorId: string,
+    actor: DeliverableActor,
     type: string,
     fromValue?: string,
     toValue?: string
@@ -851,7 +982,9 @@ class DeliverablesService {
       await this.prisma.deliverableActivity.create({
         data: {
           deliverableId,
-          actorId,
+          actorId: actor.type === "user" ? actor.id : null,
+          actorType: actor.type,
+          actorLabel: actor.type === "client" ? actor.label : null,
           type,
           fromValue: fromValue ?? null,
           toValue: toValue ?? null
@@ -883,15 +1016,20 @@ class DeliverablesService {
   }
 
   private async transition(
-    userId: string,
+    actor: DeliverableActor,
     deliverableId: string,
     data: Prisma.DeliverableUpdateInput
   ) {
     const deliverable = await this.findOrThrow(deliverableId);
-    await organizationsService.requireMembership(
-      deliverable.organizationId,
-      userId
-    );
+    // A client actor is already authorized upstream by
+    // reviewSessionsService.requireVerifiedSession before any of this runs -
+    // there's no Fylmico membership to check for them.
+    if (actor.type === "user") {
+      await organizationsService.requireMembership(
+        deliverable.organizationId,
+        actor.id
+      );
+    }
 
     const updated = await this.prisma.deliverable.update({
       where: { id: deliverableId },

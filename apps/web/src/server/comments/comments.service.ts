@@ -32,7 +32,7 @@ interface CommentDto {
   replies: CommentDto[];
 }
 
-const REACTION_EMOJIS = ["👍", "❤️", "😂", "🎉", "😮", "👀"];
+export const REACTION_EMOJIS = ["👍", "❤️", "😂", "🎉", "😮", "👀"];
 
 function excerpt(body: string, maxLength = 120): string {
   const trimmed = body.trim();
