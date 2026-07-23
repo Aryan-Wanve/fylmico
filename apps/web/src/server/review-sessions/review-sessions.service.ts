@@ -16,6 +16,8 @@ import { sendMail } from "../mail/mailer";
 import { organizationsService } from "../organizations/organizations.service";
 import { prisma } from "../prisma";
 import { getClientIp, rateLimit } from "../rate-limit";
+import { broadcast, deliverableReviewTopic } from "../realtime/broadcast";
+import { notificationsService } from "../notifications/notifications.service";
 import {
   reviewSessionCookieName,
   signReviewSessionCookie,
@@ -258,6 +260,7 @@ class ReviewSessionsService {
     }
 
     const now = new Date();
+    const isFirstView = session.status === "pending";
     await this.prisma.$transaction([
       this.prisma.reviewOtpToken.update({
         where: { id: record.id },
@@ -268,7 +271,7 @@ class ReviewSessionsService {
         data: {
           firstViewedAt: session.firstViewedAt ?? now,
           lastActivityAt: now,
-          status: session.status === "pending" ? "viewed" : session.status
+          status: isFirstView ? "viewed" : session.status
         }
       })
     ]);
@@ -278,6 +281,21 @@ class ReviewSessionsService {
       { type: "client", label: session.clientEmail },
       "review_viewed"
     );
+
+    if (isFirstView) {
+      await broadcast(deliverableReviewTopic(session.deliverableId), "viewed", {
+        reviewSessionId: session.id,
+        status: "viewed"
+      });
+      if (session.deliverable.createdById !== session.sentById) {
+        await notificationsService.create(
+          session.deliverable.createdById,
+          "review_client_viewed",
+          `Client viewed: v${session.deliverable.version}`,
+          `${session.clientEmail} opened the review link.`
+        );
+      }
+    }
 
     return {
       cookieName: reviewSessionCookieName(session.id),
@@ -351,6 +369,19 @@ class ReviewSessionsService {
           { type: "client", label: session.clientEmail },
           "review_expired"
         );
+        await broadcast(
+          deliverableReviewTopic(session.deliverableId),
+          "expired",
+          { reviewSessionId: session.id, status: "expired" }
+        );
+        if (session.deliverable.createdById !== session.sentById) {
+          await notificationsService.create(
+            session.deliverable.createdById,
+            "review_link_expired",
+            `Review link expired: v${session.deliverable.version}`,
+            `The review link sent to ${session.clientEmail} has expired.`
+          );
+        }
       }
       throw new AppException(
         HttpStatus.GONE,

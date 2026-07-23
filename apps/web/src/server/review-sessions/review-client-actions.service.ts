@@ -6,6 +6,7 @@ import { AppException, HttpStatus } from "../http";
 import { getAppUrl } from "../mail/mailer";
 import { notificationsService } from "../notifications/notifications.service";
 import { prisma } from "../prisma";
+import { broadcast, deliverableReviewTopic } from "../realtime/broadcast";
 import { reviewSessionsService } from "./review-sessions.service";
 
 type CommentReaction = { emoji: string; label: string; count: number };
@@ -94,6 +95,10 @@ class ReviewClientActionsService {
     });
 
     await this.markReviewing(session.id);
+    await broadcast(deliverableReviewTopic(session.deliverableId), "comment", {
+      reviewSessionId: session.id,
+      status: "reviewing"
+    });
     await this.notifyEditor(
       session,
       "review_client_commented",
@@ -131,6 +136,10 @@ class ReviewClientActionsService {
     });
 
     await this.markReviewing(session.id);
+    await broadcast(deliverableReviewTopic(session.deliverableId), "comment", {
+      reviewSessionId: session.id,
+      status: "reviewing"
+    });
     await this.notifyEditor(
       session,
       "review_client_commented",
@@ -213,6 +222,10 @@ class ReviewClientActionsService {
       }
     });
 
+    await broadcast(deliverableReviewTopic(session.deliverableId), "approved", {
+      reviewSessionId: session.id,
+      status: "approved"
+    });
     await this.notifyEditor(
       session,
       "review_client_approved",
@@ -261,6 +274,11 @@ class ReviewClientActionsService {
       }
     });
 
+    await broadcast(
+      deliverableReviewTopic(session.deliverableId),
+      "changes_requested",
+      { reviewSessionId: session.id, status: "changes_requested" }
+    );
     await this.notifyEditor(
       session,
       "review_changes_requested",
