@@ -2,9 +2,20 @@
 
 import { useRef, useState, type MouseEvent } from "react";
 import { MessageSquare, PenTool, ZoomIn, ZoomOut } from "lucide-react";
-import type { Annotation, Comment, Deliverable } from "@/types/base";
+import type { Annotation, Deliverable } from "@/types/base";
 import { usePlayerContext } from "./player-context";
 import { formatTimestamp } from "./player-format";
+
+// Loosened to a structural subset rather than the full internal Comment
+// type - the public client-review page has its own ReviewClientComment
+// shape (guest authors, no mentions/pins), and this is all the timeline
+// actually reads to place pins on the scrubber.
+export type TimelineComment = {
+  id: string;
+  body: string;
+  parentId?: string | null;
+  timestampSeconds?: number | null;
+};
 
 export function ReviewTimeline({
   src,
@@ -16,7 +27,7 @@ export function ReviewTimeline({
   onSelectComment
 }: {
   src: string;
-  comments: Comment[];
+  comments: TimelineComment[];
   annotations: Annotation[];
   versions: Deliverable[];
   activeVersionId: string;

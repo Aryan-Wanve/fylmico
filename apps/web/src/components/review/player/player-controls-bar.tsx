@@ -20,7 +20,11 @@ import {
 import { PLAYBACK_SPEEDS, usePlayerContext } from "./player-context";
 import { formatTimestamp } from "./player-format";
 
-export function PlayerControlsBar() {
+export function PlayerControlsBar({
+  hideFullscreen = false
+}: {
+  hideFullscreen?: boolean;
+} = {}) {
   const {
     paused,
     currentTime,
@@ -130,18 +134,20 @@ export function PlayerControlsBar() {
           value={muted ? 0 : volume}
         />
 
-        <button
-          aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen"}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white"
-          onClick={toggleFullscreen}
-          type="button"
-        >
-          {fullscreen ? (
-            <Minimize className="h-4 w-4" />
-          ) : (
-            <Maximize className="h-4 w-4" />
-          )}
-        </button>
+        {hideFullscreen ? null : (
+          <button
+            aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white"
+            onClick={toggleFullscreen}
+            type="button"
+          >
+            {fullscreen ? (
+              <Minimize className="h-4 w-4" />
+            ) : (
+              <Maximize className="h-4 w-4" />
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
