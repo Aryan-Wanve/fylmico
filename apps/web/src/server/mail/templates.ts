@@ -75,7 +75,10 @@ export function buildClientReviewInviteEmail(
     deadline?: string;
   }
 ): MailMessage {
-  const link = `${getAppUrl()}/review/${options.reviewToken}`;
+  // Deliberately not /review/<token> - that path is already the internal
+  // authenticated workspace route (/review/[deliverableId]), and Next's
+  // router would otherwise try to match a client token against it.
+  const link = `${getAppUrl()}/client-review/${options.reviewToken}`;
   const projectLine = options.projectName
     ? `<p style="font-size:14px;color:#4b5268;margin:0 0 4px;"><strong>Project:</strong> ${options.projectName}</p>`
     : "";
