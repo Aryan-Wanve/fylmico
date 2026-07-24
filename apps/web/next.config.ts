@@ -12,6 +12,16 @@ const nextConfig: NextConfig = {
     root: repositoryRoot
   },
   typedRoutes: true,
+  // Hostinger's container over-reports its CPU count (same root cause as
+  // the Prisma connection_limit/TOKIO_WORKER_THREADS workarounds - see
+  // docs/hostinger-deployment.md's Max Processes incident). Without this,
+  // `next build`'s static-generation phase sizes its worker pool off that
+  // inflated count and spawns one OS process per worker (observed: 47
+  // workers in production), which alone can push the account's
+  // process-count ceiling to its limit during every build.
+  experimental: {
+    cpus: 2
+  },
   ...(isStaticExport
     ? {}
     : {
