@@ -159,6 +159,18 @@ over-allocates:
    Prisma's compiled engine. The reliable fix is a permanent plan
    upgrade with a higher process limit, since usage already runs above
    the base plan's ceiling under normal load.
+3. **`next build`'s own static-generation worker pool** - confirmed,
+   fixed (`apps/web/next.config.ts`): production's build log read
+   `Generating static pages using 47 workers` - `next build` sizes this
+   pool off the same over-reported CPU count, and each worker is a
+   separate OS process. A build alone could spend a large chunk of the
+   account's process budget, on top of whatever the running app was
+   already using - and since build output lives in the Deployments tab,
+   not Runtime Logs, a build stuck fighting for process headroom looks
+   from Runtime Logs like nothing is happening at all. Fixed with
+   `experimental.cpus: 2` in `next.config.ts`, forcing a small, fixed
+   worker count regardless of what the container reports (confirmed
+   locally: build log now reads `using 2 workers`).
 
 Ruled out: the account's other two Hostinger-hosted sites
 (`portfolio-site`, `parakh-enterprises-website`) - both are static
