@@ -64,7 +64,9 @@ successfully but serve `403 Forbidden` on every route until they're set:
   Supabase for live chat - find the anon key on the Supabase project's
   API settings page; it's meant to be public, unlike the service role
   key). `NEXT_PUBLIC_API_URL` no longer applies - the frontend calls its
-  own same-origin `/api/v1` path now, not a separate host.
+  own same-origin `/api/v1` path now, not a separate host. `TOKIO_WORKER_THREADS`
+  is optional, experimental tuning for the Max Processes incident below -
+  see that section before setting it.
 
 Leave **Output directory** blank - this is a running Node process, not a
 static folder Hostinger copies files out of.
@@ -111,6 +113,58 @@ Hostinger plan genuinely needs a static export (a plain "publish
 directory" style deployment with no build step of its own), design that
 fresh, with `packages/` correctly protected from the start, rather than
 reviving the removed script.
+
+## Known Incident: Prisma Rust Panics from the Account's Max Processes Limit
+
+Production crash-looped repeatedly with
+`PrismaClientRustPanicError: PANIC: timer has gone away` on
+`prisma.authAccount.findUnique()` during login/Google OAuth - a hard,
+non-recoverable panic in Prisma's Rust query engine that kills the whole
+Node process (Hostinger's supervisor then auto-restarts it, which is why
+Runtime Logs showed the `▲ Next.js ... ✓ Ready in 0ms` startup banner
+repeating with no requests served in between).
+
+Two contributing causes, both rooted in the same underlying problem: this
+container's `os.cpus()`/process metrics are not representative of what
+the account is actually allotted, so anything that sizes a resource pool
+off the detected environment (rather than a hardcoded safe value)
+over-allocates:
+
+1. **Connection pool exhaustion** - already fixed
+   (`apps/web/src/server/prisma.ts`): every Next.js route chunk that
+   imported the Prisma client used to instantiate its own `PrismaClient`
+   (no global singleton in production), each opening its own connection
+   pool sized by Prisma's default (`num_physical_cpus * 2 + 1` against
+   the _host_ machine's core count, not the container's real allocation) -
+   quickly exhausting Supabase's Session Pooler. Fixed by caching a single
+   `PrismaClient` on `global` and forcing `connection_limit=5` on the
+   connection string.
+2. **Account-wide process/thread ceiling** - confirmed via hPanel's
+   Hosting Plan -> Resources Usage -> Max Processes graph: average usage
+   sat at 111-157 against a **120-process account limit**, while CPU and
+   memory were both near-idle - this is a process-_count_ ceiling, not a
+   compute constraint. Prisma's query engine is a Rust binary running a
+   `tokio` async runtime, which also sizes its worker-thread pool off the
+   detected CPU count; on Linux, threads count against the same
+   process-table ceiling as full processes. Matches a report from another
+   Hostinger-hosted Prisma user on the identical query-engine build
+   (`prisma/prisma#29336`) hitting the exact same panic at their plan's
+   process limit. Hostinger's free "Boost resources" temporarily raised
+   the limit from 120 to 400, immediately resolving the outage - but since
+   real usage (111-157) already exceeded the _original_ 120 limit, this
+   is headroom, not a fix; if the boost reverts, the crash loop returns.
+   `TOKIO_WORKER_THREADS` (see `.env.example`) is an unverified experiment
+   to cap Prisma's engine thread pool directly, on the theory that it's
+   the dominant contributor - not confirmed to actually be read by
+   Prisma's compiled engine. The reliable fix is a permanent plan
+   upgrade with a higher process limit, since usage already runs above
+   the base plan's ceiling under normal load.
+
+Ruled out: the account's other two Hostinger-hosted sites
+(`portfolio-site`, `parakh-enterprises-website`) - both are static
+exports (`output: "export"`, uploaded as pre-built files) with no
+running Node process, PHP-FPM workers, or cron jobs of their own, so they
+don't meaningfully contribute to this account's process count.
 
 ## Production Runtime
 
