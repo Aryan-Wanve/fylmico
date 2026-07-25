@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   requestReviewOtp,
@@ -8,6 +8,10 @@ import {
 } from "@/services/review-session-public.service";
 
 const MAX_OTP_ATTEMPTS = 5;
+// Mirrors the server-side burst limit in review-sessions.service.ts's
+// requestOtp() (1 request per 30s per session+IP) - disabling the button
+// client-side is just UX; the server enforces the real limit either way.
+const RESEND_COOLDOWN_MS = 30_000;
 
 export function OtpGate({
   token,
@@ -24,13 +28,27 @@ export function OtpGate({
   const [attempts, setAttempts] = useState(0);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState("");
+  const [cooldownEndsAt, setCooldownEndsAt] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const cooldownRemaining = Math.max(
+    0,
+    Math.ceil((cooldownEndsAt - now) / 1000)
+  );
 
   async function handleSendCode() {
+    if (cooldownRemaining > 0) return;
     setSending(true);
     setError("");
     try {
       await requestReviewOtp(token);
       setSent(true);
+      setCooldownEndsAt(Date.now() + RESEND_COOLDOWN_MS);
     } catch (sendError) {
       setError(
         sendError instanceof Error
@@ -86,10 +104,14 @@ export function OtpGate({
       ) : !sent ? (
         <Button
           className="mt-6 h-11 w-full"
-          disabled={sending}
+          disabled={sending || cooldownRemaining > 0}
           onClick={() => void handleSendCode()}
         >
-          {sending ? "Sending..." : "Send access code"}
+          {sending
+            ? "Sending..."
+            : cooldownRemaining > 0
+              ? `Try again in ${cooldownRemaining}s`
+              : "Send access code"}
         </Button>
       ) : (
         <div className="mt-6 grid gap-2.5">
@@ -113,11 +135,14 @@ export function OtpGate({
             {verifying ? "Verifying..." : "Verify code"}
           </Button>
           <button
-            className="text-xs font-semibold text-[var(--fylmico-accent)] hover:underline"
+            className="text-xs font-semibold text-[var(--fylmico-accent)] hover:underline disabled:cursor-not-allowed disabled:text-[var(--fylmico-accent)]/50 disabled:no-underline"
+            disabled={sending || cooldownRemaining > 0}
             onClick={() => void handleSendCode()}
             type="button"
           >
-            Resend code
+            {cooldownRemaining > 0
+              ? `Resend code in ${cooldownRemaining}s`
+              : "Resend code"}
           </button>
         </div>
       )}

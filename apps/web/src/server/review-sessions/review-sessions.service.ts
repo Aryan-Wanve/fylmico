@@ -205,6 +205,10 @@ class ReviewSessionsService {
   async requestOtp(token: string, request: NextRequest): Promise<void> {
     const session = await this.findValidSession(token);
     const ip = getClientIp(request);
+    // Two layers: a hard per-request cooldown (so "Resend code" can't be
+    // clicked in a rapid burst - each click sends a real email) plus the
+    // existing sustained-abuse cap over a longer window.
+    rateLimit(`review-otp-burst:${session.id}:${ip}`, 1, 30_000);
     rateLimit(`review-otp:${session.id}:${ip}`, 5, 15 * 60_000);
 
     await this.prisma.reviewOtpToken.updateMany({
