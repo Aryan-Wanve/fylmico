@@ -94,17 +94,29 @@ export function ScriptEditor({
       content.slice(lineStart, lineEnd),
       element
     );
-    const nextContent =
-      content.slice(0, lineStart) + formatted + content.slice(lineEnd);
 
-    setContent(nextContent);
-    scheduleSave({ content: nextContent });
+    // Applied via execCommand (which fires a native "input" event our
+    // onChange below picks up) rather than setContent directly - a plain
+    // React state update bypasses the textarea's native undo stack
+    // entirely, which is why Ctrl+Z previously did nothing after using
+    // one of these format buttons.
+    textarea.focus();
+    textarea.setSelectionRange(lineStart, lineEnd);
+    const applied = document.execCommand("insertText", false, formatted);
 
-    requestAnimationFrame(() => {
-      textarea.focus();
-      const newCursor = lineStart + formatted.length;
-      textarea.setSelectionRange(newCursor, newCursor);
-    });
+    if (!applied) {
+      // Fallback for the rare browser without execCommand support - the
+      // format still gets applied, just without a native undo entry.
+      const nextContent =
+        content.slice(0, lineStart) + formatted + content.slice(lineEnd);
+      setContent(nextContent);
+      scheduleSave({ content: nextContent });
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const newCursor = lineStart + formatted.length;
+        textarea.setSelectionRange(newCursor, newCursor);
+      });
+    }
   }
 
   return (
@@ -173,7 +185,7 @@ export function ScriptEditor({
       <ScriptFormatToolbar onApply={handleApplyFormat} />
 
       <textarea
-        className="min-h-0 w-full resize-none rounded-xl border border-black/10 bg-transparent p-4 font-mono text-sm leading-relaxed text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:text-[#f1f2f8]"
+        className="min-h-[32rem] w-full resize-y rounded-xl border border-black/10 bg-transparent p-4 font-mono text-sm leading-relaxed text-[#11142c] outline-none focus:border-[var(--fylmico-accent)] dark:border-white/10 dark:text-[#f1f2f8]"
         onBlur={() => flushSave({ content })}
         onChange={(event) => {
           setContent(event.target.value);
