@@ -52,7 +52,9 @@ export function ClientCommentThread({
       const comment = await addReviewComment(
         token,
         draft.trim(),
-        attachTimestamp ? currentTimeSeconds : undefined
+        attachTimestamp && currentTimeSeconds != null
+          ? Math.round(currentTimeSeconds)
+          : undefined
       );
       onCommentsChange([...comments, { ...comment, replies: [] }]);
       setDraft("");

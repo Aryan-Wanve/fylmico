@@ -128,7 +128,9 @@ export function CommentThreadPanel({
       const comment = await createDeliverableComment(
         deliverableId,
         draft.trim(),
-        attachTimestamp ? currentTimeSeconds : undefined,
+        attachTimestamp && currentTimeSeconds != null
+          ? Math.round(currentTimeSeconds)
+          : undefined,
         {
           frameNumber: attachTimestamp ? currentFrame : undefined,
           mentionedUserIds: draftMentions
