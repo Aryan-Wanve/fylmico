@@ -190,29 +190,29 @@ export default function ClientReviewPage({
   );
 
   return (
-    <div className="min-h-screen bg-[#0d0f1f] p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto grid max-w-6xl gap-4">
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-black text-white">
-              {content.videoTitle}
-            </h1>
-            <p className="truncate text-xs text-white/40">
-              {preview.projectName ? `${preview.projectName} - ` : ""}
-              {content.version ? `v${content.version}` : ""}
-            </p>
-          </div>
-          <ReviewCountdown initialRemainingSeconds={content.remainingSeconds} />
-        </header>
+    <div className="flex h-dvh flex-col gap-3 overflow-hidden bg-[#0d0f1f] p-4 sm:p-6 lg:p-6">
+      <header className="mx-auto flex w-full max-w-6xl shrink-0 flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-black text-white">
+            {content.videoTitle}
+          </h1>
+          <p className="truncate text-xs text-white/40">
+            {preview.projectName ? `${preview.projectName} - ` : ""}
+            {content.version ? `v${content.version}` : ""}
+          </p>
+        </div>
+        <ReviewCountdown initialRemainingSeconds={content.remainingSeconds} />
+      </header>
 
-        {!content.isCurrentVersion ? (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-300">
-            You&apos;re previewing v{content.version}. Approve and Request
-            Changes always apply to the version sent for your review, not
-            whichever version is currently on screen.
-          </div>
-        ) : null}
+      {!content.isCurrentVersion ? (
+        <div className="mx-auto w-full max-w-6xl shrink-0 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-300">
+          You&apos;re previewing v{content.version}. Approve and Request Changes
+          always apply to the version sent for your review, not whichever
+          version is currently on screen.
+        </div>
+      ) : null}
 
+      <div className="mx-auto min-h-0 w-full max-w-6xl flex-1">
         <PlayerProvider fps={24} src={content.videoUrl}>
           <ClientReviewBody
             activeVersion={content.version}
@@ -231,7 +231,9 @@ export default function ClientReviewPage({
             videoUrl={content.videoUrl}
           />
         </PlayerProvider>
+      </div>
 
+      <div className="mx-auto w-full max-w-6xl shrink-0">
         {!locked ? (
           <div className="flex flex-wrap items-center justify-end gap-3 rounded-2xl border border-white/10 bg-[#171a28] p-3">
             <Button
@@ -298,10 +300,10 @@ function ClientReviewBody({
   const { currentTime, seek } = usePlayerContext();
 
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_22rem]">
-      <div className="grid min-w-0 gap-3">
+    <div className="grid h-full min-h-0 grid-cols-1 gap-4 xl:grid-cols-[1fr_22rem]">
+      <div className="flex min-h-0 min-w-0 flex-col gap-3">
         {versions.length > 1 ? (
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex shrink-0 flex-wrap items-center gap-1.5">
             {versions.map((v) => (
               <button
                 className={`rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${
@@ -319,20 +321,26 @@ function ClientReviewBody({
           </div>
         ) : null}
 
-        <ReviewVideoPlayer src={videoUrl} />
-        <PlayerControlsBar hideFullscreen={!allowFullscreen} />
-        <ReviewTimeline
-          activeVersionId=""
-          annotations={[]}
-          comments={comments}
-          onSelectVersion={() => {}}
-          src={videoUrl}
-          versions={[]}
-        />
+        <div className="min-h-0 flex-1">
+          <ReviewVideoPlayer fillParent src={videoUrl} />
+        </div>
+        <div className="shrink-0">
+          <PlayerControlsBar hideFullscreen={!allowFullscreen} />
+        </div>
+        <div className="shrink-0">
+          <ReviewTimeline
+            activeVersionId=""
+            annotations={[]}
+            comments={comments}
+            onSelectVersion={() => {}}
+            src={videoUrl}
+            versions={[]}
+          />
+        </div>
 
         {allowDownload ? (
           <a
-            className="flex w-fit items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white/80 hover:bg-white/10"
+            className="flex w-fit shrink-0 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white/80 hover:bg-white/10"
             download
             href={videoUrl}
           >
