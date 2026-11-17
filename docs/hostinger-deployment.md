@@ -21,7 +21,7 @@ container it manages entirely:
 
 ```bash
 npm install
-npm run build   # -> next build (standalone output) + postbuild asset sync
+npm run build   # -> next build --webpack (standalone output) + postbuild asset sync
 npm start       # -> node server.js -> apps/web/.next/standalone/apps/web/server.js
 ```
 
@@ -29,6 +29,11 @@ This needs **no GitHub Actions workflow at all** - Hostinger's own
 integration is the entire CD pipeline for the frontend. Pushing to `main`
 is sufficient; the site rebuilds and redeploys on its own within a few
 minutes.
+
+The production build uses Next.js's Webpack mode. The Hostinger container's
+Turbopack build failed while spawning its PostCSS worker for `globals.css`;
+using the supported `next build --webpack` option avoids that bundler path
+without changing the app's Next.js 16 `proxy.ts` convention.
 
 ## Required One-Time Settings
 
