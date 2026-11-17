@@ -5,13 +5,64 @@ import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/lib/theme-context";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "https://lightcyan-lion-635016.hostingersite.com";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${siteUrl}/#organization`,
+      name: "Fylmico",
+      url: siteUrl,
+      description:
+        "Fylmico makes project and production management software for creative teams."
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${siteUrl}/#software`,
+      name: "Fylmico",
+      url: siteUrl,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      description:
+        "Project and production management for filmmakers, production houses, and content teams, including project planning, crew coordination, tasks, files, storyboards, and team communication.",
+      publisher: { "@id": `${siteUrl}/#organization` }
+    }
+  ]
+};
 
 export const metadata: Metadata = {
   title: {
-    default: "Fylmico",
+    default: "Fylmico | Creative Production Management",
     template: "%s | Fylmico"
   },
-  description: "The operating system for creative production.",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ||
+      "https://lightcyan-lion-635016.hostingersite.com"
+  ),
+  description:
+    "Fylmico brings film and content production teams together to plan projects, coordinate crews, manage tasks and files, storyboard ideas, and deliver creative work.",
+  applicationName: "Fylmico",
+  category: "Business software",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "Fylmico",
+    title: "Fylmico | Creative Production Management",
+    description:
+      "Plan projects, coordinate crews, manage production tasks and files, and deliver creative work together with Fylmico.",
+    url: "/",
+    locale: "en_US"
+  },
+  twitter: {
+    card: "summary",
+    title: "Fylmico | Creative Production Management",
+    description:
+      "Project and production management for filmmakers, production houses, and content teams."
+  },
   icons: {
     icon: [
       { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
@@ -63,6 +114,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>

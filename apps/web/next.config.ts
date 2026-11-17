@@ -42,6 +42,17 @@ const nextConfig: NextConfig = {
                   value: "max-age=63072000; includeSubDomains"
                 }
               ]
+            },
+            {
+              source: "/",
+              headers: [
+                {
+                  key: "Link",
+                  value:
+                    '</llms.txt>; rel="describedby"; type="text/markdown", </?format=markdown>; rel="alternate"; type="text/markdown"'
+                },
+                { key: "Vary", value: "Accept" }
+              ]
             }
           ];
         }
